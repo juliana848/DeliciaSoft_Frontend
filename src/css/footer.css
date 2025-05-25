@@ -1,0 +1,77 @@
+.footer {
+    position: relative;
+    background-color: #ff4fbb;
+    color: black;
+    padding-top: 40px;
+    padding-bottom: 20px;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.footer-wave {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: white;
+    z-index: 1;
+
+    /* Curva sutil en forma de onda
+    clip-path: path("M0,20 C100,0 200,90 500,40 C700,0 900,80 1100,40 C1300,0 1500,80 1700,40 L1700,0 L0,0 Z"); */
+}
+
+.footer-content {
+    position: relative;
+    z-index: 2; /* Sobre la curva */
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+}
+
+.footer-section {
+    max-width: 200px;
+    margin: 10px;
+}
+
+.footer-logo {
+    width: 150px;
+    height: auto;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.footer-title {
+    color: #ffeb00;
+    font-weight: 900;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.footer-text {
+    margin: 6px 0;
+    font-weight: 600;
+    color: black;
+}
+
+.footer-text a {
+    text-decoration: none;
+    color: black;
+}
+
+.footer-text a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-section {
+        max-width: 100%;
+    }
+}

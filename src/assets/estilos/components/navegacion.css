@@ -1,0 +1,149 @@
+/* Estilos para el componente de Navegación */
+
+.nav-container {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.nav-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.nav-logo img {
+  height: 48px;
+  width: 48px;
+  transition: transform 0.3s ease;
+}
+
+.nav-logo:hover img {
+  transform: scale(1.05);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: #111827;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #ec4899;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #ec4899;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-button {
+  background-color: #ec4899;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.nav-button:hover {
+  background-color: #be185d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button:active {
+  transform: translateY(0);
+}
+
+.nav-mobile-button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #111827;
+}
+
+.nav-mobile-menu {
+  display: none;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Animación para el menú móvil */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-mobile-menu.visible {
+  display: flex;
+  animation: slideDown 0.3s ease forwards;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  
+  .nav-mobile-button {
+    display: block;
+  }
+  
+  .nav-mobile-menu {
+    display: none;
+  }
+  
+  .nav-mobile-menu.visible {
+    display: flex;
+  }
+}
+
+/* Estilos para el enlace activo */
+.nav-link.active {
+  color: #ec4899;
+}
+
+.nav-link.active::after {
+  width: 100%;
+}

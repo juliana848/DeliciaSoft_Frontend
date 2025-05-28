@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import logoDelicias from '../assets/imagenes/logo-delicias-darsy.png';
 

@@ -1,8 +1,9 @@
-<<<<<<< HEAD
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logoDelicias from '../assets/imagenes/logo-delicias-darsy.png';
 
 const Contactenos = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: '',
     apellidos: '',
@@ -10,6 +11,8 @@ const Contactenos = () => {
     telefono: '',
     mensaje: ''
   });
+
+  const [showMessage, setShowMessage] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,7 +25,11 @@ const Contactenos = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Datos del formulario:', formData);
-    alert('Mensaje enviado con éxito!');
+    
+    // Mostrar mensaje de éxito
+    setShowMessage(true);
+    
+    // Limpiar formulario
     setFormData({
       nombre: '',
       apellidos: '',
@@ -30,136 +37,237 @@ const Contactenos = () => {
       telefono: '',
       mensaje: ''
     });
+
+    // Ocultar mensaje después de 3 segundos
+    setTimeout(() => {
+      setShowMessage(false);
+    }, 3000);
+  };
+
+  const handleSedesClick = () => {
+    navigate('/sedes');
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-pink-50">
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-pink-100 rounded-lg p-6 shadow-md">
-            <h2 className="text-3xl font-bold text-pink-500 text-center mb-6">Envíanos tu mensaje!</h2>
+    <>
+      {/* Sección principal de contacto */}
+      <div className="container-fluid" style={{ backgroundColor: '#fdf2f8', minHeight: '100vh', paddingTop: '2rem', paddingBottom: '2rem' }}>
+        <div className="container">
+          <div className="row g-4">
+            {/* Columna del formulario */}
+            <div className="col-lg-7">
+              <div className="bg-white rounded-4 shadow-sm p-4">
+                <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
+                  Envíanos tu mensaje!
+                </h2>
+                
+                {showMessage && (
+                  <div className="alert alert-success d-flex align-items-center" role="alert">
+                    <i className="bi bi-check-circle-fill me-2"></i>
+                    ¡Mensaje enviado con éxito!
+                  </div>
+                )}
+                
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleChange}
+                      placeholder="Nombre"
+                      className="form-control form-control-lg"
+                      style={{ 
+                        backgroundColor: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '15px 20px'
+                      }}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      name="apellidos"
+                      value={formData.apellidos}
+                      onChange={handleChange}
+                      placeholder="Apellidos"
+                      className="form-control form-control-lg"
+                      style={{ 
+                        backgroundColor: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '15px 20px'
+                      }}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-3">
+                    <input
+                      type="email"
+                      name="correo"
+                      value={formData.correo}
+                      onChange={handleChange}
+                      placeholder="Correo electrónico"
+                      className="form-control form-control-lg"
+                      style={{ 
+                        backgroundColor: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '15px 20px'
+                      }}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-3">
+                    <input
+                      type="tel"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleChange}
+                      placeholder="Número de teléfono"
+                      className="form-control form-control-lg"
+                      style={{ 
+                        backgroundColor: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '15px 20px'
+                      }}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <textarea
+                      name="mensaje"
+                      value={formData.mensaje}
+                      onChange={handleChange}
+                      placeholder="Déjanos tu mensaje aquí....."
+                      rows="5"
+                      className="form-control form-control-lg"
+                      style={{ 
+                        backgroundColor: '#e5e7eb',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '15px 20px',
+                        resize: 'vertical'
+                      }}
+                      required
+                    ></textarea>
+                  </div>
+                  
+                  <div className="text-center">
+                    <button 
+                      type="submit" 
+                      className="btn btn-lg px-5 py-3 fw-bold"
+                      style={{ 
+                        backgroundColor: '#fbbf24',
+                        color: '#111827',
+                        border: 'none',
+                        borderRadius: '50px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#f59e0b';
+                        e.target.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#fbbf24';
+                        e.target.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      Enviar mensaje
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
             
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  placeholder="Nombre"
-                  className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  required
-                />
-              </div>
-              
-              <div className="mb-4">
-                <input
-                  type="text"
-                  name="apellidos"
-                  value={formData.apellidos}
-                  onChange={handleChange}
-                  placeholder="Apellidos"
-                  className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  required
-                />
-              </div>
-              
-              <div className="mb-4">
-                <input
-                  type="email"
-                  name="correo"
-                  value={formData.correo}
-                  onChange={handleChange}
-                  placeholder="Correo electrónico"
-                  className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  required
-                />
-              </div>
-              
-              <div className="mb-4">
-                <input
-                  type="tel"
-                  name="telefono"
-                  value={formData.telefono}
-                  onChange={handleChange}
-                  placeholder="Número de teléfono"
-                  className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  required
-                />
-              </div>
-              
-              <div className="mb-6">
-                <textarea
-                  name="mensaje"
-                  value={formData.mensaje}
-                  onChange={handleChange}
-                  placeholder="Déjanos tu mensaje aquí....."
-                  rows="5"
-                  className="w-full px-4 py-2 rounded-md bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  required
-                ></textarea>
-              </div>
-              
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  className="bg-yellow-400 text-gray-800 px-8 py-2 rounded-full font-semibold hover:bg-yellow-500 transition"
-                >
-                  Enviar mensaje
-                </button>
-              </div>
-            </form>
-          </div>
-          
-          <div className="flex flex-col justify-center">
-            <h2 className="text-4xl font-bold text-pink-500 mb-8">CONTACTOS</h2>
-            
-            <div className="space-y-6">
-              <div className="flex items-center">
-                <div className="bg-pink-500 rounded-full p-2 mr-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-                <span className="text-lg font-semibold">+57 321 309 85 04</span>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="bg-pink-500 rounded-full p-2 mr-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <span className="text-lg font-semibold">Delicias_Darsy🧁</span>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="bg-pink-500 rounded-full p-2 mr-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
-                <span className="text-lg font-semibold">@delicias_darsy</span>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="bg-pink-500 rounded-full p-2 mr-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold">Cra. 57 #51-83 ·</p>
-                  <p className="text-lg font-semibold">Cra. 37 # 97-27</p>
+            {/* Columna de información de contacto */}
+            <div className="col-lg-5">
+              <div className="h-100">
+                <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
+                  CONTACTOS
+                </h2>
+                
+                <div className="d-flex flex-column gap-4">
+                  {/* Teléfono */}
+                  <div className="d-flex align-items-center">
+                    <div 
+                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                      style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        backgroundColor: '#ec4899',
+                        color: 'white'
+                      }}
+                    >
+                      <i className="bi bi-telephone-fill"></i>
+                    </div>
+                    <span className="fw-semibold fs-5">+57 321 309 85 04</span>
+                  </div>
+                  
+                  {/* WhatsApp */}
+                  <div className="d-flex align-items-center">
+                    <div 
+                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                      style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        backgroundColor: '#ec4899',
+                        color: 'white'
+                      }}
+                    >
+                      <i className="bi bi-whatsapp"></i>
+                    </div>
+                    <span className="fw-semibold fs-5">Delicias_Darsy🧁</span>
+                  </div>
+                  
+                  {/* Instagram */}
+                  <div className="d-flex align-items-center">
+                    <div 
+                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                      style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        backgroundColor: '#ec4899',
+                        color: 'white'
+                      }}
+                    >
+                      <i className="bi bi-instagram"></i>
+                    </div>
+                    <span className="fw-semibold fs-5">@delicias_darsy</span>
+                  </div>
+                  
+                  {/* Ubicación */}
+                  <div className="d-flex align-items-start">
+                    <div 
+                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                      style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        backgroundColor: '#ec4899',
+                        color: 'white'
+                      }}
+                    >
+                      <i className="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div>
+                      <p className="fw-semibold fs-5 mb-1">Cra. 57 #51-83 ·</p>
+                      <p className="fw-semibold fs-5 mb-0">Cra. 37 # 97-27</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

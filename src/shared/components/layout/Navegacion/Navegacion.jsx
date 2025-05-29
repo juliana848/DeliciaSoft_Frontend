@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import logoDelicias from '../../assets/imagenes/logo-delicias-darsy.png';
-import '../../assets/estilos/components/navegacion.css';
+import './navegacion.css';
 
 const Navegacion = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
-  // Maneja el estado de scroll para efectos visuales
+ 
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -26,7 +25,7 @@ const Navegacion = () => {
     setMenuAbierto(!menuAbierto);
   };
 
-  // Verifica si la ruta actual corresponde al enlace
+
   const isActive = (path) => {
     return location.pathname === path;
   };
@@ -34,15 +33,12 @@ const Navegacion = () => {
   return (
     <nav className={`nav-container ${scrolled ? 'scrolled' : ''}`}>
       <div className="nav-content">
-        {/* Logo */}
         <Link to="/" className="nav-logo">
           <img 
-            src={logoDelicias} 
-            alt="Delicias Darsy" 
+            src='/imagenes/logo-delicias-darsy.png' alt="Delicias Darsy" 
           />
         </Link>
         
-        {/* Links de navegación - versión desktop */}
         <div className="nav-links">
           <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>INICIO</Link>
           <Link to="/cartas" className={`nav-link ${isActive('/cartas') ? 'active' : ''}`}>CARTAS</Link>
@@ -55,7 +51,6 @@ const Navegacion = () => {
           </Link>
         </div>
         
-        {/* Botón hamburguesa para móvil */}
         <button onClick={toggleMenu} className="nav-mobile-button">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -63,7 +58,6 @@ const Navegacion = () => {
         </button>
       </div>
       
-      {/* Menú móvil */}
       <div className={`nav-mobile-menu ${menuAbierto ? 'visible' : ''}`}>
         <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>INICIO</Link>
         <Link to="/cartas" className={`nav-link ${isActive('/cartas') ? 'active' : ''}`}>CARTAS</Link>

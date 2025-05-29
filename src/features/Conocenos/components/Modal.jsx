@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../assets/estilos/components/modal.css';
+import './modal.css';
 
 const Modal = ({ children, onClose }) => {
   // Detener la propagación del click para que no se cierre el modal al hacer click en su contenido

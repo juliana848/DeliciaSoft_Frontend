@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logoDelicias from '../assets/imagenes/logo-delicias-darsy.png';
 
 const Contactenos = () => {
   const navigate = useNavigate();
@@ -26,10 +25,8 @@ const Contactenos = () => {
     e.preventDefault();
     console.log('Datos del formulario:', formData);
     
-    // Mostrar mensaje de éxito
     setShowMessage(true);
     
-    // Limpiar formulario
     setFormData({
       nombre: '',
       apellidos: '',
@@ -38,7 +35,6 @@ const Contactenos = () => {
       mensaje: ''
     });
 
-    // Ocultar mensaje después de 3 segundos
     setTimeout(() => {
       setShowMessage(false);
     }, 3000);
@@ -50,11 +46,9 @@ const Contactenos = () => {
 
   return (
     <>
-      {/* Sección principal de contacto */}
       <div className="container-fluid" style={{ backgroundColor: '#fdf2f8', minHeight: '100vh', paddingTop: '2rem', paddingBottom: '2rem' }}>
         <div className="container">
           <div className="row g-4">
-            {/* Columna del formulario */}
             <div className="col-lg-7">
               <div className="bg-white rounded-4 shadow-sm p-4">
                 <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
@@ -187,7 +181,6 @@ const Contactenos = () => {
               </div>
             </div>
             
-            {/* Columna de información de contacto */}
             <div className="col-lg-5">
               <div className="h-100">
                 <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
@@ -195,7 +188,6 @@ const Contactenos = () => {
                 </h2>
                 
                 <div className="d-flex flex-column gap-4">
-                  {/* Teléfono */}
                   <div className="d-flex align-items-center">
                     <div 
                       className="rounded-circle d-flex align-items-center justify-content-center me-3"
@@ -211,7 +203,6 @@ const Contactenos = () => {
                     <span className="fw-semibold fs-5">+57 321 309 85 04</span>
                   </div>
                   
-                  {/* WhatsApp */}
                   <div className="d-flex align-items-center">
                     <div 
                       className="rounded-circle d-flex align-items-center justify-content-center me-3"
@@ -227,7 +218,6 @@ const Contactenos = () => {
                     <span className="fw-semibold fs-5">Delicias_Darsy🧁</span>
                   </div>
                   
-                  {/* Instagram */}
                   <div className="d-flex align-items-center">
                     <div 
                       className="rounded-circle d-flex align-items-center justify-content-center me-3"
@@ -243,7 +233,6 @@ const Contactenos = () => {
                     <span className="fw-semibold fs-5">@delicias_darsy</span>
                   </div>
                   
-                  {/* Ubicación */}
                   <div className="d-flex align-items-start">
                     <div 
                       className="rounded-circle d-flex align-items-center justify-content-center me-3"

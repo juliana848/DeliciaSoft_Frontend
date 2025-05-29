@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../componentes/Modal/Modal';
-import logoDelicias from '../assets/imagenes/logo-delicias-darsy.png';
-import imgTienda from '../assets/imagenes/tienda.png';
-import imgPostre from '../assets/imagenes/postre.jpg';
-import '../assets/estilos/pages/conocenos.css';
+import Modal from '../components/Modal';
+import './conocenos.css';
 
 const Conocenos = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -68,26 +65,22 @@ const Conocenos = () => {
   return (
     <div className="conocenos-container">
       <div className={`page-content ${isVisible ? 'fade-in' : ''}`}>
-        {/* Título principal */}
         <h1 className="page-title">¡Conócenos somos Delicias Darsy!</h1>
         
-        {/* Diseño en zigzag */}
+
         <div className="zigzag-timeline">
-          {/* Línea vertical central */}
+
           <div className="center-line"></div>
           
-          {/* Elemento 1: Logo e información (derecha) */}
           <div className="zigzag-item right-item">
-            {/* Marcador 1 */}
             <div className="zigzag-marker">
               <span>1</span>
             </div>
-            {/* Título a la izquierda */}
             <h2 className="zigzag-title title-left">{modalInfo[0].titulo}</h2>
             
             <div className="zigzag-content">
               <div className="logo-circle">
-                <img src={logoDelicias} alt="Logo Delicias Darsy" className="logo-image" />
+                <img src="/imagenes/logo-delicias-darsy.png" alt="Logo" className="logo-image" />
               </div>
               <div className="item-info">
                 <p className="social-handle">@delicias_Darsy</p>
@@ -102,18 +95,15 @@ const Conocenos = () => {
             </div>
           </div>
           
-          {/* Elemento 2: Imagen de la tienda (izquierda) */}
           <div className="zigzag-item left-item">
-            {/* Marcador 2 */}
             <div className="zigzag-marker">
               <span>2</span>
             </div>
-            {/* Título a la derecha */}
             <h2 className="zigzag-title title-right">{modalInfo[1].titulo}</h2>
             
             <div className="zigzag-content">
               <div className="image-container">
-                <img src={imgTienda} alt="Tienda Delicias Darsy" className="item-image" />
+                <img src="/imagenes/Conocenos/tienda.png" alt="Tienda" className="item-image" />
               </div>
               <button 
                 className="pink-button"
@@ -124,18 +114,17 @@ const Conocenos = () => {
             </div>
           </div>
           
-          {/* Elemento 3: Cotizaciones (derecha) */}
           <div className="zigzag-item right-item">
-            {/* Marcador 3 */}
+
             <div className="zigzag-marker">
               <span>3</span>
             </div>
-            {/* Título a la izquierda */}
+
             <h2 className="zigzag-title title-left">{modalInfo[2].titulo}</h2>
             
             <div className="zigzag-content">
               <div className="image-container">
-                <img src={imgPostre} alt="Postre Delicias Darsy" className="item-image" />
+                <img src="/imagenes/Conocenos/postre.jpg" alt="Postre" className="item-image" />
               </div>
               <button 
                 className="pink-button"
@@ -148,7 +137,6 @@ const Conocenos = () => {
         </div>
       </div>
 
-      {/* Modal condicional */}
       {modalAbierto && (
         <Modal onClose={cerrarModal}>
           {modalContenido}

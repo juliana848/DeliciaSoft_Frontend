@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../css/cartas.css";
+import "./Cartas.css";
 
 function Cartas() {
   const [code, setCode] = useState("");
@@ -7,14 +7,14 @@ function Cartas() {
   const [searchTerm, setSearchTerm] = useState(""); // Estado para el buscador
 
   const productosDestacados = [
-    { nombre: "FRESAS CON CREMA", precio: "$7,000", imagen: "/imagenes/fresacrema.jpeg" },
-    { nombre: "OBLEA", precio: "$3,000", imagen: "/imagenes/obleass.jpeg" },
-    { nombre: "Mini Donas", precio: "$6,000", imagen: "/imagenes/miniDona.jpeg" },
-    { nombre: "Arroz con Leche", precio: "$10,000", imagen: "/imagenes/arrozConLeche.jpg" },
-    { nombre: "Cupcakes", precio: "$3,000", imagen: "/imagenes/cup.jpeg" },
-    { nombre: "Sandwiches", precio: "$16,500", imagen: "/imagenes/sandwches.jpeg" },
-    { nombre: "Postres", precio: "$8,000", imagen: "/imagenes/postres.jpeg" },
-    { nombre: "chocolates", precio: "$1,500", imagen: "/imagenes/chocolates.jpeg" },
+    { nombre: "FRESAS CON CREMA", precio: "$7,000", imagen: "/imagenes/Cartas/fresacrema.jpeg" },
+    { nombre: "OBLEA", precio: "$3,000", imagen: "/imagenes/Cartas/obleass.jpeg" },
+    { nombre: "Mini Donas", precio: "$6,000", imagen: "/imagenes/Cartas/miniDona.jpeg" },
+    { nombre: "Arroz con Leche", precio: "$10,000", imagen: "/imagenes/Cartas/arrozConLeche.jpg" },
+    { nombre: "Cupcakes", precio: "$3,000", imagen: "/imagenes/Cartas/cup.jpeg" },
+    { nombre: "Sandwiches", precio: "$16,500", imagen: "/imagenes/Cartas/sandwches.jpeg" },
+    { nombre: "Postres", precio: "$8,000", imagen: "/imagenes/Cartas/postres.jpeg" },
+    { nombre: "chocolates", precio: "$1,500", imagen: "/imagenes/Cartas/chocolates.jpeg" },
   ];
 
   const generateRandomCode = () => {
@@ -40,7 +40,7 @@ function Cartas() {
     <div className="carta-container">
       {/* Encabezado */}
       <div className="header">
-        <img src="/imagenes/donas.png" alt="Donas" className="donas-img" />
+        <img src="/imagenes/Cartas/donas.png" alt="Donas" className="donas-img" />
         <div className="texto-header">
           <h1>EN DELICIAS DARSY</h1>
           <p>descubre sabores únicos que endulzan cada momento.</p>
@@ -64,15 +64,15 @@ function Cartas() {
       <h2 className="categorias-titulo">CATEGORIAS</h2>
       <div className="categorias">
         <div className="categoria">
-          <img src="/imagenes/fresas.jpeg" alt="Fresas" />
+          <img src="/imagenes/Cartas/fresas.jpeg" alt="Fresas" />
           <span>FRESAS CON CREMA</span>
         </div>
         <div className="categoria">
-          <img src="/imagenes/obleas.jpeg" alt="Obleas" />
+          <img src="/imagenes/Cartas/obleas.jpeg" alt="Obleas" />
           <span>OBLEAS</span>
         </div>
         <div className="categoria">
-          <img src="/imagenes/cupcakes.jpg" alt="Cupcakes" />
+          <img src="/imagenes/Cartas/cupcakes.jpg" alt="Cupcakes" />
           <span>CUPCAKES</span>
         </div>
       </div>
@@ -97,7 +97,7 @@ function Cartas() {
       {/* Imagen del cupón (Responsive y más grande) */}
       <div className="codigo-promocional" style={{ textAlign: "center", marginTop: "2rem" }}>
         <img
-          src="/imagenes/cupon.jpg"
+          src="/imagenes/Cartas/cupon.jpg"
           alt="Promoción"
           onClick={handleImageClick}
           style={{

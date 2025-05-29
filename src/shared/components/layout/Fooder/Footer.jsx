@@ -1,5 +1,5 @@
 import React from "react";
-import "../css/footer.css";
+import "./footer.css";
 
 function Footer() {
     return (
@@ -8,7 +8,7 @@ function Footer() {
 
             <div className="footer-content">
                 <div className="footer-section logo-section">
-                    <img src="/imagenes/Logo.jpeg" alt="Delicias Darsy" className="footer-logo" />
+                    <img src="/imagenes/logo-delicias-darsy.png" alt="Delicias Darsy" className="footer-logo" />
                 </div>
 
                 <div className="footer-section about-section">

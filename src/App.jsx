@@ -3,14 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
 
-// import Inicio from './paginas/Inicio';
-import Conocenos from './paginas/Conocenos';
-import Contactenos from './paginas/Contactenos';
-import Cartas from './paginas/Cartas';
-import Sedes from './paginas/Sedes';
-import Pedidos from './paginas/Pedidos';
-import Navegacion from './componentes/Navegacion/Navegacion';
-import Footer from './componentes/Footer';
+
+import Conocenos from './features/Conocenos/pages/Conocenos';
+import Contactenos from './features/Contactenos/pages/Contactenos';
+import Cartas from './features/Cartas/pages/Cartas';
+import Sedes from './features/Sedes/pages/Sedes';
+import Pedidos from './features/Pedidos/pages/Pedidos';
+import Navegacion from './shared/components/layout/Navegacion/Navegacion';
+import Footer from './shared/components/layout/Fooder/Footer';
 
 
 
@@ -20,7 +20,6 @@ function App() {
       <div className="App">
         <Navegacion />
         <Routes>
-          {/* <Route path="/" element={<Inicio />} /> */}
           <Route path="/conocenos" element={<Conocenos />} />
           <Route path="/contactenos" element={<Contactenos />} />
           <Route path="/cartas" element={<Cartas />} />

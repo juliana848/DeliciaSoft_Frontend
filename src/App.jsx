@@ -11,8 +11,12 @@ import Pedidos from './features/Pedidos/pages/Pedidos';
 import Navegacion from './shared/components/layout/Navegacion/Navegacion';
 import Footer from './shared/components/layout/Fooder/Footer';
 import Login from './features/log/login';
+import CategoriaPage from './features/Admin/pages/CategoriaInsumo.jsx';
+import 'primereact/resources/themes/lara-light-indigo/theme.css'; 
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
+import 'primeflex/primeflex.css'; 
 
-// Nuevo componente contenedor
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/iniciar-sesion";
@@ -27,6 +31,8 @@ function AppContent() {
         <Route path="/sedes" element={<Sedes />} />
         <Route path="/pedidos" element={<Pedidos />} />
         <Route path="/iniciar-sesion" element={<Login />} />
+        <Route path="/admin/categorias" element={<CategoriaPage />} />
+
       </Routes>
       {!isLoginPage && <Footer />}
     </div>

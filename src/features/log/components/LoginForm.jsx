@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ModalVerificarCorreo from './VerificaCorreo';
 import ModalIngresarCodigo from './VerificarCodigo';
 
@@ -6,6 +7,23 @@ const LoginForm = () => {
   const [mostrarModalCorreo, setMostrarModalCorreo] = useState(false);
   const [mostrarModalCodigo, setMostrarModalCodigo] = useState(false);
   const [codigoGenerado, setCodigoGenerado] = useState(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const navigate = useNavigate(); 
+
+  const adminCredentials = [
+    { email: 'admin@delicias.com', password: 'admin123' },
+    { email: 'administrador@empresa.com', password: 'admin' },
+    { email: 'root@sistema.com', password: '123456' }
+  ];
+
+  const clienteCredentials = [
+    { email: 'cliente@correo.com', password: 'cliente123' },
+    { email: 'usuario@gmail.com', password: '123456' }
+  ];
 
   const manejarCodigoGenerado = (codigo) => {
     setCodigoGenerado(codigo);
@@ -18,11 +36,72 @@ const LoginForm = () => {
     setMostrarModalCodigo(false);
   };
 
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const determinarRolUsuario = (email, password) => {
+
+    const esAdmin = adminCredentials.some(
+      cred => cred.email === email && cred.password === password
+    );
+    
+    if (esAdmin) return 'admin';
+    const esCliente = clienteCredentials.some(
+      cred => cred.email === email && cred.password === password
+    );
+    
+    if (esCliente) return 'cliente';
+
+    if (email.includes('admin') || email.includes('administrador') || email.includes('root')) {
+      return 'admin';
+    }
+
+    return 'cliente';
+  };
+
+  const manejarSubmit = (e) => {
+    e.preventDefault();
+    
+    const userRole = determinarRolUsuario(formData.email, formData.password);
+    
+    localStorage.setItem('authToken', 'fake-jwt-token');
+    localStorage.setItem('userRole', userRole);
+    localStorage.setItem('userEmail', formData.email);
+    
+    console.log('Usuario autenticado:', { email: formData.email, role: userRole });
+    
+    if (userRole === 'admin') {
+      navigate('/admin/pages/CategoriaInsumo'); 
+    } else {
+      navigate('/'); 
+    }
+    
+    window.location.reload();
+  };
+
   return (
     <div className="form-container sign-in">
-      <form className="login-form">
-        <input type="email" placeholder="Correo electrónico" required />
-        <input type="password" placeholder="Contraseña" required />
+      <form className="login-form" onSubmit={manejarSubmit}>
+        <input 
+          type="email" 
+          name="email"
+          placeholder="Correo electrónico" 
+          value={formData.email}
+          onChange={handleInputChange}
+          required 
+        />
+        <input 
+          type="password" 
+          name="password"
+          placeholder="Contraseña" 
+          value={formData.password}
+          onChange={handleInputChange}
+          required 
+        />
 
         <a
           type="button"
@@ -33,6 +112,7 @@ const LoginForm = () => {
         </a>
 
         <button type="submit" className="btn-form">Iniciar</button>
+        
       </form>
 
       {mostrarModalCorreo && (

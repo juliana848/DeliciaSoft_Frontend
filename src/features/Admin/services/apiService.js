@@ -1,0 +1,1 @@
+//esta es para hacer peticiones de la api a al paplicativo cuando le pongamos backend 

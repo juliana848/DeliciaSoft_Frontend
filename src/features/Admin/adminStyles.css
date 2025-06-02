@@ -1,0 +1,251 @@
+/* Fondo general */
+.admin-wrapper {
+    background-color: #fce4ec;
+    font-family: 'Arial', sans-serif;
+    padding: 1rem;
+}
+
+/* Estilos generales para la tabla de PrimeReact */
+.p-datatable.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Encabezado de la tabla */
+.p-datatable.admin-table .p-datatable-thead > tr > th {
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 10px;
+}
+
+/* Celdas del cuerpo */
+.p-datatable.admin-table .p-datatable-tbody > tr > td {
+    padding: 10px;
+    text-align: center;
+}
+
+/* Fila alterna con fondo rosado */
+.p-datatable.admin-table .p-datatable-tbody > tr:nth-child(even) {
+    background-color: #f8bbd0;
+}
+
+/* Botones de acciones */
+.admin-button {
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    margin: 0 2px;
+    cursor: pointer;
+}
+
+.admin-button.gray {
+    background-color: #666;
+    color: white;
+}
+
+.admin-button.yellow {
+    background-color: #fdd835;
+    color: black;
+}
+
+.admin-button.red {
+    background-color: #e53935;
+    color: white;
+}
+
+/* InputSwitch centrado */
+.p-inputswitch {
+    vertical-align: middle;
+}
+
+.admin-button {
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    padding: 0; /* importante quitar padding */
+}
+
+.admin-button.gray {
+    background-color: #e0e0e0;
+    color: #555;
+}
+
+.admin-button.gray:hover {
+    background-color: #cfcfcf;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    transform: scale(1.1);
+}
+
+.admin-button.yellow {
+    background-color: #ffd54f;
+    color: #6b4c00;
+}
+
+.admin-button.yellow:hover {
+    background-color: #ffca28;
+    box-shadow: 0 4px 8px rgba(255, 202, 40, 0.5);
+    transform: scale(1.1);
+}
+
+.admin-button.red {
+    background-color: #ef5350;
+    color: white;
+}
+
+.admin-button.red:hover {
+    background-color: #e53935;
+    box-shadow: 0 4px 8px rgba(229, 57, 53, 0.6);
+    transform: scale(1.1);
+}
+
+
+
+.modal-btn {
+    border: 3px solid #f48fb1; /* borde rosado */
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: white;
+    font-family: 'Arial', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn {
+    color: #880e4f;
+    margin-right: 10px;
+}
+
+.cancel-btn:hover {
+    background-color: #f8bbd0;
+}
+
+.save-btn {
+    background-color: #ffd54f;
+    border-color: #fbc02d;
+    color: #6b4c00;
+}
+
+.save-btn:hover {
+    background-color: #fbc02d;
+    border-color: #f9a825;
+    color: #4a3400;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 3px solid #f48fb1; /* borde rosa */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    margin: auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-title {
+    margin-top: 0;
+    font-size: 20px;
+    color: #d81b60;
+}
+
+.modal-body {
+    margin: 1rem 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    border: 2px solid #f48fb1;
+    border-radius: 8px;
+    outline: none;
+}
+
+/* src/components/SearchBar.css */
+.search-bar {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 2px solid #f48fb1;
+  border-radius: 10px;
+  width: 250px;
+  font-size: 14px;
+  outline: none;
+}
+
+.mensaje-exito {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  padding: 10px 16px;
+  border-radius: 5px;
+  margin: 10px 0;
+  font-weight: bold;
+  text-align: center;
+  animation: fadeInOut 3s ease-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.admin-button.pink {
+  background-color: #e91e63; /* rosa fuerte */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 15%;
+  height: 30px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(233, 30, 99, 0.4);
+}
+
+.admin-button.pink:hover {
+  background-color: #c2185b; /* rosa más oscuro al hover */
+  box-shadow: 0 4px 8px rgba(194, 24, 91, 0.6);
+}
+
+.admin-button.pink:active {
+  background-color: #ad1457;
+  box-shadow: none;
+}

@@ -1,0 +1,31 @@
+.carouselInner {
+  position: relative;
+  overflow: hidden;
+  font-family: 'Fredoka', sans-serif;
+}
+
+.carouselItem {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transform: translateX(100%);
+  transition: transform 0.5s ease-in-out;
+}
+
+.carouselItem.active {
+  transform: translateX(0%);
+}
+
+.carouselItem.prev {
+  transform: translateX(-100%);
+}
+
+.carouselItem.next {
+  transform: translateX(100%);
+}
+
+.carousel-caption .btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

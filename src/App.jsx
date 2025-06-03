@@ -18,6 +18,11 @@ import Login from './features/log/login';
 import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
 import ComprasTable from './features/Admin/pages/Compras.jsx';
 import InsumosTable from './features/Admin/pages/insumos.jsx';
+import Usuarios from './features/Admin/pages/Usuarios.jsx';
+import Roles from './features/Admin/pages/Roles.jsx';
+import Clientes from './features/Admin/pages/Clientes.jsx';
+
+
 
 // Componentes de Layout
 
@@ -61,9 +66,10 @@ function AppContent() {
             <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaInsumo />} />
             <Route path="/admin/pages/insumos" element={<InsumosTable />} />
             <Route path="/admin/pages/compras" element={<ComprasTable />} />
-            {/* <Route path="/admin/usuarios" element={<Usuarios />} />
-            <Route path="/admin/roles" element={<div className="p-4"><h2>Gestión de Roles</h2></div>} />
-            <Route path="/admin/clientes" element={<div className="p-4"><h2>Gestión de Clientes</h2></div>} />
+            <Route path="/admin/pages/usuarios" element={<Usuarios />} />
+            <Route path="/admin/pages/Roles" element={<Roles />} />
+            <Route path="/admin/pages/Clientes" element={<Clientes />} />
+            {/* 
             <Route path="/admin/pedidos" element={<div className="p-4"><h2>Gestión de Pedidos</h2></div>} />
             <Route path="/admin/cotizacion" element={<div className="p-4"><h2>Cotizaciones</h2></div>} />
             <Route path="/admin/sedes" element={<div className="p-4"><h2>Gestión de Sedes</h2></div>} />

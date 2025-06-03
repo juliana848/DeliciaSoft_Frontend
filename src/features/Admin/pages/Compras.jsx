@@ -4,7 +4,7 @@ import { Column } from 'primereact/column';
 import '../adminStyles.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
-import SuccessMessage from '../components/SuccessMessage';
+import Notification from '../components/Notification';
 import AgregarInsumosModal from '../components/AgregarInsumosModal';
 
 export default function ComprasTable() {
@@ -14,7 +14,9 @@ export default function ComprasTable() {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalTipo, setModalTipo] = useState(null);
     const [compraSeleccionada, setCompraSeleccionada] = useState(null);
-    const [mensajeExito, setMensajeExito] = useState('');
+    
+    // Estado para notificaciones (reemplaza mensajeExito)
+    const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
     
     // Estados para Agregar Compra
     const [mostrarAgregarCompra, setMostrarAgregarCompra] = useState(false);
@@ -44,6 +46,15 @@ export default function ComprasTable() {
         setCompras(mockCompras);
     }, []);
 
+    // Función para mostrar notificaciones (reemplaza mostrarMensaje)
+    const showNotification = (mensaje, tipo = 'success') => {
+        setNotification({ visible: true, mensaje, tipo });
+    };
+
+    const hideNotification = () => {
+        setNotification({ visible: false, mensaje: '', tipo: 'success' });
+    };
+
     // Funciones existentes de tu CRUD
     const abrirModal = (tipo, compra) => {
         setModalTipo(tipo);
@@ -57,20 +68,15 @@ export default function ComprasTable() {
         setModalTipo(null);
     };
 
-    const mostrarMensaje = (mensaje) => {
-        setMensajeExito(mensaje);
-        setTimeout(() => setMensajeExito(''), 3000);
-    };
-
     const anularCompra = () => {
         const updated = compras.filter(c => c.id !== compraSeleccionada.id);
         setCompras(updated);
         cerrarModal();
-        mostrarMensaje('Compra anulada con éxito');
+        showNotification('Compra anulada exitosamente');
     };
 
     const exportarPDF = (compra) => {
-        mostrarMensaje(`Compra ${compra.cod_compra} exportada como PDF`);
+        showNotification(`Compra ${compra.cod_compra} exportada como PDF exitosamente`);
     };
 
     const comprasFiltradas = compras.filter(c =>
@@ -87,6 +93,7 @@ export default function ComprasTable() {
             ...prev,
             ...nuevosInsumos.filter(nuevo => !prev.some(i => i.id === nuevo.id))
         ]);
+        showNotification('Insumos agregados exitosamente');
     };
 
     const handleCantidadChange = (id, value) => {
@@ -99,12 +106,47 @@ export default function ComprasTable() {
 
     const removeInsumo = (id) => {
         setInsumosSeleccionados(prev => prev.filter(item => item.id !== id));
+        showNotification('Insumo eliminado de la lista');
+    };
+
+    // Validación del formulario
+    const validarFormulario = () => {
+        const { proveedor, fecha_compra, fecha_registro } = compraData;
+        
+        if (!proveedor.trim()) {
+            showNotification('Debe seleccionar un proveedor', 'error');
+            return false;
+        }
+        if (!fecha_compra) {
+            showNotification('La fecha de compra es obligatoria', 'error');
+            return false;
+        }
+        if (!fecha_registro) {
+            showNotification('La fecha de registro es obligatoria', 'error');
+            return false;
+        }
+        if (insumosSeleccionados.length === 0) {
+            showNotification('Debe agregar al menos un insumo', 'error');
+            return false;
+        }
+        
+        return true;
     };
 
     const guardarCompra = () => {
-        mostrarMensaje('Compra guardada con éxito');
+        if (!validarFormulario()) return;
+        
+        showNotification('Compra guardada exitosamente');
         setMostrarAgregarCompra(false);
         setInsumosSeleccionados([]);
+        // Resetear formulario
+        setCompraData({
+            cod_compra: '00000000',
+            proveedor: '',
+            fecha_compra: '',
+            fecha_registro: '',
+            observaciones: ''
+        });
     };
 
     // Calcula los totales
@@ -114,23 +156,30 @@ export default function ComprasTable() {
 
     return (
         <div className="admin-wrapper">
+            {/* Componente de notificación */}
+            <Notification
+                visible={notification.visible}
+                mensaje={notification.mensaje}
+                tipo={notification.tipo}
+                onClose={hideNotification}
+            />
+
             {!mostrarAgregarCompra ? (
                 <>
-                    <div className="admin-header">
-                        <h2>Listado de Compras</h2>
+                    <div className="admin-toolbar">
                         <button 
                             className="admin-button pink" 
                             onClick={() => setMostrarAgregarCompra(true)}
+                            type="button"
                         >
                             + Agregar Compra
                         </button>
+                        <SearchBar 
+                            placeholder="Buscar proveedor..." 
+                            value={filtro} 
+                            onChange={setFiltro} 
+                        />
                     </div>
-
-                    <div className="admin-toolbar">
-                        <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
-                    </div>
-
-                    <SuccessMessage mensaje={mensajeExito} />
 
                     <DataTable
                         value={comprasFiltradas}
@@ -207,6 +256,13 @@ export default function ComprasTable() {
                             onClick={() => {
                                 setMostrarAgregarCompra(false);
                                 setInsumosSeleccionados([]);
+                                setCompraData({
+                                    cod_compra: '00000000',
+                                    proveedor: '',
+                                    fecha_compra: '',
+                                    fecha_registro: '',
+                                    observaciones: ''
+                                });
                             }}
                         >
                             Regresar
@@ -214,7 +270,6 @@ export default function ComprasTable() {
                         <button 
                             className="btn-guardar"
                             onClick={guardarCompra}
-                            disabled={insumosSeleccionados.length === 0}
                         >
                             Guardar
                         </button>
@@ -240,7 +295,15 @@ export default function ComprasTable() {
                                 onChange={handleChange}
                             >
                                 <option value="">---</option>
-                                {/* Opciones de proveedores */}
+                                <option value="Dis.Martinez">Dis.Martinez</option>
+                                <option value="Dis.Tolu">Dis.Tolu</option>
+                                <option value="Sumi.Express">Sumi.Express</option>
+                                <option value="Mate.industriales">Mate.industriales</option>
+                                <option value="Dis.MatFruit">Dis.MatFruit</option>
+                                <option value="Desechables J&J">Desechables J&J</option>
+                                <option value="Harina la Moderna">Harina la Moderna</option>
+                                <option value="Moldes & utensilios">Moldes & utensilios</option>
+                                <option value="Dulces Delicias">Dulces Delicias</option>
                             </select>
                         </div>
                         
@@ -341,8 +404,6 @@ export default function ComprasTable() {
                             <span>${total.toFixed(2)}</span>
                         </div>
                     </div>
-                    
-                    <SuccessMessage mensaje={mensajeExito} />
                     
                     {mostrarModalInsumos && (
                         <AgregarInsumosModal

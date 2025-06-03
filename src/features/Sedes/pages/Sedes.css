@@ -1,0 +1,91 @@
+.sedes-container {
+  padding: 40px 20px;
+  background-color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  color: #333;
+  text-align: center;
+}
+
+.sedes-titulo {
+  font-size: 40px;
+  font-weight: 700;
+  color: #FC0278;
+  margin-bottom: 40px;
+  user-select: none;
+}
+
+.sedes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 60px;
+}
+
+.sede {
+  max-width: 300px;
+  text-align: left;
+}
+
+.sede-nombre {
+  color: #FFD700;
+  font-size: 24px;
+  font-weight: 650;
+  margin-bottom: 10px;
+  text-align: center;
+  user-select: none;
+}
+
+.sede-imagen {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #FC0278;
+  margin-bottom: 15px;
+}
+
+.sede-info {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+
+.sede-info li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.sede-boton {
+  background-color: #FC0278;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  transition: background-color 0.3s ease;
+}
+
+.sede-boton:hover {
+  background-color: #d20265;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sedes-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sede {
+    width: 100%;
+    max-width: 400px;
+  }
+}

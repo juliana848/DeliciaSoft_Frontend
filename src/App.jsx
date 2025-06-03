@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 
 import './App.css';
 
+
+// Importar páginas públicas
+
 import Inicio from './features/Home/pages/Inicio';
 import Conocenos from './features/Conocenos/pages/Conocenos';
 import Contactenos from './features/Contactenos/pages/Contactenos';
@@ -11,11 +14,12 @@ import Sedes from './features/Sedes/pages/Sedes';
 import Pedidos from './features/Pedidos/pages/Pedidos';
 import Login from './features/log/login';
 
-
 //IMPORTAR RUTAS ADMIN
 import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
 import ComprasTable from './features/Admin/pages/Compras.jsx';
 import InsumosTable from './features/Admin/pages/insumos.jsx';
+
+// Componentes de Layout
 
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
@@ -50,15 +54,10 @@ function AppContent() {
   
   return (
     <div className="App">
-
       {!isLoginPage && !shouldShowSidebar && <Navegacion isAuthenticated={isAuthenticated} />}
-      
-   
       {shouldShowSidebar ? (
         <Layout userRole={userRole} showSidebar={true}>
           <Routes>
-            {/* Rutas de Admin */}
-            {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
             <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaInsumo />} />
             <Route path="/admin/pages/insumos" element={<InsumosTable />} />
             <Route path="/admin/pages/compras" element={<ComprasTable />} />
@@ -79,6 +78,7 @@ function AppContent() {
           </Routes>
         </Layout>
       ) : (
+
         <>
           <Routes>
             {/* Ruta de Login */}
@@ -114,4 +114,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;

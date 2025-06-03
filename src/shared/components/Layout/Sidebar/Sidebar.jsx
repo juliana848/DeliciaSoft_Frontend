@@ -57,6 +57,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       icon: '🛒',
       hasSubmenu: true,
       submenu: [
+
         { title: 'Insumos', path: '/admin/pages/insumos' },
         { title: 'Cat. Insumos', path: '/admin/pages/CategoriaInsumo' },
         { title: 'Proveedores', path: '/admin/proveedores' },

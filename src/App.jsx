@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 
 import './App.css';
 
+
 // Importar páginas públicas
+
 import Inicio from './features/Home/pages/Inicio';
 import Conocenos from './features/Conocenos/pages/Conocenos';
 import Contactenos from './features/Contactenos/pages/Contactenos';
@@ -12,15 +14,18 @@ import Sedes from './features/Sedes/pages/Sedes';
 import Pedidos from './features/Pedidos/pages/Pedidos';
 import Login from './features/log/login';
 
-// Importar páginas de Admin
+//IMPORTAR RUTAS ADMIN
 import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
+import ComprasTable from './features/Admin/pages/Compras.jsx';
+import InsumosTable from './features/Admin/pages/insumos.jsx';
 
 // Componentes de Layout
+
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
 import Layout from './shared/components/Layout/Layout/Layout.jsx';
 
-// Estilos
+
 import 'primereact/resources/themes/lara-light-indigo/theme.css'; 
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
@@ -45,21 +50,17 @@ function AppContent() {
     }
   }, [location]);
 
-  // Determinar si mostrar sidebar (solo para admin autenticado)
   const shouldShowSidebar = isAuthenticated && userRole === 'admin' && isAdminRoute;
   
   return (
     <div className="App">
-      {/* Mostrar navegación pública cuando NO es página de login y NO es admin con sidebar */}
       {!isLoginPage && !shouldShowSidebar && <Navegacion isAuthenticated={isAuthenticated} />}
-      
-      {/* Layout con Sidebar para Admin */}
       {shouldShowSidebar ? (
         <Layout userRole={userRole} showSidebar={true}>
           <Routes>
-            {/* Rutas de Admin */}
-            {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
             <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaInsumo />} />
+            <Route path="/admin/pages/insumos" element={<InsumosTable />} />
+            <Route path="/admin/pages/compras" element={<ComprasTable />} />
             {/* <Route path="/admin/usuarios" element={<Usuarios />} />
             <Route path="/admin/roles" element={<div className="p-4"><h2>Gestión de Roles</h2></div>} />
             <Route path="/admin/clientes" element={<div className="p-4"><h2>Gestión de Clientes</h2></div>} />
@@ -77,7 +78,7 @@ function AppContent() {
           </Routes>
         </Layout>
       ) : (
-        /* Layout sin Sidebar para rutas públicas y cliente */
+
         <>
           <Routes>
             {/* Ruta de Login */}

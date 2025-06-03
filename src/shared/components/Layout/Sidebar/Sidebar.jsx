@@ -57,10 +57,11 @@ const Sidebar = ({ userRole = 'admin' }) => {
       icon: '🛒',
       hasSubmenu: true,
       submenu: [
-        { title: 'Insumos', path: '/admin/insumos' },
+
+        { title: 'Insumos', path: '/admin/pages/insumos' },
         { title: 'Cat. Insumos', path: '/admin/pages/CategoriaInsumo' },
         { title: 'Proveedores', path: '/admin/proveedores' },
-        { title: 'Compras', path: '/admin/compras-list' }
+        { title: 'Compras', path: '/admin/pages/compras' }
       ]
     },
     {

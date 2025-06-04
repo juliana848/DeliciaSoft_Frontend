@@ -54,6 +54,7 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
+    
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
@@ -137,7 +138,7 @@ export default function CategoriaTableDemo() {
         onClose={hideNotification}
       />
 
-      {/* Toolbar: botón a la izquierda, buscador a la derecha */}
+      {/* buscador */}
       <div className="admin-toolbar">
         <button
           className="admin-button pink"
@@ -229,7 +230,29 @@ export default function CategoriaTableDemo() {
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={guardarNuevaCategoria}>
+            <button
+              className="modal-btn save-btn"
+              onClick={() => {
+                if (nombreEditado.trim() === '') return alert('El nombre es obligatorio');
+                if (fechaRegistroEditada === '') return alert('La fecha de registro es obligatoria');
+
+                const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
+
+                // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
+                const [year, month, day] = fechaRegistroEditada.split('-');
+                const fechaFormateada = `${day}/${month}/${year}`;
+
+                setCategorias([...categorias, {
+                  id: nuevoId,
+                  nombre: nombreEditado,
+                  fecha_registro: fechaFormateada,
+                  activo: true
+                }]);
+
+                cerrarModal();
+                mostrarMensaje('Categoría agregada con éxito');
+              }}
+            >
               Guardar
             </button>
           </div>

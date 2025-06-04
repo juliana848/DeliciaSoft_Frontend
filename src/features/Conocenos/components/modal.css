@@ -1,6 +1,4 @@
-/* Estilos para el componente Modal */
-
-.modal-overlay {
+.darsy-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -10,22 +8,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 9999;
   backdrop-filter: blur(3px);
+  animation: darsy-fadeIn 0.3s ease forwards;
 }
 
-.modal-container {
-  background-color: white;
+.darsy-modal-container {
+  background-color: #fff;
   border-radius: 12px;
   padding: 24px;
   max-width: 500px;
   width: calc(100% - 32px);
-  margin: 0 16px;
   position: relative;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  animation: darsy-scaleIn 0.3s ease forwards;
 }
 
-.modal-close-button {
+.darsy-modal-close-button {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -36,29 +35,28 @@
   transition: color 0.3s ease;
 }
 
-.modal-close-button:hover {
+.darsy-modal-close-button:hover {
   color: #be185d;
 }
 
-.modal-content {
+.darsy-modal-content {
   margin-top: 8px;
   color: #4b5563;
 }
 
-.modal-content h2 {
+.darsy-modal-content h2 {
   color: #ec4899;
   margin-bottom: 12px;
   font-size: 1.25rem;
   font-weight: 700;
 }
 
-.modal-content p {
+.darsy-modal-content p {
   line-height: 1.6;
   font-size: 0.95rem;
 }
 
-/* Animaciones para el modal */
-@keyframes fadeIn {
+@keyframes darsy-fadeIn {
   from {
     opacity: 0;
   }
@@ -67,7 +65,7 @@
   }
 }
 
-@keyframes scaleIn {
+@keyframes darsy-scaleIn {
   from {
     transform: scale(0.95);
     opacity: 0;
@@ -78,41 +76,13 @@
   }
 }
 
-.modal-overlay {
-  animation: fadeIn 0.3s ease forwards;
-}
-
-.modal-container {
-  animation: scaleIn 0.3s ease forwards;
-}
-
-/* Estilos para modales con imágenes */
-.modal-with-image {
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-with-image .image-container {
-  width: 100%;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.modal-with-image img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-/* Estilos para el borde decorativo */
-.modal-decorative-border {
+/* Decoración adicional */
+.darsy-modal-decorative-border {
   border-top: 4px solid #fbcfe8;
   padding-top: 16px;
 }
 
-/* Estilo para los botones dentro del modal */
-.modal-button {
+.darsy-modal-button {
   display: inline-block;
   background-color: #ec4899;
   color: white;
@@ -125,6 +95,6 @@
   transition: all 0.3s ease;
 }
 
-.modal-button:hover {
+.darsy-modal-button:hover {
   background-color: #be185d;
 }

@@ -5,12 +5,12 @@ import { InputSwitch } from 'primereact/inputswitch';
 import '../adminStyles.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
-import SuccessMessage from '../components/SuccessMessage';
+import Notification from '../components/Notification';
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
   const [filtro, setFiltro] = useState('');
-  const [mensajeExito, setMensajeExito] = useState('');
+  const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTipo, setModalTipo] = useState(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
@@ -38,6 +38,15 @@ export default function CategoriaTableDemo() {
       cat.id === categoria.id ? { ...cat, activo: !cat.activo } : cat
     );
     setCategorias(updated);
+    showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
+  };
+
+  const showNotification = (mensaje, tipo = 'success') => {
+    setNotification({ visible: true, mensaje, tipo });
+  };
+
+  const hideNotification = () => {
+    setNotification({ visible: false, mensaje: '', tipo: 'success' });
   };
 
   const abrirModal = (tipo, categoria) => {
@@ -45,7 +54,8 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
-
+      // Opcional: si quieres permitir editar fecha también, agregas aquí
+      // setFechaRegistroEditada(convertirFechaATexto(categoria.fecha_registro));
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
@@ -66,25 +76,54 @@ export default function CategoriaTableDemo() {
     setFechaRegistroEditada('');
   };
 
-  const mostrarMensaje = (mensaje) => {
-    setMensajeExito(mensaje);
-    setTimeout(() => setMensajeExito(''), 3000);
+  const validarFormulario = () => {
+    if (!nombreEditado.trim()) {
+      showNotification('El nombre es obligatorio', 'error');
+      return false;
+    }
+    if (modalTipo === 'agregar' && !fechaRegistroEditada) {
+      showNotification('La fecha de registro es obligatoria', 'error');
+      return false;
+    }
+    return true;
   };
 
   const guardarEdicion = () => {
+    if (!validarFormulario()) return;
+
     const updated = categorias.map(cat =>
       cat.id === categoriaSeleccionada.id ? { ...cat, nombre: nombreEditado } : cat
     );
     setCategorias(updated);
     cerrarModal();
-    mostrarMensaje('Categoría editada con éxito');
+    showNotification('Categoría editada exitosamente');
   };
 
   const confirmarEliminar = () => {
     const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
     setCategorias(updated);
     cerrarModal();
-    mostrarMensaje('Categoría eliminada con éxito');
+    showNotification('Categoría eliminada exitosamente');
+  };
+
+  const guardarNuevaCategoria = () => {
+    if (!validarFormulario()) return;
+
+    const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
+
+    // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
+    const [year, month, day] = fechaRegistroEditada.split('-');
+    const fechaFormateada = `${day}/${month}/${year}`;
+
+    setCategorias([...categorias, {
+      id: nuevoId,
+      nombre: nombreEditado,
+      fecha_registro: fechaFormateada,
+      activo: true
+    }]);
+
+    cerrarModal();
+    showNotification('Categoría agregada exitosamente');
   };
 
   const categoriasFiltradas = categorias.filter(cat =>
@@ -93,6 +132,12 @@ export default function CategoriaTableDemo() {
 
   return (
     <div className="admin-wrapper">
+      <Notification
+        visible={notification.visible}
+        mensaje={notification.mensaje}
+        tipo={notification.tipo}
+        onClose={hideNotification}
+      />
 
       {/* buscador */}
       <div className="admin-toolbar">
@@ -109,9 +154,6 @@ export default function CategoriaTableDemo() {
           onChange={setFiltro}
         />
       </div>
-
-      {/* Mensaje de éxito */}
-      <SuccessMessage mensaje={mensajeExito} />
 
       <DataTable
         value={categoriasFiltradas}
@@ -197,7 +239,7 @@ export default function CategoriaTableDemo() {
 
                 const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
 
-          
+                // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
                 const [year, month, day] = fechaRegistroEditada.split('-');
                 const fechaFormateada = `${day}/${month}/${year}`;
 

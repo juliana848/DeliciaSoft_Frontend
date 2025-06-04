@@ -5,6 +5,7 @@ import { InputSwitch } from 'primereact/inputswitch';
 import '../adminStyles.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
+import Notification from '../components/Notification';
 
 export default function InsumosTable() {
   const [insumos, setInsumos] = useState([
@@ -14,11 +15,22 @@ export default function InsumosTable() {
   ]);
   
   const [filtro, setFiltro] = useState('');
+  const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modal, setModal] = useState({ visible: false, tipo: '', insumo: null });
   const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', estado: true });
 
+  const showNotification = (mensaje, tipo = 'success') => {
+    setNotification({ visible: true, mensaje, tipo });
+  };
+
+  const hideNotification = () => {
+    setNotification({ visible: false, mensaje: '', tipo: 'success' });
+  };
+
   const toggleEstado = (id) => {
+    const insumo = insumos.find(i => i.id === id);
     setInsumos(insumos.map(i => i.id === id ? { ...i, estado: !i.estado } : i));
+    showNotification(`Insumo ${insumo.estado ? 'desactivado' : 'activado'} exitosamente`);
   };
 
   const abrirModal = (tipo, insumo = null) => {
@@ -32,18 +44,39 @@ export default function InsumosTable() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const validarFormulario = () => {
+    if (!form.nombre.trim()) {
+      showNotification('El nombre es obligatorio', 'error');
+      return false;
+    }
+    if (!form.categoria.trim()) {
+      showNotification('La categoría es obligatoria', 'error');
+      return false;
+    }
+    if (!form.cantidad || form.cantidad <= 0) {
+      showNotification('La cantidad debe ser mayor a 0', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const guardar = () => {
+    if (!validarFormulario()) return;
+
     if (modal.tipo === 'agregar') {
       const nuevoId = Math.max(...insumos.map(i => i.id), 0) + 1;
       setInsumos([...insumos, { ...form, id: nuevoId }]);
+      showNotification('Insumo agregado exitosamente');
     } else if (modal.tipo === 'editar') {
       setInsumos(insumos.map(i => i.id === modal.insumo.id ? form : i));
+      showNotification('Insumo actualizado exitosamente');
     }
     cerrarModal();
   };
 
   const eliminar = () => {
     setInsumos(insumos.filter(i => i.id !== modal.insumo.id));
+    showNotification('Insumo eliminado exitosamente');
     cerrarModal();
   };
 
@@ -56,6 +89,13 @@ export default function InsumosTable() {
 
   return (
     <div className="admin-wrapper">
+      <Notification
+        visible={notification.visible}
+        mensaje={notification.mensaje}
+        tipo={notification.tipo}
+        onClose={hideNotification}
+      />
+
       <div className="admin-toolbar">
         <button className="admin-button pink" onClick={() => abrirModal('agregar')}>
           + Agregar

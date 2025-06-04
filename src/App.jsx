@@ -13,8 +13,11 @@ import Login from './features/log/login';
 
 // Importar páginas de Admin
 import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
-import ComprasTable from './features/Admin/pages/Compras.jsx';  // Tus rutas CRUD
-import InsumosTable from './features/Admin/pages/insumos.jsx';  // Tus rutas CRUD
+import ComprasTable from './features/Admin/pages/Compras.jsx';
+import InsumosTable from './features/Admin/pages/insumos.jsx';
+import Usuarios from './features/Admin/pages/Usuarios.jsx';
+import Roles from './features/Admin/pages/Roles.jsx';
+import Clientes from './features/Admin/pages/Clientes.jsx';
 
 // Componentes de Layout
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
@@ -54,20 +57,19 @@ function AppContent() {
       {/* Mostrar navegación pública cuando NO es página de login y NO es admin con sidebar */}
       {!isLoginPage && !shouldShowSidebar && <Navegacion isAuthenticated={isAuthenticated} />}
       
-      {/* Layout con Sidebar para Admin */}
       {shouldShowSidebar ? (
         <Layout userRole={userRole} showSidebar={true}>
           <Routes>
             {/* Rutas de Admin */}
             <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaInsumo />} />
-            <Route path="/admin/pages/insumos" element={<InsumosTable />} />  {/* Tu ruta de insumos */}
-            <Route path="/admin/pages/compras" element={<ComprasTable />} />  {/* Tu ruta de compras */}
-            {/* Rutas adicionales de Admin (comentadas) */}
-            {/* <Route path="/admin/usuarios" element={<Usuarios />} /> */}
+            <Route path="/admin/pages/insumos" element={<InsumosTable />} />
+            <Route path="/admin/pages/compras" element={<ComprasTable />} />
+            <Route path="/admin/pages/usuarios" element={<Usuarios />} />
+            <Route path="/admin/pages/Roles" element={<Roles />} />
+            <Route path="/admin/pages/Clientes" element={<Clientes />} />
           </Routes>
         </Layout>
       ) : (
-        /* Layout sin Sidebar para rutas públicas y cliente */
         <>
           <Routes>
             {/* Ruta de Login */}

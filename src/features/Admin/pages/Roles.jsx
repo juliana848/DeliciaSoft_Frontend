@@ -36,28 +36,40 @@ export default function Roles() {
         nombre: 'Administrador', 
         descripcion: 'Acceso completo al sistema',
         permisos: [1, 2, 3, 4],
-        activo: true 
+        activo: true,
+        tieneUsuarios: true
       },
       { 
         id: 2, 
         nombre: 'Repostero', 
         descripcion: 'Encargado de la producción de postres',
         permisos: [1, 2],
-        activo: true 
+        activo: true,
+        tieneUsuarios: false
       },
       { 
         id: 3, 
         nombre: 'Decorador', 
         descripcion: 'Especialista en decoración de pasteles',
         permisos: [1, 2],
-        activo: true 
+        activo: true,
+        tieneUsuarios: false
       },
       { 
         id: 4, 
         nombre: 'Vendedor', 
         descripcion: 'Personal de ventas y atención al cliente',
         permisos: [1, 4],
-        activo: false 
+        activo: false,
+        tieneUsuarios: false
+      },
+      { 
+        id: 5, 
+        nombre: 'Gerente', 
+        descripcion: 'Supervisor general de operaciones',
+        permisos: [1, 2, 3, 4],
+        activo: true,
+        tieneUsuarios: true // Este rol también tendrá usuarios asociados
       }
     ];
 
@@ -141,6 +153,17 @@ export default function Roles() {
       return false;
     }
     
+    // Validar nombre único
+    const nombreExiste = roles.some(rol => 
+      rol.nombre.toLowerCase() === nombre.trim().toLowerCase() && 
+      (modalTipo === 'agregar' || rol.id !== rolSeleccionado?.id)
+    );
+    
+    if (nombreExiste) {
+      showNotification('Ya existe un rol con este nombre', 'error');
+      return false;
+    }
+    
     return true;
   };
 
@@ -151,7 +174,8 @@ export default function Roles() {
       const nuevoId = roles.length ? Math.max(...roles.map(r => r.id)) + 1 : 1;
       const nuevoRol = {
         ...formData,
-        id: nuevoId
+        id: nuevoId,
+        tieneUsuarios: false
       };
       
       setRoles([...roles, nuevoRol]);
@@ -170,6 +194,13 @@ export default function Roles() {
   };
 
   const confirmarEliminar = () => {
+    // Verificar si el rol tiene usuarios asociados
+    if (rolSeleccionado.tieneUsuarios) {
+      showNotification('No se puede eliminar este rol porque tiene usuarios asociados', 'error');
+      cerrarModal();
+      return;
+    }
+
     const updated = roles.filter(r => r.id !== rolSeleccionado.id);
     setRoles(updated);
     cerrarModal();
@@ -281,104 +312,281 @@ export default function Roles() {
 
 {/* Modal Agregar/Editar */}
 {(modalTipo === 'agregar' || modalTipo === 'editar') && modalVisible && (
-  <Modal visible={modalVisible} onClose={cerrarModal}>
-    <h2 className="modal-title">
-      {modalTipo === 'agregar' ? 'Agregar Nuevo Rol' : 'Editar Rol'}
-    </h2>
-    <div className="modal-body">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
-        <div>
+  <Modal 
+    visible={modalVisible} 
+    onClose={cerrarModal} 
+    style={{
+      display: 'flex',
+      justifyContent: 'flex-end',  // Alinea modal a la derecha
+      alignItems: 'flex-start',    // Arriba, no centrado vertical
+      padding: '2rem',
+    }}
+  >
+    <div
+      className="modal-roles-grande"
+      style={{
+        width: '60vw',
+        maxWidth: '800px',
+        height: '80vh',            // Altura reducida
+        overflowY: 'auto',         // Scroll vertical si es necesario
+        marginLeft: 'auto',
+        marginRight: '0',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '2rem',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+      }}
+    >
+      <h2
+        className="modal-title"
+        style={{ marginBottom: '2rem', fontSize: '1.6rem', textAlign: 'center' }}
+      >
+        {modalTipo === 'agregar' ? 'Nuevo Rol' : 'Editar Rol'}
+      </h2>
+
+      <div
+        className="modal-body-roles"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 2fr',
+          gap: '1rem',
+          minHeight: '100px',
+        }}
+      >
+        {/* Columna izquierda: Información básica */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <h3 style={{ color: '#c2185b', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>
+            Información Básica
+          </h3>
+
           <div className="modal-field">
-            <label>Nombre del Rol:</label>
+            <label
+              style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.7rem', fontSize: '1rem' }}
+            >
+              Nombre del Rol:
+            </label>
             <input
               type="text"
               value={formData.nombre}
               onChange={(e) => handleInputChange('nombre', e.target.value)}
               className="modal-input"
+              style={{
+                padding: '12px',
+                fontSize: '1rem',
+                width: '100%',
+                borderRadius: '6px',
+                border: '2px solid #f48fb1',
+              }}
+              placeholder="Ej: Administrador, Vendedor..."
             />
           </div>
+
           <div className="modal-field">
-            <label>Descripción:</label>
-            <input
-              type="text"
+            <label
+              style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.7rem', fontSize: '1rem' }}
+            >
+              Descripción:
+            </label>
+            <textarea
               value={formData.descripcion}
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
               className="modal-input"
+              style={{
+                padding: '12px',
+                fontSize: '1rem',
+                width: '100%',
+                minHeight: '120px',
+                resize: 'vertical',
+                borderRadius: '6px',
+                border: '2px solid #f48fb1',
+              }}
+              placeholder="Describe las responsabilidades de este rol..."
             />
+          </div>
+
+          <div className="modal-field">
+            <label
+              style={{
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.7rem',
+                fontSize: '1rem',
+              }}
+            >
+              Estado Activo:
+              <InputSwitch
+                checked={formData.activo}
+                onChange={(e) => handleInputChange('activo', e.value)}
+              />
+            </label>
           </div>
         </div>
 
-        <div className="modal-field">
-          <label>Permisos:</label>
-          <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #f48fb1', borderRadius: '8px', padding: '10px' }}>
+        {/* Columna derecha: Permisos - Más grande */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ color: '#c2185b', margin: '0 0 1.5rem 0', fontSize: '1.2rem' }}>
+            Permisos del Sistema
+          </h3>
+
+          <div
+            style={{
+              flex: 1,
+              maxHeight: '400px',
+              overflowY: 'auto',
+              padding: '1.5rem',
+              border: '2px solid #f48fb1',
+              borderRadius: '10px',
+              backgroundColor: '#fafafa',
+            }}
+          >
             {Object.entries(permisosPorModulo).map(([modulo, permisosModulo]) => (
-              <div key={modulo} style={{ marginBottom: '15px' }}>
-                <h4 style={{ color: '#d81b60', marginBottom: '8px', fontSize: '14px' }}>{modulo}</h4>
-                <div className="permisos-grid">
-                  {permisosModulo.map(permiso => (
-                    <div key={permiso.id} className="permiso-checkbox">
+              <div key={modulo} style={{ marginBottom: '2rem' }}>
+                <h4
+                  style={{
+                    fontSize: '1.1rem',
+                    color: '#c2185b',
+                    margin: '0 0 1rem 0',
+                    fontWeight: 'bold',
+                    borderBottom: '2px solid #f48fb1',
+                    paddingBottom: '0.5rem',
+                  }}
+                >
+                  📋 {modulo}
+                </h4>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.7rem',
+                    paddingLeft: '1.5rem',
+                  }}
+                >
+                  {permisosModulo.map((permiso) => (
+                    <label
+                      key={permiso.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.7rem',
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        backgroundColor: formData.permisos.includes(permiso.id)
+                          ? '#f8bbd0'
+                          : 'transparent',
+                        transition: 'background-color 0.2s',
+                      }}
+                    >
                       <input
                         type="checkbox"
-                        id={`permiso-${permiso.id}`}
                         checked={formData.permisos.includes(permiso.id)}
                         onChange={(e) => handlePermisoChange(permiso.id, e.target.checked)}
+                        style={{ width: '18px', height: '18px' }}
                       />
-                      <label htmlFor={`permiso-${permiso.id}`} style={{ fontSize: '13px' }}>
-                        {permiso.nombre}
-                      </label>
-                    </div>
+                      <span style={{ fontSize: '1rem' }}>{permiso.nombre}</span>
+                    </label>
                   ))}
                 </div>
               </div>
             ))}
+
+            {Object.keys(permisosPorModulo).length === 0 && (
+              <p
+                style={{
+                  textAlign: 'center',
+                  color: '#666',
+                  fontStyle: 'italic',
+                  fontSize: '1rem',
+                }}
+              >
+                No hay permisos disponibles
+              </p>
+            )}
           </div>
         </div>
       </div>
-    </div>
 
-    <div className="modal-footer">
-      <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-      <button className="modal-btn save-btn" onClick={guardarRol}>Guardar</button>
+      <div
+        className="modal-actions"
+        style={{
+          marginTop: '2.5rem',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '1.5rem',
+          borderTop: '2px solid #eee',
+          paddingTop: '2rem',
+        }}
+      >
+        <button
+          className="modal-btn cancel-btn"
+          onClick={cerrarModal}
+          style={{ padding: '12px 30px', fontSize: '1.1rem' }}
+        >
+          Cancelar
+        </button>
+        <button
+          className="modal-btn save-btn"
+          onClick={guardarRol}
+          style={{ padding: '12px 30px', fontSize: '1.1rem' }}
+        >
+          {modalTipo === 'agregar' ? 'Crear Rol' : 'Actualizar Rol'}
+        </button>
+      </div>
     </div>
   </Modal>
 )}
 
 
-      {/* Modal Visualizar */}
-      {modalTipo === 'visualizar' && rolSeleccionado && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Detalles del Rol</h2>
-          <div className="modal-body">
-            <p><strong>ID:</strong> {rolSeleccionado.id}</p>
-            <p><strong>Nombre:</strong> {rolSeleccionado.nombre}</p>
-            <p><strong>Descripción:</strong> {rolSeleccionado.descripcion}</p>
-            <p><strong>Estado:</strong> {rolSeleccionado.activo ? 'Activo' : 'Inactivo'}</p>
-            <div style={{ marginTop: '15px' }}>
-              <strong>Permisos asignados:</strong>
-              <div style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
-                {Object.entries(permisosPorModulo).map(([modulo, permisosModulo]) => {
-                  const permisosAsignados = permisosModulo.filter(p => (rolSeleccionado.permisos || []).includes(p.id));
-                  if (permisosAsignados.length === 0) return null;
-                  
-                  return (
-                    <div key={modulo} style={{ marginBottom: '10px' }}>
-                      <h5 style={{ color: '#d81b60', margin: '5px 0', fontSize: '13px' }}>{modulo}:</h5>
-                      <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                        {permisosAsignados.map(p => (
-                          <li key={p.id} style={{ fontSize: '12px' }}>{p.nombre}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
+    {/* Modal Visualizar */}
+{modalTipo === 'visualizar' && rolSeleccionado && (
+  <Modal visible={modalVisible} onClose={cerrarModal}>
+    <h2 className="modal-title" style={{ fontSize: '22px' }}>Detalles del Rol</h2>
+    <div
+      className="modal-body"
+      style={{ display: 'flex', gap: '30px', fontSize: '16px', padding: '10px' }}
+    >
+      {/* Columna izquierda: info básica */}
+      <div style={{ flex: 1 }}>
+        <p><strong>ID:</strong> {rolSeleccionado.id}</p>
+        <p><strong>Nombre:</strong> {rolSeleccionado.nombre}</p>
+        <p><strong>Descripción:</strong> {rolSeleccionado.descripcion}</p>
+        <p><strong>Estado:</strong> {rolSeleccionado.activo ? 'Activo' : 'Inactivo'}</p>
+        <p><strong>Usuarios Asociados:</strong> {rolSeleccionado.tieneUsuarios ? 'Sí' : 'No'}</p>
+      </div>
+
+      {/* Columna derecha: permisos */}
+      <div style={{ flex: 1 }}>
+        <strong style={{ display: 'block', marginBottom: '10px' }}>Permisos asignados:</strong>
+        <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
+          {Object.entries(permisosPorModulo).map(([modulo, permisosModulo]) => {
+            const permisosAsignados = permisosModulo.filter(p =>
+              (rolSeleccionado.permisos || []).includes(p.id)
+            );
+            if (permisosAsignados.length === 0) return null;
+
+            return (
+              <div key={modulo} style={{ marginBottom: '12px' }}>
+                <h5 style={{ color: '#d81b60', margin: '0 0 5px', fontSize: '14px' }}>{modulo}:</h5>
+                <ul style={{ margin: '0', paddingLeft: '20px' }}>
+                  {permisosAsignados.map(p => (
+                    <li key={p.id} style={{ fontSize: '13px' }}>{p.nombre}</li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
-      )}
+            );
+          })}
+        </div>
+      </div>
+    </div>
+
+    <div className="modal-footer" style={{ marginTop: '40px' }}>
+      <button className="modal-btn cancel-btn" onClick={cerrarModal} style={{ fontSize: '20px', padding: '30px 50px' }}>
+        Cerrar
+      </button>
+    </div>
+  </Modal>
+)}
 
       {/* Modal Eliminar */}
       {modalTipo === 'eliminar' && rolSeleccionado && (
@@ -387,12 +595,16 @@ export default function Roles() {
           <div className="modal-body">
             <p>¿Está seguro que desea eliminar el rol <strong>{rolSeleccionado.nombre}</strong>?</p>
             <p style={{ color: '#e53935', fontSize: '14px' }}>
-              Esta acción no se puede deshacer y podría afectar a los usuarios que tengan este rol asignado.
+              Esta acción no se puede deshacer.
             </p>
           </div>
           <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>
+              Cancelar
+            </button>
+            <button className="modal-btn save-btn" onClick={confirmarEliminar}>
+              Eliminar
+            </button>
           </div>
         </Modal>
       )}

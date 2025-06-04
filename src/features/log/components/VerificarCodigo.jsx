@@ -6,7 +6,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido }) => {
   const manejarVerificacion = (e) => {
     e.preventDefault();
     if (codigoIngresado === codigoCorrecto) {
-      alert("Código correcto. Acceso concedido.");
+      alert("Código correcto. Puedes cambiar tu contraseña.");
       onCodigoValido();
     } else {
       alert("Código incorrecto.");
@@ -14,8 +14,8 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-contenido tarjeta">
+    <div className="modalrecuperar">
+      <div className="modal-contenidorecupera">
         <h2>Verificar Código</h2>
         <form onSubmit={manejarVerificacion}>
           <input
@@ -26,8 +26,8 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido }) => {
             required
           />
           <div className="botones">
+            <button type="button" onClick={onClose} className="btn-enviar">Cancelar</button>
             <button type="submit" className="btn-enviar">Verificar</button>
-            <button type="button" onClick={onClose} className="btn-cancelar">Cancelar</button>
           </div>
         </form>
       </div>

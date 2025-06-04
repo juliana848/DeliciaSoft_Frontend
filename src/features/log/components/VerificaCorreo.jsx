@@ -5,15 +5,14 @@ const ModalVerificarCorreo = ({ onClose, onCodigoGenerado }) => {
 
   const manejarEnvio = (e) => {
     e.preventDefault();
-    const codigo = '665544';
+    const codigo = '665544'; // En la práctica este sería aleatorio
     alert(`Tu código de recuperación es: ${codigo}`);
-
     onCodigoGenerado(codigo);
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-contenido tarjeta">
+    <div className="modalrecuperar">
+      <div className="modal-contenidorecupera">
         <h2>Recuperar Contraseña</h2>
         <form onSubmit={manejarEnvio}>
           <input
@@ -24,7 +23,7 @@ const ModalVerificarCorreo = ({ onClose, onCodigoGenerado }) => {
             required
           />
           <div className="botones">
-            <button type="button" onClick={onClose} className="btn-cancelar">Cancelar</button>
+            <button type="button" onClick={onClose} className="btn-enviar">Cancelar</button>
             <button type="submit" className="btn-enviar">Enviar código</button>
           </div>
         </form>

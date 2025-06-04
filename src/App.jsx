@@ -21,6 +21,7 @@ import InsumosTable from './features/Admin/pages/insumos.jsx';
 import Usuarios from './features/Admin/pages/Usuarios.jsx';
 import Roles from './features/Admin/pages/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes.jsx';
+import Ventas from './features/Admin/pages/ventas.jsx';
 
 
 
@@ -69,11 +70,11 @@ function AppContent() {
             <Route path="/admin/pages/usuarios" element={<Usuarios />} />
             <Route path="/admin/pages/Roles" element={<Roles />} />
             <Route path="/admin/pages/Clientes" element={<Clientes />} />
+            <Route path="/admin/pages/Ventas" element={<Ventas />} />
             {/* 
             <Route path="/admin/pedidos" element={<div className="p-4"><h2>Gestión de Pedidos</h2></div>} />
             <Route path="/admin/cotizacion" element={<div className="p-4"><h2>Cotizaciones</h2></div>} />
             <Route path="/admin/sedes" element={<div className="p-4"><h2>Gestión de Sedes</h2></div>} />
-            <Route path="/admin/ventas-list" element={<div className="p-4"><h2>Lista de Ventas</h2></div>} />
             <Route path="/admin/insumos" element={<div className="p-4"><h2>Gestión de Insumos</h2></div>} />
             <Route path="/admin/proveedores" element={<div className="p-4"><h2>Gestión de Proveedores</h2></div>} />
             <Route path="/admin/compras-list" element={<div className="p-4"><h2>Lista de Compras</h2></div>} />

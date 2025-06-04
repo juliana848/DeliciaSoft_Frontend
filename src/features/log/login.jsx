@@ -27,7 +27,7 @@ const Login = () => {
       </button>
       
 
-      <div className="container" id="container" ref={containerRef}>
+      <div className="containerlog" id="container" ref={containerRef}>
         <RegisterForm />
         <LoginForm />
         <TogglePanel onSignIn={handleLoginClick} onSignUp={handleRegisterClick} />

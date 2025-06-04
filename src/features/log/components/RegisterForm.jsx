@@ -15,7 +15,7 @@ const RegisterForm = () => (
       <input type="Number" placeholder="Número de documento" />
       <input type="Number" placeholder="Numero de Contacto" />
       <input type="password" placeholder="Password" />
-      <button type="submit" className="btn-form">Registrar</button>
+      <button type="submit" className="hiddenn1">Registrar</button>
     </form>
   </div>
 );

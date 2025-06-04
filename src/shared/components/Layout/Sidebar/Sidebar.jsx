@@ -48,7 +48,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
         { title: 'Pedidos', path: '/admin/pedidos', icon: 'bi bi-bag-check' },
         { title: 'Cotización', path: '/admin/cotizacion', icon: 'bi bi-calculator' },
         { title: 'Sedes', path: '/admin/sedes', icon: 'bi bi-geo-alt' },
-        { title: 'Ventas', path: '/admin/ventas-list', icon: 'bi bi-graph-up' }
+        { title: 'Ventas', path: '/admin/pages/Ventas', icon: 'bi bi-graph-up' }
       ]
     },
     {

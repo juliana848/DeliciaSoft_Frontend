@@ -18,6 +18,7 @@ import InsumosTable from './features/Admin/pages/insumos.jsx';
 import Usuarios from './features/Admin/pages/Usuarios.jsx';
 import Roles from './features/Admin/pages/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes.jsx';
+import ProveedorTable from './features/Admin/pages/proveedores.jsx';
 
 // Componentes de Layout
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
@@ -67,6 +68,7 @@ function AppContent() {
             <Route path="/admin/pages/usuarios" element={<Usuarios />} />
             <Route path="/admin/pages/Roles" element={<Roles />} />
             <Route path="/admin/pages/Clientes" element={<Clientes />} />
+            <Route path="/admin/pages/proveedores" element={<ProveedorTable />} />
           </Routes>
         </Layout>
       ) : (

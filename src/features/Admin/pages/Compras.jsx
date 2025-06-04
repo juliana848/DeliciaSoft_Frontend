@@ -30,16 +30,16 @@ export default function ComprasTable() {
 
     useEffect(() => {
         const mockCompras = [
-            { id: 401, cod_compra: 301, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '126.000' },
-            { id: 402, cod_compra: 302, proveedor: 'Dis.Tolu', fecha: '10/02/2024', total: '144.000' },
-            { id: 403, cod_compra: 303, proveedor: 'Sumi.Express', fecha: '10/02/2024', total: '458.900' },
-            { id: 404, cod_compra: 304, proveedor: 'Mate.industriales', fecha: '10/02/2024', total: '321.700' },
-            { id: 405, cod_compra: 305, proveedor: 'Dis.MatFruit', fecha: '10/02/2024', total: '900.100' },
-            { id: 406, cod_compra: 306, proveedor: 'Desechables J&J', fecha: '10/02/2024', total: '159.000' },
-            { id: 407, cod_compra: 307, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '888.888' },
-            { id: 408, cod_compra: 308, proveedor: 'Harina la Moderna', fecha: '10/02/2024', total: '20.900' },
-            { id: 409, cod_compra: 309, proveedor: 'Moldes & utensilios', fecha: '10/02/2024', total: '750.200' },
-            { id: 410, cod_compra: 310, proveedor: 'Dulces Delicias', fecha: '10/02/2024', total: '631.000' }
+            {  cod_compra: 301, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '126.000' },
+            {  cod_compra: 302, proveedor: 'Dis.Tolu', fecha: '10/02/2024', total: '144.000' },
+            {  cod_compra: 303, proveedor: 'Sumi.Express', fecha: '10/02/2024', total: '458.900' },
+            {  cod_compra: 304, proveedor: 'Mate.industriales', fecha: '10/02/2024', total: '321.700' },
+            {  cod_compra: 305, proveedor: 'Dis.MatFruit', fecha: '10/02/2024', total: '900.100' },
+            {  cod_compra: 306, proveedor: 'Desechables J&J', fecha: '10/02/2024', total: '159.000' },
+            {  cod_compra: 307, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '888.888' },
+            {  cod_compra: 308, proveedor: 'Harina la Moderna', fecha: '10/02/2024', total: '20.900' },
+            {  cod_compra: 309, proveedor: 'Moldes & utensilios', fecha: '10/02/2024', total: '750.200' },
+            {  cod_compra: 310, proveedor: 'Dulces Delicias', fecha: '10/02/2024', total: '631.000' }
         ];
         setCompras(mockCompras);
     }, []);

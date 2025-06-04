@@ -54,8 +54,7 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
-      // Opcional: si quieres permitir editar fecha también, agregas aquí
-      // setFechaRegistroEditada(convertirFechaATexto(categoria.fecha_registro));
+    
     }
     if (tipo === 'agregar') {
       setNombreEditado('');

@@ -544,6 +544,138 @@
     100% { opacity: 0; }
 }
 
+/* Estilos para los botones pequeños (+ Adición, + Salsa, + Relleno) */
+.btn-small {
+    background-color: #f8bbd0; /* Un rosa claro */
+    color: #4a3400; /* Color de texto oscuro para contraste */
+    border: 1px solid #f48fb1; /* Borde rosa */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 5px; /* Espacio a la izquierda del texto/lista */
+    transition: background-color 0.2s ease;
+    display: inline-block; /* Permite que el margen funcione */
+    vertical-align: middle; /* Alinea verticalmente con el texto */
+}
+
+.btn-small:hover {
+    background-color: #f48fb1; /* Rosa más oscuro al pasar el ratón */
+    color: white;
+}
+
+/* Estilos para los botones pequeños de eliminar (la 'x') */
+.btn-small.btn-eliminar-nested {
+    background-color: #ef9a9a; /* Un rojo claro */
+    color: #b71c1c; /* Rojo oscuro */
+    border: 1px solid #e57373; /* Borde rojo */
+    padding: 2px 5px; /* Padding más pequeño */
+    font-size: 10px; /* Fuente más pequeña */
+    margin-left: 8px; /* Más espacio para separarlo del texto */
+    border-radius: 50%; /* Botón redondo */
+    width: 20px; /* Ancho fijo */
+    height: 20px; /* Alto fijo */
+    display: inline-flex; /* Centrar contenido */
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; 
+}
+
+.btn-small.btn-eliminar-nested:hover {
+    background-color: #e57373;
+    color: white;
+}
+
+.compra-detalle-table td div {
+    margin-bottom: 3px; 
+    padding: 2px 0;
+    color: #555; 
+    font-size: 13px;
+    display: flex; 
+    align-items: center;
+    justify-content: space-between; 
+}
+
+.compra-detalle-table td:nth-child(4), 
+.compra-detalle-table td:nth-child(5),
+.compra-detalle-table td:nth-child(6)  
+
+
+.compra-detalle-table td:nth-child(3) {
+    font-weight: 600;
+    color: #d81b60; 
+    text-align: right; 
+    padding-right: 10px; 
+}
+
+.compra-detalle-table tr td[colSpan="4"] {
+    text-align: left;
+}
+
+
+
+.admin-select:hover {
+    border-color: #d81b60; 
+}
+
+.admin-select:focus {
+    border-color: #d81b60; 
+    box-shadow: 0 0 5px rgba(216, 27, 96, 0.5);
+}
+
+
+
+.admin-select option {
+    background-color: white;
+    color: #4a3400;
+}
+
+.btn-small.toggle-details-btn {
+    padding: 2px 6px;
+    font-size: 10px;
+    background-color: #f8bbd0;
+    color: #4a3400;
+    border: 1px solid #f48fb1;
+}
+
+.btn-small.toggle-details-btn:hover {
+     background-color: #f48fb1;
+     color: white;
+}
+
+
+.nested-item-list {
+    margin-bottom: 10px; 
+    border-bottom: 1px dashed #eee; 
+}
+
+.nested-item-list:last-child {
+    margin-bottom: 0;
+    border-bottom: none; 
+}
+
+.nested-item-list strong {
+    display: block; 
+    margin-bottom: 5px;
+    color: #d81b60; 
+}
+
+.nested-item-list div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.compra-detalle-table tr td[colSpan="5"] { 
+    text-align: left; 
+    padding-left: 20px; 
+    background-color: #fff8f9;
+}
+
+=======
 .modal-proveedor {
     display: flex;
     flex-direction: column;

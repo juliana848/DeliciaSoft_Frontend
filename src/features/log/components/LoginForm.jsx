@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModalVerificarCorreo from './VerificaCorreo';
 import ModalIngresarCodigo from './VerificarCodigo';
+import ModalCambiarContrasena from './CambiarContrasena';
 
 const LoginForm = () => {
   const [mostrarModalCorreo, setMostrarModalCorreo] = useState(false);
   const [mostrarModalCodigo, setMostrarModalCodigo] = useState(false);
+  const [mostrarModalCambio, setMostrarModalCambio] = useState(false);
+
   const [codigoGenerado, setCodigoGenerado] = useState(null);
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const adminCredentials = [
     { email: 'admin@delicias.com', password: 'admin123' },
@@ -34,6 +38,17 @@ const LoginForm = () => {
   const cerrarModales = () => {
     setMostrarModalCorreo(false);
     setMostrarModalCodigo(false);
+    setMostrarModalCambio(false);
+  };
+
+  const manejarCodigoValido = () => {
+    setMostrarModalCodigo(false);
+    setMostrarModalCambio(true);
+  };
+
+  const manejarContrasenaCambiada = () => {
+    alert("Contraseña actualizada. Por favor inicia sesión.");
+    cerrarModales();
   };
 
   const handleInputChange = (e) => {
@@ -44,16 +59,16 @@ const LoginForm = () => {
   };
 
   const determinarRolUsuario = (email, password) => {
-
     const esAdmin = adminCredentials.some(
       cred => cred.email === email && cred.password === password
     );
-    
+
     if (esAdmin) return 'admin';
+
     const esCliente = clienteCredentials.some(
       cred => cred.email === email && cred.password === password
     );
-    
+
     if (esCliente) return 'cliente';
 
     if (email.includes('admin') || email.includes('administrador') || email.includes('root')) {
@@ -65,42 +80,40 @@ const LoginForm = () => {
 
   const manejarSubmit = (e) => {
     e.preventDefault();
-    
+
     const userRole = determinarRolUsuario(formData.email, formData.password);
-    
+
     localStorage.setItem('authToken', 'fake-jwt-token');
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('userEmail', formData.email);
-    
-    console.log('Usuario autenticado:', { email: formData.email, role: userRole });
-    
+
     if (userRole === 'admin') {
-      navigate('/admin/pages/CategoriaInsumo'); 
+      navigate('/admin/pages/CategoriaInsumo');
     } else {
-      navigate('/'); 
+      navigate('/');
     }
-    
+
     window.location.reload();
   };
 
   return (
     <div className="form-container sign-in">
       <form className="login-form" onSubmit={manejarSubmit}>
-        <input 
-          type="email" 
+        <input
+          type="email"
           name="email"
-          placeholder="Correo electrónico" 
+          placeholder="Correo electrónico"
           value={formData.email}
           onChange={handleInputChange}
-          required 
+          required
         />
-        <input 
-          type="password" 
+        <input
+          type="password"
           name="password"
-          placeholder="Contraseña" 
+          placeholder="Contraseña"
           value={formData.password}
           onChange={handleInputChange}
-          required 
+          required
         />
 
         <a
@@ -111,8 +124,7 @@ const LoginForm = () => {
           ¿Olvidaste tu contraseña?
         </a>
 
-        <button type="submit" className="btn-form">Iniciar</button>
-        
+        <button type="submit" className="hiddenn1">Iniciar</button>
       </form>
 
       {mostrarModalCorreo && (
@@ -126,6 +138,14 @@ const LoginForm = () => {
         <ModalIngresarCodigo
           codigoCorrecto={codigoGenerado}
           onClose={cerrarModales}
+          onCodigoValido={manejarCodigoValido}
+        />
+      )}
+
+      {mostrarModalCambio && (
+        <ModalCambiarContrasena
+          onClose={cerrarModales}
+          onContrasenaCambiada={manejarContrasenaCambiada}
         />
       )}
     </div>

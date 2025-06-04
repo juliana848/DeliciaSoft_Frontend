@@ -9,9 +9,9 @@ import Notification from '../components/Notification';
 
 export default function InsumosTable() {
   const [insumos, setInsumos] = useState([
-    { id: 1, nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true },
-    { id: 2, nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false },
-    { id: 3, nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true }
+    {  nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true },
+    {  nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false },
+    {  nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true }
   ]);
   
   const [filtro, setFiltro] = useState('');
@@ -55,6 +55,10 @@ export default function InsumosTable() {
     }
     if (!form.cantidad || form.cantidad <= 0) {
       showNotification('La cantidad debe ser mayor a 0', 'error');
+      return false;
+    }
+    if (!form.marca || form.marca <= 0) {
+      showNotification('el insumo debe tener una marca', 'error');
       return false;
     }
     return true;

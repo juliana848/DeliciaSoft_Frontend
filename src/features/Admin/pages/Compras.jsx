@@ -8,7 +8,6 @@ import SuccessMessage from '../components/SuccessMessage';
 import AgregarInsumosModal from '../components/AgregarInsumosModal';
 
 export default function ComprasTable() {
-    // Estados existentes de tu CRUD
     const [compras, setCompras] = useState([]);
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -16,7 +15,6 @@ export default function ComprasTable() {
     const [compraSeleccionada, setCompraSeleccionada] = useState(null);
     const [mensajeExito, setMensajeExito] = useState('');
     
-    // Estados para Agregar Compra
     const [mostrarAgregarCompra, setMostrarAgregarCompra] = useState(false);
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
@@ -44,7 +42,6 @@ export default function ComprasTable() {
         setCompras(mockCompras);
     }, []);
 
-    // Funciones existentes de tu CRUD
     const abrirModal = (tipo, compra) => {
         setModalTipo(tipo);
         setCompraSeleccionada(compra);
@@ -167,7 +164,7 @@ export default function ComprasTable() {
                         />
                     </DataTable>
 
-                    {/* Modales existentes de tu CRUD */}
+        
                     {modalTipo === 'ver' && compraSeleccionada && (
                         <Modal visible={modalVisible} onClose={cerrarModal}>
                             <h2 className="modal-title">Detalles de Compra</h2>

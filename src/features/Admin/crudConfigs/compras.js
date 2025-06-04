@@ -1,6 +1,4 @@
-// src/features/Admin/crudConfigs/categorias.js
-
-export const categoriaCrudConfig = {
+export const comprasCrudConfig = {
 columns: [
     { field: 'id', header: 'ID' },
     { field: 'codigo', header: 'Codigo Compra' },

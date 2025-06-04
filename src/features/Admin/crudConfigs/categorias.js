@@ -1,5 +1,3 @@
-// src/features/Admin/crudConfigs/categorias.js
-
 export const categoriaCrudConfig = {
 columns: [
     { field: 'id', header: 'ID' },

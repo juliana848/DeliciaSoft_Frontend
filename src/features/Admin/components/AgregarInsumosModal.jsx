@@ -61,7 +61,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         </div>
         
         <div className="modal-footer">
-          <button className="admin-button gray" onClick={onClose}>Cancelar</button>
+          <button className="admin-button y" onClick={onClose}>Cancelar</button>
           <button className="admin-button pink" onClick={handleAgregar}>
             Agregar ({selectedInsumos.length})
           </button>

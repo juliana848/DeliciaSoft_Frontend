@@ -45,8 +45,7 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
-      // Opcional: si quieres permitir editar fecha también, agregas aquí
-      // setFechaRegistroEditada(convertirFechaATexto(categoria.fecha_registro));
+
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
@@ -95,7 +94,7 @@ export default function CategoriaTableDemo() {
   return (
     <div className="admin-wrapper">
 
-      {/* Toolbar: botón a la izquierda, buscador a la derecha */}
+      {/* buscador */}
       <div className="admin-toolbar">
         <button
           className="admin-button pink"
@@ -198,7 +197,7 @@ export default function CategoriaTableDemo() {
 
                 const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
 
-                // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
+          
                 const [year, month, day] = fechaRegistroEditada.split('-');
                 const fechaFormateada = `${day}/${month}/${year}`;
 

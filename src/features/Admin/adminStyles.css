@@ -543,3 +543,108 @@
     90% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+.modal-proveedor {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-proveedor label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.modal-proveedor .modal-input {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #f48fb1; 
+}
+
+/* === SOLO para AgregarInsumosModal === */
+.insumos-modal {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.insumos-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.insumos-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #aaa;
+}
+.insumos-close-btn:hover {
+  color: #000;
+}
+
+.insumos-search-bar {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.insumos-search-bar input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border 0.3s;
+}
+.insumos-search-bar input:focus {
+  outline: none;
+  border-color: #f48fb1;
+}
+
+.insumos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 1.5rem;
+}
+
+.insumos-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.insumos-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.insumos-btn.pink {
+  background-color: #f48fb1;
+  color: white;
+}
+.insumos-btn.pink:hover {
+  background-color: #ec407a;
+}
+
+.insumos-btn.cancel {
+  background-color: #eee;
+  color: #333;
+}
+.insumos-btn.cancel:hover {
+  background-color: #ddd;
+}

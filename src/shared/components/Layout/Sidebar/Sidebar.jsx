@@ -46,7 +46,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
       submenu: [
         { title: 'Clientes', path: '/admin/pages/Clientes', icon: 'bi bi-people' },
         { title: 'Pedidos', path: '/admin/pedidos', icon: 'bi bi-bag-check' },
-        { title: 'Cotización', path: '/admin/cotizacion', icon: 'bi bi-calculator' },
         { title: 'Sedes', path: '/admin/sedes', icon: 'bi bi-geo-alt' },
         { title: 'Ventas', path: '/admin/pages/Ventas', icon: 'bi bi-graph-up' }
       ]
@@ -59,7 +58,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       submenu: [
         { title: 'Insumos', path: '/admin/pages/insumos', icon: 'bi bi-box' },
         { title: 'Cat. Insumos', path: '/admin/pages/CategoriaInsumo', icon: 'bi bi-tags' },
-        { title: 'Proveedores', path: '/admin/proveedores', icon: 'bi bi-truck' },
+        { title: 'Proveedores', path: '/admin/pages/proveedores', icon: 'bi bi-truck' },
         { title: 'Compras', path: '/admin/pages/compras', icon: 'bi bi-receipt' }
       ]
     },
@@ -71,7 +70,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
       submenu: [
         { title: 'Cat. Productos', path: '/admin/pages/CategoriaProductos', icon: 'bi bi-grid' },
         { title: 'Productos', path: '/admin/productos', icon: 'bi bi-cake2' },
-        { title: 'Productos Por', path: '/admin/productos-por', icon: 'bi bi-list-ul' }
       ]
     },
     {

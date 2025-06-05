@@ -7,7 +7,7 @@ import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
 
-export default function CategoriaTableDemo() {
+export default function CategoriaProductos() {
   const [categorias, setCategorias] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
@@ -19,16 +19,12 @@ export default function CategoriaTableDemo() {
 
   useEffect(() => {
     const mockCategorias = [
-      { id: 201, nombre: 'Frutas', fecha_registro: '19/02/2024', activo: true },
-      { id: 202, nombre: 'Chocolate', fecha_registro: '20/01/2024', activo: true },
-      { id: 203, nombre: 'Lácteos', fecha_registro: '19/02/2022', activo: true },
-      { id: 204, nombre: 'Harinas', fecha_registro: '07/02/2022', activo: false },
-      { id: 205, nombre: 'Proteínas', fecha_registro: '11/03/2022', activo: true },
-      { id: 206, nombre: 'Condimentos', fecha_registro: '19/07/2022', activo: false },
-      { id: 207, nombre: 'Endulzantes', fecha_registro: '19/02/2021', activo: true },
-      { id: 208, nombre: 'Frutos Secos', fecha_registro: '26/04/2020', activo: true },
-      { id: 209, nombre: 'Colorantes', fecha_registro: '19/03/2020', activo: false },
-      { id: 210, nombre: 'Utensilios', fecha_registro: '17/02/2020', activo: true }
+      { id: 301, nombre: 'Fresas con crema', fecha_registro: '19/02/2024', activo: true },
+      { id: 302, nombre: 'Obleas', fecha_registro: '20/01/2024', activo: true },
+      { id: 303, nombre: 'Cupcakes', fecha_registro: '19/02/2022', activo: true },
+      { id: 304, nombre: 'Postres', fecha_registro: '07/02/2022', activo: false },
+      { id: 305, nombre: 'Pasteles', fecha_registro: '11/03/2022', activo: true },
+      { id: 306, nombre: 'Arroz con leche', fecha_registro: '19/07/2022', activo: false },
     ];
     setCategorias(mockCategorias);
   }, []);
@@ -38,7 +34,7 @@ export default function CategoriaTableDemo() {
       cat.id === categoria.id ? { ...cat, activo: !cat.activo } : cat
     );
     setCategorias(updated);
-    showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
+    showNotification(`Categoría de productos ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
   };
 
   const showNotification = (mensaje, tipo = 'success') => {
@@ -95,14 +91,14 @@ export default function CategoriaTableDemo() {
     );
     setCategorias(updated);
     cerrarModal();
-    showNotification('Categoría editada exitosamente');
+    showNotification('Categoría de producto editada exitosamente');
   };
 
   const confirmarEliminar = () => {
     const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
     setCategorias(updated);
     cerrarModal();
-    showNotification('Categoría eliminada exitosamente');
+    showNotification('Categoría de producto eliminada exitosamente');
   };
 
   const guardarNuevaCategoria = () => {
@@ -122,7 +118,7 @@ export default function CategoriaTableDemo() {
     }]);
 
     cerrarModal();
-    showNotification('Categoría agregada exitosamente');
+    showNotification('Categoría de producto agregada exitosamente');
   };
 
   const categoriasFiltradas = categorias.filter(cat =>
@@ -148,12 +144,14 @@ export default function CategoriaTableDemo() {
           + Agregar
         </button>
         <SearchBar
-          placeholder="Buscar categoría..."
+          placeholder="Buscar categoría de productos..."
           value={filtro}
           onChange={setFiltro}
         />
       </div>
-        <h2 className="admin-section-title">Cat-Insumos</h2>
+
+      <h2 className="admin-section-title">Cat-Productos</h2>
+      {/* tabla */}
       <DataTable
         value={categoriasFiltradas}
         className="admin-table"
@@ -163,11 +161,11 @@ export default function CategoriaTableDemo() {
         tableStyle={{ minWidth: '50rem' }}
       >
         {/* <Column field="id" header="ID" /> */}
-                <Column
-                  header="Numero"
-                  body={(_, { rowIndex }) => (categoriasFiltradas.indexOf(categoriasFiltradas[rowIndex]) + 1)}
-                  style={{ width: '3rem' }}
-                />
+        <Column
+          header="Numero"
+          body={(_, { rowIndex }) => (categoriasFiltradas.indexOf(categoriasFiltradas[rowIndex]) + 1)}
+          style={{ width: '3rem' }}
+        />
         <Column field="nombre" header="Nombre" />
         <Column field="fecha_registro" header="Fecha Registro" />
         <Column
@@ -183,6 +181,7 @@ export default function CategoriaTableDemo() {
           header="Acción"
           body={(rowData) => (
             <>
+              
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
                 &#128065; {/* 👁 */}
               </button>
@@ -251,7 +250,7 @@ export default function CategoriaTableDemo() {
                 }]);
 
                 cerrarModal();
-                mostrarMensaje('Categoría agregada con éxito');
+                mostrarMensaje('Categoría de producto agregada con éxito');
               }}
             >
               Guardar

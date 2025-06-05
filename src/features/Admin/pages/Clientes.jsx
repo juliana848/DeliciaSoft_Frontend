@@ -357,7 +357,7 @@ export default function Clientes() {
           onChange={setFiltro}
         />
       </div>
-
+      <h2 className="admin-section-title">Clientes</h2>
       <DataTable
         value={clientesFiltrados}
         className="admin-table"
@@ -366,7 +366,11 @@ export default function Clientes() {
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
       >
-        <Column field="idCliente" header="ID" />
+        <Column 
+          header="Numero" 
+          body={(rowData, { rowIndex }) => rowIndex + 1} 
+          style={{ width: '3rem', textAlign: 'center' }}
+        />
         <Column field="numeroDocumento" header="Documento" />
         <Column 
           header="Nombre Completo" 
@@ -387,12 +391,8 @@ export default function Clientes() {
           header="Acciones"
           body={(rowData) => (
             <>
-              <button
-                className="admin-button gray"
-                title="Visualizar"
-                onClick={() => abrirModal('visualizar', rowData)}
-              >
-                👁️
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+                &#128065; {/* 👁 */}
               </button>
               <button
                 className="admin-button yellow"

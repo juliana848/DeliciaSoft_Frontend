@@ -178,13 +178,19 @@ export default function ComprasTable() {
                         />
                     </div>
 
+                    <h2 className="admin-section-title">Compras</h2>
                     <DataTable
                         value={comprasFiltradas}
                         className="admin-table"
                         paginator rows={10}
                         rowsPerPageOptions={[5, 10, 25, 50]}
                     >
-                        <Column field="id" header="ID" />
+                        {/* <Column field="id" header="ID" /> */}
+                        <Column 
+                                                header="Numero" 
+                                                body={(rowData, { rowIndex }) => rowIndex + 1} 
+                                                style={{ width: '3rem', textAlign: 'center' }}
+                                                />
                         <Column field="cod_compra" header="Cod_compra" />
                         <Column field="proveedor" header="Proveedor" />
                         <Column field="fecha" header="Fecha" />
@@ -193,11 +199,9 @@ export default function ComprasTable() {
                             header="Acción"
                             body={(rowData) => (
                                 <>
-                                    <button
-                                        className="admin-button gray"
-                                        title="Ver Detalle"
-                                        onClick={() => abrirModal('ver', rowData)}
-                                    >👁️</button>
+                                    <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver',rowData)}>
+                                        &#128065; {/* 👁 */}
+                                    </button>
                                     <button
                                         className="admin-button red"
                                         title="Anular"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+//v
 
 const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido }) => {
   const [codigoIngresado, setCodigoIngresado] = useState('');

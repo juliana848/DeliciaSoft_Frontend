@@ -221,7 +221,7 @@ export default function Produccion() {
                         />
                     </div>
 
-                    <h2 className="admin-section-title">Procesos de Producción</h2>
+                    <h2 className="admin-section-title">Producción</h2>
                     <DataTable
                         value={procesosFiltrados}
                         className="admin-table"

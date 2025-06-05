@@ -8,8 +8,8 @@ const LoginForm = () => {
   const [mostrarModalCorreo, setMostrarModalCorreo] = useState(false);
   const [mostrarModalCodigo, setMostrarModalCodigo] = useState(false);
   const [mostrarModalCambio, setMostrarModalCambio] = useState(false);
-
   const [codigoGenerado, setCodigoGenerado] = useState(null);
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
 
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +17,13 @@ const LoginForm = () => {
   });
 
   const navigate = useNavigate();
+
+  const showCustomAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 3000);
+  };
 
   const adminCredentials = [
     { email: 'admin@delicias.com', password: 'admin123' },
@@ -47,7 +54,7 @@ const LoginForm = () => {
   };
 
   const manejarContrasenaCambiada = () => {
-    alert("Contraseña actualizada. Por favor inicia sesión.");
+    showCustomAlert('success', 'Contraseña actualizada. Por favor inicia sesión.');
     cerrarModales();
   };
 
@@ -80,8 +87,8 @@ const LoginForm = () => {
 
   const manejarSubmit = (e) => {
     e.preventDefault();
-
     const { email, password } = formData;
+
 
     // Validaciones
     if (!email.trim() || !password.trim()) {
@@ -107,18 +114,87 @@ const LoginForm = () => {
     localStorage.setItem('userEmail', email);
 
     alert('Inicio de sesión exitoso');
-
-    if (userRole === 'admin') {
-      navigate('/admin/pages/CategoriaInsumo');
-    } else {
-      navigate('/');
+    if (!email.trim() || !password.trim()) {
+      showCustomAlert('error', 'Por favor, completa todos los campos.');
+      return;
     }
 
-    window.location.reload();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showCustomAlert('error', 'Correo electrónico no válido.');
+      return;
+    }
+
+    if (password.length < 6) {
+      showCustomAlert('error', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    // Verificar si el email existe en cualquiera de las listas
+    const existeEmailEnAdmins = adminCredentials.some(cred => cred.email === email);
+    const existeEmailEnClientes = clienteCredentials.some(cred => cred.email === email);
+
+    if (!existeEmailEnAdmins && !existeEmailEnClientes) {
+      showCustomAlert('error', 'Usuario no encontrado. Por favor, regístrate.');
+      return;
+    }
+
+    // Verificar si la combinación email+password es correcta
+    const usuarioExiste =
+      adminCredentials.some(cred => cred.email === email && cred.password === password) ||
+      clienteCredentials.some(cred => cred.email === email && cred.password === password);
+
+    if (!usuarioExiste) {
+      showCustomAlert('error', 'Contraseña incorrecta.');
+      return;
+    }
+
+    const userRole = determinarRolUsuario(email, password);
+
+    localStorage.setItem('authToken', 'fake-jwt-token');
+    localStorage.setItem('userRole', userRole);
+    localStorage.setItem('userEmail', email);
+
+    showCustomAlert('success', 'Inicio de sesión exitoso ✅');
+
+    setTimeout(() => {
+      if (userRole === 'admin') {
+        navigate('/admin/pages/Dashboard');
+      } else {
+        navigate('/');
+      }
+      window.location.reload();
+    }, 1500);
   };
 
   return (
     <div className="form-container sign-in">
+      {/* Alerta personalizada */}
+      {showAlert.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 2000,
+            padding: '1rem 1.5rem',
+            borderRadius: '15px',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            minWidth: '300px',
+            background:
+              showAlert.type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'linear-gradient(135deg, #ec4899, #be185d)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'slideInRight 0.5s ease-out'
+          }}
+        >
+          {showAlert.message}
+        </div>
+      )}
+
       <form className="login-form" onSubmit={manejarSubmit}>
         <input
           type="email"
@@ -145,14 +221,13 @@ const LoginForm = () => {
           ¿Olvidaste tu contraseña?
         </a>
 
-        <button type="submit" className="hiddenn1">Iniciar</button>
+        <button type="submit" className="hiddenn1">
+          Iniciar
+        </button>
       </form>
 
       {mostrarModalCorreo && (
-        <ModalVerificarCorreo
-          onCodigoGenerado={manejarCodigoGenerado}
-          onClose={cerrarModales}
-        />
+        <ModalVerificarCorreo onCodigoGenerado={manejarCodigoGenerado} onClose={cerrarModales} />
       )}
 
       {mostrarModalCodigo && (

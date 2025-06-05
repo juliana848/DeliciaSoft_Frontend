@@ -5,6 +5,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import TogglePanel from './components/TogglePanel';
+//log
 
 const Login = () => {
     const containerRef = useRef(null);

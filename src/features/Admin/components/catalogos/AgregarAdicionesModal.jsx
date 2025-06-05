@@ -31,13 +31,13 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content compras-modal">
-        <div className="modal-header">
+      <div className="insumos-modal">
+        <div className="insumos-modal-header">
           <h2>Seleccionar Adiciones</h2>
-          <button onClick={onClose} className="close-btn">&times;</button>
+          <button onClick={onClose} className="insumos-close-btn">&times;</button>
         </div>
 
-        <div className="search-bar">
+        <div className="insumos-search-bar">
           <input
             type="text"
             placeholder="Buscar adición..."
@@ -57,9 +57,9 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
           ))}
         </div>
 
-        <div className="modal-footer">
-          <button className="admin-button gray" onClick={onClose}>Cancelar</button>
-          <button className="admin-button pink" onClick={handleAgregar}>
+        <div className="insumos-footer">
+          <button className="insumos-btn cancel" onClick={onClose}>Cancelar</button>
+          <button className="insumos-btn pink" onClick={handleAgregar}>
             Agregar ({selectedAdiciones.length})
           </button>
         </div>

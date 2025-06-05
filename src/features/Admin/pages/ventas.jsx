@@ -6,13 +6,9 @@ import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
 import AgregarProductosModal from '../components/catalogos/AgregarProductosModal';
-
-
-// Importar los nuevos modales (debes crearlos)
 import AgregarAdicionesModal from '../components/catalogos/AgregarAdicionesModal';
 import AgregarSalsasModal from '../components/catalogos/AgregarSalsasModal';
 import AgregarRellenosModal from '../components/catalogos/AgregarRellenosModal';
-
 
 export default function Ventas() {
     const [ventas, setVentas] = useState([]);
@@ -22,31 +18,34 @@ export default function Ventas() {
     const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
     const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
 
-    // Nuevos estados para los modales de adiciones, salsas y sabores
     const [mostrarModalAdiciones, setMostrarModalAdiciones] = useState(false);
     const [mostrarModalSalsas, setMostrarModalSalsas] = useState(false);
     const [mostrarModalRellenos, setMostrarModalRellenos] = useState(false);
-    // Estado para saber a qué producto se le están añadiendo elementos
     const [productoEditandoId, setProductoEditandoId] = useState(null);
-    // Estado para controlar la visibilidad de los detalles anidados por producto
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
 
-
-const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
-
+    const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [ventaData, setVentaData] = useState({
         cod_venta: '00000000',
-        tipo_venta: '', // Añadido tipo_venta al estado inicial
-        cliente: '', // Añadido cliente al estado inicial
-        sede: '', // Añadido sede al estado inicial
-        metodo_pago: '', // Añadido metodo_pago al estado inicial
+        tipo_venta: '', 
+        cliente: '', 
+        sede: '', 
+        metodo_pago: '', 
         fecha_venta: '',
-        fecha_registro: '', // Este campo no parece usarse en el formulario, podrías considerarlo
-        observaciones: '' // Este campo no parece usarse en el formulario, podrías considerarlo
+        fecha_registro: '', 
+        observaciones: '' 
     });
 
+    const [abonos, setAbonos] = useState([]);
+    const [mostrarModalAbonos, setMostrarModalAbonos] = useState(false);
+    const [mostrarModalAgregarAbono, setMostrarModalAgregarAbono] = useState(false);
+    const [abonoData, setAbonoData] = useState({
+    metodo_pago: '',
+    total_pagado: '',
+    fecha: ''
+    });
 
     useEffect(() => {
         const mockVentas = [
@@ -58,7 +57,11 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                 estado: 'Venta directa',
                 fecha_venta: '01/06/2025',
                 fecha_finalizacion: '01/06/2025',
-                productos: ['Harina', 'Azúcar', 'Huevos'],
+                productos: [
+                    { id: 101, nombre: 'Harina', cantidad: 5, precio: 20000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 102, nombre: 'Azúcar', cantidad: 3, precio: 15000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 103, nombre: 'Huevos', cantidad: 2, precio: 10000, adiciones: [], salsas: [], sabores: [] },
+                ],
                 subtotal: 100000,
                 iva: 19000,
                 total: 119000
@@ -71,7 +74,10 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                 estado: 'En proceso',
                 fecha_venta: '02/06/2025',
                 fecha_finalizacion: '',
-                productos: ['Chocolate', 'Mantequilla'],
+                productos: [
+                    { id: 201, nombre: 'Chocolate', cantidad: 10, precio: 8000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 202, nombre: 'Mantequilla', cantidad: 4, precio: 3000, adiciones: [], salsas: [], sabores: [] },
+                ],
                 subtotal: 80000,
                 iva: 15200,
                 total: 95200
@@ -84,7 +90,10 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                 estado: 'Por pagar',
                 fecha_venta: '03/06/2025',
                 fecha_finalizacion: '',
-                productos: ['Utensilios', 'Envases'],
+                productos: [
+                    { id: 301, nombre: 'Utensilios', cantidad: 1, precio: 50000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 302, nombre: 'Envases', cantidad: 20, precio: 3500, adiciones: [], salsas: [], sabores: [] },
+                ],
                 subtotal: 120000,
                 iva: 22800,
                 total: 142800
@@ -97,7 +106,10 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                 estado: 'Terminado',
                 fecha_venta: '04/06/2025',
                 fecha_finalizacion: '05/06/2025',
-                productos: ['Harina integral', 'Levadura'],
+                productos: [
+                    { id: 401, nombre: 'Harina integral', cantidad: 8, precio: 10000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 402, nombre: 'Levadura', cantidad: 15, precio: 1000, adiciones: [], salsas: [], sabores: [] },
+                ],
                 subtotal: 95000,
                 iva: 18050,
                 total: 113050
@@ -110,7 +122,10 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                 estado: 'Por entregar',
                 fecha_venta: '05/06/2025',
                 fecha_finalizacion: '',
-                productos: ['Colorantes', 'Decoraciones'],
+                productos: [
+                    { id: 501, nombre: 'Colorantes', cantidad: 5, precio: 5000, adiciones: [], salsas: [], sabores: [] },
+                    { id: 502, nombre: 'Decoraciones', cantidad: 10, precio: 3500, adiciones: [], salsas: [], sabores: [] },
+                ],
                 subtotal: 60000,
                 iva: 11400,
                 total: 71400
@@ -119,11 +134,105 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
         setVentas(mockVentas);
     }, []);
 
-        // Función para alternar la visibilidad de los detalles anidados de un producto
+const validarFormulario = () => {
+  const errores = {};
+  
+  if (!ventaData.cliente || ventaData.cliente.trim() === '') {
+    errores.cliente = 'Debe seleccionar un cliente';
+  }
+  
+  if (!ventaData.sede || ventaData.sede.trim() === '') {
+    errores.sede = 'Debe seleccionar una sede';
+  }
+  
+  if (!ventaData.metodo_pago || ventaData.metodo_pago.trim() === '') {
+    errores.metodo_pago = 'Debe seleccionar un método de pago';
+  }
+  
+  if (!ventaData.fecha_venta || ventaData.fecha_venta.trim() === '') {
+    errores.fecha_venta = 'Debe seleccionar una fecha de venta';
+  }
+  
+  return errores;
+};
+
+const validarProductos = () => {
+  const errores = {};
+  
+  if (insumosSeleccionados.length === 0) {
+    errores.productos = 'Debe agregar al menos un producto';
+    return errores;
+  }
+  
+  insumosSeleccionados.forEach((producto, index) => {
+    if (producto.cantidad <= 0) {
+      errores[`cantidad_${producto.id}`] = `La cantidad debe ser mayor a 0`;
+    }
+    
+    if (producto.precio <= 0) {
+      errores[`precio_${producto.id}`] = `El precio debe ser mayor a 0`;
+    }
+    
+    if (producto.adiciones.length > 5) {
+      errores[`adiciones_${producto.id}`] = 'Máximo 5 adiciones por producto';
+    }
+    
+    if (producto.salsas.length > 3) {
+      errores[`salsas_${producto.id}`] = 'Máximo 3 salsas por producto';
+    }
+    
+    if (producto.sabores.length > 2) {
+      errores[`rellenos_${producto.id}`] = 'Máximo 2 rellenos por producto';
+    }
+  });
+  
+  return errores;
+};
+
+const validarAbono = () => {
+  const errores = {};
+  
+  if (!abonoData.metodo_pago || abonoData.metodo_pago.trim() === '') {
+    errores.metodo_pago = 'Debe seleccionar un método de pago';
+  }
+  
+  if (!abonoData.total_pagado || parseFloat(abonoData.total_pagado) <= 0) {
+    errores.total_pagado = 'El monto debe ser mayor a 0';
+  }
+  
+  if (!abonoData.fecha || abonoData.fecha.trim() === '') {
+    errores.fecha = 'Debe seleccionar una fecha';
+  }
+  
+  return errores;
+};
+
+    const agregarAbono = () => {
+  const totalPagado = parseFloat(abonoData.total_pagado);
+  const ventaTotal = ventaSeleccionada.total;
+  const faltaPorPagar = ventaTotal - totalPagado;
+  
+  const nuevoAbono = {
+    id: Date.now(),
+    fecha: abonoData.fecha,
+    metodo_pago: abonoData.metodo_pago,
+    monto: totalPagado,
+    falta_por_pagar: faltaPorPagar
+  };
+
+  setAbonos(prev => [...prev, nuevoAbono]);
+  setAbonoData({
+    metodo_pago: '',
+    total_pagado: '',
+    fecha: ''
+  });
+  setMostrarModalAgregarAbono(false);
+  showNotification('Abono registrado exitosamente');
+};
     const toggleNestedDetails = (productoId) => {
         setNestedDetailsVisible(prev => ({
             ...prev,
-            [productoId]: !prev[productoId] // Alternar el valor booleano para este productoId
+            [productoId]: !prev[productoId] 
         }));
     };
 
@@ -147,14 +256,17 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
         setVentaSeleccionada(null);
         setModalTipo(null);
     };
-
-    const anularVenta = () => {
-        const updated = ventas.filter(v => v.id !== ventaSeleccionada.id);
-        setVentas(updated);
-        cerrarModal();
-        showNotification('Venta anulada exitosamente');
-    };
-
+const anularVenta = () => {
+  setVentas(prev => 
+    prev.map(v => 
+      v.id === ventaSeleccionada.id 
+        ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() }
+        : v
+    )
+  );
+  cerrarModal();
+  showNotification('Venta anulada exitosamente');
+};
     const exportarPDF = (venta) => {
         showNotification(`Venta ${venta.cod_venta || venta.id} exportada como PDF exitosamente`);
     };
@@ -167,7 +279,6 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
         setVentaData({...ventaData, [e.target.name]: e.target.value});
     };
 
-    // Modificar agregarInsumos para inicializar adiciones, salsas y sabores
     const agregarInsumos = (nuevosInsumos) => {
         setInsumosSeleccionados(prev => [
             ...prev,
@@ -178,7 +289,6 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
         showNotification('Productos agregados exitosamente');
     };
 
-        // Funciones para agregar adiciones, salsas y sabores a un producto específico
     const agregarAdiciones = (nuevasAdiciones) => {
         setInsumosSeleccionados(prev =>
             prev.map(item =>
@@ -409,37 +519,37 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                         />
                     </div>
 
-                    <DataTable
+                        <DataTable
                         value={ventasFiltradas}
                         className="admin-table"
                         paginator rows={10}
                         rowsPerPageOptions={[5, 10, 25, 50]}
-                    >
-                        <Column field="id" header="ID" />
+                        >
                         <Column field="cliente" header="Cliente" />
                         <Column field="sede" header="Sede" />
                         <Column field="fecha_venta" header="Fecha" />
                         <Column field="total" header="Total" />
-<Column
-    header="Estado"
-    body={(rowData) => (
-        <select
-            value={rowData.estado}
-            onChange={(e) => manejarCambioEstado(rowData, e.target.value)}
-            className="admin-select"
-            disabled={rowData.estado === 'Venta directa'}
-        >
-            <option value="Venta directa">Venta directa</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="En proceso">En proceso</option>
-            <option value="Entregado">Entregado</option>
-            <option value="Por entregar">Por entregar</option>
-            <option value="Iniciado">Iniciado</option>
-            <option value="Terminado">Terminado</option>
-            <option value="Por pagar">Por pagar</option>
-        </select>
-    )}
-/>
+                            <Column
+                                header="Estado"
+                                body={(rowData) => (
+                                <select
+                                    value={rowData.estado}
+                                    onChange={(e) => manejarCambioEstado(rowData, e.target.value)}
+                                    className="admin-select"
+                                    disabled={rowData.estado === 'Anulado' || rowData.estado === 'Venta directa'}
+                                >
+                                        <option value="Venta directa">Venta directa</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="En proceso">En proceso</option>
+                                        <option value="Entregado">Entregado</option>
+                                        <option value="Por entregar">Por entregar</option>
+                                        <option value="Iniciado">Iniciado</option>
+                                        <option value="Terminado">Terminado</option>
+                                        <option value="Por pagar">Por pagar</option>
+                                        <option value="Anulado">Anulado</option>
+                                    </select>
+                                )}
+                            />
                         <Column
                             header="Acción"
                             body={(rowData) => (
@@ -459,6 +569,16 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                                         title="Exportar PDF"
                                         onClick={() => exportarPDF(rowData)}
                                     >⬇️</button>
+                                     <button
+                                        className="admin-button green"
+                                        title="Abonos"
+                                        onClick={() => {
+                                        setVentaSeleccionada(rowData);
+                                        setMostrarModalAbonos(true);
+                                        }}
+                                    >
+                                        💰
+                                    </button>
                                 </>
                             )}
                         />
@@ -472,8 +592,7 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                                 <p><strong>Sede:</strong> {ventaSeleccionada.sede}</p>
                                 <p><strong>Método de Pago:</strong> {ventaSeleccionada.metodo_pago}</p>
                                 <p><strong>Estado:</strong> {ventaSeleccionada.estado}</p>
-                                {/* ESTA ES LA LÍNEA QUE DEBES REEMPLAZAR */}
-                                                                {/* Mostrar detalle de productos con adiciones, salsas, rellenos */}
+
                                 <h4>Productos:</h4>
                                 <ul>
                                     {ventaSeleccionada.productos.map((item, index) => (
@@ -487,7 +606,7 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                                                     ))}
                                                 </ul>
                                             )}
-                                             {item.salsas && item.salsas.length > 0 && (
+                                            {item.salsas && item.salsas.length > 0 && (
                                                 <ul>
                                                     <strong>Salsas:</strong>
                                                     {item.salsas.map((sa, saIndex) => (
@@ -495,7 +614,7 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                                                     ))}
                                                 </ul>
                                             )}
-                                             {item.sabores && item.sabores.length > 0 && (
+                                            {item.sabores && item.sabores.length > 0 && (
                                                 <ul>
                                                     <strong>Rellenos:</strong>
                                                     {item.sabores.map((re, reIndex) => (
@@ -514,13 +633,121 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                         {modalTipo === 'anular' && (
                             <div>
                                 <h3>¿Desea anular la venta #{ventaSeleccionada?.id}?</h3>
-                                <button className="admin-button red" onClick={anularVenta}>Confirmar</button>
-                                <button className="admin-button gray" onClick={cerrarModal}>Cancelar</button>
+                                <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+                                <button className="modal-btn save-btn" onClick={anularVenta}>Anular</button>
                             </div>
                         )}
                     </Modal>
+                    {mostrarModalAbonos && (
+  <Modal
+    visible={mostrarModalAbonos}
+    onClose={() => setMostrarModalAbonos(false)}
+  >
+    <div className="abonos-modal">
+      <h3>Abonos de la Venta #{ventaSeleccionada?.id}</h3>
+      <div className="abonos-lista">
+        {abonos.length > 0 ? (
+          <table className="abonos-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Método de Pago</th>
+                <th>Monto</th>
+                <th>Falta por Pagar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {abonos.map(abono => (
+                <tr key={abono.id}>
+                  <td>{abono.fecha}</td>
+                  <td>{abono.metodo_pago}</td>
+                  <td>${abono.monto.toLocaleString()}</td>
+                  <td>${abono.falta_por_pagar.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>No hay abonos registrados</p>
+        )}
+      </div>
+      <button
+        className="btn-agregar-abono"
+        onClick={() => setMostrarModalAgregarAbono(true)}
+      >
+        + Agregar Abono
+      </button>
+    </div>
+  </Modal>
+)}
+
+{mostrarModalAgregarAbono && (
+  <Modal
+    visible={mostrarModalAgregarAbono}
+    onClose={() => setMostrarModalAgregarAbono(false)}
+  >
+    <div className="agregar-abono-modal">
+      <h3>Agregar Abono</h3>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        agregarAbono();
+      }}>
+        <div className="form-group">
+          <label>Método de Pago:</label>
+          <select
+            name="metodo_pago"
+            value={abonoData.metodo_pago}
+            onChange={(e) => setAbonoData({...abonoData, metodo_pago: e.target.value})}
+            required
+          >
+            <option value="">Seleccione</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Total Pagado:</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={abonoData.total_pagado}
+            onChange={(e) => setAbonoData({...abonoData, total_pagado: e.target.value})}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Fecha:</label>
+          <input
+            type="date"
+            value={abonoData.fecha}
+            onChange={(e) => setAbonoData({...abonoData, fecha: e.target.value})}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Falta por Pagar:</label>
+          <input
+            type="number"
+            readOnly
+            value={ventaSeleccionada.total - (parseFloat(abonoData.total_pagado) || 0)}
+          />
+        </div>
+        <div className="modal-buttons">
+          <button type="button" className="btn-cancelar" onClick={() => setMostrarModalAgregarAbono(false)}>
+            Cancelar
+          </button>
+          <button type="submit" className="btn-guardar">
+            Guardar Abono
+          </button>
+        </div>
+      </form>
+    </div>
+  </Modal>
+)}
                 </>
             ) : (
+                
                           // Formulario para agregar venta
               <div className="compra-form-container" >
                 <h1>Agregar Venta</h1>
@@ -608,12 +835,12 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                           <tr>
                             <th>Nombre</th>
                             <th>Cantidad</th>
-                            <th>Precio Unitario</th> {/* Cambiado a Precio Unitario */}
-                            <th>Adiciones</th> {/* Columna para el botón +Adición */}
-                            <th>Salsas</th> {/* Columna para el botón +Salsa */}
-                            <th>Rellenos</th> {/* Columna para el botón +Relleno */}
-                            <th>Subtotal Item</th> {/* Nuevo campo para subtotal por item */}
-                            <th>Acciones</th> {/* Acciones para el item principal (Eliminar) */}
+                            <th>Precio Unitario</th> 
+                            <th>Adiciones</th> 
+                            <th>Salsas</th>
+                            <th>Rellenos</th> 
+                           <th>Subtotal Item</th> 
+                            <th>Acciones</th> 
                           </tr>
                         </thead>
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import InsumoCard from '../InsumoCard';
+// Asegúrate de que adminStyles.css esté importado en este archivo o en un nivel superior
+// import '../adminStyles.css';
 
 
 const AgregarRellenosModal = ({ onClose, onAgregar }) => {
@@ -30,14 +32,14 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content compras-modal">
-        <div className="modal-header">
+    <div className="modal-overlay"> {/* Clase existente, coincide */}
+      <div className="insumos-modal"> {/* Reemplazado de modal-content compras-modal */}
+        <div className="insumos-modal-header"> {/* Reemplazado de modal-header */}
           <h2>Seleccionar Rellenos</h2>
-          <button onClick={onClose} className="close-btn">&times;</button>
+          <button onClick={onClose} className="insumos-close-btn">&times;</button> {/* Reemplazado de close-btn */}
         </div>
 
-        <div className="search-bar">
+        <div className="insumos-search-bar"> {/* Reemplazado de search-bar */}
           <input
             type="text"
             placeholder="Buscar relleno..."
@@ -46,7 +48,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           />
         </div>
 
-        <div className="insumos-grid">
+        <div className="insumos-grid"> {/* Clase existente, coincide */}
           {filteredRellenos.map(relleno => (
             <InsumoCard
               key={relleno.id}
@@ -57,9 +59,9 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           ))}
         </div>
 
-        <div className="modal-footer">
-          <button className="admin-button gray" onClick={onClose}>Cancelar</button>
-          <button className="admin-button pink" onClick={handleAgregar}>
+        <div className="insumos-footer"> {/* Reemplazado de modal-footer */}
+          <button className="insumos-btn cancel" onClick={onClose}>Cancelar</button> {/* Reemplazado de admin-button gray */}
+          <button className="insumos-btn pink" onClick={handleAgregar}> {/* Reemplazado de admin-button pink */}
             Agregar ({selectedRellenos.length})
           </button>
         </div>

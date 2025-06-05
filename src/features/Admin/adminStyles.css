@@ -596,22 +596,42 @@
 
 
 
-.admin-select:hover {
-    border-color: #d81b60; 
+.admin-select {
+  width: 80%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #feddf1;
+  color: #333;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .admin-select:focus {
-    border-color: #d81b60; 
-    box-shadow: 0 0 5px rgba(216, 27, 96, 0.5);
+  outline: none;
+  border-color: #d7f321;
+  box-shadow: 0 0 0 2px rgba(226, 243, 33, 0.25);
 }
 
+.admin-select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.8;
 
+}
 
 .admin-select option {
-    background-color: white;
-    color: #4a3400;
+  padding: 8px;
 }
 
+.admin-select option:hover {
+  background-color: #f5f5f5;
+}
+
+.admin-select option:checked {
+  background-color: #e3f2fd;
+}
 .btn-small.toggle-details-btn {
     padding: 2px 6px;
     font-size: 10px;
@@ -657,7 +677,6 @@
     background-color: #fff8f9;
 }
 
-=======
 .modal-proveedor {
     display: flex;
     flex-direction: column;
@@ -762,6 +781,139 @@
 .insumos-btn.cancel:hover {
   background-color: #ddd;
 }
+
+.admin-table td {
+  transition: opacity 0.3s ease;
+}
+
+.admin-table tr[data-estado="Anulado"] {
+  opacity: 0.6;
+  background-color: #ffebee;
+}
+
+.admin-table tr[data-estado="Anulado"] td {
+  color: #d32f2f;
+}
+
+.admin-table tr[data-estado="Anulado"] button {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.abonos-modal {
+  padding: 20px;
+}
+
+.abonos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.abonos-table th,
+.abonos-table td {
+  padding: 12px;
+  border: 1px solid #000000;
+  text-align: left;
+}
+
+.abonos-table th {
+  background-color: #fdee25;
+}
+
+.btn-agregar-abono {
+  background-color: #eb5fbf;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.agregar-abono-modal .form-group {
+  margin-bottom: 15px;
+}
+
+.agregar-abono-modal label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.agregar-abono-modal input,
+.agregar-abono-modal select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ff13d8;
+  border-radius: 4px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-cancelar {
+  background-color: #959494;
+  color: black;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-guardar {
+  background-color: #f321d0;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* En adminStyles.css */
+.error {
+  border-color: #ff4444 !important;
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 0.8em;
+  margin-top: 4px;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px;
+  border-radius: 5px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.notification.error {
+  background-color: #ff4444;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+=======
 
 .modal-roles-container {
   width: 100%;

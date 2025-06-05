@@ -20,6 +20,7 @@ import Roles from './features/Admin/pages/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes.jsx';
 import Ventas from './features/Admin/pages/ventas.jsx';
 import ProveedorTable from './features/Admin/pages/proveedores.jsx';
+import Dashboard from './features/Admin/pages/Dashboard'
 
 // Componentes de Layout
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
@@ -71,6 +72,8 @@ function AppContent() {
             <Route path="/admin/pages/Clientes" element={<Clientes />} />
             <Route path="/admin/pages/proveedores" element={<ProveedorTable />} />
             <Route path="/admin/pages/Ventas" element={<Ventas />} />
+            <Route path="/admin/pages/Dashboard" element={<Dashboard/>} />
+
             {/* 
             <Route path="/admin/pedidos" element={<div className="p-4"><h2>Gestión de Pedidos</h2></div>} />
             <Route path="/admin/cotizacion" element={<div className="p-4"><h2>Cotizaciones</h2></div>} />

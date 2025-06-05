@@ -69,26 +69,49 @@
 }
 
 .nav-item {
-  margin-bottom: 8px;
+  margin-bottom: 2px; /* Reducido para consistencia */
 }
 
+/* CORRECCIÓN PRINCIPAL: Altura uniforme para todos los elementos nav */
 .nav-link {
   display: flex;
-  flex-direction: column;
-  align-items: center;    /* Centrar horizontalmente */
-  justify-content: center; /* Centrar verticalmente */
-  gap: 4px;               /* Separación adecuada */
-  padding: 12px 15px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 15px; /* Padding uniforme */
   color: #495057;
   font-size: 15px;
   font-weight: 500;
   width: 100%;
-  text-align: center;
+  text-decoration: none;
   cursor: pointer;
   border-radius: 8px;
-  margin-bottom: 3px;
+  margin-bottom: 0;
+  border: none;
+  background: transparent;
+  height: 48px; /* ALTURA FIJA UNIFORME */
+  box-sizing: border-box; /* Incluir padding en la altura */
 }
 
+.nav-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  height: 100%; /* Ocupar toda la altura del contenedor */
+  min-height: unset; /* Remover min-height que causaba inconsistencias */
+}
+
+/* Agregar la flecha después del texto */
+.nav-content::after {
+  content: '';
+  margin-left: auto;
+}
+
+/* Solo mostrar flecha en elementos con submenú */
+.nav-toggle .nav-content::after {
+  content: '';
+  margin-left: 8px;
+}
 
 .nav-link:hover {
   background: #d1c4e9;
@@ -103,17 +126,18 @@
 }
 
 .nav-icon {
-  font-size: 24px;   /* Más grande para mejor visibilidad */
-  width: 24px;
-  height: 24px;
-  line-height: 24px; /* Igual que altura para centrar */
+  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
   color: #495057;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin: 0;         /* Quita márgenes extras */
+  margin: 0;
 }
+
 .nav-link:hover .nav-icon {
   color: #495057;
 }
@@ -122,11 +146,25 @@
   color: #495057;
 }
 
+.nav-text {
+  flex: 1;
+  text-align: left;
+  line-height: 1.2;
+  display: flex; /* Cambio de inline-flex a flex */
+  align-items: center;
+}
+
 .nav-arrow {
   font-size: 12px;
   transition: transform 0.3s ease;
   color: #6c757d;
-  margin-left: auto;
+  margin-left: 8px;
+  line-height: 1;
+  display: flex; /* Cambio de inline-flex a flex */
+  align-items: center;
+  justify-content: center;
+  width: 16px; /* Ancho fijo para consistencia */
+  height: 16px; /* Alto fijo para consistencia */
 }
 
 .nav-link:hover .nav-arrow {
@@ -139,28 +177,56 @@
 }
 
 /* Submenu Styles */
+.submenu {
+  padding-left: 15px;
+  margin-top: 2px; /* Reducido para consistencia */
+  margin-bottom: 2px; /* Agregado para consistencia */
+}
+
 .submenu-link {
   display: flex;
-  align-items: center;  /* Centrar verticalmente */
-  gap: 8px;
-  padding: 10px 15px;
+  align-items: center;
+  padding: 12px 15px; /* Padding uniforme con nav-link */
   font-size: 14px;
   color: #495057;
   background: #e9ecef;
   border-radius: 6px;
-  margin-bottom: 3px;
+  margin-bottom: 2px; /* Consistente con nav-item */
+  font-weight: 500;
+  text-decoration: none;
+  height: 44px; /* Altura fija para submenús (un poco menor) */
+  box-sizing: border-box;
+}
+
+.submenu-link .nav-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%; /* Ocupar toda la altura */
 }
 
 .submenu-icon {
-  font-size: 18px;  /* Hazlo un poco más grande */
-  width: 20px;
-  height: 20px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #495057;
   margin: 0;
+}
+
+.submenu-link:hover {
+  background: #d1c4e9;
+  color: #495057;
+  text-decoration: none;
+}
+
+.submenu-link.active {
+  background: #e1bee7;
+  color: #495057;
+  font-weight: 600;
 }
 
 @keyframes slideDown {
@@ -172,30 +238,6 @@
     opacity: 1;
     max-height: 400px;
   }
-}
-
-.submenu-link {
-  padding: 10px 15px;
-  font-size: 14px;
-  color: #495057;
-  border-radius: 6px;
-  font-weight: 500;
-  background: #e9ecef;
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.submenu-link:hover {
-  background: #d1c4e9;
-  color: #495057;
-}
-
-.submenu-link.active {
-  background: #e1bee7;
-  color: #495057;
-  font-weight: 600;
 }
 
 /* Footer Styles */
@@ -212,6 +254,8 @@
   background: #e9ecef;
   padding: 12px;
   border-radius: 8px;
+  height: 60px; /* Altura fija para el footer */
+  box-sizing: border-box;
 }
 
 .user-avatar {
@@ -226,6 +270,9 @@
 
 .user-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Centrar contenido verticalmente */
 }
 
 .user-role {
@@ -234,12 +281,13 @@
   color: #212529;
   font-size: 14px;
   line-height: 1.2;
+  margin: 0; /* Remover márgenes por defecto */
 }
 
 .user-id {
   color: #6c757d;
   font-size: 11px;
-  margin-top: 2px;
+  margin: 2px 0 0 0; /* Margen controlado */
 }
 
 .logout-btn {
@@ -256,17 +304,7 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
-}
-
-.submenu-icon {
-  font-size: 12px;
-  width: 14px;
-  height: 14px;
-  color: #495057;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Evitar que se encoja */
 }
 
 .logout-btn:hover {
@@ -290,11 +328,13 @@
   .nav-link {
     padding: 12px 15px;
     font-size: 15px;
+    height: 44px; /* Altura reducida en móvil */
   }
 
   .submenu-link {
     padding: 10px 15px;
     font-size: 14px;
+    height: 40px; /* Altura reducida en móvil */
   }
 
   .logo-container h6 {

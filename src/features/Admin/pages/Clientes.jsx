@@ -90,6 +90,22 @@ export default function Clientes() {
         fechaNacimiento: '1992-03-08',
         celular: '3115254583',
         estado: true
+      },
+      {
+        idCliente: 105,
+        tipoDocumento: 'CC',
+        numeroDocumento: '1013340079',
+        nombre: 'Carlos',
+        apellido: 'Mendoza',
+        correo: 'CM@gmail.com',
+        contrasena: '********',
+        direccion: 'Calle 50 #25-30',
+        barrio: 'Poblado',
+        ciudad: 'Medellín',
+        fechaNacimiento: '1988-07-12',
+        celular: '3115254584',
+        estado: true,
+        tieneVentas: true
       }
     ];
 
@@ -176,12 +192,19 @@ export default function Clientes() {
   };
 
   const validarFormulario = () => {
-    const { numeroDocumento, nombre, apellido, correo, celular } = formData;
+    const { numeroDocumento, nombre, apellido, correo, celular, contrasena, fechaNacimiento } = formData;
     
     if (!numeroDocumento.trim()) {
       showNotification('El número de documento es obligatorio', 'error');
       return false;
     }
+    
+    // Validar que el documento solo contenga números
+    if (!/^\d+$/.test(numeroDocumento)) {
+      showNotification('El número de documento solo puede contener números', 'error');
+      return false;
+    }
+    
     if (!nombre.trim()) {
       showNotification('El nombre es obligatorio', 'error');
       return false;
@@ -199,11 +222,44 @@ export default function Clientes() {
       return false;
     }
     
+    // Validar que el celular solo contenga números
+    if (!/^\d+$/.test(celular)) {
+      showNotification('El celular solo puede contener números', 'error');
+      return false;
+    }
+    
+    // Validar contraseña (solo para agregar o si se está editando y hay contraseña)
+    if (modalTipo === 'agregar' || (modalTipo === 'editar' && contrasena.trim())) {
+      if (contrasena.length < 8) {
+        showNotification('La contraseña debe tener al menos 8 caracteres', 'error');
+        return false;
+      }
+    }
+    
     // Validar formato de correo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       showNotification('El formato del correo no es válido', 'error');
       return false;
+    }
+    
+    // Validar fecha de nacimiento (al menos 13 años)
+    if (fechaNacimiento) {
+      const fechaNac = new Date(fechaNacimiento);
+      const fechaActual = new Date();
+      const edad = fechaActual.getFullYear() - fechaNac.getFullYear();
+      const mesActual = fechaActual.getMonth();
+      const mesNacimiento = fechaNac.getMonth();
+      
+      let edadFinal = edad;
+      if (mesActual < mesNacimiento || (mesActual === mesNacimiento && fechaActual.getDate() < fechaNac.getDate())) {
+        edadFinal--;
+      }
+      
+      if (edadFinal < 13) {
+        showNotification('El cliente debe tener al menos 13 años', 'error');
+        return false;
+      }
     }
     
     // Validar que el documento no esté repetido
@@ -245,6 +301,18 @@ export default function Clientes() {
     cerrarModal();
   };
 
+  const manejarEliminacion = () => {
+    // Verificar si el cliente tiene ventas asociadas
+    if (clienteSeleccionado.tieneVentas) {
+      cerrarModal();
+      showNotification('No se puede eliminar el cliente porque tiene ventas asociadas', 'error');
+      return;
+    }
+    
+    // Si no tiene ventas, abrir modal de confirmación
+    setModalTipo('confirmarEliminar');
+  };
+
   const confirmarEliminar = () => {
     const updated = clientes.filter(c => c.idCliente !== clienteSeleccionado.idCliente);
     setClientes(updated);
@@ -279,6 +347,7 @@ export default function Clientes() {
           className="admin-button pink"
           onClick={() => abrirModal('agregar')}
           type="button"
+          style={{ padding: '10px 18px', fontSize: '15px', fontWeight: '500' }}
         >
           + Agregar Cliente
         </button>
@@ -347,171 +416,173 @@ export default function Clientes() {
 {/* Modal Agregar/Editar */}
 {(modalTipo === 'agregar' || modalTipo === 'editar') && modalVisible && (
   <Modal visible={modalVisible} onClose={cerrarModal}>
-    <h2 className="modal-title">
-      {modalTipo === 'agregar' ? 'Agregar Nuevo Cliente' : 'Editar Cliente'}
+    <h2 className="modal-title text-base">
+      {modalTipo === 'agregar' ? 'Agregar Cliente' : 'Editar Cliente'}
     </h2>
+
     <div className="modal-body">
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}
-      >
-        {/* Columna 1 */}
-        <div>
-          <div className="modal-field">
-            <label>Tipo de Documento:</label>
-            <select
-              value={formData.tipoDocumento}
-              onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
-              className="modal-input"
-            >
-              <option value="CC">Cédula de Ciudadanía</option>
-              <option value="TI">Tarjeta de Identidad</option>
-              <option value="CE">Cédula de Extranjería</option>
-              <option value="PA">Pasaporte</option>
-            </select>
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '0.50fr 0.50fr', gap: '0.25rem', width: '100%', minWidth: '500px' }}>
+        
+        {/* Fila 1: Tipo de Documento y Número de Documento */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Tipo de Documento:</label>
+          <select
+            value={formData.tipoDocumento}
+            onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+          >
+            <option value="CC">Cédula</option>
+            <option value="TI">TI</option>
+            <option value="CE">CE</option>
+            <option value="PA">Pasaporte</option>
+          </select>
+        </div>
 
-          <div className="modal-field">
-            <label>Número de Documento:</label>
-            <input
-              type="text"
-              value={formData.numeroDocumento}
-              onChange={(e) => handleInputChange('numeroDocumento', e.target.value)}
-              className="modal-input"
-              maxLength={20}
-            />
-          </div>
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>N° Documento:</label>
+          <input
+            type="text"
+            value={formData.numeroDocumento}
+            onChange={(e) => handleInputChange('numeroDocumento', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={20}
+          />
+        </div>
 
-          <div className="modal-field">
-            <label>Nombre:</label>
-            <input
-              type="text"
-              value={formData.nombre}
-              onChange={(e) => handleInputChange('nombre', e.target.value)}
-              className="modal-input"
-              maxLength={30}
+        {/* Fila 2: Nombre y Apellido */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Nombre:</label>
+          <input
+            type="text"
+            value={formData.nombre}
+            onChange={(e) => handleInputChange('nombre', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
+          />
+        </div>
+
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Apellido:</label>
+          <input
+            type="text"
+            value={formData.apellido}
+            onChange={(e) => handleInputChange('apellido', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
+          />
+        </div>
+
+        {/* Fila 3: Correo y Contraseña */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Correo:</label>
+          <input
+            type="email"
+            value={formData.correo}
+            onChange={(e) => handleInputChange('correo', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={50}
+          />
+        </div>
+
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Contraseña:</label>
+          <input
+            type="password"
+            value={formData.contrasena}
+            onChange={(e) => handleInputChange('contrasena', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            placeholder={modalTipo === 'editar' ? 'Opcional (mín. 8 caracteres)' : 'Mínimo 8 caracteres'}
+            maxLength={20}
+          />
+        </div>
+
+        {/* Fila 4: Dirección y Barrio */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Dirección:</label>
+          <input
+            type="text"
+            value={formData.direccion}
+            onChange={(e) => handleInputChange('direccion', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={50}
+          />
+        </div>
+
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
+          <input
+            type="text"
+            value={formData.barrio}
+            onChange={(e) => handleInputChange('barrio', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
+          />
+        </div>
+
+        {/* Fila 5: Ciudad y Fecha de Nacimiento */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
+          <input
+            type="text"
+            value={formData.ciudad}
+            onChange={(e) => handleInputChange('ciudad', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
+          />
+        </div>
+
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Fecha Nacimiento:</label>
+          <input
+            type="date"
+            value={formData.fechaNacimiento}
+            onChange={(e) => handleInputChange('fechaNacimiento', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+          />
+        </div>
+
+        {/* Fila 6: Celular y Estado */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Celular:</label>
+          <input
+            type="tel"
+            value={formData.celular}
+            onChange={(e) => handleInputChange('celular', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={20}
+          />
+        </div>
+
+        <div className="modal-field">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
+            <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>
+            <InputSwitch
+              checked={formData.estado}
+              onChange={(e) => handleInputChange('estado', e.value)}
             />
           </div>
         </div>
 
-        {/* Columna 2 */}
-        <div>
-          <div className="modal-field">
-            <label>Apellido:</label>
-            <input
-              type="text"
-              value={formData.apellido}
-              onChange={(e) => handleInputChange('apellido', e.target.value)}
-              className="modal-input"
-              maxLength={30}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label>Correo Electrónico:</label>
-            <input
-              type="email"
-              value={formData.correo}
-              onChange={(e) => handleInputChange('correo', e.target.value)}
-              className="modal-input"
-              maxLength={50}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label>Contraseña:</label>
-            <input
-              type="password"
-              value={formData.contrasena}
-              onChange={(e) => handleInputChange('contrasena', e.target.value)}
-              className="modal-input"
-              maxLength={20}
-              placeholder={modalTipo === 'editar' ? 'Dejar vacío para mantener actual' : ''}
-            />
-          </div>
-        </div>
-
-        {/* Columna 3 */}
-        <div>
-          <div className="modal-field">
-            <label>Dirección:</label>
-            <input
-              type="text"
-              value={formData.direccion}
-              onChange={(e) => handleInputChange('direccion', e.target.value)}
-              className="modal-input"
-              maxLength={50}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label>Barrio:</label>
-            <input
-              type="text"
-              value={formData.barrio}
-              onChange={(e) => handleInputChange('barrio', e.target.value)}
-              className="modal-input"
-              maxLength={30}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label>Ciudad:</label>
-            <input
-              type="text"
-              value={formData.ciudad}
-              onChange={(e) => handleInputChange('ciudad', e.target.value)}
-              className="modal-input"
-              maxLength={30}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label>Fecha de Nacimiento:</label>
-            <input
-              type="date"
-              value={formData.fechaNacimiento}
-              onChange={(e) => handleInputChange('fechaNacimiento', e.target.value)}
-              className="modal-input"
-            />
-          </div>
-        </div>
-
-        {/* Columna 4 */}
-        <div>
-          <div className="modal-field">
-            <label>Celular:</label>
-            <input
-              type="tel"
-              value={formData.celular}
-              onChange={(e) => handleInputChange('celular', e.target.value)}
-              className="modal-input"
-              maxLength={20}
-            />
-          </div>
-
-          <div className="modal-field">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              Estado:
-              <InputSwitch
-                checked={formData.estado}
-                onChange={(e) => handleInputChange('estado', e.value)}
-              />
-            </label>
-          </div>
-        </div>
       </div>
     </div>
 
-    <div className="modal-footer">
-      <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-      <button className="modal-btn save-btn" onClick={guardarCliente}>Guardar</button>
+    <div className="modal-footer mt-2 flex justify-end gap-2">
+      <button className="modal-btn cancel-btn text-sm px-3 py-1" onClick={cerrarModal}>Cancelar</button>
+      <button className="modal-btn save-btn text-sm px-3 py-1" onClick={guardarCliente}>Guardar</button>
     </div>
   </Modal>
 )}
-
-
-
 
       {/* Modal Visualizar */}
       {modalTipo === 'visualizar' && clienteSeleccionado && (
@@ -546,19 +617,33 @@ export default function Clientes() {
         </Modal>
       )}
 
-      {/* Modal Eliminar */}
+      {/* Modal Eliminar - Pregunta inicial */}
       {modalTipo === 'eliminar' && clienteSeleccionado && (
+        <Modal visible={modalVisible} onClose={cerrarModal}>
+          <h2 className="modal-title">Eliminar Cliente</h2>
+          <div className="modal-body">
+            <p>¿Está seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
+          </div>
+          <div className="modal-footer">
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+            <button className="modal-btn save-btn" onClick={manejarEliminacion}>Eliminar</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Confirmar Eliminación */}
+      {modalTipo === 'confirmarEliminar' && clienteSeleccionado && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Confirmar Eliminación</h2>
           <div className="modal-body">
-            <p>¿Está seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
+            <p>¿Está completamente seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
             <p style={{ color: '#e53935', fontSize: '14px' }}>
               Esta acción no se puede deshacer y se eliminará toda la información del cliente.
             </p>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Confirmar Eliminación</button>
           </div>
         </Modal>
       )}

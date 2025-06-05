@@ -505,24 +505,6 @@
     }
 }
 
-/* Permisos checkbox grid */
-.permisos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.permiso-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.permiso-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-}
 
 /* Mensaje de éxito antiguo - mantener para compatibilidad */
 .mensaje-exito {
@@ -799,7 +781,7 @@
 .insumos-btn.cancel:hover {
   background-color: #ddd;
 }
-/* Agregar a adminStyles.css */
+
 .admin-table td {
   transition: opacity 0.3s ease;
 }
@@ -931,3 +913,178 @@
     opacity: 1;
   }
 }
+=======
+
+.modal-roles-container {
+  width: 100%;
+  max-width: 1000px;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 3px solid #f48fb1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-roles-header {
+  margin-bottom: 1rem;
+}
+
+.modal-roles-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-roles-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-roles-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.permisos-container {
+  padding: 1rem;
+  border: 2px solid #f48fb1;
+  border-radius: 10px;
+  background-color: #fafafa;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+.permisos-container-flex {
+  padding: 1rem;
+  border: 2px solid #f48fb1;
+  border-radius: 10px;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+.permisos-grid-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.permisos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.permiso-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.permiso-checkbox:hover {
+  background-color: #fcc2c2;
+}
+
+.permiso-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.permiso-checkbox label {
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin: 0;
+}
+
+.permiso-checkbox input[type="checkbox"]:checked + label {
+  font-weight: 600;
+  color: #c2185b;
+}
+
+.modal-field {
+  margin-bottom: 0.8rem;
+}
+
+.modal-field label {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+.modal-field.compact {
+  margin-bottom: 0.5rem;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 2px solid #f48fb1;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+  border-color: #c2185b;
+}
+
+.modal-input.compact {
+  padding: 0.5rem;
+}
+
+.modal-textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.section-title {
+  color: #c2185b;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  font-weight: bold;
+}
+
+.estado-activo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .modal-roles-container {
+    max-width: 95vw;
+    padding: 1rem;
+    max-height: 90vh;
+  }
+  
+  .modal-roles-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    height: auto;
+  }
+  
+  .permisos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .permisos-container {
+    max-height: 200px;
+  }
+}
+

@@ -19,6 +19,7 @@ export default function Usuarios() {
     nombres: '',
     apellidos: '',
     correo: '',
+    contraseña: '',
     rol_id: '',
     activo: true
   });
@@ -28,8 +29,9 @@ export default function Usuarios() {
       { 
         id: 1, 
         nombres: 'Juan Carlos', 
-        apellidos: 'Pérez López', 
+        apellidos: 'Pérez García',
         correo: 'juan@gmail.com', 
+        contraseña: '123456',
         rol_id: 1, 
         rol_nombre: 'Administrador', 
         activo: true 
@@ -37,8 +39,9 @@ export default function Usuarios() {
       { 
         id: 2, 
         nombres: 'María Elena', 
-        apellidos: 'García Ruiz', 
+        apellidos: 'García López',
         correo: 'maria@gmail.com', 
+        contraseña: '123456',
         rol_id: 2, 
         rol_nombre: 'Repostero', 
         activo: true 
@@ -46,8 +49,9 @@ export default function Usuarios() {
       { 
         id: 3, 
         nombres: 'Carlos Alberto', 
-        apellidos: 'Rodríguez Hernández', 
+        apellidos: 'Rodríguez Martínez',
         correo: 'carlos@gmail.com', 
+        contraseña: '123456',
         rol_id: 3, 
         rol_nombre: 'Decorador', 
         activo: false 
@@ -55,8 +59,9 @@ export default function Usuarios() {
       { 
         id: 4, 
         nombres: 'Ana Patricia', 
-        apellidos: 'Martínez González', 
+        apellidos: 'Martínez Hernández',
         correo: 'ana@gmail.com', 
+        contraseña: '123456',
         rol_id: 2, 
         rol_nombre: 'Repostero', 
         activo: true 
@@ -64,8 +69,9 @@ export default function Usuarios() {
       { 
         id: 5, 
         nombres: 'Luis Fernando', 
-        apellidos: 'Fernández Castro', 
+        apellidos: 'Fernández Silva',
         correo: 'luis@gmail.com', 
+        contraseña: '123456',
         rol_id: 1, 
         rol_nombre: 'Administrador', 
         activo: true 
@@ -108,6 +114,7 @@ export default function Usuarios() {
         nombres: '',
         apellidos: '',
         correo: '',
+        contraseña: '',
         rol_id: '',
         activo: true
       });
@@ -116,6 +123,7 @@ export default function Usuarios() {
         nombres: usuario.nombres,
         apellidos: usuario.apellidos,
         correo: usuario.correo,
+        contraseña: usuario.contraseña,
         rol_id: usuario.rol_id,
         activo: usuario.activo
       });
@@ -132,6 +140,7 @@ export default function Usuarios() {
       nombres: '',
       apellidos: '',
       correo: '',
+      contraseña: '',
       rol_id: '',
       activo: true
     });
@@ -141,12 +150,11 @@ export default function Usuarios() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // CORRECCIÓN: Validación sin el campo telefono que no existe
   const validarFormulario = () => {
-    const { nombres, apellidos, correo, rol_id } = formData;
+    const { nombres, apellidos, correo, contraseña, rol_id } = formData;
     
     if (!nombres.trim()) {
-      showNotification('El nombre es obligatorio', 'error');
+      showNotification('Los nombres son obligatorios', 'error');
       return false;
     }
     if (!apellidos.trim()) {
@@ -155,6 +163,14 @@ export default function Usuarios() {
     }
     if (!correo.trim()) {
       showNotification('El correo es obligatorio', 'error');
+      return false;
+    }
+    if (!contraseña.trim()) {
+      showNotification('La contraseña es obligatoria', 'error');
+      return false;
+    }
+    if (contraseña.length < 6) {
+      showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
       return false;
     }
     if (!rol_id) {
@@ -219,6 +235,11 @@ export default function Usuarios() {
     showNotification('Usuario eliminado exitosamente');
   };
 
+  // Función para mostrar el nombre completo en la tabla
+  const nombreCompletoTemplate = (rowData) => {
+    return `${rowData.nombres} ${rowData.apellidos}`;
+  };
+
   const usuariosFiltrados = usuarios.filter(usr =>
     usr.nombres.toLowerCase().includes(filtro.toLowerCase()) ||
     usr.apellidos.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -259,8 +280,7 @@ export default function Usuarios() {
         tableStyle={{ minWidth: '50rem' }}
       >
         <Column field="id" header="ID" />
-        <Column field="nombres" header="Nombres" />
-        <Column field="apellidos" header="Apellidos" />
+        <Column header="Nombre Completo" body={nombreCompletoTemplate} />
         <Column field="correo" header="Correo" />
         <Column field="rol_nombre" header="Rol" />
         <Column
@@ -308,10 +328,10 @@ export default function Usuarios() {
           <h2 className="modal-title">
             {modalTipo === 'agregar' ? 'Agregar Nuevo Usuario' : 'Editar Usuario'}
           </h2>
-          <div className="modal-body">
-            <div className="modal-grid">
+          <div className="modal-body modal-body-large">
+            <div className="modal-grid modal-grid-large">
               <div className="modal-field">
-                <label>Nombres:</label>
+                <label className="modal-label">Nombres:</label>
                 <input
                   type="text"
                   value={formData.nombres}
@@ -321,17 +341,17 @@ export default function Usuarios() {
                 />
               </div>
               <div className="modal-field">
-                <label>Apellidos:</label>
+                <label className="modal-label">Apellidos:</label>
                 <input
                   type="text"
                   value={formData.apellidos}
                   onChange={(e) => handleInputChange('apellidos', e.target.value)}
                   className="modal-input"
-                  placeholder="Ej: Pérez López"
+                  placeholder="Ej: Pérez García"
                 />
               </div>
               <div className="modal-field">
-                <label>Correo:</label>
+                <label className="modal-label">Correo Electrónico:</label>
                 <input
                   type="email"
                   value={formData.correo}
@@ -341,17 +361,34 @@ export default function Usuarios() {
                 />
               </div>
               <div className="modal-field">
-                <label>Rol:</label>
-                <select
-                  value={formData.rol_id}
-                  onChange={(e) => handleInputChange('rol_id', e.target.value)}
-                  className="modal-select"
-                >
-                  <option value="">Seleccionar rol</option>
-                  {roles.map(rol => (
-                    <option key={rol.id} value={rol.id}>{rol.nombre}</option>
-                  ))}
-                </select>
+                <label className="modal-label">Contraseña:</label>
+                <input
+                  type="password"
+                  value={formData.contraseña}
+                  onChange={(e) => handleInputChange('contraseña', e.target.value)}
+                  className="modal-input"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div className="modal-field">
+                <label className="modal-label">Rol del Usuario:</label>
+                <div className="custom-select-wrapper">
+                  <select
+                    value={formData.rol_id}
+                    onChange={(e) => handleInputChange('rol_id', e.target.value)}
+                    className="custom-select"
+                  >
+                    <option value="">Seleccionar rol</option>
+                    {roles.map(rol => (
+                      <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+                    ))}
+                  </select>
+                  <div className="select-arrow">
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M6 8L0 2L1.5 0.5L6 5L10.5 0.5L12 2L6 8Z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -396,6 +433,102 @@ export default function Usuarios() {
           </div>
         </Modal>
       )}
+
+      <style jsx>{`
+        .modal-body-large {
+          min-width: 500px;
+          max-width: 500px;
+          padding: 1rem;
+        }
+
+        .modal-grid-large {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .modal-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .modal-field:nth-child(3),
+        .modal-field:nth-child(4),
+        .modal-field:nth-child(5) {
+          grid-column: 1 / -1;
+        }
+
+        .modal-label {
+          font-weight: 600;
+          color: #333;
+          font-size: 0.9rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .custom-select-wrapper {
+          position: relative;
+          display: inline-block;
+          width: 100%;
+        }
+
+        .custom-select {
+          width: 100%;
+          padding: 0.75rem 2.5rem 0.75rem 1rem;
+          border: 2px solid #e1e5e9;
+          border-radius: 8px;
+          background-color: #fff;
+          font-size: 0.9rem;
+          color: #333;
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          outline: none;
+        }
+
+        .custom-select:focus {
+          border-color: #ff6b9d;
+          box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
+
+        .custom-select:hover {
+          border-color: #ff6b9d;
+        }
+
+        .select-arrow {
+          position: absolute;
+          right: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          color: #666;
+          transition: transform 0.3s ease;
+        }
+
+        .custom-select:focus + .select-arrow {
+          transform: translateY(-50%) rotate(180deg);
+        }
+
+        @media (max-width: 768px) {
+          .modal-body-large {
+            min-width: auto;
+            max-width: 90vw;
+            padding: 1.5rem;
+          }
+
+          .modal-grid-large {
+            grid-template-columns: 1fr;
+          }
+
+          .modal-field:nth-child(3),
+          .modal-field:nth-child(4),
+          .modal-field:nth-child(5) {
+            grid-column: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -69,7 +69,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       hasSubmenu: true,
       submenu: [
         { title: 'Cat. Productos', path: '/admin/pages/CategoriaProductos', icon: 'bi bi-grid' },
-        { title: 'Productos', path: '/admin/productos', icon: 'bi bi-cake2' },
+        { title: 'Productos', path: '/admin/pages/productos', icon: 'bi bi-cake2' },
       ]
     },
     {

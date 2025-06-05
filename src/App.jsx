@@ -25,6 +25,7 @@ import Ventas from './features/Admin/pages/ventas.jsx';
 import ProveedorTable from './features/Admin/pages/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
+import Productos from './features/Admin/pages/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 
 
@@ -78,6 +79,7 @@ function AppContent() {
             <Route path="/admin/pages/Ventas" element={<Ventas />} />
             <Route path="/admin/pages/Dashboard" element={<Dashboard/>} />
             <Route path="/admin/pages/CategoriaProductos" element={<CategoriaProductos />} />
+            <Route path="/admin/pages/Productos" element={<Productos />} />
             <Route path="/admin/pages/Produccion" element={<Produccion />} />
 
             {/* 

@@ -27,7 +27,7 @@ const Login = () => {
         <div className="login-wrapper">
             <button className="back-button" onClick={handleBackClick}>
                 ⬅ Atras
-            </button> 
+            </button>
             <div className="containerlog" id="container" ref={containerRef}>
                 <RegisterForm />
                 <LoginForm />

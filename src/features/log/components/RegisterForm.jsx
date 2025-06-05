@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';  // <-- Importa useNavigate
 const RegisterForm = () => {
-  const navigate = useNavigate();
+ const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -44,7 +43,6 @@ const RegisterForm = () => {
       password,
     } = formData;
 
-    // Validaciones
     if (
       !nombre.trim() ||
       !apellido.trim() ||
@@ -54,17 +52,28 @@ const RegisterForm = () => {
       !contacto.trim() ||
       !password.trim()
     ) {
+      alert('Por favor, completa todos los campos.');
       showCustomAlert('error', 'Por favor, completa todos los campos.');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
+      alert('Correo electrónico no válido.');
       showCustomAlert('error', 'Correo electrónico no válido.');
       return;
     }
 
     if (password.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    alert('¡Registro exitoso!');
+    console.log('Datos registrados:', formData);
+
+    // Redirige a la ruta '/' después del registro exitoso
+    navigate('/');
       showCustomAlert('error', 'La contraseña debe tener al menos 6 caracteres.');
       return;
     }

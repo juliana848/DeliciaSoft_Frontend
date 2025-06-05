@@ -130,7 +130,13 @@ export default function ProveedoresTable() {
         <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
       </div>
 
+      <h2 className="admin-section-title">Proveedores</h2>
       <DataTable value={proveedoresFiltrados} className="admin-table" paginator rows={5}>
+        <Column 
+                                header="Numero" 
+                                body={(rowData, { rowIndex }) => rowIndex + 1} 
+                                style={{ width: '3rem', textAlign: 'center' }}
+                                />
         <Column field="nombre" header="Nombre" />
         <Column field="tipo" header="Tipo Proveedor" />
         <Column field="contacto" header="Contacto" />
@@ -146,7 +152,9 @@ export default function ProveedoresTable() {
           header="Acciones"
           body={(rowData) => (
             <>
-              <button className="admin-button gray" onClick={() => abrirModal('visualizar', rowData)}>👁️</button>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+                &#128065; {/* 👁 */}
+              </button>
               <button className="admin-button yellow" onClick={() => abrirModal('editar', rowData)}>✏️</button>
               <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
             </>

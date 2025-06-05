@@ -6,7 +6,7 @@ const ModalVerificarCorreo = ({ onClose, onCodigoGenerado }) => {
   const manejarEnvio = (e) => {
     e.preventDefault();
     const codigo = '665544'; // En la práctica este sería aleatorio
-    alert(`Tu código de recuperación es: ${codigo}`);
+    alert(`se a enviado el código de verificación a su correo`);
     onCodigoGenerado(codigo);
   };
 

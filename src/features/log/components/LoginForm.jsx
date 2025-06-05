@@ -81,11 +81,32 @@ const LoginForm = () => {
   const manejarSubmit = (e) => {
     e.preventDefault();
 
-    const userRole = determinarRolUsuario(formData.email, formData.password);
+    const { email, password } = formData;
+
+    // Validaciones
+    if (!email.trim() || !password.trim()) {
+      alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Correo electrónico no válido.');
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    const userRole = determinarRolUsuario(email, password);
 
     localStorage.setItem('authToken', 'fake-jwt-token');
     localStorage.setItem('userRole', userRole);
-    localStorage.setItem('userEmail', formData.email);
+    localStorage.setItem('userEmail', email);
+
+    alert('Inicio de sesión exitoso');
 
     if (userRole === 'admin') {
       navigate('/admin/pages/CategoriaInsumo');

@@ -265,24 +265,20 @@ export default function Roles() {
         paginator
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
+        tableStyle={{ minWidth: '35rem' }}
       >
         <Column 
           header="Numero" 
           body={(rowData, { rowIndex }) => rowIndex + 1} 
-          style={{ width: '3rem', textAlign: 'center' }}
+          style={{ width: '4rem', textAlign: 'center' }}
         />
 
-        <Column field="nombre" header="Nombre"/>
-        <Column field="descripcion" header="Descripción" />
         <Column 
-          header="Permisos" 
-          body={(rowData) => (
-            <span title={getPermisosNombres(rowData.permisos || [])}>
-              {(rowData.permisos || []).length} permisos
-            </span>
-          )}
+          field="nombre" 
+          header="Nombre"
+          style={{ width: '12rem' }}
         />
+        
         <Column
           header="Estado"
           body={(rowData) => (
@@ -291,7 +287,9 @@ export default function Roles() {
               onChange={() => toggleActivo(rowData)}
             />
           )}
+          style={{ width: '6rem', textAlign: 'center' }}
         />
+        
         <Column
           header="Acciones"
           body={(rowData) => (
@@ -315,6 +313,7 @@ export default function Roles() {
               </button>
             </>
           )}
+          style={{ width: '8rem' }}
         />
       </DataTable>
 

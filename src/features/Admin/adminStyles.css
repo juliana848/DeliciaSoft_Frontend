@@ -5,6 +5,10 @@
     padding: 1rem;
 }
 
+.admin-table {
+  user-select: none; 
+}
+
 /* Estilos generales para la tabla de PrimeReact */
 .p-datatable.admin-table {
     width: 100%;
@@ -657,7 +661,6 @@
     background-color: #fff8f9;
 }
 
-=======
 .modal-proveedor {
     display: flex;
     flex-direction: column;
@@ -936,3 +939,33 @@
   }
 }
 
+.admin-section-title {
+  background-color: #000;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: fit-content;
+  margin-bottom: -0.2rem;
+  user-select: none; 
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem; 
+}
+
+
+.admin-table .p-dropdown {
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+  background-color: white;
+  color: black;
+}

@@ -409,13 +409,18 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                         />
                     </div>
 
+      <h2 className="admin-section-title">Ventas</h2>
                     <DataTable
                         value={ventasFiltradas}
                         className="admin-table"
                         paginator rows={10}
                         rowsPerPageOptions={[5, 10, 25, 50]}
                     >
-                        <Column field="id" header="ID" />
+                        <Column 
+                        header="Numero" 
+                        body={(rowData, { rowIndex }) => rowIndex + 1} 
+                        style={{ width: '3rem', textAlign: 'center' }}
+                        />
                         <Column field="cliente" header="Cliente" />
                         <Column field="sede" header="Sede" />
                         <Column field="fecha_venta" header="Fecha" />
@@ -444,11 +449,9 @@ const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
                             header="Acción"
                             body={(rowData) => (
                                 <>
-                                    <button
-                                        className="admin-button gray"
-                                        title="Ver Detalle"
-                                        onClick={() => abrirModal('ver', rowData)}
-                                    >👁️</button>
+                                    <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+                                        &#128065; {/* 👁 */}
+                                    </button>
                                     <button
                                         className="admin-button red"
                                         title="Anular"

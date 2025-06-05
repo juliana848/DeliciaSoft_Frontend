@@ -69,7 +69,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       icon: 'bi bi-cake-fill',
       hasSubmenu: true,
       submenu: [
-        { title: 'Cat. Productos', path: '/admin/cat-productos', icon: 'bi bi-grid' },
+        { title: 'Cat. Productos', path: '/admin/pages/CategoriaProductos', icon: 'bi bi-grid' },
         { title: 'Productos', path: '/admin/productos', icon: 'bi bi-cake2' },
         { title: 'Productos Por', path: '/admin/productos-por', icon: 'bi bi-list-ul' }
       ]
@@ -78,7 +78,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       key: 'produccion',
       title: 'Producción',
       icon: 'bi bi-building',
-      path: '/admin/produccion'
+      path: '/admin/pages/produccion'
     }
   ];
 

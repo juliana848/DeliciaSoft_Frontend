@@ -107,7 +107,13 @@ export default function InsumosTable() {
         <SearchBar value={filtro} onChange={setFiltro} placeholder="Buscar insumo..." />
       </div>
 
+      <h2 className="admin-section-title">Insumos</h2>
       <DataTable value={insumosFiltrados} paginator rows={5} className="admin-table">
+        <Column 
+                                header="Numero" 
+                                body={(rowData, { rowIndex }) => rowIndex + 1} 
+                                style={{ width: '3rem', textAlign: 'center' }}
+                                />
         <Column field="nombre" header="Nombre" />
         <Column field="categoria" header="Categoría" />
         <Column header="Cantidad" body={i => `${i.cantidad} ${i.unidad}`} />
@@ -116,7 +122,9 @@ export default function InsumosTable() {
         )} />
         <Column header="Acción" body={i => (
           <div>
-            <button className="admin-button gray" onClick={() => abrirModal('ver', i)}>👁️</button>
+            <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver',i)}>
+                &#128065; {/* 👁 */}
+              </button>
             <button className="admin-button yellow" onClick={() => abrirModal('editar', i)}>✏️</button>
             <button className="admin-button red" onClick={() => abrirModal('eliminar', i)}>🗑️</button>
           </div>

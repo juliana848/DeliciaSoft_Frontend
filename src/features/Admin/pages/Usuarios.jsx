@@ -271,6 +271,7 @@ export default function Usuarios() {
         />
       </div>
 
+      <h2 className="admin-section-title">Usuarios</h2>
       <DataTable
         value={usuariosFiltrados}
         className="admin-table"
@@ -279,7 +280,11 @@ export default function Usuarios() {
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
       >
-        <Column field="id" header="ID" />
+        <Column 
+                  header="Numero" 
+                  body={(rowData, { rowIndex }) => rowIndex + 1} 
+                  style={{ width: '3rem', textAlign: 'center' }}
+                />
         <Column header="Nombre Completo" body={nombreCompletoTemplate} />
         <Column field="correo" header="Correo" />
         <Column field="rol_nombre" header="Rol" />
@@ -296,12 +301,8 @@ export default function Usuarios() {
           header="Acciones"
           body={(rowData) => (
             <>
-              <button
-                className="admin-button gray"
-                title="Visualizar"
-                onClick={() => abrirModal('visualizar', rowData)}
-              >
-                👁️
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+                &#128065; {/* 👁 */}
               </button>
               <button
                 className="admin-button yellow"

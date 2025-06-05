@@ -21,7 +21,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       key: 'dashboard',
       title: 'Dashboard',
       icon: 'bi bi-bar-chart-fill',
-      path: '/admin/dashboard'
+      path: '/admin/pages/Dashboard'
     },
     {
       key: 'configuracion',
@@ -152,9 +152,11 @@ const Sidebar = ({ userRole = 'admin' }) => {
                     aria-expanded={expandedMenus[item.key]}
                     aria-controls={`submenu-${item.key}`}
                   >
-                    <i className={`nav-icon ${item.icon}`}></i>
-                    <span className="nav-text">{item.title}</span>
-                    <i className="nav-arrow bi bi-chevron-right"></i>
+                    <div className="nav-content">
+                      <i className={`nav-icon ${item.icon}`}></i>
+                      <span className="nav-text">{item.title}</span>
+                      <i className="nav-arrow bi bi-chevron-right"></i>
+                    </div>
                   </button>
                   {expandedMenus[item.key] && (
                     <div 
@@ -169,8 +171,10 @@ const Sidebar = ({ userRole = 'admin' }) => {
                           className={`nav-link submenu-link ${isActive(subItem.path) ? 'active' : ''}`}
                           role="menuitem"
                         >
-                          {subItem.icon && <i className={`submenu-icon ${subItem.icon}`}></i>}
-                          <span className="nav-text">{subItem.title}</span>
+                          <div className="nav-content">
+                            {subItem.icon && <i className={`submenu-icon ${subItem.icon}`}></i>}
+                            <span className="nav-text">{subItem.title}</span>
+                          </div>
                         </Link>
                       ))}
                     </div>
@@ -182,8 +186,10 @@ const Sidebar = ({ userRole = 'admin' }) => {
                   className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
                   role="menuitem"
                 >
-                  <i className={`nav-icon ${item.icon}`}></i>
-                  <span className="nav-text">{item.title}</span>
+                  <div className="nav-content">
+                    <i className={`nav-icon ${item.icon}`}></i>
+                    <span className="nav-text">{item.title}</span>
+                  </div>
                 </Link>
               )}
             </div>

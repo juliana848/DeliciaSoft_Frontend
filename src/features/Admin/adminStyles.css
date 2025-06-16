@@ -6,7 +6,7 @@
 }
 
 .admin-table {
-  user-select: none; 
+  user-select: none;
 }
 
 /* Estilos generales para la tabla de PrimeReact */
@@ -75,7 +75,7 @@
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
-    padding: 0; 
+    padding: 0;
 }
 
 .admin-button.gray {
@@ -244,7 +244,7 @@
 }
 
 .admin-button.pink:hover {
-    background-color: #c2185b; 
+    background-color: #c2185b;
     box-shadow: 0 4px 8px rgba(194, 24, 91, 0.6);
 }
 
@@ -564,7 +564,7 @@
     display: inline-flex; /* Centrar contenido */
     align-items: center;
     justify-content: center;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .btn-small.btn-eliminar-nested:hover {
@@ -573,25 +573,25 @@
 }
 
 .compra-detalle-table td div {
-    margin-bottom: 3px; 
+    margin-bottom: 3px;
     padding: 2px 0;
-    color: #555; 
+    color: #555;
     font-size: 13px;
-    display: flex; 
+    display: flex;
     align-items: center;
-    justify-content: space-between; 
+    justify-content: space-between;
 }
 
-.compra-detalle-table td:nth-child(4), 
+.compra-detalle-table td:nth-child(4),
 .compra-detalle-table td:nth-child(5),
-.compra-detalle-table td:nth-child(6)  
+.compra-detalle-table td:nth-child(6)
 
 
 .compra-detalle-table td:nth-child(3) {
     font-weight: 600;
-    color: #d81b60; 
-    text-align: right; 
-    padding-right: 10px; 
+    color: #d81b60;
+    text-align: right;
+    padding-right: 10px;
 }
 
 .compra-detalle-table tr td[colSpan="4"] {
@@ -651,19 +651,19 @@
 
 
 .nested-item-list {
-    margin-bottom: 10px; 
-    border-bottom: 1px dashed #eee; 
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #eee;
 }
 
 .nested-item-list:last-child {
     margin-bottom: 0;
-    border-bottom: none; 
+    border-bottom: none;
 }
 
 .nested-item-list strong {
-    display: block; 
+    display: block;
     margin-bottom: 5px;
-    color: #d81b60; 
+    color: #d81b60;
 }
 
 .nested-item-list div {
@@ -675,9 +675,9 @@
     color: #555;
 }
 
-.compra-detalle-table tr td[colSpan="5"] { 
-    text-align: left; 
-    padding-left: 20px; 
+.compra-detalle-table tr td[colSpan="5"] {
+    text-align: left;
+    padding-left: 20px;
     background-color: #fff8f9;
 }
 
@@ -698,7 +698,7 @@
     width: 100%;
     padding: 0.5rem;
     border-radius: 5px;
-    border: 1px solid #f48fb1; 
+    border: 1px solid #f48fb1;
 }
 
 /* === SOLO para AgregarInsumosModal === */
@@ -917,7 +917,6 @@
     opacity: 1;
   }
 }
-=======
 
 .modal-roles-container {
   width: 100%;
@@ -1076,17 +1075,17 @@
     padding: 1rem;
     max-height: 90vh;
   }
-  
+
   .modal-roles-content {
     grid-template-columns: 1fr;
     gap: 1rem;
     height: auto;
   }
-  
+
   .permisos-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .permisos-container {
     max-height: 200px;
   }
@@ -1102,7 +1101,7 @@
   border-top-right-radius: 12px;
   width: fit-content;
   margin-bottom: -0.2rem;
-  user-select: none; 
+  user-select: none;
 }
 
 .admin-toolbar {
@@ -1110,7 +1109,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  padding: 0 0.5rem; 
+  padding: 0 0.5rem;
 }
 
 
@@ -1122,3 +1121,22 @@
   background-color: white;
   color: black;
 }
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem; /* Espacio entre columnas y filas */
+}
+
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+

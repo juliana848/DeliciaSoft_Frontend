@@ -348,7 +348,7 @@ export default function Productos() {
                 aria-label="Ver producto"
                 title="Ver producto"
               >
-                👁
+                🔍
               </button>
               <button
                 className="admin-button yellow"

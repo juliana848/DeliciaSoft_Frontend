@@ -5,88 +5,97 @@
     color: #333;
 }
 
+/* HEADER */
 .header {
     display: flex;
+    flex-wrap: wrap;
     background-color: #ffd400;
     padding: 20px;
     border-radius: 10px;
     align-items: center;
     margin-bottom: 20px;
+    justify-content: center;
+    text-align: center;
 }
 
 .donas-img {
-    width: 400px;
-    margin-left: 105px;
+    width: 300px;
+    max-width: 100%;
     border-radius: 10px;
-    
+    margin: 0 auto;
+}
+
+.texto-header {
+    flex: 1;
+    padding: 10px;
 }
 
 .texto-header h1 {
     color: #ff0080;
     font-size: 30px;
     margin: 0;
-    align-items: center;
 }
 
 .texto-header p {
-    font-size: 28px;
+    font-size: 20px;
     margin: 5px 0;
-    margin-left: 100px;
 }
 
 .contacto-header {
     font-weight: bold;
 }
 
+/* BUSCADOR */
 .buscador-carta {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     margin-bottom: 50px;
+    gap: 20px;
 }
 
 .buscador-carta h2 {
     color: #ff0080;
-    font-size: 54px;
-    margin-bottom: 30px;
-    padding-left: 200px;
-    order: 1;
-    left: 850px;
-    position: absolute;
+    font-size: 40px;
+    margin: 0;
 }
-
 
 .buscador-carta input {
     padding: 15px;
-    margin-right: 20px;
     border-radius: 10px;
     border: 1px solid #ccc;
-    width: 800px;
-    margin-left: 150px;
+    width: 80%;
+    max-width: 600px;
 }
 
-
-.categorias-titulo, .destacados-titulo {
+/* CATEGORÍAS */
+.categorias-titulo,
+.destacados-titulo {
     color: #ff0080;
     font-size: 24px;
-    margin-bottom: 10px;
+    margin: 20px 0 10px;
+    text-align: center;
 }
 
 .categorias {
     display: flex;
+    flex-wrap: wrap;
     gap: 15px;
+    justify-content: center;
     margin-bottom: 20px;
 }
 
 .categoria {
-    flex: 1;
+    flex: 1 1 100px;
+    max-width: 120px;
     text-align: center;
 }
 
 .categoria img {
     width: 100%;
     border-radius: 10px;
-    height: 200px;
+    height: 100px;
     object-fit: cover;
 }
 
@@ -96,9 +105,10 @@
     display: block;
 }
 
+/* PRODUCTOS */
 .productos {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 15px;
 }
 
@@ -123,11 +133,11 @@
     border-radius: 4px;
 }
 
-.img-placeholder {
+.producto-img {
     width: 100%;
-    height: 100px;
-    background-color: #eee;
-    border-radius: 6px;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 8px;
     margin-bottom: 10px;
 }
 
@@ -136,10 +146,72 @@
     font-weight: bold;
 }
 
-.producto-img {
-    width: 100%;
-    height: 170px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 10px;
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .buscador-carta {
+        flex-direction: column;
+    }
+
+    .buscador-carta h2 {
+        font-size: 32px;
+        position: static;
+        order: -1;
+        padding: 0;
+    }
+
+    .donas-img {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .texto-header p {
+        margin-left: 0;
+        font-size: 16px;
+    }
+
+    .texto-header h1 {
+        font-size: 24px;
+    }
+
+    .productos {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+
+    .categoria img {
+        height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .buscador-carta input {
+        width: 100%;
+    }
+
+    .productos {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    .producto-img {
+        height: 130px;
+    }
+
+    .categoria {
+        max-width: 90px;
+    }
+
+    .producto-detalle-container {
+  padding: 20px;
+  background-color: #ffeaf7;
+  text-align: center;
+}
+
+.detalle-titulo {
+  font-size: 36px;
+  color: #ff0080;
+  margin-bottom: 30px;
+}
+
+/* .productos y .producto ya las tienes, así que se reutilizan */
+
+
 }

@@ -7,6 +7,7 @@ import Inicio from './features/Home/pages/Inicio';
 import Conocenos from './features/Conocenos/pages/Conocenos';
 import Contactenos from './features/Contactenos/pages/Contactenos';
 import Cartas from './features/Cartas/pages/Cartas';
+import ProductoDetalle from "./features/Cartas/pages/Detallefresas";
 import Sedes from './features/Sedes/pages/Sedes';
 import Pedidos from './features/Pedidos/pages/Pedidos';
 import Login from './features/log/login';
@@ -29,6 +30,7 @@ import Productos from './features/Admin/pages/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas.jsx';
 import SedesTable from './features/Admin/pages/Sede.jsx';
+
 
 
 
@@ -101,6 +103,7 @@ function AppContent() {
             <Route path="/conocenos" element={<Conocenos />} />
             <Route path="/contactenos" element={<Contactenos />} />
             <Route path="/cartas" element={<Cartas />} />
+            <Route path="/producto/:nombre" element={<ProductoDetalle />} />
             <Route path="/sedes" element={<Sedes />} />
             <Route path="/pedidos" element={<Pedidos />} />
             {isAuthenticated && userRole === 'cliente' && (

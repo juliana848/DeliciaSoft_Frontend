@@ -9,15 +9,15 @@ import Notification from '../components/Notification';
 
 export default function InsumosTable() {
   const [insumos, setInsumos] = useState([
-    { id: 1, nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true, marca: 'Nestlé' },
-    { id: 2, nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false, marca: 'Diana' },
-    { id: 3, nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true, marca: 'Colanta' }
+    { id: 1, nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true },
+    { id: 2, nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false },
+    { id: 3, nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true }
   ]);
 
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modal, setModal] = useState({ visible: false, tipo: '', insumo: null });
-  const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', marca: '', imagen: '', estado: true });
+  const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', imagen: '', estado: true });
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
@@ -36,7 +36,7 @@ export default function InsumosTable() {
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
     if (tipo === 'editar' && insumo) setForm({ ...insumo });
-    if (tipo === 'agregar') setForm({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', marca: '', imagen: '', estado: true });
+    if (tipo === 'agregar') setForm({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', imagen: '', estado: true });
   };
 
   const handleChange = (e) => {
@@ -64,10 +64,17 @@ export default function InsumosTable() {
       showNotification('La cantidad debe ser mayor a 0', 'error');
       return false;
     }
-    if (!form.marca.trim()) {
-      showNotification('El insumo debe tener una marca', 'error');
+      if (!form.unidad.trim()) {
+      showNotification('La unidad es obligatoria', 'error');
       return false;
     }
+
+      if (!form.imagen.trim()) {
+      showNotification('La imagen es obligatoria', 'error');
+      return false;
+    }
+
+
     return true;
   };
 
@@ -149,7 +156,7 @@ export default function InsumosTable() {
                 <p><strong>Nombre:</strong> {modal.insumo?.nombre}</p>
                 <p><strong>Categoría:</strong> {modal.insumo?.categoria}</p>
                 <p><strong>Cantidad:</strong> {modal.insumo?.cantidad} {modal.insumo?.unidad}</p>
-                <p><strong>Marca:</strong> {modal.insumo?.marca}</p>
+                {/* <p><strong>Unidad:</strong> {modal.insumo?.unidad} {modal.insumo?.unidad}</p> */}
                 {modal.insumo?.imagen && (
                   <div style={{ marginTop: '10px' }}>
                     <strong>Imagen:</strong>
@@ -161,11 +168,11 @@ export default function InsumosTable() {
             ) : (
               <div>
                 <label>
-                  Nombre:
+                  Nombre*
                   <input name="nombre" value={form.nombre} onChange={handleChange} className="modal-input" required />
                 </label>
                 <label>
-                  Categoría:
+                  Categoría*
                   <select name="categoria" value={form.categoria} onChange={handleChange} className="modal-input">
                     <option value="">Selecciona una categoría</option>
                     <option value="Secos">Secos</option>
@@ -176,11 +183,11 @@ export default function InsumosTable() {
                 </label>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <label style={{ flex: 1 }}>
-                    Cantidad:
+                    Cantidad*
                     <input type="number" name="cantidad" value={form.cantidad} onChange={handleChange} className="modal-input" required />
                   </label>
                   <label style={{ flex: 1 }}>
-                    Unidad:
+                    Unidad*
                     <select name="unidad" value={form.unidad} onChange={handleChange} className="modal-input">
                       <option value="kg">kilogramo(kg)</option>
                       <option value="g">Gramo(g)</option>
@@ -191,17 +198,7 @@ export default function InsumosTable() {
                   </label>
                 </div>
                 <label>
-                  Marca:
-                  <select name="marca" value={form.marca} onChange={handleChange} className="modal-input">
-                    <option value="">Selecciona una marca</option>
-                    <option value="Nestlé">Nestlé</option>
-                    <option value="Diana">Diana</option>
-                    <option value="Colanta">Colanta</option>
-                    <option value="Otra">Otra</option>
-                  </select>
-                </label>
-                <label>
-                  Imagen:
+                  Imagen*
                   <input
                     type="file"
                     accept="image/*"
@@ -234,7 +231,7 @@ export default function InsumosTable() {
               {modal.tipo === 'ver' ? 'Cerrar' : 'Cancelar'}
             </button>
             {modal.tipo !== 'ver' && (
-              <button className={`modal-btn ${modal.tipo === 'eliminar' ? 'delete-btn' : 'save-btn'}`} onClick={modal.tipo === 'eliminar' ? eliminar : guardar}>
+              <button className={`modal-btn save-btn ${modal.tipo === 'eliminar' ? 'delete-btn' : 'modal-btn save-btn'}`} onClick={modal.tipo === 'eliminar' ? eliminar : guardar}>
                 {modal.tipo === 'eliminar' ? 'Eliminar' : 'Guardar'}
               </button>
             )}

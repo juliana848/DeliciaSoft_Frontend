@@ -10,7 +10,7 @@ function Cotizacion() {
         <img src={imagenLateral} alt="Imagen lateral" />
       </div>
       <div className="contenido-cotizacion">
-        <h2 className="titulo-cotizacion">Solicita Cotización</h2>
+        <h2 className="titulo-cotizacion">Solicita Pedidos</h2>
         <div className="secciones">
           <div className="seccion">
             <div className="numero">1</div>
@@ -24,7 +24,7 @@ function Cotizacion() {
             <div className="mini-titulo">Precios</div>
             <div className="texto">
               Precios personalizados, adaptados a tus necesidades.
-              <button className="btn-cotizar">Cotizar Ahora</button>
+              <button className="btn-cotizar">Pedido Ahora</button>
             </div>
           </div>
           <div className="seccion">

@@ -9,15 +9,15 @@ import Notification from '../components/Notification';
 
 export default function InsumosTable() {
   const [insumos, setInsumos] = useState([
-    {  nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true },
-    {  nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false },
-    {  nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true }
+    { id: 1, nombre: 'Harina', categoria: 'Secos', cantidad: 10, unidad: 'kg', estado: true, marca: 'Nestlé' },
+    { id: 2, nombre: 'Azúcar', categoria: 'Endulzantes', cantidad: 5, unidad: 'kg', estado: false, marca: 'Diana' },
+    { id: 3, nombre: 'Huevos', categoria: 'Frescos', cantidad: 30, unidad: 'unid', estado: true, marca: 'Colanta' }
   ]);
-  
+
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modal, setModal] = useState({ visible: false, tipo: '', insumo: null });
-  const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', estado: true });
+  const [form, setForm] = useState({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', marca: '', imagen: '', estado: true });
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
@@ -36,12 +36,19 @@ export default function InsumosTable() {
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
     if (tipo === 'editar' && insumo) setForm({ ...insumo });
-    if (tipo === 'agregar') setForm({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', estado: true });
+    if (tipo === 'agregar') setForm({ nombre: '', categoria: '', cantidad: '', unidad: 'kg', marca: '', imagen: '', estado: true });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const convertirABase64 = (file, callback) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => callback(reader.result);
+    reader.onerror = (error) => console.error('Error al leer archivo:', error);
   };
 
   const validarFormulario = () => {
@@ -57,8 +64,8 @@ export default function InsumosTable() {
       showNotification('La cantidad debe ser mayor a 0', 'error');
       return false;
     }
-    if (!form.marca || form.marca <= 0) {
-      showNotification('el insumo debe tener una marca', 'error');
+    if (!form.marca.trim()) {
+      showNotification('El insumo debe tener una marca', 'error');
       return false;
     }
     return true;
@@ -109,11 +116,7 @@ export default function InsumosTable() {
 
       <h2 className="admin-section-title">Insumos</h2>
       <DataTable value={insumosFiltrados} paginator rows={5} className="admin-table">
-        <Column 
-                                header="Numero" 
-                                body={(rowData, { rowIndex }) => rowIndex + 1} 
-                                style={{ width: '3rem', textAlign: 'center' }}
-                                />
+        <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
         <Column field="nombre" header="Nombre" />
         <Column field="categoria" header="Categoría" />
         <Column header="Cantidad" body={i => `${i.cantidad} ${i.unidad}`} />
@@ -122,16 +125,13 @@ export default function InsumosTable() {
         )} />
         <Column header="Acción" body={i => (
           <div>
-            <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver',i)}>
-                &#128065; {/* 👁 */}
-              </button>
+            <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver', i)}>&#128065;</button>
             <button className="admin-button yellow" onClick={() => abrirModal('editar', i)}>✏️</button>
             <button className="admin-button red" onClick={() => abrirModal('eliminar', i)}>🗑️</button>
           </div>
         )} />
       </DataTable>
 
-      {/* Modal único para todos los casos */}
       {modal.visible && (
         <Modal visible={modal.visible} onClose={cerrarModal}>
           <h2 className="modal-title">
@@ -141,7 +141,7 @@ export default function InsumosTable() {
             {modal.tipo === 'eliminar' && 'Eliminar Insumo'}
           </h2>
 
-        <div className="modal-body">
+          <div className="modal-body">
             {modal.tipo === 'eliminar' ? (
               <p>¿Eliminar <strong>{modal.insumo?.nombre}</strong>?</p>
             ) : modal.tipo === 'ver' ? (
@@ -152,12 +152,8 @@ export default function InsumosTable() {
                 <p><strong>Marca:</strong> {modal.insumo?.marca}</p>
                 {modal.insumo?.imagen && (
                   <div style={{ marginTop: '10px' }}>
-                    <strong>Imagen:</strong> 
-                    <img 
-                      src={modal.insumo.imagen} 
-                      alt={modal.insumo.nombre} 
-                      style={{ maxWidth: '100%', maxHeight: '150px', display: 'block', marginTop: '5px' }}
-                    />
+                    <strong>Imagen:</strong>
+                    <img src={modal.insumo.imagen} alt={modal.insumo.nombre} style={{ maxWidth: '100%', maxHeight: '150px', display: 'block', marginTop: '5px' }} />
                   </div>
                 )}
                 <p><strong>Estado:</strong> {modal.insumo?.estado ? 'Activo' : 'Inactivo'}</p>
@@ -170,7 +166,13 @@ export default function InsumosTable() {
                 </label>
                 <label>
                   Categoría:
-                  <input name="categoria" value={form.categoria} onChange={handleChange} className="modal-input" required />
+                  <select name="categoria" value={form.categoria} onChange={handleChange} className="modal-input">
+                    <option value="">Selecciona una categoría</option>
+                    <option value="Secos">Secos</option>
+                    <option value="Frescos">Frescos</option>
+                    <option value="Endulzantes">Endulzantes</option>
+                    <option value="Otros">Otros</option>
+                  </select>
                 </label>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <label style={{ flex: 1 }}>
@@ -180,48 +182,59 @@ export default function InsumosTable() {
                   <label style={{ flex: 1 }}>
                     Unidad:
                     <select name="unidad" value={form.unidad} onChange={handleChange} className="modal-input">
-                      <option value="kg">kg</option>
-                      <option value="g">g</option>
-                      <option value="l">l</option>
-                      <option value="ml">ml</option>
-                      <option value="unid">unidades</option>
+                      <option value="kg">kilogramo(kg)</option>
+                      <option value="g">Gramo(g)</option>
+                      <option value="l">Litros(l)</option>
+                      <option value="ml">Mililitros(ml)</option>
+                      <option value="unid">unidades(u)</option>
                     </select>
                   </label>
                 </div>
                 <label>
                   Marca:
-                  <input name="marca" value={form.marca} onChange={handleChange} className="modal-input" />
+                  <select name="marca" value={form.marca} onChange={handleChange} className="modal-input">
+                    <option value="">Selecciona una marca</option>
+                    <option value="Nestlé">Nestlé</option>
+                    <option value="Diana">Diana</option>
+                    <option value="Colanta">Colanta</option>
+                    <option value="Otra">Otra</option>
+                  </select>
                 </label>
                 <label>
-                  Imagen (URL):
-                  <input name="imagen" value={form.imagen} onChange={handleChange} className="modal-input" placeholder="https://..." />
+                  Imagen:
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const archivo = e.target.files[0];
+                      if (archivo) {
+                        convertirABase64(archivo, (base64) => {
+                          setForm((prev) => ({ ...prev, imagen: base64 }));
+                        });
+                      }
+                    }}
+                    className="modal-input"
+                  />
                 </label>
                 {form.imagen && (
-                  <img 
-                    src={form.imagen} 
-                    alt="Vista previa" 
-                    style={{ maxWidth: '100%', maxHeight: '100px', marginTop: '5px' }}
-                  />
+                  <img src={form.imagen} alt="Vista previa" style={{ maxWidth: '100%', maxHeight: '100px', marginTop: '5px' }} />
                 )}
-                <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '10px' }}>
-                  Estado:
-                  <InputSwitch checked={form.estado} onChange={e => setForm({ ...form, estado: e.value })} />
-                </label>
+                {modal.tipo !== 'agregar' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '10px' }}>
+                    Estado:
+                    <InputSwitch checked={form.estado} onChange={e => setForm({ ...form, estado: e.value })} />
+                  </label>
+                )}
               </div>
             )}
           </div>
-
 
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>
               {modal.tipo === 'ver' ? 'Cerrar' : 'Cancelar'}
             </button>
-            
             {modal.tipo !== 'ver' && (
-              <button 
-                className={`modal-btn ${modal.tipo === 'eliminar' ? 'delete-btn' : 'save-btn'}`}
-                onClick={modal.tipo === 'eliminar' ? eliminar : guardar}
-              >
+              <button className={`modal-btn ${modal.tipo === 'eliminar' ? 'delete-btn' : 'save-btn'}`} onClick={modal.tipo === 'eliminar' ? eliminar : guardar}>
                 {modal.tipo === 'eliminar' ? 'Eliminar' : 'Guardar'}
               </button>
             )}

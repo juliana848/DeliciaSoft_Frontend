@@ -15,20 +15,15 @@ export default function CategoriaTableDemo() {
   const [modalTipo, setModalTipo] = useState(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [nombreEditado, setNombreEditado] = useState('');
-  const [fechaRegistroEditada, setFechaRegistroEditada] = useState('');
+  const [descripcionEditada, setDescripcionEditada] = useState('');
 
   useEffect(() => {
     const mockCategorias = [
-      { id: 201, nombre: 'Frutas', fecha_registro: '19/02/2024', activo: true },
-      { id: 202, nombre: 'Chocolate', fecha_registro: '20/01/2024', activo: true },
-      { id: 203, nombre: 'Lácteos', fecha_registro: '19/02/2022', activo: true },
-      { id: 204, nombre: 'Harinas', fecha_registro: '07/02/2022', activo: false },
-      { id: 205, nombre: 'Proteínas', fecha_registro: '11/03/2022', activo: true },
-      { id: 206, nombre: 'Condimentos', fecha_registro: '19/07/2022', activo: false },
-      { id: 207, nombre: 'Endulzantes', fecha_registro: '19/02/2021', activo: true },
-      { id: 208, nombre: 'Frutos Secos', fecha_registro: '26/04/2020', activo: true },
-      { id: 209, nombre: 'Colorantes', fecha_registro: '19/03/2020', activo: false },
-      { id: 210, nombre: 'Utensilios', fecha_registro: '17/02/2020', activo: true }
+      { id: 201, nombre: 'Frutas', descripcion: 'Productos naturales', activo: true },
+      { id: 202, nombre: 'Chocolate', descripcion: 'Derivados del cacao', activo: true },
+      { id: 203, nombre: 'Lácteos', descripcion: 'Productos de leche', activo: true },
+      { id: 204, nombre: 'Harinas', descripcion: 'Cereales y derivados', activo: false },
+      { id: 205, nombre: 'Proteínas', descripcion: 'Carnes y vegetales', activo: true }
     ];
     setCategorias(mockCategorias);
   }, []);
@@ -54,17 +49,13 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
-    
+      setDescripcionEditada(categoria.descripcion);
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
-      setFechaRegistroEditada('');
+      setDescripcionEditada('');
     }
     setModalVisible(true);
-  };
-
-  const abrirModalAgregar = () => {
-    abrirModal('agregar', null);
   };
 
   const cerrarModal = () => {
@@ -72,7 +63,7 @@ export default function CategoriaTableDemo() {
     setCategoriaSeleccionada(null);
     setModalTipo(null);
     setNombreEditado('');
-    setFechaRegistroEditada('');
+    setDescripcionEditada('');
   };
 
   const validarFormulario = () => {
@@ -80,8 +71,8 @@ export default function CategoriaTableDemo() {
       showNotification('El nombre es obligatorio', 'error');
       return false;
     }
-    if (modalTipo === 'agregar' && !fechaRegistroEditada) {
-      showNotification('La fecha de registro es obligatoria', 'error');
+    if (!descripcionEditada.trim()) {
+      showNotification('La descripción es obligatoria', 'error');
       return false;
     }
     return true;
@@ -91,7 +82,9 @@ export default function CategoriaTableDemo() {
     if (!validarFormulario()) return;
 
     const updated = categorias.map(cat =>
-      cat.id === categoriaSeleccionada.id ? { ...cat, nombre: nombreEditado } : cat
+      cat.id === categoriaSeleccionada.id
+        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada }
+        : cat
     );
     setCategorias(updated);
     cerrarModal();
@@ -110,16 +103,15 @@ export default function CategoriaTableDemo() {
 
     const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
 
-    // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
-    const [year, month, day] = fechaRegistroEditada.split('-');
-    const fechaFormateada = `${day}/${month}/${year}`;
-
-    setCategorias([...categorias, {
-      id: nuevoId,
-      nombre: nombreEditado,
-      fecha_registro: fechaFormateada,
-      activo: true
-    }]);
+    setCategorias([
+      ...categorias,
+      {
+        id: nuevoId,
+        nombre: nombreEditado,
+        descripcion: descripcionEditada,
+        activo: true
+      }
+    ]);
 
     cerrarModal();
     showNotification('Categoría agregada exitosamente');
@@ -138,13 +130,8 @@ export default function CategoriaTableDemo() {
         onClose={hideNotification}
       />
 
-      {/* buscador */}
       <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={abrirModalAgregar}
-          type="button"
-        >
+        <button className="admin-button pink" onClick={() => abrirModal('agregar')} type="button">
           + Agregar
         </button>
         <SearchBar
@@ -153,7 +140,9 @@ export default function CategoriaTableDemo() {
           onChange={setFiltro}
         />
       </div>
-        <h2 className="admin-section-title">Cat-Insumos</h2>
+
+      <h2 className="admin-section-title">Categoria Insumos</h2>
+
       <DataTable
         value={categoriasFiltradas}
         className="admin-table"
@@ -162,14 +151,24 @@ export default function CategoriaTableDemo() {
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
       >
-        {/* <Column field="id" header="ID" /> */}
-                <Column
-                  header="Numero"
-                  body={(_, { rowIndex }) => (categoriasFiltradas.indexOf(categoriasFiltradas[rowIndex]) + 1)}
-                  style={{ width: '3rem' }}
-                />
-        <Column field="nombre" header="Nombre" />
-        <Column field="fecha_registro" header="Fecha Registro" />
+        <Column
+          header="N°"
+          body={(_, { rowIndex }) => rowIndex + 1}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+        />
+        <Column
+          field="nombre"
+          header="Nombre"
+          headerStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
+          bodyStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
+        />
+        <Column
+          field="descripcion"
+          header="Descripción"
+          headerStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
+          bodyStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
+        />
         <Column
           header="Estados"
           body={(rowData) => (
@@ -178,122 +177,110 @@ export default function CategoriaTableDemo() {
               onChange={() => toggleActivo(rowData)}
             />
           )}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
         <Column
           header="Acción"
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                &#128065; {/* 👁 */}
+                👁
               </button>
-              <button
-                className="admin-button yellow"
-                title="Editar"
-                onClick={() => abrirModal('editar', rowData)}
-              >
+              <button className="admin-button yellow" title="Editar" onClick={() => abrirModal('editar', rowData)}>
                 ✏️
               </button>
-              <button
-                className="admin-button red"
-                title="Eliminar"
-                onClick={() => abrirModal('eliminar', rowData)}
-              >
+              <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>
                 🗑️
               </button>
             </>
           )}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
       </DataTable>
 
-      {/* Modal Agregar */}
-      {modalTipo === 'agregar' && modalVisible && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Agregar Nueva Categoría</h2>
+      {/* Modal Agregar/Editar */}
+    {modalVisible && (
+    <Modal visible={modalVisible} onClose={cerrarModal}>
+      {modalTipo === 'agregar' || modalTipo === 'editar' ? (
+        <>
+          <h2 className="modal-title">
+            {modalTipo === 'agregar' ? 'Agregar Nueva Categoría' : 'Editar Categoría'}
+          </h2>
           <div className="modal-body">
-            <label>
-              Nombre:
-              <input
-                type="text"
-                value={nombreEditado}
-                onChange={(e) => setNombreEditado(e.target.value)}
-                className="modal-input"
-              />
-            </label>
-            <label style={{ marginTop: '1rem', display: 'block' }}>
-              Fecha de Registro:
-              <input
-                type="date"
-                value={fechaRegistroEditada}
-                onChange={(e) => setFechaRegistroEditada(e.target.value)}
-                className="modal-input"
-              />
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label>
+                Nombre:
+                <input
+                  type="text"
+                  value={nombreEditado}
+                  onChange={(e) => setNombreEditado(e.target.value)}
+                  className="modal-input"
+                />
+              </label>
+              <label>
+                Descripción:
+                <textarea
+                  value={descripcionEditada}
+                  onChange={(e) => setDescripcionEditada(e.target.value)}
+                  className="modal-input textarea"
+                  rows={3}
+                  style={{ resize: 'vertical' }}
+                />
+              </label>
+            </div>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
             <button
               className="modal-btn save-btn"
-              onClick={() => {
-                if (nombreEditado.trim() === '') return alert('El nombre es obligatorio');
-                if (fechaRegistroEditada === '') return alert('La fecha de registro es obligatoria');
-
-                const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
-
-                // Formatear fecha de yyyy-mm-dd a dd/mm/yyyy
-                const [year, month, day] = fechaRegistroEditada.split('-');
-                const fechaFormateada = `${day}/${month}/${year}`;
-
-                setCategorias([...categorias, {
-                  id: nuevoId,
-                  nombre: nombreEditado,
-                  fecha_registro: fechaFormateada,
-                  activo: true
-                }]);
-
-                cerrarModal();
-                mostrarMensaje('Categoría agregada con éxito');
-              }}
+              onClick={modalTipo === 'agregar' ? guardarNuevaCategoria : guardarEdicion}
             >
               Guardar
             </button>
           </div>
-        </Modal>
-      )}
+        </>
+      ) : modalTipo === 'visualizar' && categoriaSeleccionada ? (
+        <>
+          <h2 className="modal-title">Detalles Categoría</h2>
+          <div className="modal-body">
+            <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
+            <p><strong>Descripción:</strong> {categoriaSeleccionada.descripcion}</p>
+            <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
+          </div>
+          <div className="modal-footer">
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
+          </div>
+        </>
+      ) : modalTipo === 'eliminar' && categoriaSeleccionada ? (
+        <>
+          <h2 className="modal-title">Confirmar Eliminación</h2>
+          <div className="modal-body">
+            <p>¿Seguro que quieres eliminar la categoría <strong>{categoriaSeleccionada.nombre}</strong>?</p>
+          </div>
+          <div className="modal-footer">
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+          </div>
+        </>
+      ) : null}
+    </Modal>
+  )};
+
+
 
       {/* Modal Visualizar */}
       {modalTipo === 'visualizar' && categoriaSeleccionada && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Detalles Categoría</h2>
           <div className="modal-body">
-            <p><strong>ID:</strong> {categoriaSeleccionada.id}</p>
             <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
-            <p><strong>Fecha Registro:</strong> {categoriaSeleccionada.fecha_registro}</p>
+            <p><strong>Descripción:</strong> {categoriaSeleccionada.descripcion}</p>
             <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Modal Editar */}
-      {modalTipo === 'editar' && categoriaSeleccionada && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Editar Categoría</h2>
-          <div className="modal-body">
-            <label>
-              Nombre:
-              <input
-                type="text"
-                value={nombreEditado}
-                onChange={(e) => setNombreEditado(e.target.value)}
-                className="modal-input"
-              />
-            </label>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={guardarEdicion}>Guardar</button>
           </div>
         </Modal>
       )}
@@ -311,7 +298,6 @@ export default function CategoriaTableDemo() {
           </div>
         </Modal>
       )}
-
     </div>
   );
 }

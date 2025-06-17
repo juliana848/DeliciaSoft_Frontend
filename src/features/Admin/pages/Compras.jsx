@@ -14,37 +14,92 @@ export default function ComprasTable() {
     const [modalTipo, setModalTipo] = useState(null);
     const [compraSeleccionada, setCompraSeleccionada] = useState(null);
     
-    // Estado para notificaciones (reemplaza mensajeExito)
     const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
     
     const [mostrarAgregarCompra, setMostrarAgregarCompra] = useState(false);
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
+
+    const obtenerFechaActual = () => {
+        const hoy = new Date();
+        return hoy.toISOString().split('T')[0]; 
+    }
+
     const [compraData, setCompraData] = useState({
-        cod_compra: '00000000',
         proveedor: '',
         fecha_compra: '',
-        fecha_registro: '',
+        fecha_registro: obtenerFechaActual(),
         observaciones: ''
     });
 
+    
+
     useEffect(() => {
         const mockCompras = [
-            {  cod_compra: 301, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '126.000' },
-            {  cod_compra: 302, proveedor: 'Dis.Tolu', fecha: '10/02/2024', total: '144.000' },
-            {  cod_compra: 303, proveedor: 'Sumi.Express', fecha: '10/02/2024', total: '458.900' },
-            {  cod_compra: 304, proveedor: 'Mate.industriales', fecha: '10/02/2024', total: '321.700' },
-            {  cod_compra: 305, proveedor: 'Dis.MatFruit', fecha: '10/02/2024', total: '900.100' },
-            {  cod_compra: 306, proveedor: 'Desechables J&J', fecha: '10/02/2024', total: '159.000' },
-            {  cod_compra: 307, proveedor: 'Dis.Martinez', fecha: '10/02/2024', total: '888.888' },
-            {  cod_compra: 308, proveedor: 'Harina la Moderna', fecha: '10/02/2024', total: '20.900' },
-            {  cod_compra: 309, proveedor: 'Moldes & utensilios', fecha: '10/02/2024', total: '750.200' },
-            {  cod_compra: 310, proveedor: 'Dulces Delicias', fecha: '10/02/2024', total: '631.000' }
+            {  
+                id:1, 
+                proveedor: 'Dis.Martinez', 
+                fecha: '10/02/2024', 
+                total: 126000,
+                fecha_compra: '10/02/2024',
+                fecha_registro: '11/02/2024',
+                observaciones: 'Pago contado',
+                subtotal: 108621,
+                iva: 17379,
+                insumos: [
+                    { id: 1, nombre: 'Harina', unidad: 'kg', cantidad: 5, precio: 10000 },
+                    { id: 2, nombre: 'Azúcar', unidad: 'kg', cantidad: 2, precio: 8000 }
+                ]
+            },
+            {  
+                id:2, 
+                proveedor: 'Dis.Tolu', 
+                fecha: '10/02/2024', 
+                total: 144000,
+                fecha_compra: '10/02/2024',
+                fecha_registro: '11/02/2024',
+                observaciones: 'Transferencia',
+                subtotal: 124137,
+                iva: 19863,
+                insumos: [
+                    { id: 3, nombre: 'Leche', unidad: 'litros', cantidad: 10, precio: 5000 },
+                    { id: 4, nombre: 'Huevos', unidad: 'docena', cantidad: 3, precio: 12000 }
+                ]
+            },
+            {  
+                id:3, 
+                proveedor: 'Sumi.Express', 
+                fecha: '10/02/2024', 
+                total: 458900,
+                fecha_compra: '10/02/2024',
+                fecha_registro: '11/02/2024',
+                observaciones: '',
+                subtotal: 395603,
+                iva: 63297,
+                insumos: [
+                    { id: 5, nombre: 'Mantequilla', unidad: 'kg', cantidad: 4, precio: 15000 },
+                    { id: 6, nombre: 'Chocolate', unidad: 'kg', cantidad: 3, precio: 20000 }
+                ]
+            },
+            {  
+                id:4, 
+                proveedor: 'Mate.industriales', 
+                fecha: '10/02/2024', 
+                total: 321700,
+                fecha_compra: '10/02/2024',
+                fecha_registro: '11/02/2024',
+                observaciones: 'Pago parcial',
+                subtotal: 277327,
+                iva: 44373,
+                insumos: [
+                    { id: 7, nombre: 'Molde aluminio', unidad: 'unidad', cantidad: 10, precio: 2500 },
+                    { id: 8, nombre: 'Espátula', unidad: 'unidad', cantidad: 5, precio: 4000 }
+                ]
+            }
         ];
         setCompras(mockCompras);
     }, []);
 
-    // Función para mostrar notificaciones (reemplaza mostrarMensaje)
     const showNotification = (mensaje, tipo = 'success') => {
         setNotification({ visible: true, mensaje, tipo });
     };
@@ -80,7 +135,6 @@ export default function ComprasTable() {
         c.proveedor.toLowerCase().includes(filtro.toLowerCase())
     );
 
-    // Funciones para Agregar Compra
     const handleChange = (e) => {
         setCompraData({...compraData, [e.target.name]: e.target.value});
     };
@@ -106,9 +160,8 @@ export default function ComprasTable() {
         showNotification('Insumo eliminado de la lista');
     };
 
-    // Validación del formulario
     const validarFormulario = () => {
-        const { proveedor, fecha_compra, fecha_registro } = compraData;
+        const { proveedor, fecha_compra } = compraData;
         
         if (!proveedor.trim()) {
             showNotification('Debe seleccionar un proveedor', 'error');
@@ -116,10 +169,6 @@ export default function ComprasTable() {
         }
         if (!fecha_compra) {
             showNotification('La fecha de compra es obligatoria', 'error');
-            return false;
-        }
-        if (!fecha_registro) {
-            showNotification('La fecha de registro es obligatoria', 'error');
             return false;
         }
         if (insumosSeleccionados.length === 0) {
@@ -130,30 +179,51 @@ export default function ComprasTable() {
         return true;
     };
 
-    const guardarCompra = () => {
-        if (!validarFormulario()) return;
-        
-        showNotification('Compra guardada exitosamente');
-        setMostrarAgregarCompra(false);
-        setInsumosSeleccionados([]);
-        // Resetear formulario
-        setCompraData({
-            cod_compra: '00000000',
-            proveedor: '',
-            fecha_compra: '',
-            fecha_registro: '',
-            observaciones: ''
-        });
+        const guardarCompra = () => {
+    if (!validarFormulario()) return;
+
+    // Calcular subtotal, iva y total
+    const subtotal = insumosSeleccionados.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const iva = subtotal * 0.16;
+    const total = subtotal + iva;
+
+    // Crear la nueva compra
+    const nuevaCompra = {
+        id: compras.length + 1, // generar un id simple (podrías usar uuid si quisieras)
+        proveedor: compraData.proveedor,
+        fecha: compraData.fecha_compra,
+        fecha_compra: compraData.fecha_compra,
+        fecha_registro: obtenerFechaActual(),
+        observaciones: compraData.observaciones,
+        insumos: insumosSeleccionados,
+        subtotal,
+        iva,
+        total
     };
 
-    // Calcula los totales
+    // Añadir la nueva compra a la lista
+    setCompras([...compras, nuevaCompra]);
+
+    // Mostrar notificación y resetear formulario
+    showNotification('Compra guardada exitosamente');
+    setMostrarAgregarCompra(false);
+    setInsumosSeleccionados([]);
+    setCompraData({
+        proveedor: '',
+        fecha_compra: '',
+        fecha_registro: obtenerFechaActual(),
+        observaciones: ''
+    });
+};
+
+
+
     const subtotal = insumosSeleccionados.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
     return (
         <div className="admin-wrapper">
-            {/* Componente de notificación */}
             <Notification
                 visible={notification.visible}
                 mensaje={notification.mensaje}
@@ -166,13 +236,17 @@ export default function ComprasTable() {
                     <div className="admin-toolbar">
                         <button 
                             className="admin-button pink" 
-                            onClick={() => setMostrarAgregarCompra(true)}
+                            onClick={() => {
+                                setMostrarAgregarCompra(true);
+                                // Set fecha registro automáticamente al abrir el formulario
+                                setCompraData(prev => ({ ...prev, fecha_registro: obtenerFechaActual() }));
+                            }}
                             type="button"
                         >
-                            + Agregar Compra
+                            + Agregar 
                         </button>
                         <SearchBar 
-                            placeholder="Buscar proveedor..." 
+                            placeholder="Buscar Compra..." 
                             value={filtro} 
                             onChange={setFiltro} 
                         />
@@ -185,22 +259,20 @@ export default function ComprasTable() {
                         paginator rows={10}
                         rowsPerPageOptions={[5, 10, 25, 50]}
                     >
-                        {/* <Column field="id" header="ID" /> */}
                         <Column 
-                                                header="Numero" 
-                                                body={(rowData, { rowIndex }) => rowIndex + 1} 
-                                                style={{ width: '3rem', textAlign: 'center' }}
-                                                />
-                        <Column field="cod_compra" header="Cod_compra" />
+                            header="N°" 
+                            body={(rowData, { rowIndex }) => rowIndex + 1} 
+                            style={{ width: '3rem', textAlign: 'center' }}
+                        />
                         <Column field="proveedor" header="Proveedor" />
-                        <Column field="fecha" header="Fecha" />
-                        <Column field="total" header="Total" />
+                        <Column field="fecha" header="Fecha Compra" />
+                        <Column field="total" header="Total"  />
                         <Column
                             header="Acción"
                             body={(rowData) => (
                                 <>
                                     <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver',rowData)}>
-                                        &#128065; {/* 👁 */}
+                                        &#128065;
                                     </button>
                                     <button
                                         className="admin-button red"
@@ -217,15 +289,13 @@ export default function ComprasTable() {
                         />
                     </DataTable>
 
-        
                     {modalTipo === 'ver' && compraSeleccionada && (
                         <Modal visible={modalVisible} onClose={cerrarModal}>
                             <h2 className="modal-title">Detalles de Compra</h2>
                             <div className="modal-body">
-                                <p><strong>ID:</strong> {compraSeleccionada.id}</p>
-                                <p><strong>Código:</strong> {compraSeleccionada.cod_compra}</p>
                                 <p><strong>Proveedor:</strong> {compraSeleccionada.proveedor}</p>
-                                <p><strong>Fecha:</strong> {compraSeleccionada.fecha}</p>
+                                <p><strong>Fecha Compra:</strong> {compraSeleccionada.fecha}</p>
+                                <p><strong>Insumos:</strong> {compraSeleccionada.insumos.map((insumo) => insumo.nombre).join(', ')}</p>
                                 <p><strong>Total:</strong> {compraSeleccionada.total}</p>
                             </div>
                             <div className="modal-footer">
@@ -249,44 +319,19 @@ export default function ComprasTable() {
                 </>
             ) : (
                 <div className="compra-form-container">
-                    <h1>Agregar Compra</h1>
-                    
-                    <div className="compra-header-actions">
-                        <button 
-                            className="btn-regresar"
-                            onClick={() => {
-                                setMostrarAgregarCompra(false);
-                                setInsumosSeleccionados([]);
-                                setCompraData({
-                                    cod_compra: '00000000',
-                                    proveedor: '',
-                                    fecha_compra: '',
-                                    fecha_registro: '',
-                                    observaciones: ''
-                                });
-                            }}
-                        >
-                            Regresar
-                        </button>
-                        <button 
-                            className="btn-guardar"
-                            onClick={guardarCompra}
-                        >
-                            Guardar
-                        </button>
-                    </div>
+                    <h1>Agregar</h1>
                     
                     <div className="compra-fields-grid">
-                        <div className="field-group">
+                        {/* <div className="field-group">
                             <label>Cod_Compra:</label>
                             <input 
                                 type="text" 
                                 name="cod_compra"
-                                value={compraData.cod_compra} 
+                                value={compraData.cod_compra || ''} 
                                 onChange={handleChange}
                                 disabled
                             />
-                        </div>
+                        </div> */}
                         
                         <div className="field-group">
                             <label>Proveedor:</label>
@@ -325,6 +370,7 @@ export default function ComprasTable() {
                                 name="fecha_registro"
                                 value={compraData.fecha_registro}
                                 onChange={handleChange}
+                                disabled
                             />
                         </div>
                     </div>
@@ -335,19 +381,18 @@ export default function ComprasTable() {
                         <h2>Detalle:</h2>
                         
                         <table className="compra-detalle-table">
-                            <thead>
+                            <thead class="p-datatable-thead">
                                 <tr>
-                                    <th>Id_Producto</th>
                                     <th>Cantidad</th>
                                     <th>Unidad_Medida</th>
                                     <th>Nombre Producto</th>
+                                    <th>Precio unitario</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody  class="p-datatable">
                                 {insumosSeleccionados.map((item) => (
                                     <tr key={item.id}>
-                                        <td>{item.id}</td>
                                         <td>
                                             <input
                                                 type="number"
@@ -358,6 +403,7 @@ export default function ComprasTable() {
                                         </td>
                                         <td>{item.unidad}</td>
                                         <td>{item.nombre}</td>
+                                        <td>${item.precio?.toFixed(2)}</td>
                                         <td>
                                             <button 
                                                 className="btn-eliminar"
@@ -381,7 +427,7 @@ export default function ComprasTable() {
                     
                     <div className="section-divider"></div>
                     
-                    <div className="observaciones-section">
+                    {/* <div className="observaciones-section">
                         <h2>Observaciones</h2>
                         <textarea
                             name="observaciones"
@@ -389,7 +435,7 @@ export default function ComprasTable() {
                             onChange={handleChange}
                             className="observaciones-field"
                         ></textarea>
-                    </div>
+                    </div> */}
                     
                     <div className="compra-totales-grid">
                         <div className="total-item">
@@ -404,6 +450,31 @@ export default function ComprasTable() {
                             <span>Total:</span>
                             <span>${total.toFixed(2)}</span>
                         </div>
+                    </div>
+
+                    {/* Botones abajo */}
+                    <div className="compra-header-actions" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                        <button 
+                            className="btn-regresar"
+                            onClick={() => {
+                                setMostrarAgregarCompra(false);
+                                setInsumosSeleccionados([]);
+                                setCompraData({
+                                    proveedor: '',
+                                    fecha_compra: '',
+                                    fecha_registro: obtenerFechaActual(),
+                                    observaciones: ''
+                                });
+                            }}
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            className="btn-guardar"
+                            onClick={guardarCompra}
+                        >
+                            Guardar
+                        </button>
                     </div>
                     
                     {mostrarModalInsumos && (

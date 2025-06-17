@@ -1140,3 +1140,25 @@
   box-sizing: border-box;
 }
 
+.modal-visualizar-rol {
+  width: 400px;
+  max-width: 90vw;
+}
+
+.permisos-visualizar {
+  max-width: 350px;
+  word-wrap: break-word;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Celdas del cuerpo - centrar contenido */
+.p-datatable.admin-table .p-datatable-tbody > tr > td {
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}

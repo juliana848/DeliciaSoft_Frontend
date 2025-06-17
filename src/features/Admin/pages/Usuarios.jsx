@@ -262,7 +262,7 @@ export default function Usuarios() {
           onClick={() => abrirModal('agregar')}
           type="button"
         >
-          + Agregar Usuario
+          + Agregar 
         </button>
         <SearchBar
           placeholder="Buscar usuario..."

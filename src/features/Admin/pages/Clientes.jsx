@@ -342,15 +342,15 @@ export default function Clientes() {
         onClose={hideNotification}
       />
 
-      <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal('agregar')}
-          type="button"
-          style={{ padding: '10px 18px', fontSize: '15px', fontWeight: '500' }}
-        >
-          + Agregar Cliente
-        </button>
+        <div className="admin-toolbar">
+          <button
+            className="admin-button pink"
+            onClick={() => abrirModal('agregar')}
+            type="button"
+          >
+            + Agregar
+          </button>
+        
         <SearchBar
           placeholder="Buscar cliente..."
           value={filtro}

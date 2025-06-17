@@ -43,40 +43,40 @@ export default function Roles() {
       { 
         id: 1, 
         nombre: 'Administrador', 
-        descripcion: 'Acceso completo al sistema',
-        permisos: [1, 2, 3, 4],
+        descripcion: 'Acceso completo',
+        permisos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
         activo: true,
         tieneUsuarios: true
       },
       { 
         id: 2, 
         nombre: 'Repostero', 
-        descripcion: 'Encargado de la producción de postres',
-        permisos: [1, 2],
+        descripcion: 'Producción postres',
+        permisos: [1, 13],
         activo: true,
         tieneUsuarios: false
       },
       { 
         id: 3, 
         nombre: 'Decorador', 
-        descripcion: 'Especialista en decoración de pasteles',
-        permisos: [1, 2],
+        descripcion: 'Decoración pasteles',
+        permisos: [1, 13],
         activo: true,
         tieneUsuarios: false
       },
       { 
         id: 4, 
         nombre: 'Vendedor', 
-        descripcion: 'Personal de ventas y atención al cliente',
-        permisos: [1, 4],
+        descripcion: 'Ventas y atención',
+        permisos: [1, 4, 5],
         activo: false,
         tieneUsuarios: false
       },
       { 
         id: 5, 
         nombre: 'Gerente', 
-        descripcion: 'Supervisor general de operaciones',
-        permisos: [1, 2, 3, 4],
+        descripcion: 'Supervisor general',
+        permisos: [1, 2, 3, 4, 5, 6, 7, 8, 12],
         activo: true,
         tieneUsuarios: true 
       }
@@ -249,7 +249,7 @@ export default function Roles() {
           onClick={() => abrirModal('agregar')}
           type="button"
         >
-          + Agregar Rol
+          + Agregar
         </button>
         <SearchBar
           placeholder="Buscar rol..."
@@ -266,17 +266,24 @@ export default function Roles() {
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '35rem' }}
+        rowClassName={(rowData) => !rowData.activo ? 'fila-inactiva' : ''}
       >
         <Column 
-          header="Numero" 
+          header="N°" 
           body={(rowData, { rowIndex }) => rowIndex + 1} 
-          style={{ width: '4rem', textAlign: 'center' }}
+          style={{ width: '3rem', textAlign: 'center' }}
         />
 
         <Column 
           field="nombre" 
           header="Nombre"
-          style={{ width: '12rem' }}
+          style={{ width: '12rem', textAlign: 'center' }}
+        />
+
+        <Column 
+          field="descripcion" 
+          header="Descripción"
+          style={{ width: '12rem', textAlign: 'center' }}
         />
         
         <Column
@@ -313,7 +320,7 @@ export default function Roles() {
               </button>
             </>
           )}
-          style={{ width: '8rem' }}
+          style={{ width: '10rem', textAlign: 'center' }}
         />
       </DataTable>
 
@@ -322,7 +329,7 @@ export default function Roles() {
         {(modalTipo === 'agregar' || modalTipo === 'editar') && (
           <div style={{ width: '800px', maxWidth: '90vw' }}>
             <h2 style={{ marginTop: 0, marginBottom: '1.5rem'}}>
-              {modalTipo === 'agregar' ? 'Nuevo Rol' : 'Editar Rol'}
+              {modalTipo === 'agregar' ? 'Agregar Rol' : 'Editar Rol'}
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
@@ -361,22 +368,24 @@ export default function Roles() {
                       border: '2px solid #f48fb1',
                       borderRadius: '6px',
                       outline: 'none',
-                      minHeight: '80px',
+                      minHeight: '60px',
                       resize: 'vertical'
                     }}
                     placeholder="Describe este rol..."
                   />
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                    <label style={{ fontWeight: 'bold' }}>Estado Activo:</label>
-                    <InputSwitch
-                      checked={formData.activo}
-                      onChange={(e) => handleInputChange('activo', e.value)}
-                    />
+                {modalTipo === 'editar' && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                      <label style={{ fontWeight: 'bold' }}>Estado Activo:</label>
+                      <InputSwitch
+                        checked={formData.activo}
+                        onChange={(e) => handleInputChange('activo', e.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div>
@@ -445,7 +454,7 @@ export default function Roles() {
                 Cancelar
               </button>
               <button className="modal-btn save-btn" onClick={guardarRol}>
-                {modalTipo === 'agregar' ? 'Crear Rol' : 'Actualizar Rol'}
+                Guardar
               </button>
             </div>
           </div>
@@ -453,13 +462,16 @@ export default function Roles() {
 
         {/* Modal Visualizar */}
         {modalTipo === 'visualizar' && rolSeleccionado && (
-          <div>
-            <h2 style={{ marginTop: 0, color: '#d81b60' }}>Detalles del Rol</h2>
+          <div className="modal-visualizar-rol">
+            <h2 style={{ marginTop: 0, color: '#000000' }}>Ver Detalles del Rol</h2>
             <div style={{ margin: '1rem 0' }}>
               <p><strong>Nombre:</strong> {rolSeleccionado.nombre}</p>
               <p><strong>Descripción:</strong> {rolSeleccionado.descripcion}</p>
               <p><strong>Estado:</strong> {rolSeleccionado.activo ? 'Activo' : 'Inactivo'}</p>
-              <p><strong>Permisos:</strong> {getPermisosNombres(rolSeleccionado.permisos || [])}</p>
+              <p><strong>Permisos:</strong></p>
+              <div className="permisos-visualizar">
+                {getPermisosNombres(rolSeleccionado.permisos || [])}
+              </div>
             </div>
           </div>
         )}

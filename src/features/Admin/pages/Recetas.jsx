@@ -306,7 +306,7 @@ export default function RecetasTabla() {
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                &#128065; {/* 👁 */}
+                🔍
               </button>
               <button
                 className="admin-button yellow"

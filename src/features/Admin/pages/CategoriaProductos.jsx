@@ -204,7 +204,7 @@ export default function CategoriaProductos() {
           title="Visualizar"
           onClick={() => abrirModal('visualizar', rowData)}
         >
-          👁
+          🔍
         </button>
         <button
           className="admin-button yellow"

@@ -334,7 +334,7 @@ export default function ComprasTable() {
                         </div> */}
                         
                         <div className="field-group">
-                            <label>Proveedor:</label>
+                            <label>Proveedor*</label>
                             <select
                                 name="proveedor"
                                 value={compraData.proveedor}
@@ -354,7 +354,7 @@ export default function ComprasTable() {
                         </div>
                         
                         <div className="field-group">
-                            <label>Fecha de compra</label>
+                            <label>Fecha de compra*</label>
                             <input
                                 type="date"
                                 name="fecha_compra"
@@ -378,7 +378,7 @@ export default function ComprasTable() {
                     <div className="section-divider"></div>
                     
                     <div className="detalle-section">
-                        <h2>Detalle:</h2>
+                        <h2>Detalle*</h2>
                         
                         <table className="compra-detalle-table">
                             <thead class="p-datatable-thead">
@@ -453,9 +453,15 @@ export default function ComprasTable() {
                     </div>
 
                     {/* Botones abajo */}
-                    <div className="compra-header-actions" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <div className="compra-header-actions"
+                        style={{
+                            marginTop: '1rem',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '0.5rem' // Espacio entre botones
+                        }}>
                         <button 
-                            className="btn-regresar"
+                            className="modal-btn cancel-btn"
                             onClick={() => {
                                 setMostrarAgregarCompra(false);
                                 setInsumosSeleccionados([]);
@@ -463,14 +469,14 @@ export default function ComprasTable() {
                                     proveedor: '',
                                     fecha_compra: '',
                                     fecha_registro: obtenerFechaActual(),
-                                    observaciones: ''
+                                    
                                 });
                             }}
                         >
                             Cancelar
                         </button>
                         <button 
-                            className="btn-guardar"
+                            className="modal-btn save-btn"
                             onClick={guardarCompra}
                         >
                             Guardar

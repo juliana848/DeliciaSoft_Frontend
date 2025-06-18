@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const mockData = {
   "fresas-con-crema": [
@@ -27,13 +28,13 @@ const mockData = {
 };
 
 const ProductoDetalle = () => {
-  // Como no se está usando useParams, omitimos nombre dinámico
+  const navigate = useNavigate(); // hook para navegación
   const productos = mockData["fresas-con-crema"];
 
   return (
     <div className="producto-detalle-container">
       <h2 className="detalle-titulo">FRESAS CON CREMA</h2>
-      
+
       <div className="productos-detalle">
         {productos.map((producto) => (
           <div className="producto-card" key={producto.id}>
@@ -51,6 +52,23 @@ const ProductoDetalle = () => {
         <p>🎉 ¡Gracias por preferirnos! Todos nuestros productos son preparados con ingredientes frescos y mucho amor. 💖</p>
         <p>Además ofrecemos fresas con crema con durazno, cereza, y mango, con adiciones 💖</p>
         <p>"Y recuerda no dejes para mañana lo que te puedes comer hoy" 💖</p>
+      </div>
+
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <button
+          onClick={() => navigate("/Cartas")}
+          style={{
+            backgroundColor: "#ff0080",
+            color: "#fff",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          ⬅ Volver a la carta
+        </button>
       </div>
     </div>
   );

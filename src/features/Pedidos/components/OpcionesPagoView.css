@@ -614,3 +614,151 @@
 
   
 }
+
+
+.alert-info {
+  background: #ffe0b2; /* Light orange */
+  color: #e65100; /* Darker orange */
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+.alert-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Resumen del Pedido */
+.resumen-pago {
+  background: #f8f9fa;
+  border-radius: 18px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.resumen-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #495057;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Custom Alert Styles */
+.custom-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 15px 25px;
+  border-radius: 15px;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideInRight 0.5s ease-out forwards;
+  min-width: 300px;
+  max-width: 90vw;
+  box-sizing: border-box;
+  text-align: left; /* Ensure text aligns left in multiline messages */
+  line-height: 1.4;
+}
+
+.custom-alert .alert-message p {
+  margin: 0; /* Remove default paragraph margin */
+}
+
+.custom-alert.success {
+  background: linear-gradient(135deg, #10b981, #059669); /* Green */
+}
+
+.custom-alert.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626); /* Red */
+}
+
+.custom-alert.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb); /* Blue */
+  flex-direction: column; /* Stack icon and message for info alerts */
+  align-items: flex-start;
+  text-align: left;
+}
+
+.custom-alert.info .alert-message {
+  white-space: pre-wrap; /* Preserve line breaks for info messages */
+  font-family: 'monospace', sans-serif; /* Monospace font for better alignment of code-like info */
+  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom-alert.info .alert-icon {
+  margin-bottom: 10px; /* Space between icon and message for info alerts */
+  font-size: 40px;
+}
+
+.custom-alert .alert-icon {
+  font-size: 28px;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.custom-alert .close-alert-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  margin-left: 15px;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.custom-alert .close-alert-btn:hover {
+  opacity: 1;
+}
+
+/* Image Upload Alert Specifics */
+.image-upload-alert {
+  background: linear-gradient(135deg, #6a0dad, #8a2be2); /* Purple shade */
+  font-size: 15px;
+}
+
+.image-upload-alert .alert-icon {
+  font-size: 28px;
+}
+
+.image-upload-alert .file-name-display {
+  font-weight: 700;
+  color: #fff;
+  margin-top: 5px;
+  word-break: break-all; /* Break long file names */
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

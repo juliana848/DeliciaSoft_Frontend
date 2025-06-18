@@ -35,7 +35,7 @@ function CategoriasSlider() {
 
   return (
     <div className="categorias-contenedor">
-      <h2 className="categorias-titulo">Categorías</h2>
+      <h2 className="categorias-titulo">Destacados</h2>
       <div className="categorias-slider-wrapper">
         <div className="categorias-slider animacion-infinita">
           {allCategorias.map((cat, index) => (

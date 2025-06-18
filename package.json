@@ -9,6 +9,8 @@
     "@testing-library/user-event": "^13.5.0",
     "@vitejs/plugin-react": "^4.4.1",
     "bootstrap": "^5.3.6",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.512.0",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",

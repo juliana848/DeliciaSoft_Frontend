@@ -147,48 +147,81 @@ export default function InsumosTable() {
             {modal.tipo === 'ver' && 'Detalles Insumo'}
             {modal.tipo === 'eliminar' && 'Eliminar Insumo'}
           </h2>
+            <div className="modal-body">
+              {modal.tipo === 'eliminar' ? (
+                <p>¿Eliminar <strong>{modal.insumo?.nombre}</strong>?</p>
+              ) : modal.tipo === 'ver' ? (
+                <div className="modal-form-grid">
+                  <p><strong>Nombre:</strong> {modal.insumo?.nombre}</p>
+                  <p><strong>Categoría:</strong> {modal.insumo?.categoria}</p>
+                  <p><strong>Cantidad:</strong> {modal.insumo?.cantidad} {modal.insumo?.unidad}</p>
+                  <p><strong>Estado:</strong> {modal.insumo?.estado ? 'Activo' : 'Inactivo'}</p>
 
-          <div className="modal-body">
-            {modal.tipo === 'eliminar' ? (
-              <p>¿Eliminar <strong>{modal.insumo?.nombre}</strong>?</p>
-            ) : modal.tipo === 'ver' ? (
-              <div>
-                <p><strong>Nombre:</strong> {modal.insumo?.nombre}</p>
-                <p><strong>Categoría:</strong> {modal.insumo?.categoria}</p>
-                <p><strong>Cantidad:</strong> {modal.insumo?.cantidad} {modal.insumo?.unidad}</p>
-                {/* <p><strong>Unidad:</strong> {modal.insumo?.unidad} {modal.insumo?.unidad}</p> */}
-                {modal.insumo?.imagen && (
-                  <div style={{ marginTop: '10px' }}>
-                    <strong>Imagen:</strong>
-                    <img src={modal.insumo.imagen} alt={modal.insumo.nombre} style={{ maxWidth: '100%', maxHeight: '150px', display: 'block', marginTop: '5px' }} />
-                  </div>
-                )}
-                <p><strong>Estado:</strong> {modal.insumo?.estado ? 'Activo' : 'Inactivo'}</p>
-              </div>
-            ) : (
-              <div>
-                <label>
-                  Nombre*
-                  <input name="nombre" value={form.nombre} onChange={handleChange} className="modal-input" required />
-                </label>
-                <label>
-                  Categoría*
-                  <select name="categoria" value={form.categoria} onChange={handleChange} className="modal-input">
-                    <option value="">Selecciona una categoría</option>
-                    <option value="Secos">Secos</option>
-                    <option value="Frescos">Frescos</option>
-                    <option value="Endulzantes">Endulzantes</option>
-                    <option value="Otros">Otros</option>
-                  </select>
-                </label>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <label style={{ flex: 1 }}>
-                    Cantidad*
-                    <input type="number" name="cantidad" value={form.cantidad} onChange={handleChange} className="modal-input" required />
+                  {modal.insumo?.imagen && (
+                    <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+                      <strong>Imagen:</strong>
+                      <img
+                        src={modal.insumo.imagen}
+                        alt={modal.insumo.nombre}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '150px',
+                          display: 'block',
+                          marginTop: '5px'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="modal-form-grid">
+                  <label>
+                    Nombre*
+                    <input
+                      name="nombre"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      className="modal-input"
+                      required
+                    />
                   </label>
-                  <label style={{ flex: 1 }}>
+
+                  <label>
+                    Categoría*
+                    <select
+                      name="categoria"
+                      value={form.categoria}
+                      onChange={handleChange}
+                      className="modal-input"
+                    >
+                      <option value="">Selecciona una categoría</option>
+                      <option value="Secos">Secos</option>
+                      <option value="Frescos">Frescos</option>
+                      <option value="Endulzantes">Endulzantes</option>
+                      <option value="Otros">Otros</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Cantidad*
+                    <input
+                      type="number"
+                      name="cantidad"
+                      value={form.cantidad}
+                      onChange={handleChange}
+                      className="modal-input"
+                      required
+                    />
+                  </label>
+
+                  <label>
                     Unidad*
-                    <select name="unidad" value={form.unidad} onChange={handleChange} className="modal-input">
+                    <select
+                      name="unidad"
+                      value={form.unidad}
+                      onChange={handleChange}
+                      className="modal-input"
+                    >
                       <option value="kg">kilogramo(kg)</option>
                       <option value="g">Gramo(g)</option>
                       <option value="l">Litros(l)</option>
@@ -196,35 +229,56 @@ export default function InsumosTable() {
                       <option value="unid">unidades(u)</option>
                     </select>
                   </label>
-                </div>
-                <label>
-                  Imagen*
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const archivo = e.target.files[0];
-                      if (archivo) {
-                        convertirABase64(archivo, (base64) => {
-                          setForm((prev) => ({ ...prev, imagen: base64 }));
-                        });
-                      }
-                    }}
-                    className="modal-input"
-                  />
-                </label>
-                {form.imagen && (
-                  <img src={form.imagen} alt="Vista previa" style={{ maxWidth: '100%', maxHeight: '100px', marginTop: '5px' }} />
-                )}
-                {modal.tipo !== 'agregar' && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '10px' }}>
-                    Estado:
-                    <InputSwitch checked={form.estado} onChange={e => setForm({ ...form, estado: e.value })} />
+
+                  <label style={{ gridColumn: '1 / -1' }}>
+                    Imagen*
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const archivo = e.target.files[0];
+                        if (archivo) {
+                          convertirABase64(archivo, (base64) => {
+                            setForm((prev) => ({ ...prev, imagen: base64 }));
+                          });
+                        }
+                      }}
+                      className="modal-input"
+                    />
                   </label>
-                )}
-              </div>
-            )}
-          </div>
+
+                  {form.imagen && (
+                    <img
+                      src={form.imagen}
+                      alt="Vista previa"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100px',
+                        marginTop: '-10px',
+                        gridColumn: '1 / -1',
+                      }}
+                    />
+                  )}
+
+                  {modal.tipo !== 'agregar' && (
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        gridColumn: '1 / -1',
+                      }}
+                    >
+                      Estado:
+                      <InputSwitch
+                        checked={form.estado}
+                        onChange={(e) => setForm({ ...form, estado: e.value })}
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
 
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>

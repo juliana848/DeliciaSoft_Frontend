@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
@@ -7,80 +7,72 @@ import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
 
-export default function RecetasTabla() {
-  const [recetas, setRecetas] = useState([]);
+export default function RecetasTable() {
+  const [recetas, setRecetas] = useState([
+    {
+      id: 1,
+      nombre: 'Pan de ajo',
+      descripcion: 'Receta deliciosa de pan con mantequilla y ajo.',
+      ingredientes: 'Harina, ajo, mantequilla, levadura',
+      preparacion: 'Mezcla todo y hornea por 25 minutos.',
+      tiempo_preparacion: '30 min',
+      imagen: '',
+      estado: true,
+    },
+      {
+      id: 2,
+      nombre: 'fresas con crema',
+      descripcion: 'Receta deliciosa con fresas y crema.',
+      ingredientes: 'crema de leche, azucar,fresas',
+      preparacion: 'batir por 20 min, picar fresa',
+      tiempo_preparacion: '41 min',
+      imagen: '',
+      estado: true,
+    },
+      {
+      id: 3,
+      nombre: 'Pan de ajo',
+      descripcion: 'Receta deliciosa de pan con mantequilla y ajo.',
+      ingredientes: 'Harina, ajo, mantequilla, levadura',
+      preparacion: 'Mezcla todo y hornea por 25 minutos.',
+      tiempo_preparacion: '30 min',
+      imagen: '',
+      estado: true,
+    },
+      {
+      id: 4,
+      nombre: 'Pan frances',
+      descripcion: 'Receta deliciosa de pan con mantequilla y ajo.',
+      ingredientes: 'Harina, ajo, mantequilla, levadura',
+      preparacion: 'Mezcla todo y hornea por 25 minutos.',
+      tiempo_preparacion: '30 min',
+      imagen: '',
+      estado: true,
+    },
+      {
+      id: 5,
+      nombre: 'postres',
+      descripcion: 'Receta deliciosa de pan con mantequilla y ajo.',
+      ingredientes: 'Harina, ajo, mantequilla, levadura',
+      preparacion: 'Mezcla todo y hornea por 25 minutos.',
+      tiempo_preparacion: '30 min',
+      imagen: '',
+      estado: true,
+    }
+  ]);
+
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalTipo, setModalTipo] = useState(null);
-  const [recetaSeleccionada, setRecetaSeleccionada] = useState(null);
-  const [formData, setFormData] = useState({
+  const [modal, setModal] = useState({ visible: false, tipo: '', receta: null });
+  const [form, setForm] = useState({
     nombre: '',
-    categoria: '',
-    cantidad: '',
-    unidad: 'kg',
-    marca: '',
+    descripcion: '',
+    ingredientes: '',
+    preparacion: '',
+    tiempo_preparacion: '',
     imagen: '',
-    especificaciones: '',
-    estado: true
+    estado: true,
   });
-
-  useEffect(() => {
-    const mockRecetas = [
-      {
-        Idreceta: 1,
-        IdProductoGeneral: 1,
-        IdUnidadMedida: 1,
-        nombre: "Harina",
-        categoria: "Granos",
-        cantidad: 2,
-        unidad: "kg",
-        marca: "Don Pancho",
-        imagen: "https://via.placeholder.com/150",
-        especificaciones: "Sin azúcar",
-        estado: true,
-        tieneVinculaciones: true
-      },
-      {
-        Idreceta: 2,
-        IdProductoGeneral: 2,
-        IdUnidadMedida: 2,
-        nombre: "Azúcar",
-        categoria: "Endulzantes",
-        cantidad: 1,
-        unidad: "kg",
-        marca: "Manuelita",
-        imagen: "https://via.placeholder.com/150",
-        especificaciones: "Azúcar refinada",
-        estado: true,
-        tieneVinculaciones: false
-      },
-      {
-        Idreceta: 3,
-        IdProductoGeneral: 3,
-        IdUnidadMedida: 3,
-        nombre: "Mantequilla",
-        categoria: "Lácteos",
-        cantidad: 500,
-        unidad: "gr",
-        marca: "Alpina",
-        imagen: "https://via.placeholder.com/150",
-        especificaciones: "Sin sal",
-        estado: false,
-        tieneVinculaciones: false
-      }
-    ];
-
-    setRecetas(mockRecetas);
-  }, []);
-
-  const toggleEstado = (receta) => {
-    const updated = recetas.map(r =>
-      r.Idreceta === receta.Idreceta ? { ...r, estado: !r.estado } : r
-    );
-    setRecetas(updated);
-    showNotification(`Receta ${receta.estado ? 'desactivada' : 'activada'} exitosamente`);
-  };
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
@@ -90,431 +82,181 @@ export default function RecetasTabla() {
     setNotification({ visible: false, mensaje: '', tipo: 'success' });
   };
 
+  const toggleEstado = (id) => {
+    const receta = recetas.find(r => r.id === id);
+    setRecetas(recetas.map(r => r.id === id ? { ...r, estado: !r.estado } : r));
+    showNotification(`Receta ${receta.estado ? 'desactivada' : 'activada'} exitosamente`);
+  };
+
   const abrirModal = (tipo, receta = null) => {
-    setModalTipo(tipo);
-    setRecetaSeleccionada(receta);
-    
+    setModal({ visible: true, tipo, receta });
+    if (tipo === 'editar' && receta) setForm({ ...receta });
     if (tipo === 'agregar') {
-      setFormData({
+      setForm({
         nombre: '',
-        categoria: '',
-        cantidad: '',
-        unidad: 'kg',
-        marca: '',
+        descripcion: '',
+        ingredientes: '',
+        preparacion: '',
+        tiempo_preparacion: '',
         imagen: '',
-        especificaciones: '',
-        estado: true
-      });
-    } else if (tipo === 'editar' && receta) {
-      setFormData({
-        nombre: receta.nombre,
-        categoria: receta.categoria,
-        cantidad: receta.cantidad,
-        unidad: receta.unidad,
-        marca: receta.marca,
-        imagen: receta.imagen,
-        especificaciones: receta.especificaciones,
-        estado: receta.estado
+        estado: true,
       });
     }
-    
-    setModalVisible(true);
   };
 
-  const cerrarModal = () => {
-    setModalVisible(false);
-    setRecetaSeleccionada(null);
-    setModalTipo(null);
-    setFormData({
-      nombre: '',
-      categoria: '',
-      cantidad: '',
-      unidad: 'kg',
-      marca: '',
-      imagen: '',
-      especificaciones: '',
-      estado: true
-    });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const convertirABase64 = (file, callback) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => callback(reader.result);
+    reader.onerror = (error) => console.error('Error al leer archivo:', error);
   };
 
   const validarFormulario = () => {
-    const { nombre, categoria, cantidad, unidad, marca } = formData;
-    
-    if (!nombre.trim()) {
-      showNotification('El nombre es obligatorio', 'error');
-      return false;
-    }
-    
-    if (!categoria.trim()) {
-      showNotification('La categoría es obligatoria', 'error');
-      return false;
-    }
-    
-    if (!cantidad || cantidad <= 0) {
-      showNotification('La cantidad debe ser mayor a 0', 'error');
-      return false;
-    }
-    
-    if (!unidad.trim()) {
-      showNotification('La unidad es obligatoria', 'error');
-      return false;
-    }
-    
-    if (!marca.trim()) {
-      showNotification('La marca es obligatoria', 'error');
-      return false;
-    }
-    
-    // Validar que el nombre no esté repetido
-    const nombreExiste = recetas.some(r => 
-      r.nombre.toLowerCase() === nombre.toLowerCase() && 
-      (modalTipo === 'agregar' || r.Idreceta !== recetaSeleccionada?.Idreceta)
-    );
-    if (nombreExiste) {
-      showNotification('Ya existe una receta con este nombre', 'error');
-      return false;
-    }
-    
+    if (!form.nombre.trim()) return showNotification('El nombre es obligatorio', 'error');
+    if (!form.descripcion.trim()) return showNotification('La descripción es obligatoria', 'error');
+    if (!form.ingredientes.trim()) return showNotification('Los ingredientes son obligatorios', 'error');
+    if (!form.preparacion.trim()) return showNotification('Los pasos de preparación son obligatorios', 'error');
+    if (!form.tiempo_preparacion.trim()) return showNotification('El tiempo de preparación es obligatorio', 'error');
     return true;
   };
 
-  const guardarReceta = () => {
+  const guardar = () => {
     if (!validarFormulario()) return;
-    
-    if (modalTipo === 'agregar') {
-      const nuevoId = recetas.length ? Math.max(...recetas.map(r => r.Idreceta)) + 1 : 1;
-      const nuevaReceta = {
-        ...formData,
-        Idreceta: nuevoId,
-        IdProductoGeneral: nuevoId,
-        IdUnidadMedida: nuevoId,
-        cantidad: parseFloat(formData.cantidad)
-      };
-      
-      setRecetas([...recetas, nuevaReceta]);
+
+    if (modal.tipo === 'agregar') {
+      const nuevoId = Math.max(...recetas.map(r => r.id), 0) + 1;
+      setRecetas([...recetas, { ...form, id: nuevoId }]);
       showNotification('Receta agregada exitosamente');
-    } else if (modalTipo === 'editar') {
-      const updated = recetas.map(r =>
-        r.Idreceta === recetaSeleccionada.Idreceta 
-          ? { ...r, ...formData, cantidad: parseFloat(formData.cantidad) }
-          : r
-      );
-      setRecetas(updated);
+    } else if (modal.tipo === 'editar') {
+      setRecetas(recetas.map(r => r.id === modal.receta.id ? form : r));
       showNotification('Receta actualizada exitosamente');
     }
-    
     cerrarModal();
   };
 
-  const manejarEliminacion = () => {
-    // Verificar si la receta tiene vinculaciones
-    if (recetaSeleccionada.tieneVinculaciones) {
-      cerrarModal();
-      showNotification('No se puede eliminar la receta porque tiene vinculaciones asociadas', 'error');
-      return;
-    }
-    
-    // Si no tiene vinculaciones, abrir modal de confirmación
-    setModalTipo('confirmarEliminar');
-  };
-
-  const confirmarEliminar = () => {
-    const updated = recetas.filter(r => r.Idreceta !== recetaSeleccionada.Idreceta);
-    setRecetas(updated);
-    cerrarModal();
+  const eliminar = () => {
+    setRecetas(recetas.filter(r => r.id !== modal.receta.id));
     showNotification('Receta eliminada exitosamente');
+    cerrarModal();
   };
 
-  const recetasFiltradas = recetas.filter(receta =>
-    receta.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    receta.categoria.toLowerCase().includes(filtro.toLowerCase()) ||
-    receta.marca.toLowerCase().includes(filtro.toLowerCase()) ||
-    receta.unidad.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const cerrarModal = () => setModal({ visible: false, tipo: '', receta: null });
 
-  const unidades = [
-    { label: 'Kilogramos', value: 'kg' },
-    { label: 'Gramos', value: 'gr' },
-    { label: 'Litros', value: 'lt' },
-    { label: 'Mililitros', value: 'ml' },
-    { label: 'Unidades', value: 'und' },
-    { label: 'Cucharadas', value: 'cda' },
-    { label: 'Cucharaditas', value: 'cdta' },
-    { label: 'Tazas', value: 'tza' }
-  ];
+  const recetasFiltradas = recetas.filter(r =>
+    r.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+    r.descripcion.toLowerCase().includes(filtro.toLowerCase())
+  );
 
   return (
     <div className="admin-wrapper">
-      <Notification
-        visible={notification.visible}
-        mensaje={notification.mensaje}
-        tipo={notification.tipo}
-        onClose={hideNotification}
-      />
+      <Notification {...notification} onClose={hideNotification} />
 
       <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal('agregar')}
-          type="button"
-          style={{ padding: '10px 18px', fontSize: '15px', fontWeight: '500' }}
-        >
-          + Agregar Receta
-        </button>
-        <SearchBar
-          placeholder="Buscar receta..."
-          value={filtro}
-          onChange={setFiltro}
-        />
+        <button className="admin-button pink" onClick={() => abrirModal('agregar')}>+ Agregar</button>
+        <SearchBar value={filtro} onChange={setFiltro} placeholder="Buscar receta..." />
       </div>
-      <h2 className="admin-section-title">Gestión de Recetas</h2>
-      <DataTable
-        value={recetasFiltradas}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-      >
-        <Column 
-          header="Numero" 
-          body={(rowData, { rowIndex }) => rowIndex + 1} 
-          style={{ width: '3rem', textAlign: 'center' }}
-        />
+
+      <h2 className="admin-section-title">Recetas</h2>
+      <DataTable value={recetasFiltradas} paginator rows={5} className="admin-table">
+        <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
         <Column field="nombre" header="Nombre" />
-        <Column field="categoria" header="Categoría" />
-        <Column 
-          header="Cantidad" 
-          body={(rowData) => `${rowData.cantidad} ${rowData.unidad}`}
-        />
-        <Column field="marca" header="Marca" />
-        <Column
-          header="Estado"
-          body={(rowData) => (
-            <InputSwitch
-              checked={rowData.estado}
-              onChange={() => toggleEstado(rowData)}
-            />
-          )}
-        />
-        <Column
-          header="Acciones"
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                🔍
-              </button>
-              <button
-                className="admin-button yellow"
-                title="Editar"
-                onClick={() => abrirModal('editar', rowData)}
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                title="Eliminar"
-                onClick={() => abrirModal('eliminar', rowData)}
-              >
-                🗑️
-              </button>
-            </>
-          )}
-        />
+        <Column field="tiempo_preparacion" header="Tiempo" />
+        <Column field="estado" header="Estado" body={r => <InputSwitch checked={r.estado} onChange={() => toggleEstado(r.id)} />} />
+        <Column header="Acción" body={r => (
+          <div>
+            <button className="admin-button gray" onClick={() => abrirModal('ver', r)}>🔍</button>
+            <button className="admin-button yellow" onClick={() => abrirModal('editar', r)}>✏️</button>
+            <button className="admin-button red" onClick={() => abrirModal('eliminar', r)}>🗑️</button>
+          </div>
+        )} />
       </DataTable>
 
-      {/* Modal Agregar/Editar */}
-      {(modalTipo === 'agregar' || modalTipo === 'editar') && modalVisible && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title text-base">
-            {modalTipo === 'agregar' ? 'Agregar Receta' : 'Editar Receta'}
+      {modal.visible && (
+        <Modal visible={modal.visible} onClose={cerrarModal}>
+          <h2 className="modal-title">
+            {modal.tipo === 'agregar' && 'Agregar Receta'}
+            {modal.tipo === 'editar' && 'Editar Receta'}
+            {modal.tipo === 'ver' && 'Detalles de la Receta'}
+            {modal.tipo === 'eliminar' && 'Eliminar Receta'}
           </h2>
 
           <div className="modal-body">
-            <div style={{ display: 'grid', gridTemplateColumns: '0.50fr 0.50fr', gap: '0.25rem', width: '100%', minWidth: '500px' }}>
-              
-              {/* Fila 1: Nombre y Categoría */}
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Nombre:</label>
-                <input
-                  type="text"
-                  value={formData.nombre}
-                  onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Categoría:</label>
-                <input
-                  type="text"
-                  value={formData.categoria}
-                  onChange={(e) => handleInputChange('categoria', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                  maxLength={30}
-                />
-              </div>
-
-              {/* Fila 2: Cantidad y Unidad */}
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Cantidad:</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={formData.cantidad}
-                  onChange={(e) => handleInputChange('cantidad', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Unidad:</label>
-                <select
-                  value={formData.unidad}
-                  onChange={(e) => handleInputChange('unidad', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                >
-                  {unidades.map(unidad => (
-                    <option key={unidad.value} value={unidad.value}>
-                      {unidad.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Fila 3: Marca y Especificaciones */}
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Marca:</label>
-                <input
-                  type="text"
-                  value={formData.marca}
-                  onChange={(e) => handleInputChange('marca', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                  maxLength={30}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Especificaciones:</label>
-                <input
-                  type="text"
-                  value={formData.especificaciones}
-                  onChange={(e) => handleInputChange('especificaciones', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                  maxLength={100}
-                  placeholder="Opcional"
-                />
-              </div>
-
-              {/* Fila 4: Imagen y Estado */}
-              <div className="modal-field">
-                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>URL Imagen:</label>
-                <input
-                  type="url"
-                  value={formData.imagen}
-                  onChange={(e) => handleInputChange('imagen', e.target.value)}
-                  className="modal-input text-sm p-1"
-                  style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                />
-              </div>
-
-              <div className="modal-field">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
-                  <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>
-                  <InputSwitch
-                    checked={formData.estado}
-                    onChange={(e) => handleInputChange('estado', e.value)}
-                  />
+          {modal.tipo === 'eliminar' ? (
+            <p>¿Eliminar <strong>{modal.receta?.nombre}</strong>?</p>
+          ) : modal.tipo === 'ver' ? (
+            <div>
+              <p><strong>Nombre:</strong> {modal.receta?.nombre}</p>
+              <p><strong>Descripción:</strong> {modal.receta?.descripcion}</p>
+              <p><strong>Ingredientes:</strong> {modal.receta?.ingredientes}</p>
+              <p><strong>Preparación:</strong> {modal.receta?.preparacion}</p>
+              <p><strong>Tiempo de preparación:</strong> {modal.receta?.tiempo_preparacion}</p>
+              {modal.receta?.imagen && (
+                <div style={{ marginTop: '10px' }}>
+                  <strong>Imagen:</strong>
+                  <img src={modal.receta.imagen} alt={modal.receta.nombre} style={{ maxWidth: '100%', maxHeight: '150px', display: 'block', marginTop: '5px' }} />
                 </div>
-              </div>
-
+              )}
             </div>
-          </div>
-
-          <div className="modal-footer mt-2 flex justify-end gap-2">
-            <button className="modal-btn cancel-btn text-sm px-3 py-1" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn text-sm px-3 py-1" onClick={guardarReceta}>Guardar</button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Modal Visualizar */}
-      {modalTipo === 'visualizar' && recetaSeleccionada && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Detalles de la Receta</h2>
-          <div className="modal-body">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              {/* Columna 1 */}
-              <div>
-                <p><strong>ID Receta:</strong> {recetaSeleccionada.Idreceta}</p>
-                <p><strong>Nombre:</strong> {recetaSeleccionada.nombre}</p>
-                <p><strong>Categoría:</strong> {recetaSeleccionada.categoria}</p>
-                <p><strong>Cantidad:</strong> {recetaSeleccionada.cantidad} {recetaSeleccionada.unidad}</p>
-                <p><strong>Marca:</strong> {recetaSeleccionada.marca}</p>
-              </div>
-              
-              {/* Columna 2 */}
-              <div>
-                <p><strong>Especificaciones:</strong> {recetaSeleccionada.especificaciones || 'N/A'}</p>
-                <p><strong>Estado:</strong> {recetaSeleccionada.estado ? 'Activo' : 'Inactivo'}</p>
-                <p><strong>Imagen:</strong> 
-                  {recetaSeleccionada.imagen && (
-                    <img 
-                      src={recetaSeleccionada.imagen} 
-                      alt={recetaSeleccionada.nombre}
-                      style={{ width: '50px', height: '50px', objectFit: 'cover', marginLeft: '10px' }}
-                    />
-                  )}
-                </p>
-              </div>
+          ) : (
+            <div className="modal-form-grid">
+              <label>
+                Nombre*
+                <input name="nombre" value={form.nombre} onChange={handleChange} className="modal-input" required />
+              </label>
+              <label>
+                Tiempo preparación*
+                <input name="tiempo_preparacion" value={form.tiempo_preparacion} onChange={handleChange} className="modal-input" required />
+              </label>
+              <label>
+                Descripción*
+                <textarea name="descripcion" value={form.descripcion} onChange={handleChange} className="modal-input" required />
+              </label>
+              <label>
+                Ingredientes*
+                <textarea name="ingredientes" value={form.ingredientes} onChange={handleChange} className="modal-input" required />
+              </label>
+              <label>
+                Preparación*
+                <textarea name="preparacion" value={form.preparacion} onChange={handleChange} className="modal-input" required />
+              </label>
+              <label>
+                Imagen
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const archivo = e.target.files[0];
+                    if (archivo) {
+                      convertirABase64(archivo, (base64) => {
+                        setForm((prev) => ({ ...prev, imagen: base64 }));
+                      });
+                    }
+                  }}
+                  className="modal-input"
+                />
+                {form.imagen && (
+                  <img src={form.imagen} alt="Vista previa" style={{ maxWidth: '100%', maxHeight: '100px', marginTop: '5px' }} />
+                )}
+              </label>
             </div>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
-      )}
+          )}
 
-      {/* Modal Eliminar - Pregunta inicial */}
-      {modalTipo === 'eliminar' && recetaSeleccionada && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Eliminar Receta</h2>
-          <div className="modal-body">
-            <p>¿Está seguro que desea eliminar la receta <strong>{recetaSeleccionada.nombre}</strong>?</p>
           </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={manejarEliminacion}>Eliminar</button>
-          </div>
-        </Modal>
-      )}
 
-      {/* Modal Confirmar Eliminación */}
-      {modalTipo === 'confirmarEliminar' && recetaSeleccionada && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Confirmar Eliminación</h2>
-          <div className="modal-body">
-            <p>¿Está completamente seguro que desea eliminar la receta <strong>{recetaSeleccionada.nombre}</strong>?</p>
-            <p style={{ color: '#e53935', fontSize: '14px' }}>
-              Esta acción no se puede deshacer y se eliminará toda la información de la receta.
-            </p>
-          </div>
           <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Confirmar Eliminación</button>
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>
+              {modal.tipo === 'ver' ? 'Cerrar' : 'Cancelar'}
+            </button>
+            {modal.tipo !== 'ver' && (
+              <button className={`modal-btn save-btn ${modal.tipo === 'eliminar' ? 'delete-btn' : ''}`} onClick={modal.tipo === 'eliminar' ? eliminar : guardar}>
+                {modal.tipo === 'eliminar' ? 'Eliminar' : 'Guardar'}
+              </button>
+            )}
           </div>
         </Modal>
       )}

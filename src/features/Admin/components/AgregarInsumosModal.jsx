@@ -12,21 +12,21 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       nombre: 'Crema de leche',
       unidad: 'L',
       precio: 25.50,
-      imagen: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Heavy_cream.jpg'
+      imagen: 'https://alqueria.com.co/sites/default/files/styles/200x274/public/2022-12/dummie-Crema-de-leche-Alqueria-180g.png?h=f214ce63&itok=H2mVvO_G'
     },
     {
       id: 2323231,
       nombre: 'Arroz',
       unidad: 'Kg',
       precio: 12.00,
-      imagen: 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Uncooked_rice_grains.jpg'
+      imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtheyuV01b9_za2ouNGHTbL1XlJsQA85Q&s'
     },
     {
       id: 2323233,
       nombre: 'Harina de trigo',
       unidad: 'Kg',
       precio: 15.75,
-      imagen: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Wheat_flour_in_a_bowl.jpg'
+      imagen: 'https://olimpica.vtexassets.com/arquivos/ids/617052/7701008629240.jpg?v=637626523850430000'
     }
   ];
 

@@ -5,6 +5,12 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
   const [metodoPago, setMetodoPago] = useState('');
   const [sedeSeleccionada, setSedeSeleccionada] = useState('');
   const [mostrarDatosBanco, setMostrarDatosBanco] = useState(false);
+  const [comprobante, setComprobante] = useState(null);
+  const [errorComprobante, setErrorComprobante] = useState('');
+  const [numeroPedido] = useState(() => {
+    // Generar número de pedido único
+    return `PED-${Date.now().toString().slice(-6)}`;
+  });
 
   // Calcular totales
   const subtotal = total || 0;
@@ -29,11 +35,38 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
 
   const handleMetodoPago = (metodo) => {
     setMetodoPago(metodo);
+    setErrorComprobante('');
+    setComprobante(null);
+    
     if (metodo === 'transferencia') {
       setMostrarDatosBanco(true);
       setSedeSeleccionada('');
     } else {
       setMostrarDatosBanco(false);
+    }
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    setErrorComprobante('');
+    
+    if (file) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrorComprobante('Solo se permiten archivos de imagen (JPG, PNG, WEBP)');
+        setComprobante(null);
+        return;
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorComprobante('El archivo es demasiado grande. Máximo 5MB.');
+        setComprobante(null);
+        return;
+      }
+
+      setComprobante(file);
     }
   };
 
@@ -51,24 +84,58 @@ Valor a transferir: $${abono.toLocaleString()}`;
     });
   };
 
+  const mostrarAlertaEfectivo = () => {
+    const sedeInfo = sedes.find(sede => sede.id === sedeSeleccionada);
+    const mensaje = `🏪 INFORMACIÓN IMPORTANTE
+
+📋 Número de Pedido: ${numeroPedido}
+📍 Sede: ${sedeInfo.nombre}
+📍 Dirección: ${sedeInfo.direccion}
+⏰ Horario: ${sedeInfo.horario}
+💰 Valor a pagar: $${abono.toLocaleString()}
+
+⚠️ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
+
+    alert(mensaje);
+  };
+
   const procesarPago = () => {
+    // Validar método de pago
     if (!metodoPago) {
-      alert('Por favor selecciona un método de pago');
+      alert('❌ Por favor selecciona un método de pago');
       return;
     }
 
-    if (metodoPago === 'efectivo' && !sedeSeleccionada) {
-      alert('Por favor selecciona una sede para el pago en efectivo');
-      return;
+    // Validar transferencia
+    if (metodoPago === 'transferencia') {
+      if (!comprobante) {
+        setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
+        return;
+      }
+    }
+
+    // Validar efectivo
+    if (metodoPago === 'efectivo') {
+      if (!sedeSeleccionada) {
+        alert('❌ Por favor selecciona una sede para el pago en efectivo');
+        return;
+      }
+      
+      // Mostrar alerta con información del pedido
+      mostrarAlertaEfectivo();
     }
 
     // Guardar información del pago
-    onOpcionSeleccionada({
+    const datosPago = {
       metodo: metodoPago,
       sede: sedeSeleccionada,
       abono: abono,
-      total: totalFinal
-    });
+      total: totalFinal,
+      numeroPedido: numeroPedido,
+      comprobante: comprobante
+    };
+
+    onOpcionSeleccionada(datosPago);
 
     // Completar pedido
     onPedidoCompletado();
@@ -79,6 +146,9 @@ Valor a transferir: $${abono.toLocaleString()}`;
       <div className="pago-contenido">
         <div className="seccion-header">
           <h2 className="seccion-title">💳 Opciones de Pago</h2>
+          <div className="numero-pedido">
+            <span>📋 Número de Pedido: <strong>{numeroPedido}</strong></span>
+          </div>
           <div className="alert-info">
             <span className="alert-icon">ℹ️</span>
             <span>Los productos personalizados requieren un abono del 50% para iniciar la producción</span>
@@ -138,7 +208,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
             </div>
             <div className="total-item abono-destacado">
               <span>🔸 Abono requerido (50%):</span>
-              <span>${abono.toLocaleString()}</span>
+              <span className="abono-valor">${abono.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -203,6 +273,40 @@ Valor a transferir: $${abono.toLocaleString()}`;
                       📋 Copiar datos
                     </button>
                   </div>
+
+                  {/* Sección de subir comprobante */}
+                  <div className="comprobante-section">
+                    <h5>📎 Subir Comprobante <span className="obligatorio">*</span></h5>
+                    <div className="upload-area">
+                      <input 
+                        type="file" 
+                        id="comprobante"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="file-input"
+                      />
+                      <label htmlFor="comprobante" className="upload-label">
+                        {comprobante ? (
+                          <div className="file-selected">
+                            <span className="file-icon">✅</span>
+                            <span className="file-name">{comprobante.name}</span>
+                          </div>
+                        ) : (
+                          <div className="upload-placeholder">
+                            <span className="upload-icon">📷</span>
+                            <span>Seleccionar imagen del comprobante</span>
+                            <small>JPG, PNG, WEBP (máx. 5MB)</small>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                    {errorComprobante && (
+                      <div className="error-message">
+                        <span className="error-icon">❌</span>
+                        <span>{errorComprobante}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -228,7 +332,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
               
               {metodoPago === 'efectivo' && (
                 <div className="sedes-efectivo">
-                  <h5>📍 Selecciona la sede:</h5>
+                  <h5>📍 Selecciona la sede: <span className="obligatorio">*</span></h5>
                   {sedes.map(sede => (
                     <label key={sede.id} className={`sede-option ${sedeSeleccionada === sede.id ? 'selected' : ''}`}>
                       <input 
@@ -266,7 +370,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
           <button 
             className="btn-continuar" 
             onClick={procesarPago}
-            disabled={!metodoPago || (metodoPago === 'efectivo' && !sedeSeleccionada)}
+            disabled={!metodoPago || (metodoPago === 'efectivo' && !sedeSeleccionada) || (metodoPago === 'transferencia' && !comprobante)}
           >
             Completar Pedido
             <span className="btn-icon">✓</span>

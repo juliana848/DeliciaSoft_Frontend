@@ -1187,3 +1187,201 @@
 .insumo-card {
   width: 160px;
 }
+=======
+.modal-visualizar-rol {
+  width: 400px;
+  max-width: 90vw;
+}
+
+.permisos-visualizar {
+  max-width: 350px;
+  word-wrap: break-word;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Celdas del cuerpo - centrar contenido */
+.p-datatable.admin-table .p-datatable-tbody > tr > td {
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.detalle-venta-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-content-columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.modal-content-columns .column {
+    flex: 1;
+    min-width: 300px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+}
+
+/* Responsive: En pantallas pequeñas, las columnas se apilan */
+@media (max-width: 768px) {
+    .modal-content-columns {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-content-columns .column {
+        min-width: unset;
+        width: 100%;
+    }
+}
+
+.productos-lista {
+    margin-top: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.producto-item-container {
+    padding: 12px 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 8px;
+}
+
+.producto-item-container:last-child {
+    border-bottom: none;
+}
+
+.producto-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 5px;
+}
+
+.producto-info {
+    flex: 1;
+    line-height: 1.4;
+    margin: 0;
+    word-wrap: break-word;
+}
+
+
+/* Desplegable de opciones */
+.product-options-dropdown {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 10px;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.options-section {
+    margin-bottom: 12px;
+}
+
+.options-section:last-child {
+    margin-bottom: 0;
+}
+
+.options-section strong {
+    color: #495057;
+    font-size: 0.9em;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.options-section ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.options-section li {
+    font-size: 0.85em;
+    color: #666;
+    padding: 3px 0;
+    padding-left: 15px;
+    position: relative;
+}
+
+.options-section li:before {
+    content: "•";
+    color: #6c757d;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.resumen-venta {
+    margin-top: 20px;
+    border-top: 2px solid #eee;
+    padding-top: 15px;
+    text-align: right;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.resumen-venta p {
+    margin: 8px 0;
+    font-size: 1.1em;
+}
+
+.resumen-venta p:last-child {
+    font-size: 1.2em;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* Scrollbar personalizado para webkit browsers */
+.productos-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.productos-lista::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.productos-lista::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.productos-lista::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

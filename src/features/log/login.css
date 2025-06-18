@@ -1,5 +1,5 @@
 .toggle-left {
-  background-color: #FFCC00;
+  background-color: #ff007b; /* Rosa más claro para registro */
 }
 
 .toggle-right {
@@ -113,7 +113,7 @@
 }
 
 .sign-up {
-  background-image: url('https://th.bing.com/th/id/OIP.2L5-BNQQGBWmgp-_zHZM-wAAAA?w=420&h=280&rs=1&pid=ImgDetMain');
+  background-image: url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -147,7 +147,7 @@
 
 .toggle {
   background-color: #ffffff;
-  background: linear-gradient(to right, #FFCC00, #ffcc00, #f40072, #fc0278);
+  background: linear-gradient(to right, #FFB6D9, #ffb6d9, #f40072, #fc0278); /* Gradiente actualizado con rosa más claro */
   color: #fff;
   position: relative;
   left: -100%;
@@ -290,4 +290,78 @@
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* Agregar estas animaciones al final del archivo login.css */
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Mejoras para los botones de los modales */
+.botones {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-enviar {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-enviar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para el campo de código de verificación */
+.codigo-input {
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+/* Estilos para la información de requisitos de contraseña */
+.password-requirements {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
+.password-requirements ul {
+  margin: 5px 0;
+  padding-left: 15px;
+}
+
+.password-requirements li {
+  margin: 2px 0;
 }

@@ -343,7 +343,8 @@ export default function Roles() {
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    Nombre del Rol:
+                    Nombre del Rol 
+                      <span style={{ color: 'red' }}> *</span>
                   </label>
                   <input
                     type="text"
@@ -362,7 +363,8 @@ export default function Roles() {
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    Descripción:
+                    Descripción 
+                    <span style={{ color: 'red' }}> *</span>
                   </label>
                   <textarea
                     value={formData.descripcion}

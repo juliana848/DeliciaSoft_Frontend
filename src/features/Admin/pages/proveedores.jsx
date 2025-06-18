@@ -168,12 +168,12 @@ export default function ProveedoresTable() {
 
       <h2 className="admin-section-title">Proveedores</h2>
       <DataTable value={proveedoresFiltrados} className="admin-table" paginator rows={5}>
-        <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-        <Column field="nombre" header="Nombre" />
+        <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+        <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }}/>
         <Column field="tipo" header="Tipo Proveedor" />
         <Column field="contacto" header="Contacto" />
-        <Column field="correo" header="Correo" />
-        <Column field="direccion" header="Dirección" />
+        <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }}/>
+        <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }}/>
         <Column
           header="Estado"
           body={(rowData) => (
@@ -181,7 +181,8 @@ export default function ProveedoresTable() {
           )}
         />
         <Column
-          header="Acciones"
+          header="Acciones" 
+          headerStyle={{ paddingLeft: '2rem' }}
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>🔍</button>

@@ -800,17 +800,19 @@ const guardarVenta = () => {
                         rowClassName={getRowClassName}
                     >
                         <Column
-                            header="Numero"
+                            header="N°"
                             body={(rowData, { rowIndex }) => rowIndex + 1}
                             style={{ width: '3rem', textAlign: 'center' }}
+                            headerStyle={{ paddingLeft: '1rem' }}
                         />
 
-                        <Column field="cliente" header="Cliente" />
-                        <Column field="sede" header="Sede" />
-                        <Column field="fecha_venta" header="Fecha" />
-                        <Column field="total" header="Total" />
+                        <Column field="cliente" header="Cliente" headerStyle={{ paddingLeft: '4rem' }}/>
+                        <Column field="sede" header="Sede"  headerStyle={{ paddingLeft: '2.5rem' }}/>
+                        <Column field="fecha_venta" header="Fecha" headerStyle={{ paddingLeft: '2.5rem' }}/>
+                        <Column field="total" header="Total" headerStyle={{ paddingLeft: '1.5rem' }} />
                         <Column
                             header="Estado"
+                            headerStyle={{ paddingLeft: '2.5rem' }}
                             body={(rowData) => (
                                 <select
                                     value={rowData.estado}
@@ -832,6 +834,7 @@ const guardarVenta = () => {
                         />
                         <Column
                             header="Acción"
+                            headerStyle={{ paddingLeft: '6rem' }}
                             body={(rowData) => (
                                 <>
                                     <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>

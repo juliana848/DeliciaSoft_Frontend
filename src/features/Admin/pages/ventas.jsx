@@ -10,6 +10,10 @@ import AgregarAdicionesModal from '../components/catalogos/AgregarAdicionesModal
 import AgregarSalsasModal from '../components/catalogos/AgregarSalsasModal';
 import AgregarRellenosModal from '../components/catalogos/AgregarRellenosModal';
 
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
 export default function Ventas() {
     const [ventas, setVentas] = useState([]);
     const [filtro, setFiltro] = useState('');
@@ -53,6 +57,8 @@ export default function Ventas() {
         total_pagado: '',
         fecha: new Date().toISOString().split('T')[0] // Fecha automática para abonos
     });
+
+    
 
     useEffect(() => {
         const mockVentas = [
@@ -199,6 +205,185 @@ const validarFormularioVenta = () => {
     return errores;
 };
 
+
+const generarPDFVenta = (venta) => {
+  const doc = new jsPDF();
+
+  // Título principal
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FACTURA DE VENTA', 20, 20);
+
+  // Información de la empresa
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Delicias Darsy', 20, 30);
+  doc.text('Medellín, Antioquia', 20, 35);
+
+  // Información de la venta - Lado izquierdo
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INFORMACIÓN DE LA VENTA', 20, 50);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Cliente: ${venta.cliente}`, 20, 60);
+  doc.text(`Sede: ${venta.sede}`, 20, 67);
+  doc.text(`Método de Pago: ${venta.metodo_pago}`, 20, 74);
+  doc.text(`Estado: ${venta.estado}`, 20, 81);
+
+  // Información - Lado derecho
+  doc.text(`Número de Venta: ${venta.id}`, 120, 60);
+  doc.text(`Fecha de Venta: ${venta.fecha_venta}`, 120, 67);
+  if (venta.fecha_finalizacion) {
+    doc.text(`Fecha Finalización: ${venta.fecha_finalizacion}`, 120, 74);
+  }
+
+  // Preparar datos de productos con adiciones
+  const productosData = venta.productos.map(producto => {
+    const subtotalProducto = producto.cantidad * producto.precio;
+    
+    // Calcular total de adiciones
+    let totalAdiciones = 0;
+    if (producto.adiciones && producto.adiciones.length > 0) {
+      totalAdiciones = producto.adiciones.reduce((sum, adicion) => sum + adicion.precio, 0) * producto.cantidad;
+    }
+    
+    const totalConAdiciones = subtotalProducto + totalAdiciones;
+    
+    return [
+      producto.nombre,
+      producto.cantidad,
+      `$${producto.precio.toFixed(2)}`,
+      `$${subtotalProducto.toFixed(2)}`,
+      totalAdiciones > 0 ? `$${totalAdiciones.toFixed(2)}` : '-',
+      `$${totalConAdiciones.toFixed(2)}`
+    ];
+  });
+ autoTable(doc, {
+    head: [['Producto', 'Cant.', 'Precio Unit.', 'Subtotal', 'Adiciones', 'Total']],
+    body: productosData,
+    startY: 90,
+    styles: {
+      fillColor: [255, 228, 225], // Rosa claro (igual que compras)
+      textColor: 0,
+      fontSize: 9,
+    },
+    headStyles: {
+      fillColor: [255, 105, 180], // Rosa fuerte (igual que compras)
+      textColor: 255,
+      fontStyle: 'bold',
+      halign: 'center',
+    },
+    columnStyles: {
+      0: { cellWidth: 50 }, // Producto
+      1: { halign: 'center', cellWidth: 20 }, // Cantidad
+      2: { halign: 'right', cellWidth: 25 }, // Precio Unit.
+      3: { halign: 'right', cellWidth: 25 }, // Subtotal
+      4: { halign: 'right', cellWidth: 25 }, // Adiciones
+      5: { halign: 'right', cellWidth: 25 }  // Total
+    }
+  });
+
+  // Mostrar detalles de adiciones si existen
+  let currentY = doc.lastAutoTable.finalY + 10;
+  
+  // Verificar si hay productos con adiciones para mostrar detalles
+  const productosConAdiciones = venta.productos.filter(p => p.adiciones && p.adiciones.length > 0);
+  
+  if (productosConAdiciones.length > 0) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Detalles de Adiciones:', 20, currentY);
+    currentY += 7;
+    
+    doc.setFont('helvetica', 'normal');
+    productosConAdiciones.forEach(producto => {
+      doc.text(`• ${producto.nombre}:`, 25, currentY);
+      currentY += 5;
+      
+      producto.adiciones.forEach(adicion => {
+        doc.text(`  - ${adicion.nombre}: $${adicion.precio.toFixed(2)}`, 30, currentY);
+        currentY += 4;
+      });
+      currentY += 2;
+    });
+    currentY += 5;
+  }
+
+  // Totales
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  
+  // Cuadro de totales - lado derecho
+  const totalStartX = 130;
+  doc.text(`Subtotal:`, totalStartX, currentY);
+  doc.text(`$${venta.subtotal.toFixed(2)}`, totalStartX + 40, currentY);
+  
+  doc.text(`IVA:`, totalStartX, currentY + 7);
+  doc.text(`$${venta.iva.toFixed(2)}`, totalStartX + 40, currentY + 7);
+  
+  // Total destacado
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(`TOTAL:`, totalStartX, currentY + 17);
+  doc.text(`$${venta.total.toFixed(2)}`, totalStartX + 40, currentY + 17);
+
+  // Pie de página
+  const pageHeight = doc.internal.pageSize.height;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('¡Gracias por su compra!', 20, pageHeight - 25);
+  doc.text(`Generado el: ${new Date().toLocaleDateString('es-CO')}`, 20, pageHeight - 20);
+  doc.text(`Hora: ${new Date().toLocaleTimeString('es-CO')}`, 20, pageHeight - 15);
+
+  // Guardar PDF
+  doc.save(`venta-${venta.id}-${venta.cliente.replace(/\s+/g, '_')}.pdf`);
+};
+
+// 3. Función alternativa más simple (sin tabla de adiciones)
+const generarPDFVentaSimple = (venta) => {
+  const doc = new jsPDF();
+
+  // Título
+  doc.setFontSize(16);
+  doc.text('Detalle de Venta', 20, 20);
+
+  // Información básica
+  doc.setFontSize(12);
+  doc.text(`Cliente: ${venta.cliente}`, 20, 35);
+  doc.text(`Sede: ${venta.sede}`, 20, 42);
+  doc.text(`Fecha: ${venta.fecha_venta}`, 20, 49);
+  doc.text(`Estado: ${venta.estado}`, 20, 56);
+  doc.text(`Método de Pago: ${venta.metodo_pago}`, 20, 63);
+
+  // Productos
+  doc.text('Productos:', 20, 80);
+  let yPos = 90;
+  
+  venta.productos.forEach((producto, index) => {
+    const subtotal = producto.cantidad * producto.precio;
+    doc.text(`• ${producto.nombre} - Cant: ${producto.cantidad} - $${producto.precio.toFixed(2)} = $${subtotal.toFixed(2)}`, 25, yPos);
+    yPos += 7;
+    
+    // Mostrar adiciones si las tiene
+    if (producto.adiciones && producto.adiciones.length > 0) {
+      producto.adiciones.forEach(adicion => {
+        doc.text(`  + ${adicion.nombre}: $${adicion.precio.toFixed(2)}`, 30, yPos);
+        yPos += 5;
+      });
+    }
+    yPos += 3;
+  });
+
+  // Totales
+  yPos += 10;
+  doc.text(`Subtotal: $${venta.subtotal.toFixed(2)}`, 20, yPos);
+  doc.text(`IVA: $${venta.iva.toFixed(2)}`, 20, yPos + 7);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`TOTAL: $${venta.total.toFixed(2)}`, 20, yPos + 17);
+
+  doc.save(`venta-${venta.id}.pdf`);
+};
     // Función para validar abonos
 const validarAbono = () => {
     const errores = {};
@@ -660,9 +845,11 @@ const guardarVenta = () => {
                                     >🛑</button>
                                     <button
                                         className="admin-button blue"
-                                        title="Exportar PDF"
-                                        onClick={() => exportarPDF(rowData)}
-                                    >⬇️</button>
+                                        title="Descargar PDF"
+                                        onClick={() => generarPDFVenta(rowData)}
+                                    >
+                                        ⬇️
+                                    </button>
                                     <button
                                         className="admin-button green"
                                         title="Abonos"

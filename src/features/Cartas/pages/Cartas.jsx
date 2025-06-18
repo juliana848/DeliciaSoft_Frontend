@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Cartas.css";
+
 import CategoriasInicio from "../../Home/pages/components/Categorias/CategoriasInicio";
 import Header from "./Header";
 import Buscador from "./Buscador";
@@ -11,6 +13,7 @@ function Cartas() {
   const [code, setCode] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const productosDestacados = [
     { nombre: "FRESAS CON CREMA", precio: "$7,000", imagen: "/imagenes/Cartas/fresacrema.jpeg" },
@@ -35,13 +38,36 @@ function Cartas() {
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+ const handleProductoClick = (producto) => {
+  const nombre = producto.nombre.toLowerCase();
+
+  if (nombre.includes("fresa")) {
+    navigate("/detalle-fresas");
+  } else if (nombre.includes("oblea")) {
+    navigate("/detalle-obleas");
+  } else if (nombre.includes("mini dona")) {
+    navigate("/detalle-mini-donas");
+  } else if (nombre.includes("cupcake")) {
+    navigate("/detalle-cupcake");
+  } else if (nombre.includes("arroz")) {
+    navigate("/detalle-arroz");
+  } else if (nombre.includes("postres")) {
+    navigate("/detalle-postres");
+  } else if (nombre.includes("sandwich")) {
+    navigate("/detalle-sandwiches");
+  } else if (nombre.includes("chocolate")) {
+    navigate("/detalle-chocolates");
+  }
+};
+  
+
   return (
     <div className="carta-container">
       <Header />
       <Buscador value={searchTerm} onChange={setSearchTerm} />
       <CategoriasInicio />
-      <h2 className="destacados-titulo">DESTACADOS</h2>
-      <ProductosDestacados productos={productosFiltrados} />
+      <h2 className="destacados-titulo">Categorias</h2>
+      <ProductosDestacados productos={productosFiltrados} onProductoClick={handleProductoClick} />
       <Cupon onClick={handleImageClick} />
       {modalVisible && <Modal code={code} onClose={closeModal} />}
     </div>

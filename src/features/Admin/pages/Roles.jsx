@@ -270,6 +270,7 @@ export default function Roles() {
       >
         <Column 
           header="N°" 
+          headerStyle={{ paddingLeft: '2rem' }}
           body={(rowData, { rowIndex }) => rowIndex + 1} 
           style={{ width: '3rem', textAlign: 'center' }}
         />
@@ -277,17 +278,20 @@ export default function Roles() {
         <Column 
           field="nombre" 
           header="Nombre"
+          headerStyle={{ paddingLeft: '5.8rem' }}
           style={{ width: '12rem', textAlign: 'center' }}
         />
 
         <Column 
           field="descripcion" 
           header="Descripción"
+          headerStyle={{ paddingLeft: '5rem' }}
           style={{ width: '12rem', textAlign: 'center' }}
         />
         
         <Column
           header="Estado"
+          headerStyle={{ paddingLeft: '3rem' }}
           body={(rowData) => (
             <InputSwitch
               checked={rowData.activo}
@@ -299,6 +303,7 @@ export default function Roles() {
         
         <Column
           header="Acciones"
+          headerStyle={{ paddingLeft: '5rem' }}
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>

@@ -4,6 +4,14 @@ const PedidosActivos = () => {
   // Estado para controlar qué pedido está expandido
   const [pedidoExpandido, setPedidoExpandido] = useState(null);
   
+  // Nuevo estado para controlar la visibilidad de la modal de confirmación
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  // Nuevo estado para guardar el ID del pedido a anular
+  const [pedidoToAnnull, setPedidoToAnnull] = useState(null);
+
+  // Nuevo estado para controlar la visibilidad y contenido de la alerta
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+
   // Estados de los pedidos
   const estados = {
     pendiente: { color: '#ffc107', label: 'Pendiente' },
@@ -106,22 +114,44 @@ const PedidosActivos = () => {
 
   const [filtroEstado, setFiltroEstado] = useState('todos');
 
+  // Función para mostrar la alerta personalizada
+  const showCustomAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 3000); // La alerta desaparecerá después de 3 segundos
+  };
+
   // Función para alternar la expansión de detalles
   const toggleDetalles = (pedidoId) => {
     setPedidoExpandido(pedidoExpandido === pedidoId ? null : pedidoId);
   };
 
-  // Función para anular pedido
-  const anularPedido = (pedidoId) => {
-    if (window.confirm('¿Estás seguro de que quieres anular este pedido?')) {
-      setPedidos(prevPedidos => 
-        prevPedidos.map(pedido => 
-          pedido.id === pedidoId 
-            ? { ...pedido, estado: 'anulado' }
-            : pedido
-        )
-      );
-    }
+  // Función para abrir la modal de confirmación
+  const handleAnularPedidoClick = (pedidoId) => {
+    setPedidoToAnnull(pedidoId);
+    setShowConfirmModal(true);
+  };
+
+  // Función para confirmar la anulación del pedido
+  const confirmAnularPedido = () => {
+    setPedidos(prevPedidos => 
+      prevPedidos.map(pedido => 
+        pedido.id === pedidoToAnnull
+          ? { ...pedido, estado: 'anulado' }
+          : pedido
+      )
+    );
+    setShowConfirmModal(false); // Cerrar la modal después de anular
+    setPedidoToAnnull(null); // Limpiar el ID del pedido
+    showCustomAlert('success', `Pedido #${pedidoToAnnull} anulado exitosamente.`);
+  };
+
+  // Función para cancelar la anulación (cerrar la modal)
+  const cancelAnularPedido = () => {
+    setShowConfirmModal(false);
+    setPedidoToAnnull(null);
+    showCustomAlert('info', 'Anulación de pedido cancelada.');
   };
 
   // Filtrar pedidos según el estado seleccionado
@@ -136,6 +166,34 @@ const PedidosActivos = () => {
       padding: '20px',
       fontFamily: 'Inter, sans-serif'
     }}>
+      {/* Alerta personalizada */}
+      {showAlert.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 2000,
+            padding: '1rem 1.5rem',
+            borderRadius: '15px',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            minWidth: '300px',
+            background:
+              showAlert.type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : showAlert.type === 'error'
+                ? 'linear-gradient(135deg, #ec4899, #be185d)'
+                : 'linear-gradient(135deg, #0ea5e9, #0284c7)', // Color para tipo 'info'
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'slideInRight 0.5s ease-out'
+          }}
+        >
+          {showAlert.message}
+        </div>
+      )}
+
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{
@@ -322,7 +380,7 @@ const PedidosActivos = () => {
                     
                     {pedido.estado === 'pendiente' && (
                       <button
-                        onClick={() => anularPedido(pedido.id)}
+                        onClick={() => handleAnularPedidoClick(pedido.id)}
                         style={{
                           padding: '10px 20px',
                           border: 'none',
@@ -534,6 +592,105 @@ const PedidosActivos = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Confirmación */}
+      {showConfirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '15px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '450px',
+            boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
+            textAlign: 'center',
+            animation: 'fadeInUp 0.3s ease-out',
+            position: 'relative'
+          }}>
+            <button
+              onClick={cancelAnularPedido}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#adb5bd'
+              }}
+            >
+              &times;
+            </button>
+            <div style={{ fontSize: '60px', marginBottom: '20px', lineHeight: '1' }}>
+              ⚠️
+            </div>
+            <h3 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#495057',
+              marginBottom: '15px'
+            }}>
+              ¿Anular Pedido?
+            </h3>
+            <p style={{
+              color: '#6c757d',
+              fontSize: '16px',
+              marginBottom: '30px'
+            }}>
+              Estás a punto de anular el pedido <strong style={{color: '#e91e63'}}>#{pedidoToAnnull}</strong>. Esta acción no se puede deshacer.
+              ¿Estás seguro de que quieres continuar?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                            <button
+                onClick={cancelAnularPedido}
+                style={{
+                  padding: '12px 25px',
+                  border: '2px solid #6c757d',
+                  borderRadius: '10px',
+                  background: 'white',
+                  color: '#6c757d',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmAnularPedido}
+                style={{
+                  padding: '12px 25px',
+                  border: 'none',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(45deg, #dc3545, #e85a67)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 10px rgba(220, 53, 69, 0.3)'
+                }}
+              >
+                Sí, Anular
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 
-const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [] }) => {
+const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
   const [categoriaActiva, setCategoriaActiva] = useState('donas');
   const [modalDetalle, setModalDetalle] = useState(null);
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+  const [showConfirmation, setShowConfirmation] = useState(false); // New state for confirmation dialog
 
   const categorias = [
     { id: 'fresas', nombre: 'Fresas con Crema', icon: '🍓' },
@@ -53,7 +55,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'd3',
         nombre: 'Mini donas x15',
-        imagen: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=300&h=200&fit:crop',
         precio: 40000,
         descripcion: 'Pack familiar de 15 mini donas surtidas',
         categoria: 'donas'
@@ -71,7 +73,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'p2',
         nombre: 'Cheesecake de Fresa',
-        imagen: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300&h=200&fit:crop',
         precio: 10000,
         descripcion: 'Cremoso cheesecake con topping de fresas naturales',
         categoria: 'postres'
@@ -89,7 +91,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'c2',
         nombre: 'Cupcake de Chocolate',
-        imagen: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&h=200&fit:crop',
         precio: 6500,
         descripcion: 'Rico cupcake de chocolate con ganache',
         categoria: 'cupcakes'
@@ -117,7 +119,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 's2',
         nombre: 'Sandwich Veggie',
-        imagen: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&h=200&fit:crop',
         precio: 11000,
         descripcion: 'Sandwich vegetariano con queso y verduras frescas',
         categoria: 'sanduches'
@@ -127,7 +129,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 't1',
         nombre: 'Torta de Chocolate',
-        imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit:crop',
         precio: 35000,
         descripcion: 'Deliciosa torta de chocolate para 8 personas',
         categoria: 'tortas'
@@ -135,12 +137,19 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 't2',
         nombre: 'Torta de Vainilla',
-        imagen: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=300&h=200&fit=crop',
+        imagen: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=300&h=200&fit:crop',
         precio: 32000,
         descripcion: 'Suave torta de vainilla con decoración especial',
         categoria: 'tortas'
       }
     ]
+  };
+
+  const showCustomAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 3000);
   };
 
   const seleccionarProducto = (producto) => {
@@ -149,17 +158,23 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     if (!yaSeleccionado) {
       const productoConCantidad = { ...producto, cantidad: 1 };
       onProductoSeleccionado(productoConCantidad);
+      showCustomAlert('success', `${producto.nombre} ha sido agregado al pedido!`);
     }
   };
 
   const actualizarCantidad = (productoId, nuevaCantidad) => {
-    // Esta función debería ser manejada por el componente padre
-    console.log('Actualizar cantidad:', productoId, nuevaCantidad);
+    if (nuevaCantidad <= 0) {
+      onEliminarProducto(productoId);
+      showCustomAlert('error', `Producto eliminado del pedido.`);
+    } else {
+      onActualizarCantidad(productoId, nuevaCantidad);
+      showCustomAlert('success', `Cantidad actualizada para el producto.`);
+    }
   };
 
   const eliminarProducto = (productoId) => {
-    // Esta función debería ser manejada por el componente padre
-    console.log('Eliminar producto:', productoId);
+    onEliminarProducto(productoId);
+    showCustomAlert('error', `Producto eliminado del pedido.`);
   };
 
   const abrirModal = (producto) => {
@@ -170,12 +185,22 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     setModalDetalle(null);
   };
 
+  // Modified continuar function to show confirmation
   const continuar = () => {
     if (productosSeleccionados.length > 0) {
-      onSiguiente();
+      setShowConfirmation(true); // Show confirmation dialog
     } else {
-      alert('Por favor selecciona al menos un producto antes de continuar');
+      showCustomAlert('error', 'Por favor selecciona al menos un producto antes de continuar');
     }
+  };
+
+  const handleConfirmContinue = () => {
+    setShowConfirmation(false); // Close confirmation dialog
+    onSiguiente(); // Proceed to next step
+  };
+
+  const handleCancelContinue = () => {
+    setShowConfirmation(false); // Close confirmation dialog
   };
 
   const calcularTotal = () => {
@@ -186,6 +211,32 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
 
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
+      {/* Custom Alert */}
+      {showAlert.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 2000,
+            padding: '1rem 1.5rem',
+            borderRadius: '15px',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            minWidth: '300px',
+            background:
+              showAlert.type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'linear-gradient(135deg, #ec4899, #be185d)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'slideInRight 0.5s ease-out'
+          }}
+        >
+          {showAlert.message}
+        </div>
+      )}
+
       {/* Header con título */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h1 style={{ 
@@ -374,11 +425,54 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                     {producto.nombre}
                   </span>
                   <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
-                    ${producto.precio.toLocaleString()} x {producto.cantidad}
+                    ${producto.precio.toLocaleString()}
                   </div>
                 </div>
                 
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
+                    style={{
+                      padding: '5px 10px',
+                      border: 'none',
+                      borderRadius: '5px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    -
+                  </button>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
+                  <button
+                    onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
+                    style={{
+                      padding: '5px 10px',
+                      border: 'none',
+                      borderRadius: '5px',
+                      backgroundColor: '#2ecc71',
+                      color: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => eliminarProducto(producto.id)}
+                    style={{
+                      padding: '8px 16px',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Eliminar
+                  </button>
                   <button
                     onClick={() => abrirModal(producto)}
                     style={{
@@ -412,7 +506,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
             </div>
             
             <button
-              onClick={continuar}
+              onClick={continuar} // This will now trigger the confirmation dialog
               style={{
                 padding: '15px 30px',
                 border: 'none',
@@ -514,6 +608,76 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
             }}>
               {modalDetalle.descripcion}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001 // Higher z-index to be above other modals
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#2c3e50',
+              marginBottom: '20px'
+            }}>
+              ¿Estás seguro que seleccionaste todo lo que deseas?
+            </h3>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+              {/* Inverted buttons */}
+              <button
+                onClick={handleCancelContinue}
+                style={{
+                  padding: '12px 25px',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                No, volver
+              </button>
+              <button
+                onClick={handleConfirmContinue}
+                style={{
+                  padding: '12px 25px',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: '#2ecc71',
+                  color: 'white',
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                Sí, continuar
+              </button>
+            </div>
           </div>
         </div>
       )}

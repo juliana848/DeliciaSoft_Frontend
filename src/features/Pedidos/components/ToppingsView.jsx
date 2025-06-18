@@ -5,32 +5,32 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
   const [toppings] = useState([
     {
       id: 1,
-      nombre: 'Galletas de Chocolate',
-      imagen: 'https://www.rawpixel.com/image/15350095/delicious-chocolate-chip-cookies-stack', //
+      nombre: 'Chispas de Chocolate',
+      imagen: 'https://i.pinimg.com/736x/76/2c/7b/762c7bc7dac8135a749f7b8b3f8f070e.jpg', //
       precio: 0 // Precio cambiado a 0
     },
     {
       id: 2,
       nombre: 'Granola de Canela',
-      imagen: 'https://www.shutterstock.com/image-photo/bowl-cinnamon-maple-granola-isolated-260nw-2195982823.jpg', //
+      imagen: 'https://i.pinimg.com/736x/e5/a7/c4/e5a7c476f1ff55267038774bde297eeb.jpg', //
       precio: 0 // Precio cambiado a 0
     },
     {
       id: 3,
       nombre: 'Maní',
-      imagen: 'https://www.shutterstock.com/image-photo/against-white-background-various-peanutsincl-260nw-2337622877.jpg', //
+      imagen: 'https://i.pinimg.com/736x/49/13/16/49131610f1afaaef6603c3fe16b943c3.jpg', //
       precio: 0 // Precio cambiado a 0
     },
     {
       id: 4,
-      nombre: 'Chispas',
-      imagen: 'https://www.istockphoto.com/photo/chocolate-sprinkles-gm600647898-103332463', //
+      nombre: 'Chispas de colores',
+      imagen: 'https://i.pinimg.com/736x/8b/6d/40/8b6d40ca5b18d59b11ad2d2d3f061a88.jpg', //
       precio: 0 // Precio cambiado a 0
     },
     {
       id: 5,
       nombre: 'Oreo',
-      imagen: 'https://commons.wikimedia.org/wiki/File:Oreo_cookies.JPG', //
+      imagen: 'https://i.pinimg.com/736x/19/84/ee/1984eefed011f2db17a53d7ba24b5838.jpg', //
       precio: 0 // Precio cambiado a 0
     }
   ]);

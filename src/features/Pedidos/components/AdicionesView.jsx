@@ -6,37 +6,37 @@ const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
     {
       id: 1,
       nombre: 'Nutella',
-      imagen: 'https://images.unsplash.com/photo-1591958468308-8d9b3dafc572?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/b4/51/15/b45115c6e7e713389ea73f79127aed78.jpg',
       precio: 3000
     },
     {
       id: 2,
       nombre: 'Chispas de Colores',
-      imagen: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/8b/6d/40/8b6d40ca5b18d59b11ad2d2d3f061a88.jpg',
       precio: 1200
     },
     {
       id: 3,
-      nombre: 'Miel',
-      imagen: 'https://images.unsplash.com/photo-1587049633312-d628ae50a8ae?w=400&h=400&fit=crop&crop=center',
+      nombre: 'Oreo',
+      imagen: 'https://i.pinimg.com/736x/19/84/ee/1984eefed011f2db17a53d7ba24b5838.jpg',
       precio: 1500
     },
     {
       id: 4,
       nombre: 'Coco Rallado',
-      imagen: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/7b/39/af/7b39af1d06e365be340df9b5d3708c90.jpg',
       precio: 1000
     },
     {
       id: 5,
       nombre: 'Crema Chantilly',
-      imagen: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/a5/4f/73/a54f7307469891f136216ed6041a594e.jpg',
       precio: 2000
     },
     {
       id: 6,
       nombre: 'Fresas',
-      imagen: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/fb/62/56/fb6256e1223051ad0cc1e4f6dbdb3319.jpg',
       precio: 2500
     }
   ]);

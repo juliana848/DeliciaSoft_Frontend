@@ -21,7 +21,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'f1',
         nombre: 'Fresas con Crema Clásica',
-        imagen: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300&h=200&fit=crop',
+        imagen: 'https://7diasdesabor.com/wp-content/uploads/2024/08/WEB-POSTRE-1-1536x827.png',
         precio: 12000,
         descripcion: 'Deliciosas fresas frescas con crema batida y azúcar',
         categoria: 'fresas'
@@ -29,7 +29,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'f2',
         nombre: 'Fresas con Crema Premium',
-        imagen: 'https://images.unsplash.com/photo-1488900128323-21503983a07e?w=300&h=200&fit=crop',
+        imagen: 'https://animalgourmet.com/wp-content/uploads/2024/03/Crema-para-fresas-con-crema1-jpg.webp',
         precio: 18000,
         descripcion: 'Fresas premium con crema de vainilla y toppings especiales',
         categoria: 'fresas'
@@ -39,7 +39,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'd1',
         nombre: 'Mini donas x4',
-        imagen: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=200&fit=crop',
+        imagen: 'https://i.pinimg.com/736x/57/4c/b7/574cb74e69958defd5b2fae7f70f23af.jpg',
         precio: 15000,
         descripcion: 'Pack de 4 mini donas con glaseado variado',
         categoria: 'donas'
@@ -47,7 +47,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'd2',
         nombre: 'Mini donas x9',
-        imagen: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=300&h=200&fit=crop',
+        imagen: 'https://i.pinimg.com/736x/ae/ee/df/aeeedf00b249fe03600d30ad8ed69bfa.jpg',
         precio: 25000,
         descripcion: 'Pack de 9 mini donas con diferentes sabores y coberturas',
         categoria: 'donas'
@@ -55,7 +55,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'd3',
         nombre: 'Mini donas x15',
-        imagen: 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=300&h=200&fit:crop',
+        imagen: 'https://i.pinimg.com/736x/de/bd/b8/debdb8444b386c8155246d2366da04ea.jpg',
         precio: 40000,
         descripcion: 'Pack familiar de 15 mini donas surtidas',
         categoria: 'donas'
@@ -91,7 +91,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'c2',
         nombre: 'Cupcake de Chocolate',
-        imagen: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&h=200&fit:crop',
+        imagen: 'https://i.pinimg.com/736x/7f/ee/25/7fee254ebbc03272b2f38ca2473f575f.jpg',
         precio: 6500,
         descripcion: 'Rico cupcake de chocolate con ganache',
         categoria: 'cupcakes'
@@ -101,7 +101,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       {
         id: 'a1',
         nombre: 'Arroz con Leche Tradicional',
-        imagen: 'https://images.unsplash.com/photo-1544375354-38609de07ad6?w=300&h=200&fit=crop',
+        imagen: 'https://i.pinimg.com/736x/39/5d/d8/395dd87946906f0570ef9e2d104e859f.jpg',
         precio: 5000,
         descripcion: 'Cremoso arroz con leche con canela y pasas',
         categoria: 'arroz'

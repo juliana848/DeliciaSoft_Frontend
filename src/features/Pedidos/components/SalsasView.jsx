@@ -6,37 +6,37 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
     {
       id: 1,
       nombre: 'Arequipe',
-      imagen: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/ed/d3/35/edd3357867f3ccc9b84df746d2941f97.jpg',
       precio: 2500
     },
     {
       id: 2,
       nombre: 'Lechera',
-      imagen: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/0f/6c/7f/0f6c7f676e02bae61c1ba3f96634dc4a.jpg',
       precio: 2000
     },
     {
       id: 3,
       nombre: 'Salsa de Mora',
-      imagen: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/3e/ee/58/3eee581de7ecd7962a275100fed03a0f.jpg',
       precio: 2200
     },
     {
       id: 4,
-      nombre: 'Chocolate Caliente',
-      imagen: 'https://images.unsplash.com/photo-1541518176711-62ba5067f206?w=400&h=400&fit=crop&crop=center',
+      nombre: 'Salsa de Chocolate',
+      imagen: 'https://i.pinimg.com/736x/fd/8d/50/fd8d50f4c111ae95257d79fd16142876.jpg',
       precio: 2800
     },
     {
       id: 5,
       nombre: 'Salsa de Fresa',
-      imagen: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/5b/88/aa/5b88aa145b8dcfe733b4006b5ff39dba.jpg',
       precio: 2200
     },
     {
       id: 6,
       nombre: 'Caramelo',
-      imagen: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop&crop=center',
+      imagen: 'https://i.pinimg.com/736x/d2/f2/36/d2f23694b64c62e240b2b8dbb22b5a6a.jpg',
       precio: 2600
     }
   ]);

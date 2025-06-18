@@ -41,17 +41,67 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
     }
   ]);
 
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+
+  const showCustomAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 3000);
+  };
+
   const calcularTotalSalsas = () => {
     return selectedItems.reduce((total, item) => total + item.precio, 0);
   };
 
+  const handleItemToggle = (salsa) => {
+    const isSelected = selectedItems.some(item => item.id === salsa.id);
+
+    if (isSelected) {
+      onItemToggle(salsa); // Deselect if already selected
+    } else {
+      if (selectedItems.length === 2) { // If two salsas are already selected, and user tries to add a third
+        showCustomAlert('info', 'A partir de la tercera salsa, cada una tendrá un costo adicional.');
+      }
+      onItemToggle(salsa); // Always allow selection, the alert is just a warning.
+    }
+  };
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
+      {/* Alerta personalizada */}
+      {showAlert.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 2000,
+            padding: '1rem 1.5rem',
+            borderRadius: '15px',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            minWidth: '300px',
+            background:
+              showAlert.type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : showAlert.type === 'info'
+                ? 'linear-gradient(135deg, #2196F3, #1976D2)' // Blue gradient for info
+                : 'linear-gradient(135deg, #ec4899, #be185d)', // Default error pink
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'slideInRight 0.5s ease-out'
+          }}
+        >
+          {showAlert.message}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ 
-          fontSize: '28px', 
-          fontWeight: 'bold', 
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
           color: '#2c3e50',
           marginBottom: '10px',
           background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
@@ -76,9 +126,9 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         <div style={{ marginBottom: '20px' }}>
           {salsas.map(salsa => {
             const isSelected = selectedItems.some(item => item.id === salsa.id);
-            
+
             return (
-              <div 
+              <div
                 key={salsa.id}
                 style={{
                   display: 'flex',
@@ -94,7 +144,7 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                   transform: isSelected ? 'translateY(-2px)' : 'none',
                   boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
                 }}
-                onClick={() => onItemToggle(salsa)}
+                onClick={() => handleItemToggle(salsa)}
               >
                 <div style={{
                   width: '60px',
@@ -104,9 +154,9 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                   overflow: 'hidden',
                   flexShrink: 0
                 }}>
-                  <img 
-                    src={salsa.imagen} 
-                    alt={salsa.nombre} 
+                  <img
+                    src={salsa.imagen}
+                    alt={salsa.nombre}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -117,26 +167,26 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                     }}
                   />
                 </div>
-                
+
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    fontSize: '16px', 
-                    fontWeight: 'bold', 
-                    color: '#2c3e50', 
-                    margin: '0 0 5px 0' 
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#2c3e50',
+                    margin: '0 0 5px 0'
                   }}>
                     {salsa.nombre}
                   </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#e91e63', 
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#e91e63',
                     fontWeight: '600',
-                    margin: 0 
+                    margin: 0
                   }}>
                     ${salsa.precio.toLocaleString()}
                   </p>
                 </div>
-                
+
                 <div style={{
                   width: '30px',
                   height: '30px',
@@ -168,16 +218,16 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           marginBottom: '20px'
         }}>
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: 'bold', 
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
             color: '#2c3e50',
             marginBottom: '15px',
             margin: '0 0 15px 0'
           }}>
             Salsas Seleccionadas ({selectedItems.length})
           </h3>
-          
+
           <div style={{ marginBottom: '15px' }}>
             {selectedItems.map(item => (
               <div key={item.id} style={{
@@ -194,7 +244,7 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
               </div>
             ))}
           </div>
-          
+
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -218,7 +268,7 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         alignItems: 'center',
         gap: '15px'
       }}>
-        <button 
+        <button
           onClick={onBack}
           style={{
             padding: '15px 25px',
@@ -235,8 +285,8 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         >
           ← Anterior
         </button>
-        
-        <button 
+
+        <button
           onClick={onContinue}
           style={{
             padding: '15px 25px',

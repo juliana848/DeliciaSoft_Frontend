@@ -6,46 +6,95 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
     {
       id: 1,
       nombre: 'Galletas de Chocolate',
-      imagen: '/images/galletas-chocolate.jpg',
-      precio: 2000
+      imagen: 'https://www.rawpixel.com/image/15350095/delicious-chocolate-chip-cookies-stack', //
+      precio: 0 // Precio cambiado a 0
     },
     {
       id: 2,
       nombre: 'Granola de Canela',
-      imagen: '/images/granola-canela.jpg',
-      precio: 1500
+      imagen: 'https://www.shutterstock.com/image-photo/bowl-cinnamon-maple-granola-isolated-260nw-2195982823.jpg', //
+      precio: 0 // Precio cambiado a 0
     },
     {
       id: 3,
       nombre: 'Maní',
-      imagen: '/images/mani.jpg',
-      precio: 1000
+      imagen: 'https://www.shutterstock.com/image-photo/against-white-background-various-peanutsincl-260nw-2337622877.jpg', //
+      precio: 0 // Precio cambiado a 0
     },
     {
       id: 4,
       nombre: 'Chispas',
-      imagen: '/images/chispas.jpg',
-      precio: 800
+      imagen: 'https://www.istockphoto.com/photo/chocolate-sprinkles-gm600647898-103332463', //
+      precio: 0 // Precio cambiado a 0
     },
     {
       id: 5,
       nombre: 'Oreo',
-      imagen: '/images/oreo.jpg',
-      precio: 2500
+      imagen: 'https://commons.wikimedia.org/wiki/File:Oreo_cookies.JPG', //
+      precio: 0 // Precio cambiado a 0
     }
   ]);
+
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+
+  const showCustomAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 3000);
+  };
 
   const calcularTotalToppings = () => {
     return selectedItems.reduce((total, item) => total + item.precio, 0);
   };
 
+  const handleItemToggle = (topping) => {
+    const isSelected = selectedItems.some(item => item.id === topping.id);
+
+    if (isSelected) {
+      onItemToggle(topping); // Deselect if already selected
+    } else {
+      if (selectedItems.length < 3) {
+        onItemToggle(topping); // Select if less than 3 are selected
+      } else {
+        showCustomAlert('error', 'Solo puedes seleccionar un máximo de 3 toppings.');
+      }
+    }
+  };
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
+      {/* Alerta personalizada */}
+      {showAlert.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 2000,
+            padding: '1rem 1.5rem',
+            borderRadius: '15px',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            minWidth: '300px',
+            background:
+              showAlert.type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'linear-gradient(135deg, #ec4899, #be185d)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'slideInRight 0.5s ease-out'
+          }}
+        >
+          {showAlert.message}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ 
-          fontSize: '28px', 
-          fontWeight: 'bold', 
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
           color: '#2c3e50',
           marginBottom: '10px',
           background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
@@ -55,7 +104,7 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
           Selecciona Toppings
         </h1>
         <p style={{ color: '#7f8c8d', fontSize: '16px' }}>
-          Personaliza tu pedido con deliciosos toppings
+          Personaliza tu pedido con deliciosos toppings (Máximo 3, ¡son gratis!)
         </p>
       </div>
 
@@ -70,9 +119,9 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         <div style={{ marginBottom: '20px' }}>
           {toppings.map(topping => {
             const isSelected = selectedItems.some(item => item.id === topping.id);
-            
+
             return (
-              <div 
+              <div
                 key={topping.id}
                 style={{
                   display: 'flex',
@@ -88,7 +137,7 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                   transform: isSelected ? 'translateY(-2px)' : 'none',
                   boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
                 }}
-                onClick={() => onItemToggle(topping)}
+                onClick={() => handleItemToggle(topping)}
               >
                 <div style={{
                   width: '60px',
@@ -98,9 +147,9 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                   overflow: 'hidden',
                   flexShrink: 0
                 }}>
-                  <img 
-                    src={topping.imagen} 
-                    alt={topping.nombre} 
+                  <img
+                    src={topping.imagen}
+                    alt={topping.nombre}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -111,26 +160,26 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
                     }}
                   />
                 </div>
-                
+
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    fontSize: '16px', 
-                    fontWeight: 'bold', 
-                    color: '#2c3e50', 
-                    margin: '0 0 5px 0' 
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#2c3e50',
+                    margin: '0 0 5px 0'
                   }}>
                     {topping.nombre}
                   </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#e91e63', 
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#e91e63',
                     fontWeight: '600',
-                    margin: 0 
+                    margin: 0
                   }}>
                     ${topping.precio.toLocaleString()}
                   </p>
                 </div>
-                
+
                 <div style={{
                   width: '30px',
                   height: '30px',
@@ -162,16 +211,16 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           marginBottom: '20px'
         }}>
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: 'bold', 
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
             color: '#2c3e50',
             marginBottom: '15px',
             margin: '0 0 15px 0'
           }}>
             Toppings Seleccionados ({selectedItems.length})
           </h3>
-          
+
           <div style={{ marginBottom: '15px' }}>
             {selectedItems.map(item => (
               <div key={item.id} style={{
@@ -188,7 +237,7 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
               </div>
             ))}
           </div>
-          
+
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -212,7 +261,7 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         alignItems: 'center',
         gap: '15px'
       }}>
-        <button 
+        <button
           onClick={onBack}
           style={{
             padding: '15px 25px',
@@ -229,8 +278,8 @@ const ToppingsView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         >
           ← Anterior
         </button>
-        
-        <button 
+
+        <button
           onClick={onContinue}
           style={{
             padding: '15px 25px',

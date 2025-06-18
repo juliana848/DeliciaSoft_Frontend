@@ -1,3 +1,167 @@
+/* Dynamic Alert Styles */
+.alerta-dinamica {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  min-width: 300px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alerta-dinamica.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.alerta-dinamica.error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.alerta-dinamica.warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.alerta-mensaje {
+  flex: 1;
+  font-weight: 500;
+}
+
+.alerta-cerrar {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.alerta-cerrar:hover {
+  opacity: 1;
+}
+
+.pedido-vacio {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.btn-agregar-producto {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.btn-agregar-producto:hover {
+  background: #0056b3;
+}
+
+.producto-sin-extras {
+  padding: 15px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.producto-sin-extras p {
+  margin: 0;
+  color: #856404;
+  font-style: italic;
+}
+
+.comentarios-contador {
+  display: block;
+  text-align: right;
+  margin-top: 5px;
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.detalles-seccion h5 {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-eliminar-item:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-eliminar-producto:hover {
+  transform: scale(1.1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  /* Removed background color for transparency */
+  background: transparent;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  transform: translateY(-20px);
+  animation: fadeInScale 0.3s ease-out forwards;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Confirmation View Styles */
 .confirmacion-view {
   max-width: 1200px;
   margin: 0 auto;
@@ -10,7 +174,6 @@
   background: white;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
 .seccion-header {

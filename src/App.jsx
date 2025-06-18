@@ -7,10 +7,17 @@ import Inicio from './features/Home/pages/Inicio';
 import Conocenos from './features/Conocenos/pages/Conocenos';
 import Contactenos from './features/Contactenos/pages/Contactenos';
 import Cartas from './features/Cartas/pages/Cartas';
-import ProductoDetalle from "./features/Cartas/pages/Detallefresas";
+import ProductoDetalle from "./features/Cartas/pages/DetalleFresas";
 import Sedes from './features/Sedes/pages/Sedes';
 import Pedidos from './features/Pedidos/pages/Pedidos';
 import Login from './features/log/login';
+import DetalleObleas from "./features/Cartas/pages/DetalleObleas";
+import DetalleMiniDonas from "./features/Cartas/pages/DetalleMiniDonas";
+import DetalleCupcake from "./features/Cartas/pages/DetalleCupcake";
+import detallesArroz from "./features/Cartas/pages/DetallesArrozConLeche";
+import detallesPostres from "./features/Cartas/pages/detallePostres";
+import detallesSandwiches from "./features/Cartas/pages/detallesSandwis";
+import detallesChocolates from "./features/Cartas/pages/detallesChocolates";
 
 // Importar páginas de Cliente
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
@@ -103,8 +110,15 @@ function AppContent() {
             <Route path="/conocenos" element={<Conocenos />} />
             <Route path="/contactenos" element={<Contactenos />} />
             <Route path="/cartas" element={<Cartas />} />
-            <Route path="/producto/:nombre" element={<ProductoDetalle />} />
-            <Route path="/sedes" element={<Sedes />} />
+            {/* <Route path="/producto/:nombre" element={<ProductoDetalle />} /> */}
+            <Route path="/detalle-fresas" element={<ProductoDetalle />} />
+            <Route path="/detalle-obleas" element={<DetalleObleas />} />
+            <Route path="/detalle-mini-donas" element={<DetalleMiniDonas />} />
+            <Route path="/detalle-cupcake" element={<DetalleCupcake/>} />
+            <Route path="/detalle-arroz" element={<detallesArroz />} />
+            <Route path="/detalle-postres" element={<detallesPostres />} />
+            <Route path="/detalle-sandwiches" element={<detallesSandwiches />} />
+            <Route path="/detalle-chocolates" element={<detallesChocolates />} />
             <Route path="/pedidos" element={<Pedidos />} />
             {isAuthenticated && userRole === 'cliente' && (
               <Route path="/perfil" element={<PerfilCliente />} />

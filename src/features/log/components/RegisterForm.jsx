@@ -513,7 +513,7 @@ const RegisterForm = () => {
         }
 
         .prev-button:hover {
-          background-color: rgba(255, 255, 255, 0.2);
+          background-color: rgb(255, 255, 255);
         }
 
         .next-button {
@@ -531,7 +531,7 @@ const RegisterForm = () => {
           font-size: 11px;
           color: rgba(255, 255, 255, 0.8);
           margin-top: 10px;
-          background-color: rgba(0, 0, 0, 0.2);
+          background-color: rgba(255, 255, 255, 0.2);
           padding: 10px;
           border-radius: 5px;
           border: 1px solid rgba(255, 255, 255, 0.1);

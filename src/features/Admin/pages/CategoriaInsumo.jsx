@@ -154,7 +154,7 @@ export default function CategoriaTableDemo() {
         <Column
           header="N°"
           body={(_, { rowIndex }) => rowIndex + 1}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '4rem' }}
           bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
         <Column
@@ -177,7 +177,7 @@ export default function CategoriaTableDemo() {
               onChange={() => toggleActivo(rowData)}
             />
           )}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '4rem' }}
           bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
         <Column
@@ -195,7 +195,7 @@ export default function CategoriaTableDemo() {
               </button>
             </>
           )}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
+          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '6rem' }}
           bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
       </DataTable>

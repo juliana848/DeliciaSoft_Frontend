@@ -21,6 +21,7 @@ export default function Clientes() {
     apellido: '',
     correo: '',
     contrasena: '',
+    confirmarContrasena: '', // Nuevo campo
     direccion: '',
     barrio: '',
     ciudad: '',
@@ -140,6 +141,7 @@ export default function Clientes() {
         apellido: '',
         correo: '',
         contrasena: '',
+        confirmarContrasena: '', // Limpiar confirmación
         direccion: '',
         barrio: '',
         ciudad: '',
@@ -155,6 +157,7 @@ export default function Clientes() {
         apellido: cliente.apellido,
         correo: cliente.correo,
         contrasena: cliente.contrasena,
+        confirmarContrasena: '', // No llenar confirmación en editar
         direccion: cliente.direccion,
         barrio: cliente.barrio,
         ciudad: cliente.ciudad,
@@ -178,6 +181,7 @@ export default function Clientes() {
       apellido: '',
       correo: '',
       contrasena: '',
+      confirmarContrasena: '', // Limpiar confirmación
       direccion: '',
       barrio: '',
       ciudad: '',
@@ -192,7 +196,7 @@ export default function Clientes() {
   };
 
   const validarFormulario = () => {
-    const { numeroDocumento, nombre, apellido, correo, celular, contrasena, fechaNacimiento } = formData;
+    const { numeroDocumento, nombre, apellido, correo, celular, contrasena, confirmarContrasena, fechaNacimiento } = formData;
     
     if (!numeroDocumento.trim()) {
       showNotification('El número de documento es obligatorio', 'error');
@@ -229,9 +233,30 @@ export default function Clientes() {
     }
     
     // Validar contraseña (solo para agregar o si se está editando y hay contraseña)
-    if (modalTipo === 'agregar' || (modalTipo === 'editar' && contrasena.trim())) {
+    if (modalTipo === 'agregar') {
+      if (!contrasena.trim()) {
+        showNotification('La contraseña es obligatoria', 'error');
+        return false;
+      }
       if (contrasena.length < 8) {
         showNotification('La contraseña debe tener al menos 8 caracteres', 'error');
+        return false;
+      }
+      if (!confirmarContrasena.trim()) {
+        showNotification('Debe confirmar la contraseña', 'error');
+        return false;
+      }
+      if (contrasena !== confirmarContrasena) {
+        showNotification('Las contraseñas no coinciden', 'error');
+        return false;
+      }
+    } else if (modalTipo === 'editar' && contrasena.trim()) {
+      if (contrasena.length < 8) {
+        showNotification('La contraseña debe tener al menos 8 caracteres', 'error');
+        return false;
+      }
+      if (confirmarContrasena.trim() && contrasena !== confirmarContrasena) {
+        showNotification('Las contraseñas no coinciden', 'error');
         return false;
       }
     }
@@ -287,12 +312,18 @@ export default function Clientes() {
         estado: true // Siempre activo al crear
       };
       
+      // Remover confirmarContrasena antes de guardar
+      delete nuevoCliente.confirmarContrasena;
+      
       setClientes([...clientes, nuevoCliente]);
       showNotification('Cliente agregado exitosamente');
     } else if (modalTipo === 'editar') {
+      const clienteActualizado = { ...formData };
+      delete clienteActualizado.confirmarContrasena; // Remover confirmación
+      
       const updated = clientes.map(c =>
         c.idCliente === clienteSeleccionado.idCliente 
-          ? { ...c, ...formData }
+          ? { ...c, ...clienteActualizado }
           : c
       );
       setClientes(updated);
@@ -425,7 +456,9 @@ export default function Clientes() {
         
         {/* Fila 1: Tipo de Documento y Número de Documento */}
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Tipo de Documento:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Tipo de Documento: <span style={{ color: 'red' }}>*</span>
+          </label>
           <select
             value={formData.tipoDocumento}
             onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
@@ -440,7 +473,9 @@ export default function Clientes() {
         </div>
 
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>N° Documento:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            N° Documento: <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type="text"
             value={formData.numeroDocumento}
@@ -453,7 +488,9 @@ export default function Clientes() {
 
         {/* Fila 2: Nombre y Apellido */}
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Nombre:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Nombre: <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type="text"
             value={formData.nombre}
@@ -465,7 +502,9 @@ export default function Clientes() {
         </div>
 
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Apellido:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Apellido: <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type="text"
             value={formData.apellido}
@@ -476,9 +515,11 @@ export default function Clientes() {
           />
         </div>
 
-        {/* Fila 3: Correo y Contraseña */}
+        {/* Fila 3: Correo y Celular */}
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Correo:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Correo: <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type="email"
             value={formData.correo}
@@ -490,7 +531,24 @@ export default function Clientes() {
         </div>
 
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Contraseña:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Celular: <span style={{ color: 'red' }}>*</span>
+          </label>
+          <input
+            type="tel"
+            value={formData.celular}
+            onChange={(e) => handleInputChange('celular', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={20}
+          />
+        </div>
+
+        {/* Fila 4: Contraseña y espacio vacío (o fecha nacimiento si no hay contraseña) */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Contraseña: {modalTipo === 'agregar' && <span style={{ color: 'red' }}>*</span>}
+          </label>
           <input
             type="password"
             value={formData.contrasena}
@@ -499,44 +557,6 @@ export default function Clientes() {
             style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
             placeholder={modalTipo === 'editar' ? 'Opcional (mín. 8 caracteres)' : 'Mínimo 8 caracteres'}
             maxLength={20}
-          />
-        </div>
-
-        {/* Fila 4: Dirección y Barrio */}
-        <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Dirección:</label>
-          <input
-            type="text"
-            value={formData.direccion}
-            onChange={(e) => handleInputChange('direccion', e.target.value)}
-            className="modal-input text-sm p-1"
-            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-            maxLength={50}
-          />
-        </div>
-
-        <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
-          <input
-            type="text"
-            value={formData.barrio}
-            onChange={(e) => handleInputChange('barrio', e.target.value)}
-            className="modal-input text-sm p-1"
-            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-            maxLength={30}
-          />
-        </div>
-
-        {/* Fila 5: Ciudad y Fecha de Nacimiento */}
-        <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
-          <input
-            type="text"
-            value={formData.ciudad}
-            onChange={(e) => handleInputChange('ciudad', e.target.value)}
-            className="modal-input text-sm p-1"
-            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-            maxLength={30}
           />
         </div>
 
@@ -551,16 +571,58 @@ export default function Clientes() {
           />
         </div>
 
-        {/* Fila 6: Celular y Estado (solo para editar) */}
+        {/* Fila 5: Confirmar Contraseña (solo en agregar) y Dirección */}
+        {modalTipo === 'agregar' && (
+          <div className="modal-field">
+            <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+              Confirmar Contraseña: <span style={{ color: 'red' }}>*</span>
+            </label>
+            <input
+              type="password"
+              value={formData.confirmarContrasena}
+              onChange={(e) => handleInputChange('confirmarContrasena', e.target.value)}
+              className="modal-input text-sm p-1"
+              style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+              placeholder="Confirme la contraseña"
+              maxLength={20}
+            />
+          </div>
+        )}
+
         <div className="modal-field">
-          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Celular:</label>
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Dirección:</label>
           <input
-            type="tel"
-            value={formData.celular}
-            onChange={(e) => handleInputChange('celular', e.target.value)}
+            type="text"
+            value={formData.direccion}
+            onChange={(e) => handleInputChange('direccion', e.target.value)}
             className="modal-input text-sm p-1"
             style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-            maxLength={20}
+            maxLength={50}
+          />
+        </div>
+
+        {/* Fila 6: Barrio y Ciudad */}
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
+          <input
+            type="text"
+            value={formData.barrio}
+            onChange={(e) => handleInputChange('barrio', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
+          />
+        </div>
+
+        <div className="modal-field">
+          <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
+          <input
+            type="text"
+            value={formData.ciudad}
+            onChange={(e) => handleInputChange('ciudad', e.target.value)}
+            className="modal-input text-sm p-1"
+            style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+            maxLength={30}
           />
         </div>
 

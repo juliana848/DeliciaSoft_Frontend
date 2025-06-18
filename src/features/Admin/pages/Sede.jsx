@@ -401,7 +401,7 @@ export default function SedesTable() {
           type="button"
           style={{ padding: "10px 18px", fontSize: "15px", fontWeight: "500" }}
         >
-          + Agregar Sede
+          + Agregar
         </button>
         <SearchBar
           placeholder="Buscar sede..."

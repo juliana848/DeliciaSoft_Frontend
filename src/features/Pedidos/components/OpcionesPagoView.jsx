@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import './OpcionesPagoView.css';
 
 const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada }) => {
@@ -8,9 +8,13 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
   const [comprobante, setComprobante] = useState(null);
   const [errorComprobante, setErrorComprobante] = useState('');
   const [numeroPedido] = useState(() => {
-    // Generar número de pedido único
     return `PED-${Date.now().toString().slice(-6)}`;
   });
+
+  // Nuevo estado para la alerta personalizada
+  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+  // Estado para la alerta de subida de imagen
+  const [showImageUploadAlert, setShowImageUploadAlert] = useState(false);
 
   // Calcular totales
   const subtotal = total || 0;
@@ -26,18 +30,27 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
       horario: '9:00 AM - 6:00 PM'
     },
     {
-      id: 'san-pablo', 
+      id: 'san-pablo',
       nombre: 'San Pablo',
       direccion: 'Carrera 15 #12-45',
       horario: '10:00 AM - 7:00 PM'
     }
   ];
 
+  // Función para mostrar la alerta personalizada
+  const triggerAlert = (type, message) => {
+    setShowAlert({ show: true, type, message });
+    setTimeout(() => {
+      setShowAlert({ show: false, type: '', message: '' });
+    }, 5000); // La alerta se oculta después de 5 segundos
+  };
+
   const handleMetodoPago = (metodo) => {
     setMetodoPago(metodo);
     setErrorComprobante('');
     setComprobante(null);
-    
+    setShowImageUploadAlert(false); // Hide image upload alert when changing method
+
     if (metodo === 'transferencia') {
       setMostrarDatosBanco(true);
       setSedeSeleccionada('');
@@ -49,9 +62,9 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     setErrorComprobante('');
-    
+    setShowImageUploadAlert(false); // Hide previous image upload alert
+
     if (file) {
-      // Validar tipo de archivo
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         setErrorComprobante('Solo se permiten archivos de imagen (JPG, PNG, WEBP)');
@@ -59,7 +72,6 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
         return;
       }
 
-      // Validar tamaño (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setErrorComprobante('El archivo es demasiado grande. Máximo 5MB.');
         setComprobante(null);
@@ -67,27 +79,24 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
       }
 
       setComprobante(file);
+      setShowImageUploadAlert(true); // Show success alert
+      setTimeout(() => {
+        setShowImageUploadAlert(false);
+      }, 3000); // Hide success alert after 3 seconds
     }
   };
 
   const copiarDatos = () => {
-    const datos = `Banco Bancolombia
-Ahorro
-Cuenta: 123-456-789
-Cédula: 12.345.678
-Nombre: Juan Pérez
-Nequi: 300 123 45 67
-Valor a transferir: $${abono.toLocaleString()}`;
-    
+    const datos = `Banco Bancolombia\nAhorro\nCuenta: 123-456-789\nCédula: 12.345.678\nNombre: Juan Pérez\nNequi: 300 123 45 67\nValor a transferir: $${abono.toLocaleString()}`;
+
     navigator.clipboard.writeText(datos).then(() => {
-      alert('Datos copiados al portapapeles');
+      triggerAlert('success', '✅ Datos bancarios copiados al portapapeles');
     });
   };
 
   const mostrarAlertaEfectivo = () => {
     const sedeInfo = sedes.find(sede => sede.id === sedeSeleccionada);
-    const mensaje = `🏪 INFORMACIÓN IMPORTANTE
-
+    const mensaje = `
 📋 Número de Pedido: ${numeroPedido}
 📍 Sede: ${sedeInfo.nombre}
 📍 Dirección: ${sedeInfo.direccion}
@@ -96,17 +105,15 @@ Valor a transferir: $${abono.toLocaleString()}`;
 
 ⚠️ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
-    alert(mensaje);
+    triggerAlert('info', mensaje); // Use the custom alert for this
   };
 
   const procesarPago = () => {
-    // Validar método de pago
     if (!metodoPago) {
-      alert('❌ Por favor selecciona un método de pago');
+      triggerAlert('error', '❌ Por favor selecciona un método de pago.');
       return;
     }
 
-    // Validar transferencia
     if (metodoPago === 'transferencia') {
       if (!comprobante) {
         setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
@@ -114,35 +121,63 @@ Valor a transferir: $${abono.toLocaleString()}`;
       }
     }
 
-    // Validar efectivo
     if (metodoPago === 'efectivo') {
       if (!sedeSeleccionada) {
-        alert('❌ Por favor selecciona una sede para el pago en efectivo');
+        triggerAlert('error', '❌ Por favor selecciona una sede para el pago en efectivo.');
         return;
       }
-      
-      // Mostrar alerta con información del pedido
-      mostrarAlertaEfectivo();
+      mostrarAlertaEfectivo(); // This will now trigger the custom alert
     }
 
-    // Guardar información del pago
     const datosPago = {
       metodo: metodoPago,
       sede: sedeSeleccionada,
       abono: abono,
       total: totalFinal,
       numeroPedido: numeroPedido,
-      comprobante: comprobante
+      comprobante: comprobante // Note: In a real app, you'd upload this file to a server
     };
 
     onOpcionSeleccionada(datosPago);
-
-    // Completar pedido
     onPedidoCompletado();
+    triggerAlert('success', '🎉 ¡Pedido completado con éxito! Revisa la información de pago.');
   };
 
   return (
     <div className="opciones-pago-view">
+      {/* Alerta personalizada */}
+      {showAlert.show && (
+        <div className={`custom-alert ${showAlert.type}`}>
+          <span className="alert-icon">
+            {showAlert.type === 'success' && '✅'}
+            {showAlert.type === 'error' && '❌'}
+            {showAlert.type === 'info' && 'ℹ️'}
+          </span>
+          <div className="alert-message">
+            {showAlert.message.split('\n').map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
+          </div>
+          <button className="close-alert-btn" onClick={() => setShowAlert({ show: false, type: '', message: '' })}>
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Alerta de imagen subida */}
+      {showImageUploadAlert && (
+        <div className="custom-alert success image-upload-alert">
+          <span className="alert-icon">📸</span>
+          <div className="alert-message">
+            <p>¡Imagen subida correctamente!</p>
+            <p className="file-name-display">{comprobante?.name}</p>
+          </div>
+          <button className="close-alert-btn" onClick={() => setShowImageUploadAlert(false)}>
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="pago-contenido">
         <div className="seccion-header">
           <h2 className="seccion-title">💳 Opciones de Pago</h2>
@@ -158,7 +193,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
         {/* Resumen del pedido */}
         <div className="resumen-pago">
           <h3 className="resumen-title">📋 Resumen del Pedido</h3>
-          
+
           <div className="productos-lista">
             {pedido.productos.map((producto, index) => (
               <div key={index} className="producto-pago-item">
@@ -167,8 +202,8 @@ Valor a transferir: $${abono.toLocaleString()}`;
                 <span className="producto-precio">${(producto.precio * producto.cantidad).toLocaleString()}</span>
               </div>
             ))}
-            
-            {pedido.toppings.length > 0 && (
+
+            {pedido.toppings && pedido.toppings.length > 0 && (
               <div className="extras-section">
                 <span className="extras-title">Toppings:</span>
                 {pedido.toppings.map((topping, index) => (
@@ -179,8 +214,8 @@ Valor a transferir: $${abono.toLocaleString()}`;
                 ))}
               </div>
             )}
-            
-            {pedido.adiciones.length > 0 && (
+
+            {pedido.adiciones && pedido.adiciones.length > 0 && (
               <div className="extras-section">
                 <span className="extras-title">Adiciones:</span>
                 {pedido.adiciones.map((adicion, index) => (
@@ -216,14 +251,14 @@ Valor a transferir: $${abono.toLocaleString()}`;
         {/* Métodos de pago */}
         <div className="metodos-pago">
           <h3 className="metodos-title">Selecciona tu método de pago</h3>
-          
+
           <div className="metodos-grid">
             {/* Transferencia */}
             <div className={`metodo-card ${metodoPago === 'transferencia' ? 'selected' : ''}`}>
               <label className="metodo-label">
-                <input 
-                  type="radio" 
-                  name="metodoPago" 
+                <input
+                  type="radio"
+                  name="metodoPago"
                   value="transferencia"
                   checked={metodoPago === 'transferencia'}
                   onChange={() => handleMetodoPago('transferencia')}
@@ -236,7 +271,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
                   </div>
                 </div>
               </label>
-              
+
               {mostrarDatosBanco && (
                 <div className="datos-banco">
                   <div className="banco-info">
@@ -278,8 +313,8 @@ Valor a transferir: $${abono.toLocaleString()}`;
                   <div className="comprobante-section">
                     <h5>📎 Subir Comprobante <span className="obligatorio">*</span></h5>
                     <div className="upload-area">
-                      <input 
-                        type="file" 
+                      <input
+                        type="file"
                         id="comprobante"
                         accept="image/*"
                         onChange={handleFileUpload}
@@ -314,9 +349,9 @@ Valor a transferir: $${abono.toLocaleString()}`;
             {/* Efectivo en sede */}
             <div className={`metodo-card ${metodoPago === 'efectivo' ? 'selected' : ''}`}>
               <label className="metodo-label">
-                <input 
-                  type="radio" 
-                  name="metodoPago" 
+                <input
+                  type="radio"
+                  name="metodoPago"
                   value="efectivo"
                   checked={metodoPago === 'efectivo'}
                   onChange={() => handleMetodoPago('efectivo')}
@@ -329,15 +364,15 @@ Valor a transferir: $${abono.toLocaleString()}`;
                   </div>
                 </div>
               </label>
-              
+
               {metodoPago === 'efectivo' && (
                 <div className="sedes-efectivo">
                   <h5>📍 Selecciona la sede: <span className="obligatorio">*</span></h5>
                   {sedes.map(sede => (
                     <label key={sede.id} className={`sede-option ${sedeSeleccionada === sede.id ? 'selected' : ''}`}>
-                      <input 
-                        type="radio" 
-                        name="sede" 
+                      <input
+                        type="radio"
+                        name="sede"
                         value={sede.id}
                         checked={sedeSeleccionada === sede.id}
                         onChange={(e) => setSedeSeleccionada(e.target.value)}
@@ -349,7 +384,7 @@ Valor a transferir: $${abono.toLocaleString()}`;
                       </div>
                     </label>
                   ))}
-                  
+
                   {sedeSeleccionada && (
                     <div className="valor-efectivo">
                       <span className="valor-label">Valor a pagar:</span>
@@ -367,8 +402,8 @@ Valor a transferir: $${abono.toLocaleString()}`;
             <span className="btn-icon">←</span>
             Anterior
           </button>
-          <button 
-            className="btn-continuar" 
+          <button
+            className="btn-continuar"
             onClick={procesarPago}
             disabled={!metodoPago || (metodoPago === 'efectivo' && !sedeSeleccionada) || (metodoPago === 'transferencia' && !comprobante)}
           >

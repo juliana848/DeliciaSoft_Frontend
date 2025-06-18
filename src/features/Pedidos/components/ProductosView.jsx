@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
   const [categoriaActiva, setCategoriaActiva] = useState('donas');
   const [modalDetalle, setModalDetalle] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
-  const [showConfirmation, setShowConfirmation] = useState(false); // New state for confirmation dialog
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showAuthAlert, setShowAuthAlert] = useState(false); // Nueva alerta para autenticación
+  
+  const navigate = useNavigate();
 
   const categorias = [
     { id: 'fresas', nombre: 'Fresas con Crema', icon: '🍓' },
@@ -145,6 +149,12 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     ]
   };
 
+  // Función para verificar si el usuario está autenticado
+  const isUserAuthenticated = () => {
+    const token = localStorage.getItem('authToken');
+    return !!token; // Devuelve true si hay token, false si no
+  };
+
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -185,22 +195,38 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     setModalDetalle(null);
   };
 
-  // Modified continuar function to show confirmation
+  // Función modificada para verificar autenticación antes de continuar
   const continuar = () => {
     if (productosSeleccionados.length > 0) {
-      setShowConfirmation(true); // Show confirmation dialog
+      // Verificar si el usuario está autenticado
+      if (!isUserAuthenticated()) {
+        setShowAuthAlert(true); // Mostrar alerta de autenticación
+        return;
+      }
+      setShowConfirmation(true); // Mostrar confirmación si está autenticado
     } else {
       showCustomAlert('error', 'Por favor selecciona al menos un producto antes de continuar');
     }
   };
 
   const handleConfirmContinue = () => {
-    setShowConfirmation(false); // Close confirmation dialog
-    onSiguiente(); // Proceed to next step
+    setShowConfirmation(false);
+    onSiguiente();
   };
 
   const handleCancelContinue = () => {
-    setShowConfirmation(false); // Close confirmation dialog
+    setShowConfirmation(false);
+  };
+
+  // Función para manejar el ir al login
+  const handleGoToLogin = () => {
+    setShowAuthAlert(false);
+    navigate('/iniciar-sesion');
+  };
+
+  // Función para cancelar el ir al login
+  const handleCancelLogin = () => {
+    setShowAuthAlert(false);
   };
 
   const calcularTotal = () => {
@@ -506,7 +532,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
             </div>
             
             <button
-              onClick={continuar} // This will now trigger the confirmation dialog
+              onClick={continuar}
               style={{
                 padding: '15px 30px',
                 border: 'none',
@@ -624,7 +650,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1001 // Higher z-index to be above other modals
+          zIndex: 1001
         }}>
           <div style={{
             backgroundColor: 'white',
@@ -644,7 +670,6 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
               ¿Estás seguro que seleccionaste todo lo que deseas?
             </h3>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              {/* Inverted buttons */}
               <button
                 onClick={handleCancelContinue}
                 style={{
@@ -676,6 +701,90 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                 }}
               >
                 Sí, continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert de Autenticación */}
+      {showAuthAlert && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1002 // Más alto que otros modales
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '450px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '20px'
+            }}>
+              🔒
+            </div>
+            <h3 style={{ 
+              fontSize: '22px', 
+              fontWeight: 'bold', 
+              color: '#2c3e50',
+              marginBottom: '15px'
+            }}>
+              ¡Inicia sesión para continuar!
+            </h3>
+            <p style={{
+              fontSize: '16px',
+              color: '#7f8c8d',
+              marginBottom: '25px',
+              lineHeight: '1.5'
+            }}>
+              Para personalizar tu pedido y continuar con el proceso de compra, necesitas iniciar sesión en tu cuenta.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+              <button
+                onClick={handleCancelLogin}
+                style={{
+                  padding: '12px 25px',
+                  border: '2px solid #e74c3c',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  color: '#e74c3c',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGoToLogin}
+                style={{
+                  padding: '12px 25px',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
+                  color: 'white',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
+                }}
+              >
+                Iniciar Sesión
               </button>
             </div>
           </div>

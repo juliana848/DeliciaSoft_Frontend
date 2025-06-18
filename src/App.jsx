@@ -38,10 +38,6 @@ import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas.jsx';
 import SedesTable from './features/Admin/pages/Sede.jsx';
 
-
-
-
-
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
 import Layout from './shared/components/Layout/Layout/Layout.jsx';
@@ -71,7 +67,6 @@ function AppContent() {
     }
   }, [location]);
 
-
   const shouldShowSidebar = isAuthenticated && userRole === 'admin' && isAdminRoute;
   
   return (
@@ -96,8 +91,6 @@ function AppContent() {
             <Route path="/admin/pages/Produccion" element={<Produccion />} />
             <Route path="/admin/pages/Recetas" element={<RecetasTabla />} />
             <Route path="/admin/pages/Sede" element={<SedesTable />} />
-
-
           </Routes>
         </Layout>
       ) : (
@@ -111,6 +104,8 @@ function AppContent() {
             <Route path="/conocenos" element={<Conocenos />} />
             <Route path="/contactenos" element={<Contactenos />} />
             <Route path="/cartas" element={<Cartas />} />
+            <Route path="/sedes" element={<Sedes />} /> {/* ESTA LÍNEA FALTABA */}
+            <Route path="/pedidos" element={<Pedidos />} />
             {/* <Route path="/producto/:nombre" element={<ProductoDetalle />} /> */}
             <Route path="/detalle-fresas" element={<ProductoDetalle />} />
             <Route path="/detalle-obleas" element={<DetalleObleas />} />
@@ -120,7 +115,6 @@ function AppContent() {
             <Route path="/detalle-postres" element={<detallesPostres />} />
             <Route path="/detalle-sandwiches" element={<detallesSandwiches />} />
             <Route path="/detalle-chocolates" element={<detallesChocolates />} />
-            <Route path="/pedidos" element={<Pedidos />} />
             {isAuthenticated && userRole === 'cliente' && (
               <Route path="/perfil" element={<PerfilCliente />} />
             )}

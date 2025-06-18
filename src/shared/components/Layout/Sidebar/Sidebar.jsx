@@ -45,7 +45,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
       hasSubmenu: true,
       submenu: [
         { title: 'Clientes', path: '/admin/pages/Clientes', icon: 'bi bi-people' },
-        { title: 'Pedidos', path: '/admin/pedidos', icon: 'bi bi-bag-check' },
         { title: 'Sedes', path: '/admin/pages/Sede', icon: 'bi bi-geo-alt' },
         { title: 'Ventas', path: '/admin/pages/Ventas', icon: 'bi bi-graph-up' }
       ]
@@ -93,12 +92,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
       title: 'Cartas',
       icon: 'bi bi-card-list',
       path: '/cartas'
-    },
-    {
-      key: 'pedidos',
-      title: 'Mis Pedidos',
-      icon: 'bi bi-box-seam',
-      path: '/pedidos'
     },
     {
       key: 'sedes',

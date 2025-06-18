@@ -12,20 +12,98 @@ const Contactenos = () => {
   });
 
   const [showMessage, setShowMessage] = useState(false);
+  const [messageType, setMessageType] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validar nombre
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es obligatorio';
+    }
+
+    // Validar apellidos
+    if (!formData.apellidos.trim()) {
+      newErrors.apellidos = 'Los apellidos son obligatorios';
+    }
+
+    // Validar correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.correo.trim()) {
+      newErrors.correo = 'El correo electrónico es obligatorio';
+    } else if (!emailRegex.test(formData.correo)) {
+      newErrors.correo = 'El correo electrónico no es válido';
+    }
+
+    // Validar teléfono
+    const phoneRegex = /^\d{10}$/;
+    if (!formData.telefono.trim()) {
+      newErrors.telefono = 'El número de teléfono es obligatorio';
+    } else if (!phoneRegex.test(formData.telefono)) {
+      newErrors.telefono = 'El teléfono debe tener exactamente 10 números';
+    }
+
+    // Validar mensaje
+    if (!formData.mensaje.trim()) {
+      newErrors.mensaje = 'El mensaje es obligatorio';
+    }
+
+    return newErrors;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    
+    // Validación especial para teléfono - solo números
+    if (name === 'telefono') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length <= 10) {
+        setFormData({
+          ...formData,
+          [name]: numericValue
+        });
+      }
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    const formErrors = validateForm();
+    
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      setMessageType('error');
+      setAlertMessage('Por favor, corrige los errores en el formulario');
+      setShowMessage(true);
+      
+      setTimeout(() => {
+        setShowMessage(false);
+      }, 5000);
+      return;
+    }
+
     console.log('Datos del formulario:', formData);
     
+    setMessageType('success');
+    setAlertMessage('¡Mensaje enviado con éxito! Te contactaremos pronto.');
     setShowMessage(true);
+    setErrors({});
     
     setFormData({
       nombre: '',
@@ -37,7 +115,7 @@ const Contactenos = () => {
 
     setTimeout(() => {
       setShowMessage(false);
-    }, 3000);
+    }, 4000);
   };
 
   const handleSedesClick = () => {
@@ -51,14 +129,14 @@ const Contactenos = () => {
           <div className="row g-4">
             <div className="col-lg-7">
               <div className="bg-white rounded-4 shadow-sm p-4">
-                <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
-                  Envíanos tu mensaje!
+                <h2 className="fw-bold mb-4 text-center" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
+                  ¡Contáctanos!
                 </h2>
                 
                 {showMessage && (
-                  <div className="alert alert-success d-flex align-items-center" role="alert">
-                    <i className="bi bi-check-circle-fill me-2"></i>
-                    ¡Mensaje enviado con éxito!
+                  <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} d-flex align-items-center mb-4`} role="alert">
+                    <i className={`bi ${messageType === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} me-2`}></i>
+                    {alertMessage}
                   </div>
                 )}
                 
@@ -69,16 +147,20 @@ const Contactenos = () => {
                       name="nombre"
                       value={formData.nombre}
                       onChange={handleChange}
-                      placeholder="Nombre"
-                      className="form-control form-control-lg"
+                      placeholder="Nombre *"
+                      className={`form-control form-control-lg ${errors.nombre ? 'is-invalid' : ''}`}
                       style={{ 
                         backgroundColor: '#e5e7eb',
-                        border: 'none',
+                        border: errors.nombre ? '2px solid #dc3545' : 'none',
                         borderRadius: '12px',
                         padding: '15px 20px'
                       }}
-                      required
                     />
+                    {errors.nombre && (
+                      <div className="invalid-feedback d-block">
+                        <small>{errors.nombre}</small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">
@@ -87,16 +169,20 @@ const Contactenos = () => {
                       name="apellidos"
                       value={formData.apellidos}
                       onChange={handleChange}
-                      placeholder="Apellidos"
-                      className="form-control form-control-lg"
+                      placeholder="Apellidos *"
+                      className={`form-control form-control-lg ${errors.apellidos ? 'is-invalid' : ''}`}
                       style={{ 
                         backgroundColor: '#e5e7eb',
-                        border: 'none',
+                        border: errors.apellidos ? '2px solid #dc3545' : 'none',
                         borderRadius: '12px',
                         padding: '15px 20px'
                       }}
-                      required
                     />
+                    {errors.apellidos && (
+                      <div className="invalid-feedback d-block">
+                        <small>{errors.apellidos}</small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">
@@ -105,16 +191,20 @@ const Contactenos = () => {
                       name="correo"
                       value={formData.correo}
                       onChange={handleChange}
-                      placeholder="Correo electrónico"
-                      className="form-control form-control-lg"
+                      placeholder="Correo electrónico *"
+                      className={`form-control form-control-lg ${errors.correo ? 'is-invalid' : ''}`}
                       style={{ 
                         backgroundColor: '#e5e7eb',
-                        border: 'none',
+                        border: errors.correo ? '2px solid #dc3545' : 'none',
                         borderRadius: '12px',
                         padding: '15px 20px'
                       }}
-                      required
                     />
+                    {errors.correo && (
+                      <div className="invalid-feedback d-block">
+                        <small>{errors.correo}</small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-3">
@@ -123,16 +213,22 @@ const Contactenos = () => {
                       name="telefono"
                       value={formData.telefono}
                       onChange={handleChange}
-                      placeholder="Número de teléfono"
-                      className="form-control form-control-lg"
+                      placeholder="Número de teléfono (10 dígitos) *"
+                      className={`form-control form-control-lg ${errors.telefono ? 'is-invalid' : ''}`}
                       style={{ 
                         backgroundColor: '#e5e7eb',
-                        border: 'none',
+                        border: errors.telefono ? '2px solid #dc3545' : 'none',
                         borderRadius: '12px',
                         padding: '15px 20px'
                       }}
-                      required
+                      maxLength="10"
                     />
+                    {errors.telefono && (
+                      <div className="invalid-feedback d-block">
+                        <small>{errors.telefono}</small>
+                      </div>
+                    )}
+                    <small className="text-muted">Solo números, exactamente 10 dígitos</small>
                   </div>
                   
                   <div className="mb-4">
@@ -140,18 +236,22 @@ const Contactenos = () => {
                       name="mensaje"
                       value={formData.mensaje}
                       onChange={handleChange}
-                      placeholder="Déjanos tu mensaje aquí....."
+                      placeholder="Déjanos tu mensaje aquí... *"
                       rows="5"
-                      className="form-control form-control-lg"
+                      className={`form-control form-control-lg ${errors.mensaje ? 'is-invalid' : ''}`}
                       style={{ 
                         backgroundColor: '#e5e7eb',
-                        border: 'none',
+                        border: errors.mensaje ? '2px solid #dc3545' : 'none',
                         borderRadius: '12px',
                         padding: '15px 20px',
                         resize: 'vertical'
                       }}
-                      required
                     ></textarea>
+                    {errors.mensaje && (
+                      <div className="invalid-feedback d-block">
+                        <small>{errors.mensaje}</small>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="text-center">
@@ -177,13 +277,17 @@ const Contactenos = () => {
                       Enviar mensaje
                     </button>
                   </div>
+                  
+                  <div className="text-center mt-3">
+                    <small className="text-muted">* Campos obligatorios</small>
+                  </div>
                 </form>
               </div>
             </div>
             
             <div className="col-lg-5">
               <div className="h-100">
-                <h2 className="fw-bold mb-4" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
+                <h2 className="fw-bold mb-4 text-center" style={{ color: '#ec4899', fontSize: '1.8rem' }}>
                   CONTACTOS
                 </h2>
                 
@@ -233,7 +337,7 @@ const Contactenos = () => {
                     <span className="fw-semibold fs-5">@delicias_darsy</span>
                   </div>
                   
-                  <div className="d-flex align-items-start">
+                  <div className="d-flex align-items-center">
                     <div 
                       className="rounded-circle d-flex align-items-center justify-content-center me-3"
                       style={{ 
@@ -245,9 +349,29 @@ const Contactenos = () => {
                     >
                       <i className="bi bi-geo-alt-fill"></i>
                     </div>
-                    <div>
-                      <p className="fw-semibold fs-5 mb-1">Cra. 57 #51-83 ·</p>
-                      <p className="fw-semibold fs-5 mb-0">Cra. 37 # 97-27</p>
+                    <div className="d-flex flex-column">
+                      <span className="fw-semibold fs-6 mb-2">Nuestras ubicaciones:</span>
+                      <button 
+                        onClick={handleSedesClick}
+                        className="btn btn-outline-pink fw-semibold"
+                        style={{ 
+                          borderColor: '#ec4899',
+                          color: '#ec4899',
+                          borderRadius: '25px',
+                          padding: '8px 20px',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseOver={(e) => {
+                          e.target.style.backgroundColor = '#ec4899';
+                          e.target.style.color = 'white';
+                        }}
+                        onMouseOut={(e) => {
+                          e.target.style.backgroundColor = 'transparent';
+                          e.target.style.color = '#ec4899';
+                        }}
+                      >
+                        Ver nuestras sedes
+                      </button>
                     </div>
                   </div>
                 </div>

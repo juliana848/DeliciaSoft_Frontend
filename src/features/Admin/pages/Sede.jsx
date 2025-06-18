@@ -23,7 +23,6 @@ export default function SedesTable() {
     nombre: "",
     Direccion: "",
     Telefono: "",
-    horarios: "",
     activo: true,
   });
 
@@ -34,7 +33,6 @@ export default function SedesTable() {
         nombre: "San Pablo",
         Direccion: "Cra.37# 97-27",
         Telefono: "325888960",
-        horarios: "10:00am - 5:30pm",
         activo: true,
       },
       {
@@ -42,7 +40,6 @@ export default function SedesTable() {
         nombre: "San Benito",
         Direccion: "Cra.57# 51-83",
         Telefono: "3107412156",
-        horarios: "10:00am - 5:30pm",
         activo: true,
       },
     ];
@@ -77,7 +74,6 @@ export default function SedesTable() {
         nombre: "",
         Direccion: "",
         Telefono: "",
-        horarios: "",
         activo: true,
       });
     } else if (tipo === "editar" && usuario) {
@@ -96,7 +92,6 @@ export default function SedesTable() {
       nombre: "",
       Direccion: "",
       Telefono: "",
-      horarios: "",
       activo: true,
     });
   };
@@ -106,7 +101,7 @@ export default function SedesTable() {
   };
 
   const validarFormulario = () => {
-    const { nombre, Direccion, Telefono, horarios } = formData;
+    const { nombre, Direccion, Telefono } = formData;
 
     if (!nombre.trim()) {
       showNotification("El nombre es obligatorio", "error");
@@ -118,10 +113,6 @@ export default function SedesTable() {
     }
     if (!Telefono.trim()) {
       showNotification("El teléfono es obligatorio", "error");
-      return false;
-    }
-    if (!horarios.trim()) {
-      showNotification("El horario es obligatorio", "error");
       return false;
     }
 
@@ -164,9 +155,235 @@ export default function SedesTable() {
     (usr) =>
       usr.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
       usr.Direccion.toLowerCase().includes(filtro.toLowerCase()) ||
-      usr.Telefono.toLowerCase().includes(filtro.toLowerCase()) ||
-      usr.horarios.toLowerCase().includes(filtro.toLowerCase())
+      usr.Telefono.toLowerCase().includes(filtro.toLowerCase())
   );
+
+  const renderModal = () => {
+    if (!modalVisible) return null;
+
+    switch (modalTipo) {
+      case "agregar":
+        return (
+          <Modal visible={modalVisible} onClose={cerrarModal}>
+            <div className="modal-header">
+              <h2 className="modal-title">Agregar Sede</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-grid">
+                <div className="modal-field">
+                  <label className="modal-label">Nombre:</label>
+                  <input
+                    type="text"
+                    value={formData.nombre}
+                    onChange={(e) =>
+                      handleInputChange("nombre", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese el nombre de la sede"
+                  />
+                </div>
+                <div className="modal-field">
+                  <label className="modal-label">Dirección:</label>
+                  <input
+                    type="text"
+                    value={formData.Direccion}
+                    onChange={(e) =>
+                      handleInputChange("Direccion", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese la dirección"
+                  />
+                </div>
+                <div className="modal-field">
+                  <label className="modal-label">Teléfono:</label>
+                  <input
+                    type="text"
+                    value={formData.Telefono}
+                    onChange={(e) =>
+                      handleInputChange("Telefono", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese el teléfono"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer mt-2 flex justify-end gap-2">
+              <button
+                className="modal-btn cancel-btn text-sm px-3 py-1"
+                onClick={cerrarModal}
+              >
+                Cancelar
+              </button>
+              <button
+                className="modal-btn save-btn text-sm px-3 py-1"
+                onClick={guardarUsuario}
+              >
+                Guardar
+              </button>
+            </div>
+          </Modal>
+        );
+
+      case "editar":
+        return (
+          <Modal visible={modalVisible} onClose={cerrarModal}>
+            <div className="modal-header">
+              <h2 className="modal-title">Editar Sede</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-grid">
+                <div className="modal-field">
+                  <label className="modal-label">Nombre:</label>
+                  <input
+                    type="text"
+                    value={formData.nombre}
+                    onChange={(e) =>
+                      handleInputChange("nombre", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese el nombre de la sede"
+                  />
+                </div>
+                <div className="modal-field">
+                  <label className="modal-label">Dirección:</label>
+                  <input
+                    type="text"
+                    value={formData.Direccion}
+                    onChange={(e) =>
+                      handleInputChange("Direccion", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese la dirección"
+                  />
+                </div>
+                <div className="modal-field">
+                  <label className="modal-label">Teléfono:</label>
+                  <input
+                    type="text"
+                    value={formData.Telefono}
+                    onChange={(e) =>
+                      handleInputChange("Telefono", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese el teléfono"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer mt-2 flex justify-end gap-2">
+              <button
+                className="modal-btn cancel-btn text-sm px-3 py-1"
+                onClick={cerrarModal}
+              >
+                Cancelar
+              </button>
+              <button
+                className="modal-btn save-btn text-sm px-3 py-1"
+                onClick={guardarUsuario}
+              >
+                Guardar
+              </button>
+            </div>
+          </Modal>
+        );
+
+      case "ver":
+        return (
+          <Modal visible={modalVisible} onClose={cerrarModal}>
+            <div className="modal-header">
+              <h2 className="modal-title">Detalles de la Sede</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-details">
+                <div className="detail-row">
+                  <span className="detail-label">ID:</span>
+                  <span className="detail-value">
+                    {usuarioSeleccionado?.id}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Nombre:</span>
+                  <span className="detail-value">
+                    {usuarioSeleccionado?.nombre}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Dirección:</span>
+                  <span className="detail-value">
+                    {usuarioSeleccionado?.Direccion}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Teléfono:</span>
+                  <span className="detail-value">
+                    {usuarioSeleccionado?.Telefono}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Estado:</span>
+                  <span
+                    className={`detail-value status ${
+                      usuarioSeleccionado?.activo ? "active" : "inactive"
+                    }`}
+                  >
+                    {usuarioSeleccionado?.activo ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer mt-2 flex justify-end gap-2">
+              <button
+                className="modal-btn cancel-btn text-sm px-3 py-1"
+                onClick={cerrarModal}
+              >
+                Cerrar
+              </button>
+            </div>
+          </Modal>
+        );
+
+      case "eliminar":
+        return (
+          <Modal visible={modalVisible} onClose={cerrarModal}>
+            <div className="modal-header">
+              <h2 className="modal-title">Confirmar Eliminación</h2>
+            </div>
+            <div className="modal-body">
+              <div className="modal-confirmation">
+                <div className="confirmation-icon">
+                  <i className="pi pi-exclamation-triangle"></i>
+                </div>
+                <p className="confirmation-text">
+                  ¿Estás seguro de que deseas eliminar la sede{" "}
+                  <strong>"{usuarioSeleccionado?.nombre}"</strong>?
+                </p>
+                <p className="confirmation-warning">
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div className="modal-footer mt-2 flex justify-end gap-2">
+              <button
+                className="modal-btn cancel-btn text-sm px-3 py-1"
+                onClick={cerrarModal}
+              >
+                Cancelar
+              </button>
+              <button
+                className="modal-btn save-btn text-sm px-3 py-1"
+                onClick={confirmarEliminar}
+              >
+                Eliminar
+              </button>
+            </div>
+          </Modal>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="admin-wrapper">
@@ -182,6 +399,7 @@ export default function SedesTable() {
           className="admin-button pink"
           onClick={() => abrirModal("agregar")}
           type="button"
+          style={{ padding: "10px 18px", fontSize: "15px", fontWeight: "500" }}
         >
           + Agregar Sede
         </button>
@@ -199,122 +417,53 @@ export default function SedesTable() {
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: "50rem" }}
+        emptyMessage="No se encontraron sedes"
       >
         <Column field="id" header="ID" />
         <Column field="nombre" header="Nombre" />
         <Column field="Direccion" header="Dirección" />
         <Column field="Telefono" header="Teléfono" />
-        <Column field="horarios" header="Horarios" />
         <Column
           header="Estado"
           body={(rowData) => (
             <InputSwitch
               checked={rowData.activo}
               onChange={() => toggleActivo(rowData)}
+              tooltip={rowData.activo ? "Desactivar sede" : "Activar sede"}
             />
           )}
         />
         <Column
           header="Acciones"
           body={(rowData) => (
-            <>
+            <div className="action-buttons">
+              <button
+                className="admin-button gray"
+                title="Visualizar"
+                onClick={() => abrirModal("ver", rowData)}
+              >
+                <i className="pi pi-search"></i>
+              </button>
               <button
                 className="admin-button yellow"
                 title="Editar"
                 onClick={() => abrirModal("editar", rowData)}
               >
-                ✏️
+                <i className="pi pi-pencil"></i>
               </button>
               <button
                 className="admin-button red"
                 title="Eliminar"
                 onClick={() => abrirModal("eliminar", rowData)}
               >
-                🗑️
+                <i className="pi pi-trash"></i>
               </button>
-            </>
+            </div>
           )}
         />
       </DataTable>
 
-      {modalVisible && (modalTipo === "agregar" || modalTipo === "editar") && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">
-            {modalTipo === "agregar" ? "Agregar Sede" : "Editar Sede"}
-          </h2>
-          <div className="modal-body">
-            <div className="modal-grid">
-              <div className="modal-field">
-                <label>Nombre:</label>
-                <input
-                  type="text"
-                  value={formData.nombre}
-                  onChange={(e) => handleInputChange("nombre", e.target.value)}
-                  className="modal-input"
-                />
-              </div>
-              <div className="modal-field">
-                <label>Dirección:</label>
-                <input
-                  type="text"
-                  value={formData.Direccion}
-                  onChange={(e) =>
-                    handleInputChange("Direccion", e.target.value)
-                  }
-                  className="modal-input"
-                />
-              </div>
-              <div className="modal-field">
-                <label>Teléfono:</label>
-                <input
-                  type="text"
-                  value={formData.Telefono}
-                  onChange={(e) =>
-                    handleInputChange("Telefono", e.target.value)
-                  }
-                  className="modal-input"
-                />
-              </div>
-              <div className="modal-field">
-                <label>Horarios:</label>
-                <input
-                  type="text"
-                  value={formData.horarios}
-                  onChange={(e) =>
-                    handleInputChange("horarios", e.target.value)
-                  }
-                  className="modal-input"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button className="admin-button green" onClick={guardarUsuario}>
-              Guardar
-            </button>
-            <button className="admin-button gray" onClick={cerrarModal}>
-              Cancelar
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {modalVisible && modalTipo === "eliminar" && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Confirmar Eliminación</h2>
-          <p>
-            ¿Estás seguro de eliminar la sede "{usuarioSeleccionado?.nombre}"?
-          </p>
-          <div className="modal-footer">
-            <button className="admin-button red" onClick={confirmarEliminar}>
-              Eliminar
-            </button>
-            <button className="admin-button gray" onClick={cerrarModal}>
-              Cancelar
-            </button>
-          </div>
-        </Modal>
-      )}
+      {renderModal()}
     </div>
   );
 }

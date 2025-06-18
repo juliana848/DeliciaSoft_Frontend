@@ -28,6 +28,9 @@ import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
+import RecetasTabla from './features/Admin/pages/Recetas.jsx';
+import SedesTable from './features/Admin/pages/Sede.jsx';
+
 
 
 
@@ -83,10 +86,9 @@ function AppContent() {
             <Route path="/admin/pages/CategoriaProductos" element={<CategoriaProductos />} />
             <Route path="/admin/pages/Productos" element={<Productos />} />
             <Route path="/admin/pages/Produccion" element={<Produccion />} />
+            <Route path="/admin/pages/Recetas" element={<RecetasTabla />} />
+            <Route path="/admin/pages/Sede" element={<SedesTable />} />
 
-            {/* 
-            <Route path="/admin/pedidos" element={<div className="p-4"><h2>Gestión de Pedidos</h2></div>} />
-            <Route path="/admin/sedes" element={<div className="p-4"><h2>Gestión de Sedes</h2></div>} />/> */}
 
           </Routes>
         </Layout>

@@ -46,7 +46,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       submenu: [
         { title: 'Clientes', path: '/admin/pages/Clientes', icon: 'bi bi-people' },
         { title: 'Pedidos', path: '/admin/pedidos', icon: 'bi bi-bag-check' },
-        { title: 'Sedes', path: '/admin/sedes', icon: 'bi bi-geo-alt' },
+        { title: 'Sedes', path: '/admin/pages/Sede', icon: 'bi bi-geo-alt' },
         { title: 'Ventas', path: '/admin/pages/Ventas', icon: 'bi bi-graph-up' }
       ]
     },
@@ -70,6 +70,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
       submenu: [
         { title: 'Cat. Productos', path: '/admin/pages/CategoriaProductos', icon: 'bi bi-grid' },
         { title: 'Productos', path: '/admin/pages/productos', icon: 'bi bi-cake2' },
+        { title: 'Recetas', path: '/admin/pages/Recetas', icon: 'bi bi-cake2' },
       ]
     },
     {

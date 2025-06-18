@@ -185,7 +185,7 @@ export default function CategoriaTableDemo() {
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                👁
+                🔍
               </button>
               <button className="admin-button yellow" title="Editar" onClick={() => abrirModal('editar', rowData)}>
                 ✏️

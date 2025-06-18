@@ -132,7 +132,7 @@ export default function InsumosTable() {
         )} />
         <Column header="Acción" body={i => (
           <div>
-            <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver', i)}>&#128065;</button>
+            <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver', i)}>🔍</button>
             <button className="admin-button yellow" onClick={() => abrirModal('editar', i)}>✏️</button>
             <button className="admin-button red" onClick={() => abrirModal('eliminar', i)}>🗑️</button>
           </div>

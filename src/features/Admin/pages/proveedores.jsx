@@ -184,7 +184,7 @@ export default function ProveedoresTable() {
           header="Acciones"
           body={(rowData) => (
             <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>🔍</button>
               <button className="admin-button yellow" onClick={() => abrirModal('editar', rowData)}>✏️</button>
               <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
             </>

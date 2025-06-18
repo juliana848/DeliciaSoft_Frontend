@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const mockData = [
   {
@@ -25,6 +26,8 @@ const mockData = [
 ];
 
 const DetalleObleas = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="producto-detalle-container">
       <h2 className="detalle-titulo">OBLEAS</h2>
@@ -49,8 +52,25 @@ const DetalleObleas = () => {
         <p>También puedes personalizar tu oblea con hasta 5 toppings diferentes. ✨</p>
         <p>"Y recuerda, no dejes para mañana lo que te puedes comer hoy" 💖</p>
       </div>
+
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <button
+          onClick={() => navigate("/Cartas")} // ✅ Redirecciona a la ruta "/Cartas"
+          style={{
+            backgroundColor: "#ff0080",
+            color: "#fff",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          ⬅ Volver a la carta
+        </button>
+      </div>
     </div>
   );
 };
 
-export default DetalleObleas
+export default DetalleObleas;

@@ -252,3 +252,29 @@
   color: #a3005c;
   border-radius: 10px;
 }
+
+/* Mejora el espacio entre imagen y texto dentro del producto-card */
+.producto-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 30px; /* Agrega separación horizontal */
+}
+
+/* Elimina el margin-left si ya estás usando gap */
+.producto-info {
+  margin-left: 0;
+}
+
+@media (max-width: 768px) {
+  .producto-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .producto-info {
+    text-align: center;
+  }
+}

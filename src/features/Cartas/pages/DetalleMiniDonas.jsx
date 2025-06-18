@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; 
 
 const mockData = [
   {
@@ -18,6 +19,8 @@ const mockData = [
 ];
 
 const DetalleMiniDonas = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="producto-detalle-container">
       <h2 className="detalle-titulo">MINI DONAS</h2>
@@ -45,6 +48,24 @@ const DetalleMiniDonas = () => {
         <p>🎉 ¡Gracias por preferirnos! Todos nuestros productos son preparados con ingredientes frescos y mucho amor. 💖</p>
         <p>También puedes pedir mini donas personalizadas para tus eventos. 🎈</p>
         <p>"Y recuerda, no dejes para mañana lo que te puedes comer hoy" 💖</p>
+      </div>
+
+      {/* ✅ Botón para regresar */}
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <button
+          onClick={() => navigate("/Cartas")} 
+          style={{
+            backgroundColor: "#ff0080",
+            color: "#fff",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          ⬅ Volver a la carta
+        </button>
       </div>
     </div>
   );

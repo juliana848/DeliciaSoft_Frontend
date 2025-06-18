@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; 
 
 const mockData = [
   {
@@ -18,6 +19,7 @@ const mockData = [
 ];
 
 const DetalleCupcake = () => {
+  const navigate = useNavigate();
   return (
     <div className="producto-detalle-container">
       <h2 className="detalle-titulo">CUPCAKES</h2>
@@ -52,6 +54,22 @@ const DetalleCupcake = () => {
         <p>
           "Y recuerda, no dejes para mañana lo que te puedes comer hoy" 💖
         </p>
+      </div>
+            <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <button
+          onClick={() => navigate("/Cartas")}
+          style={{
+            backgroundColor: "#ff0080",
+            color: "#fff",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          ⬅ Volver a la carta
+        </button>
       </div>
     </div>
   );

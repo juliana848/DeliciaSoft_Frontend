@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import '../adminStyles.css';
+import '../adminStyles.css'; // Asegúrate de que este archivo CSS exista
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
@@ -24,27 +24,34 @@ export default function Ventas() {
     const [productoEditandoId, setProductoEditandoId] = useState(null);
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
 
+    // Nuevo estado para controlar la visibilidad de la modal de opciones por producto
+    const [showProductOptions, setShowProductOptions] = useState({});
+
     const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
+    
+    // Estado para errores de validación
+    const [erroresValidacion, setErroresValidacion] = useState({});
+
     const [ventaData, setVentaData] = useState({
         cod_venta: '00000000',
-        tipo_venta: '', 
-        cliente: '', 
-        sede: '', 
-        metodo_pago: '', 
-        fecha_venta: '',
-        fecha_registro: '', 
-        observaciones: '' 
+        tipo_venta: '',
+        cliente: '',
+        sede: '',
+        metodo_pago: '',
+        fecha_venta: new Date().toISOString().split('T')[0], // Fecha automática
+        fecha_registro: '',
+        observaciones: ''
     });
 
     const [abonos, setAbonos] = useState([]);
     const [mostrarModalAbonos, setMostrarModalAbonos] = useState(false);
     const [mostrarModalAgregarAbono, setMostrarModalAgregarAbono] = useState(false);
     const [abonoData, setAbonoData] = useState({
-    metodo_pago: '',
-    total_pagado: '',
-    fecha: ''
+        metodo_pago: '',
+        total_pagado: '',
+        fecha: new Date().toISOString().split('T')[0] // Fecha automática para abonos
     });
 
     useEffect(() => {
@@ -60,7 +67,24 @@ export default function Ventas() {
                 productos: [
                     { id: 101, nombre: 'Harina', cantidad: 5, precio: 20000, adiciones: [], salsas: [], sabores: [] },
                     { id: 102, nombre: 'Azúcar', cantidad: 3, precio: 15000, adiciones: [], salsas: [], sabores: [] },
-                    { id: 103, nombre: 'Huevos', cantidad: 2, precio: 10000, adiciones: [], salsas: [], sabores: [] },
+                    {
+                        id: 103,
+                        nombre: 'Pastel de Chocolate',
+                        cantidad: 1,
+                        precio: 35000,
+                        adiciones: [
+                            { id: 1, nombre: 'Chispas de Chocolate', precio: 2000 },
+                            { id: 2, nombre: 'Frutos Rojos', precio: 3000 }
+                        ],
+                        salsas: [
+                            { id: 1, nombre: 'Salsa de Arequipe', precio: 0 },
+                            { id: 2, nombre: 'Salsa de Chocolate', precio: 0 }
+                        ],
+                        sabores: [ // Usamos 'sabores' para representar rellenos
+                            { id: 1, nombre: 'Relleno de Vainilla', precio: 4000 },
+                            { id: 2, nombre: 'Relleno de Crema', precio: 3500 }
+                        ]
+                    },
                 ],
                 subtotal: 100000,
                 iva: 19000,
@@ -75,7 +99,17 @@ export default function Ventas() {
                 fecha_venta: '02/06/2025',
                 fecha_finalizacion: '',
                 productos: [
-                    { id: 201, nombre: 'Chocolate', cantidad: 10, precio: 8000, adiciones: [], salsas: [], sabores: [] },
+                    {
+                        id: 201,
+                        nombre: 'Galletas surtidas',
+                        cantidad: 10,
+                        precio: 8000,
+                        adiciones: [
+                            { id: 3, nombre: 'Cobertura de Chocolate', precio: 1500 }
+                        ],
+                        salsas: [],
+                        sabores: []
+                    },
                     { id: 202, nombre: 'Mantequilla', cantidad: 4, precio: 3000, adiciones: [], salsas: [], sabores: [] },
                 ],
                 subtotal: 80000,
@@ -134,108 +168,126 @@ export default function Ventas() {
         setVentas(mockVentas);
     }, []);
 
-const validarFormulario = () => {
-  const errores = {};
-  
-  if (!ventaData.cliente || ventaData.cliente.trim() === '') {
-    errores.cliente = 'Debe seleccionar un cliente';
-  }
-  
-  if (!ventaData.sede || ventaData.sede.trim() === '') {
-    errores.sede = 'Debe seleccionar una sede';
-  }
-  
-  if (!ventaData.metodo_pago || ventaData.metodo_pago.trim() === '') {
-    errores.metodo_pago = 'Debe seleccionar un método de pago';
-  }
-  
-  if (!ventaData.fecha_venta || ventaData.fecha_venta.trim() === '') {
-    errores.fecha_venta = 'Debe seleccionar una fecha de venta';
-  }
-  
-  return errores;
-};
+    // Función para validar el formulario de venta
+const validarFormularioVenta = () => {
+    const errores = {};
 
-const validarProductos = () => {
-  const errores = {};
-  
-  if (insumosSeleccionados.length === 0) {
-    errores.productos = 'Debe agregar al menos un producto';
+    if (!ventaData.tipo_venta || ventaData.tipo_venta.trim() === '') {
+        errores.tipo_venta = 'El tipo de venta es requerido';
+    }
+
+    if (!ventaData.cliente || ventaData.cliente.trim() === '') {
+        errores.cliente = 'Debe seleccionar un cliente';
+    }
+
+    if (!ventaData.sede || ventaData.sede.trim() === '') {
+        errores.sede = 'Debe seleccionar una sede';
+    }
+
+    if (!ventaData.metodo_pago || ventaData.metodo_pago.trim() === '') {
+        errores.metodo_pago = 'Debe seleccionar un método de pago';
+    }
+
+    if (!ventaData.fecha_venta || ventaData.fecha_venta.trim() === '') {
+        errores.fecha_venta = 'La fecha de venta es requerida';
+    }
+
+    if (insumosSeleccionados.length === 0) {
+        errores.productos = 'Debe agregar al menos un producto';
+    }
+
     return errores;
-  }
-  
-  insumosSeleccionados.forEach((producto, index) => {
-    if (producto.cantidad <= 0) {
-      errores[`cantidad_${producto.id}`] = `La cantidad debe ser mayor a 0`;
-    }
-    
-    if (producto.precio <= 0) {
-      errores[`precio_${producto.id}`] = `El precio debe ser mayor a 0`;
-    }
-    
-    if (producto.adiciones.length > 5) {
-      errores[`adiciones_${producto.id}`] = 'Máximo 5 adiciones por producto';
-    }
-    
-    if (producto.salsas.length > 3) {
-      errores[`salsas_${producto.id}`] = 'Máximo 3 salsas por producto';
-    }
-    
-    if (producto.sabores.length > 2) {
-      errores[`rellenos_${producto.id}`] = 'Máximo 2 rellenos por producto';
-    }
-  });
-  
-  return errores;
 };
 
+    // Función para validar abonos
 const validarAbono = () => {
-  const errores = {};
-  
-  if (!abonoData.metodo_pago || abonoData.metodo_pago.trim() === '') {
-    errores.metodo_pago = 'Debe seleccionar un método de pago';
-  }
-  
-  if (!abonoData.total_pagado || parseFloat(abonoData.total_pagado) <= 0) {
-    errores.total_pagado = 'El monto debe ser mayor a 0';
-  }
-  
-  if (!abonoData.fecha || abonoData.fecha.trim() === '') {
-    errores.fecha = 'Debe seleccionar una fecha';
-  }
-  
-  return errores;
+    const errores = {};
+
+    if (!abonoData.metodo_pago || abonoData.metodo_pago.trim() === '') {
+        errores.metodo_pago = 'El método de pago es requerido';
+    }
+
+    if (!abonoData.total_pagado || parseFloat(abonoData.total_pagado) <= 0) {
+        errores.total_pagado = 'El monto debe ser mayor a 0';
+    }
+
+    if (!abonoData.fecha || abonoData.fecha.trim() === '') {
+        errores.fecha = 'La fecha es requerida';
+    }
+
+    return errores;
 };
 
-    const agregarAbono = () => {
-  const totalPagado = parseFloat(abonoData.total_pagado);
-  const ventaTotal = ventaSeleccionada.total;
-  const faltaPorPagar = ventaTotal - totalPagado;
-  
-  const nuevoAbono = {
-    id: Date.now(),
-    fecha: abonoData.fecha,
-    metodo_pago: abonoData.metodo_pago,
-    monto: totalPagado,
-    falta_por_pagar: faltaPorPagar
-  };
+const agregarAbono = () => {
+    const errores = validarAbono();
+    if (Object.keys(errores).length > 0) {
+        setErroresValidacion(errores);
+        
+        // Mostrar alertas específicas para cada campo faltante en abonos
+        const camposFaltantes = Object.entries(errores).map(([campo, mensaje]) => {
+            const nombresCampos = {
+                metodo_pago: 'Método de Pago',
+                total_pagado: 'Total Pagado',
+                fecha: 'Fecha'
+            };
+            return `${nombresCampos[campo] || campo}: ${mensaje}`;
+        });
+        
+        showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
+        return;
+    }
 
-  setAbonos(prev => [...prev, nuevoAbono]);
-  setAbonoData({
-    metodo_pago: '',
-    total_pagado: '',
-    fecha: ''
-  });
-  setMostrarModalAgregarAbono(false);
-  showNotification('Abono registrado exitosamente');
-};
-    const toggleNestedDetails = (productoId) => {
-        setNestedDetailsVisible(prev => ({
-            ...prev,
-            [productoId]: !prev[productoId] 
-        }));
+    const totalPagado = parseFloat(abonoData.total_pagado);
+    const ventaTotal = ventaSeleccionada.total;
+    const faltaPorPagar = ventaTotal - totalPagado;
+
+    const nuevoAbono = {
+        id: Date.now(),
+        fecha: abonoData.fecha,
+        metodo_pago: abonoData.metodo_pago,
+        monto: totalPagado,
+        falta_por_pagar: faltaPorPagar
     };
 
+    setAbonos(prev => [...prev, nuevoAbono]);
+    setAbonoData({
+        metodo_pago: '',
+        total_pagado: '',
+        fecha: new Date().toISOString().split('T')[0]
+    });
+    setErroresValidacion({});
+    setMostrarModalAgregarAbono(false);
+    showNotification('Abono registrado exitosamente');
+};
+
+
+    // Función para alternar la visibilidad de las opciones de un producto (solo una a la vez)
+    const toggleProductOptions = (productId) => {
+        setShowProductOptions(prev => {
+            const newState = {};
+            // Si el producto clickeado ya estaba abierto, lo cerramos
+            if (prev[productId]) {
+                return {};
+            } else {
+                // Si no, cerramos todos y abrimos solo el clickeado
+                newState[productId] = true;
+                return newState;
+            }
+        });
+    };
+
+    // Función para alternar detalles anidados (también solo uno a la vez)
+    const toggleNestedDetails = (productId) => {
+        setNestedDetailsVisible(prev => {
+            const newState = {};
+            if (prev[productId]) {
+                return {};
+            } else {
+                newState[productId] = true;
+                return newState;
+            }
+        });
+    };
 
     const showNotification = (mensaje, tipo = 'success') => {
         setNotification({ visible: true, mensaje, tipo });
@@ -249,24 +301,28 @@ const validarAbono = () => {
         setModalTipo(tipo);
         setVentaSeleccionada(venta);
         setModalVisible(true);
+        setShowProductOptions({}); // Reiniciar las opciones de producto al abrir una nueva venta
     };
 
     const cerrarModal = () => {
         setModalVisible(false);
         setVentaSeleccionada(null);
         setModalTipo(null);
+        setShowProductOptions({}); // Asegurarse de ocultar todas las opciones al cerrar el modal principal
     };
-const anularVenta = () => {
-  setVentas(prev => 
-    prev.map(v => 
-      v.id === ventaSeleccionada.id 
-        ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() }
-        : v
-    )
-  );
-  cerrarModal();
-  showNotification('Venta anulada exitosamente');
-};
+
+    const anularVenta = () => {
+        setVentas(prev =>
+            prev.map(v =>
+                v.id === ventaSeleccionada.id
+                    ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() }
+                    : v
+            )
+        );
+        cerrarModal();
+        showNotification('Venta anulada exitosamente');
+    };
+
     const exportarPDF = (venta) => {
         showNotification(`Venta ${venta.cod_venta || venta.id} exportada como PDF exitosamente`);
     };
@@ -276,7 +332,17 @@ const anularVenta = () => {
     );
 
     const handleChange = (e) => {
-        setVentaData({...ventaData, [e.target.name]: e.target.value});
+        const { name, value } = e.target;
+        setVentaData({ ...ventaData, [name]: value });
+        
+        // Limpiar error específico cuando el usuario corrige el campo
+        if (erroresValidacion[name]) {
+            setErroresValidacion(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
     };
 
     const agregarInsumos = (nuevosInsumos) => {
@@ -286,6 +352,16 @@ const anularVenta = () => {
                 .filter(nuevo => !prev.some(i => i.id === nuevo.id))
                 .map(item => ({ ...item, cantidad: 1, adiciones: [], salsas: [], sabores: [] })) // Inicializar arrays vacíos
         ]);
+        
+        // Limpiar error de productos si había
+        if (erroresValidacion.productos) {
+            setErroresValidacion(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.productos;
+                return newErrors;
+            });
+        }
+        
         showNotification('Productos agregados exitosamente');
     };
 
@@ -294,12 +370,12 @@ const anularVenta = () => {
             prev.map(item =>
                 item.id === productoEditandoId
                     ? {
-                          ...item,
-                          adiciones: [
-                              ...item.adiciones,
-                              ...nuevasAdiciones.filter(nuevo => !item.adiciones.some(a => a.id === nuevo.id))
-                          ]
-                      }
+                        ...item,
+                        adiciones: [
+                            ...item.adiciones,
+                            ...nuevasAdiciones.filter(nuevo => !item.adiciones.some(a => a.id === nuevo.id))
+                        ]
+                    }
                     : item
             )
         );
@@ -313,12 +389,12 @@ const anularVenta = () => {
             prev.map(item =>
                 item.id === productoEditandoId
                     ? {
-                          ...item,
-                          salsas: [
-                              ...item.salsas,
-                              ...nuevasSalsas.filter(nuevo => !item.salsas.some(s => s.id === nuevo.id))
-                          ]
-                      }
+                        ...item,
+                        salsas: [
+                            ...item.salsas,
+                            ...nuevasSalsas.filter(nuevo => !item.salsas.some(s => s.id === nuevo.id))
+                        ]
+                    }
                     : item
             )
         );
@@ -332,12 +408,12 @@ const anularVenta = () => {
             prev.map(item =>
                 item.id === productoEditandoId
                     ? {
-                          ...item,
-                          sabores: [ // Usamos 'sabores' para rellenos según el ejemplo
-                              ...item.sabores,
-                              ...nuevosRellenos.filter(nuevo => !item.sabores.some(r => r.id === nuevo.id))
-                          ]
-                      }
+                        ...item,
+                        sabores: [ // Usamos 'sabores' para rellenos según el ejemplo
+                            ...item.sabores,
+                            ...nuevosRellenos.filter(nuevo => !item.sabores.some(r => r.id === nuevo.id))
+                        ]
+                    }
                     : item
             )
         );
@@ -386,22 +462,20 @@ const anularVenta = () => {
         setMostrarModalAdiciones(true);
     };
 
-     const abrirModalSalsas = (productoId) => {
+    const abrirModalSalsas = (productoId) => {
         setProductoEditandoId(productoId);
         setMostrarModalSalsas(true);
     };
 
-     const abrirModalRellenos = (productoId) => {
+    const abrirModalRellenos = (productoId) => {
         setProductoEditandoId(productoId);
         setMostrarModalRellenos(true);
     };
 
-
-
     const handleCantidadChange = (id, value) => {
-        setInsumosSeleccionados(prev => 
-            prev.map(item => 
-                item.id === id ? {...item, cantidad: Math.max(1, value)} : item
+        setInsumosSeleccionados(prev =>
+            prev.map(item =>
+                item.id === id ? { ...item, cantidad: Math.max(1, value) } : item
             )
         );
     };
@@ -411,7 +485,6 @@ const anularVenta = () => {
         showNotification('Insumo eliminado de la lista');
     };
 
- 
     // Calcular el subtotal incluyendo productos, rellenos y adiciones (cobrando desde la tercera)
     const subtotal = insumosSeleccionados.reduce((sum, item) => {
         // Calcular el costo de las adiciones, cobrando solo a partir de la tercera
@@ -423,15 +496,14 @@ const anularVenta = () => {
         // El costo de las salsas es 0 según el requisito
 
         const itemTotal = (item.precio * item.cantidad) +
-                          adicionesCost + // Sumar el costo calculado de las adiciones (desde la 3ra)
-                          rellenosCost; // Sumar el costo de los rellenos
+            adicionesCost + // Sumar el costo calculado de las adiciones (desde la 3ra)
+            rellenosCost; // Sumar el costo de los rellenos
 
         return sum + itemTotal;
     }, 0);
 
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
-
 
     const manejarCambioEstado = (venta, nuevoEstado) => {
         setVentas(prev =>
@@ -442,56 +514,71 @@ const anularVenta = () => {
         showNotification(`Estado actualizado a "${nuevoEstado}"`);
     };
 
-        // *** Función guardarVenta añadida ***
-    const guardarVenta = () => {
-        // Aquí puedes añadir validaciones si son necesarias antes de "guardar"
-        if (insumosSeleccionados.length === 0) {
-            showNotification('Debe agregar al menos un producto al detalle de la venta.', 'error');
-            return;
-        }
-
-        // Simular guardar la venta (añadirla a la lista existente)
-        const nuevaVenta = {
-            id: ventas.length + 1, // Generar un ID simple (ajustar según tu lógica real)
-            ...ventaData,
-            productos: insumosSeleccionados.map(item => ({ // Guardar el detalle completo de productos, adiciones, etc.
-                id: item.id,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precio: item.precio,
-                adiciones: item.adiciones,
-                salsas: item.salsas,
-                sabores: item.sabores,
-            })),
-            subtotal: subtotal,
-            iva: iva,
-            total: total,
-            estado: ventaData.tipo_venta === 'venta directa' ? 'Venta directa' : 'Pendiente', // Establecer estado inicial basado en tipo
-            fecha_finalizacion: ventaData.tipo_venta === 'venta directa' ? new Date().toLocaleDateString() : '' // Finalizar si es venta directa
-        };
-
-        setVentas(prev => [...prev, nuevaVenta]);
-
-        // Mostrar notificación de éxito
-        showNotification('Venta guardada correctamente', 'success');
-
-        // Resetear el formulario y volver a la vista de lista
-        setVentaData({
-            cod_venta: '00000000',
-            tipo_venta: '',
-            cliente: '',
-            sede: '',
-            metodo_pago: '',
-            fecha_venta: '',
-            fecha_registro: '',
-            observaciones: ''
+const guardarVenta = () => {
+    const errores = validarFormularioVenta();
+    
+    if (Object.keys(errores).length > 0) {
+        setErroresValidacion(errores);
+        
+        // Mostrar alertas específicas para cada campo faltante
+        const camposFaltantes = Object.entries(errores).map(([campo, mensaje]) => {
+            const nombresCampos = {
+                tipo_venta: 'Tipo de Venta',
+                cliente: 'Cliente',
+                sede: 'Sede',
+                metodo_pago: 'Método de Pago',
+                fecha_venta: 'Fecha de Venta',
+                productos: 'Productos'
+            };
+            return `${nombresCampos[campo] || campo}: ${mensaje}`;
         });
-        setInsumosSeleccionados([]);
-        setNestedDetailsVisible({}); // Resetear visibilidad de detalles anidados
-        setMostrarAgregarVenta(false);
-    };
-    // *** Fin de la función guardarVenta ***
+        
+        showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
+        return;
+    }
 
+    const nuevaVenta = {
+        id: ventas.length + 1,
+        ...ventaData,
+        productos: insumosSeleccionados.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            cantidad: item.cantidad,
+            precio: item.precio,
+            adiciones: item.adiciones,
+            salsas: item.salsas,
+            sabores: item.sabores,
+        })),
+        subtotal: subtotal,
+        iva: iva,
+        total: total,
+        estado: ventaData.tipo_venta === 'venta directa' ? 'Venta directa' : 'Pendiente',
+        fecha_finalizacion: ventaData.tipo_venta === 'venta directa' ? new Date().toLocaleDateString() : ''
+    };
+
+    setVentas(prev => [...prev, nuevaVenta]);
+    showNotification('Venta guardada correctamente', 'success');
+
+    setVentaData({
+        cod_venta: '00000000',
+        tipo_venta: '',
+        cliente: '',
+        sede: '',
+        metodo_pago: '',
+        fecha_venta: new Date().toISOString().split('T')[0],
+        fecha_registro: '',
+        observaciones: ''
+    });
+    setInsumosSeleccionados([]);
+    setNestedDetailsVisible({});
+    setErroresValidacion({});
+    setMostrarAgregarVenta(false);
+};
+
+    // Función para obtener el estilo de fila según el estado
+    const getRowClassName = (rowData) => {
+        return rowData.estado === 'Anulado' ? 'venta-anulada' : '';
+    };
 
     return (
         <div className="admin-wrapper">
@@ -505,81 +592,83 @@ const anularVenta = () => {
             {!mostrarAgregarVenta ? (
                 <>
                     <div className="admin-toolbar">
-                        <button 
-                            className="admin-button pink" 
+                        <button
+                            className="admin-button pink"
                             onClick={() => setMostrarAgregarVenta(true)}
                             type="button"
                         >
-                            + Agregar Venta
+                            + Agregar
                         </button>
-                        <SearchBar 
-                            placeholder="Buscar cliente..." 
-                            value={filtro} 
-                            onChange={setFiltro} 
+                        <SearchBar
+                            placeholder="Buscar cliente..."
+                            value={filtro}
+                            onChange={setFiltro}
                         />
                     </div>
 
-      <h2 className="admin-section-title">Ventas</h2>
+                    <h2 className="admin-section-title">Ventas</h2>
                     <DataTable
                         value={ventasFiltradas}
                         className="admin-table"
                         paginator rows={10}
                         rowsPerPageOptions={[5, 10, 25, 50]}
+                        rowClassName={getRowClassName}
                     >
-                        <Column 
-                        header="Numero" 
-                        body={(rowData, { rowIndex }) => rowIndex + 1} 
-                        style={{ width: '3rem', textAlign: 'center' }}
+                        <Column
+                            header="Numero"
+                            body={(rowData, { rowIndex }) => rowIndex + 1}
+                            style={{ width: '3rem', textAlign: 'center' }}
                         />
 
                         <Column field="cliente" header="Cliente" />
                         <Column field="sede" header="Sede" />
                         <Column field="fecha_venta" header="Fecha" />
                         <Column field="total" header="Total" />
-                            <Column
-                                header="Estado"
-                                body={(rowData) => (
+                        <Column
+                            header="Estado"
+                            body={(rowData) => (
                                 <select
                                     value={rowData.estado}
                                     onChange={(e) => manejarCambioEstado(rowData, e.target.value)}
                                     className="admin-select"
                                     disabled={rowData.estado === 'Anulado' || rowData.estado === 'Venta directa'}
                                 >
-                                        <option value="Venta directa">Venta directa</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="En proceso">En proceso</option>
-                                        <option value="Entregado">Entregado</option>
-                                        <option value="Por entregar">Por entregar</option>
-                                        <option value="Iniciado">Iniciado</option>
-                                        <option value="Terminado">Terminado</option>
-                                        <option value="Por pagar">Por pagar</option>
-                                        <option value="Anulado">Anulado</option>
-                                    </select>
-                                )}
-                            />
+                                    <option value="Venta directa">Venta directa</option>
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En proceso">En proceso</option>
+                                    <option value="Entregado">Entregado</option>
+                                    <option value="Por entregar">Por entregar</option>
+                                    <option value="Iniciado">Iniciado</option>
+                                    <option value="Terminado">Terminado</option>
+                                    <option value="Por pagar">Por pagar</option>
+                                    <option value="Anulado">Anulado</option>
+                                </select>
+                            )}
+                        />
                         <Column
                             header="Acción"
                             body={(rowData) => (
                                 <>
                                     <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                                        &#128065; {/* 👁 */}
+                                        🔍
                                     </button>
                                     <button
                                         className="admin-button red"
                                         title="Anular"
                                         onClick={() => abrirModal('anular', rowData)}
+                                        disabled={rowData.estado === 'Anulado'}
                                     >🛑</button>
                                     <button
                                         className="admin-button blue"
                                         title="Exportar PDF"
                                         onClick={() => exportarPDF(rowData)}
                                     >⬇️</button>
-                                     <button
+                                    <button
                                         className="admin-button green"
                                         title="Abonos"
                                         onClick={() => {
-                                        setVentaSeleccionada(rowData);
-                                        setMostrarModalAbonos(true);
+                                            setVentaSeleccionada(rowData);
+                                            setMostrarModalAbonos(true);
                                         }}
                                     >
                                         💰
@@ -589,97 +678,157 @@ const anularVenta = () => {
                         />
                     </DataTable>
 
-                    <Modal visible={modalVisible} onClose={cerrarModal}>
-                        {modalTipo === 'ver' && ventaSeleccionada && (
-                            <div>
-                                <h3>Detalle Venta #{ventaSeleccionada.id}</h3>
-                                <p><strong>Cliente:</strong> {ventaSeleccionada.cliente}</p>
-                                <p><strong>Sede:</strong> {ventaSeleccionada.sede}</p>
-                                <p><strong>Método de Pago:</strong> {ventaSeleccionada.metodo_pago}</p>
-                                <p><strong>Estado:</strong> {ventaSeleccionada.estado}</p>
+<Modal visible={modalVisible} onClose={cerrarModal}>
+    {modalTipo === 'visualizar' && ventaSeleccionada && (
+        <div className="detalle-venta-modal">
+            <h3>Detalle de la Venta #{ventaSeleccionada.id}</h3>
+            <div className="modal-content-columns">
+                <div className="column">
+                    <h4>Información de la Venta:</h4>
+                    <p><strong>Cliente:</strong> {ventaSeleccionada.cliente}</p>
+                    <p><strong>Sede:</strong> {ventaSeleccionada.sede}</p>
+                    <p><strong>Método de Pago:</strong> {ventaSeleccionada.metodo_pago}</p>
+                    <p><strong>Estado:</strong> {ventaSeleccionada.estado}</p>
+                    {ventaSeleccionada.fecha_venta && <p><strong>Fecha de Venta:</strong> {ventaSeleccionada.fecha_venta}</p>}
+                    {ventaSeleccionada.fecha_finalizacion && <p><strong>Fecha de Finalización:</strong> {ventaSeleccionada.fecha_finalizacion}</p>}
+                </div>
+                <div className="column">
+                    <h4>Productos Incluidos:</h4>
+                    <div className="productos-lista">
+                        {ventaSeleccionada.productos.length > 0 ? (
+                            ventaSeleccionada.productos.map((item) => (
+                                <div key={item.id} className="producto-item-container">
+                                    <div className="producto-item-header">
+                                        <div className="producto-info">
+                                            <strong>Producto:</strong> {item.nombre} (Cantidad: {item.cantidad}) - ${item.precio.toLocaleString()} c/u
+                                        </div>
+                                        {/* Mostrar el botón solo si el producto tiene adiciones, salsas o rellenos */}
+                                        {(item.adiciones?.length > 0 || item.salsas?.length > 0 || item.sabores?.length > 0) && (
+                                            <button
+                                                className="admin-button small-button dropdown-toggle"
+                                                onClick={() => {
+                                                    // Cerrar todos los otros productos abiertos
+                                                    const newShowState = {};
+                                                    Object.keys(showProductOptions).forEach(key => {
+                                                        newShowState[key] = false;
+                                                    });
+                                                    // Toggle el producto actual
+                                                    newShowState[item.id] = !showProductOptions[item.id];
+                                                    setShowProductOptions(newShowState);
+                                                }}
+                                            >
+                                                {showProductOptions[item.id] ? '▲ Ocultar' : '▼ Opciones'}
+                                            </button>
+                                        )}
+                                    </div>
 
-                                <h4>Productos:</h4>
-                                <ul>
-                                    {ventaSeleccionada.productos.map((item, index) => (
-                                        <li key={index}>
-                                            {item.nombre} (Cantidad: {item.cantidad}) - ${item.precio.toLocaleString()} c/u
+                                    {/* Desplegable de opciones dentro del contenedor */}
+                                    {showProductOptions[item.id] && (
+                                        <div className="product-options-dropdown">
                                             {item.adiciones && item.adiciones.length > 0 && (
-                                                <ul>
+                                                <div className="options-section">
                                                     <strong>Adiciones:</strong>
-                                                    {item.adiciones.map((ad, adIndex) => (
-                                                        <li key={adIndex}>{ad.nombre} (${ad.precio.toLocaleString()})</li>
-                                                    ))}
-                                                </ul>
+                                                    <ul>
+                                                        {item.adiciones.map((ad, adIndex) => (
+                                                            <li key={adIndex}>{ad.nombre} (${ad.precio.toLocaleString()})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             )}
                                             {item.salsas && item.salsas.length > 0 && (
-                                                <ul>
+                                                <div className="options-section">
                                                     <strong>Salsas:</strong>
-                                                    {item.salsas.map((sa, saIndex) => (
-                                                        <li key={saIndex}>{sa.nombre} (${sa.precio.toLocaleString()})</li>
-                                                    ))}
-                                                </ul>
+                                                    <ul>
+                                                        {item.salsas.map((sa, saIndex) => (
+                                                            <li key={saIndex}>{sa.nombre} (${sa.precio.toLocaleString()})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             )}
                                             {item.sabores && item.sabores.length > 0 && (
-                                                <ul>
+                                                <div className="options-section">
                                                     <strong>Rellenos:</strong>
-                                                    {item.sabores.map((re, reIndex) => (
-                                                        <li key={reIndex}>{re.nombre} (${re.precio.toLocaleString()})</li>
-                                                    ))}
-                                                </ul>
+                                                    <ul>
+                                                        {item.sabores.map((re, reIndex) => (
+                                                            <li key={reIndex}>{re.nombre} (${re.precio.toLocaleString()})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             )}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <p><strong>Subtotal:</strong> ${ventaSeleccionada.subtotal.toLocaleString()}</p>
-                                <p><strong>IVA:</strong> ${ventaSeleccionada.iva.toLocaleString()}</p>
-                                <p><strong>Total:</strong> ${ventaSeleccionada.total.toLocaleString()}</p>
-                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <p>No hay productos en esta venta.</p>
                         )}
-                        {modalTipo === 'anular' && (
-                            <div>
-                                <h3>¿Desea anular la venta #{ventaSeleccionada?.id}?</h3>
-                                <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-                                <button className="modal-btn save-btn" onClick={anularVenta}>Anular</button>
-                            </div>
-                        )}
-                    </Modal>
+                    </div>
+                </div>
+            </div>
+            <div className="resumen-venta">
+                <p><strong>Subtotal:</strong> ${ventaSeleccionada.subtotal.toLocaleString()}</p>
+                <p><strong>IVA:</strong> ${ventaSeleccionada.iva.toLocaleString()}</p>
+                <p><strong>Total:</strong> ${ventaSeleccionada.total.toLocaleString()}</p>
+            </div>
+            <div className="modal-footer">
+                <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
+            </div>
+        </div>
+    )}
+</Modal>
+{modalTipo === 'anular' && (
+        <Modal visible={modalVisible} onClose={cerrarModal}>
+          <h2 className="modal-title">Confirmar anulación</h2>
+          <div className="modal-body">
+            <l1>!Está seguro que desea anular la venta de {ventaSeleccionada.cliente}¡</l1>
+            <p style={{ color: '#e53935', fontSize: '14px' }}>
+              Esta acción no se puede deshacer.
+            </p>
+          </div>
+          <div className="modal-footer">
+            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+            <button className="modal-btn save-btn" onClick={anularVenta}>Anular</button>
+          </div>
+          </Modal>
+)}
+
                     {mostrarModalAbonos && (
-  <Modal
-    visible={mostrarModalAbonos}
-    onClose={() => setMostrarModalAbonos(false)}
-  >
-    <div className="abonos-modal">
-      <h3>Abonos de la Venta #{ventaSeleccionada?.id}</h3>
-      <div className="abonos-lista">
-        {abonos.length > 0 ? (
-          <table className="abonos-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Método de Pago</th>
-                <th>Monto</th>
-                <th>Falta por Pagar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {abonos.map(abono => (
-                <tr key={abono.id}>
-                  <td>{abono.fecha}</td>
-                  <td>{abono.metodo_pago}</td>
-                  <td>${abono.monto.toLocaleString()}</td>
-                  <td>${abono.falta_por_pagar.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No hay abonos registrados</p>
-        )}
-      </div>
-      <button
-        className="btn-agregar-abono"
-        onClick={() => setMostrarModalAgregarAbono(true)}
-      >
+                        <Modal
+                            visible={mostrarModalAbonos}
+                            onClose={() => setMostrarModalAbonos(false)}
+                        >
+                            <div className="abonos-modal">
+                                <h3>Abonos de la Venta #{ventaSeleccionada?.id}</h3>
+                                <div className="abonos-lista">
+                                    {abonos.length > 0 ? (
+                                        <table className="abonos-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Método de Pago</th>
+                                                    <th>Monto</th>
+                                                    <th>Falta por Pagar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {abonos.map(abono => (
+                                                    <tr key={abono.id}>
+                                                        <td>{abono.fecha}</td>
+                                                        <td>{abono.metodo_pago}</td>
+                                                        <td>${abono.monto.toLocaleString()}</td>
+                                                        <td>${abono.falta_por_pagar.toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    ) : (
+                                        <p>No hay abonos registrados</p>
+                                    )}
+                                </div>
+                                <button
+                                    className="btn-agregar-abono"
+                                    onClick={() => setMostrarModalAgregarAbono(true)}
+                                >
         + Agregar Abono
       </button>
     </div>
@@ -739,11 +888,11 @@ const anularVenta = () => {
           />
         </div>
         <div className="modal-buttons">
-          <button type="button" className="btn-cancelar" onClick={() => setMostrarModalAgregarAbono(false)}>
+          <button type="button" className="modal-btn cancel-btn" onClick={() => setMostrarModalAgregarAbono(false)}>
             Cancelar
           </button>
-          <button type="submit" className="btn-guardar">
-            Guardar Abono
+          <button type="submit" className="modal-btn save-btn">
+            Guardar
           </button>
         </div>
       </form>
@@ -755,7 +904,7 @@ const anularVenta = () => {
                 
                           // Formulario para agregar venta
               <div className="compra-form-container" >
-                <h1>Agregar Venta</h1>
+                <h1>Agregar</h1>
 
                 <form
                   onSubmit={e => {
@@ -764,50 +913,63 @@ const anularVenta = () => {
                   }}
                 >
                   <div className="compra-fields-grid">
-                    <div className="field-group">
-                      <label>Tipo de Venta</label>
-                      <select
+                    <div className={`field-group ${erroresValidacion.tipo_venta ? 'has-error' : ''}`}>
+                    <label>Tipo de Venta <span style={{ color: 'red' }}>*</span></label>
+                    <select
                         name="tipo_venta"
                         value={ventaData.tipo_venta}
                         onChange={handleChange}
+                        className={erroresValidacion.tipo_venta ? 'field-error' : ''}
                         required
-                      >
+                    >
                         <option value="">Seleccione</option>
                         <option value="venta directa">Venta Directa</option>
                         <option value="pedido">Pedido</option>
-                      </select>
+                    </select>
+                    {erroresValidacion.tipo_venta && (
+                        <span className="error-message">{erroresValidacion.tipo_venta}</span>
+                    )}
                     </div>
-                    <div className="field-group">
-                      <label>Fecha de Venta</label>
-                      <input
+                    <div className={`field-group ${erroresValidacion.fecha_venta ? 'has-error' : ''}`}>
+                    <label>Fecha de Venta </label>
+                    <input
                         type="date"
                         name="fecha_venta"
                         value={ventaData.fecha_venta}
                         onChange={handleChange}
+                        className={erroresValidacion.fecha_venta ? 'field-error' : ''}
                         required
-                      />
+                    />
+                    {erroresValidacion.fecha_venta && (
+                        <span className="error-message">{erroresValidacion.fecha_venta}</span>
+                    )}
                     </div>
-                    <div className="field-group">
-                      <label>Sede</label>
-                      <select
-                        name="sede"
-                        value={ventaData.sede}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione</option>
-                        <option value="San Pablo">San Pablo</option>
-                        <option value="San Benito">San Benito</option>
-                      </select>
-                    </div>
-                    <div className="field-group">
-                      <label>Cliente</label>
-                      <select
+                    <div className={`field-group ${erroresValidacion.sede ? 'has-error' : ''}`}>
+                        <label>Sede  <span style={{ color: 'red' }}>*</span></label>
+                        <select
+                            name="sede"
+                            value={ventaData.sede}
+                            onChange={handleChange}
+                            className={erroresValidacion.sede ? 'field-error' : ''}
+                            required
+                        >
+                            <option value="">Seleccione</option>
+                            <option value="San Pablo">San Pablo</option>
+                            <option value="San Benito">San Benito</option>
+                        </select>
+                        {erroresValidacion.sede && (
+                            <span className="error-message">{erroresValidacion.sede}</span>
+                        )}
+                        </div>
+                    <div className={`field-group ${erroresValidacion.cliente ? 'has-error' : ''}`}>
+                    <label>Cliente  <span style={{ color: 'red' }}>*</span></label>
+                    <select
                         name="cliente"
                         value={ventaData.cliente}
                         onChange={handleChange}
+                        className={erroresValidacion.cliente ? 'field-error' : ''}
                         required
-                      >
+                    >
                         <option value="">Seleccione</option>
                         <option value="Cliente Genérico">Cliente Genérico</option>
                         <option value="Carlos Pérez">Carlos Pérez</option>
@@ -815,20 +977,29 @@ const anularVenta = () => {
                         <option value="Luis Torres">Luis Torres</option>
                         <option value="María Sánchez">María Sánchez</option>
                         <option value="Juan Rodríguez">Juan Rodríguez</option>
-                      </select>
+                    </select>
+                    {erroresValidacion.cliente && (
+                        <span className="error-message">{erroresValidacion.cliente}</span>
+                    )}
                     </div>
-                    <div className="field-group">
-                      <label>Método de Pago</label>
-                      <select
+                    <div className={`field-group ${erroresValidacion.metodo_pago ? 'has-error' : ''}`}>
+                    <label>
+                    Método de Pago <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <select
                         name="metodo_pago"
                         value={ventaData.metodo_pago}
                         onChange={handleChange}
+                        className={erroresValidacion.metodo_pago ? 'field-error' : ''}
                         required
-                      >
+                    >
                         <option value="">Seleccione</option>
                         <option value="efectivo">Efectivo</option>
                         <option value="transferencia">Transferencia</option>
-                      </select>
+                    </select>
+                    {erroresValidacion.metodo_pago && (
+                        <span className="error-message">{erroresValidacion.metodo_pago}</span>
+                    )}
                     </div>
                   </div>
                   <div className="section-divider"></div>
@@ -965,15 +1136,19 @@ const anularVenta = () => {
                       </table>
                     )}
 
-                    <button
-                      type="button"
-                      className="btn-agregar-insumos"
-                      onClick={() => setMostrarModalInsumos(true)}
-                    >
-                      + Agregar Insumos
-                    </button>
-                  </div>
-
+<button
+    type="button"
+    className="btn-agregar-insumos"
+    onClick={() => setMostrarModalInsumos(true)}
+>
+    + Agregar
+</button>
+{erroresValidacion.productos && (
+    <div className="error-message" style={{marginTop: '8px', textAlign: 'center'}}>
+        {erroresValidacion.productos}
+    </div>
+)}
+</div>
                   <div className="compra-totales-grid">
                     <div className="total-item">
                       <span>Subtotal:</span>
@@ -989,16 +1164,18 @@ const anularVenta = () => {
                     </div>
                   </div>
 
-                  <div className="compra-header-actions">
-                    <button className="btn-guardar" type="submit">Guardar Venta</button>
-                    <button
-                      type="button"
-                      className="btn-regresar"
-                      onClick={() => setMostrarAgregarVenta(false)}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
+<div className="compra-header-actions">
+  <button
+    type="button"
+    className="modal-btn cancel-btn"
+    onClick={() => setMostrarAgregarVenta(false)}
+  >
+    Cancelar
+  </button>
+  <button className="modal-btn save-btn" type="submit">
+    Guardar
+  </button>
+</div>
                 </form>
 
                 {mostrarModalInsumos && (
@@ -1039,6 +1216,3 @@ const anularVenta = () => {
         </div>
     );
 }
-
-
-

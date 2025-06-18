@@ -10,6 +10,7 @@ import Notification from '../components/Notification';
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [tiposDocumento, setTiposDocumento] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modalVisible, setModalVisible] = useState(false);
@@ -21,6 +22,8 @@ export default function Usuarios() {
     correo: '',
     contraseña: '',
     rol_id: '',
+    tipo_documento_id: '',
+    documento: '',
     activo: true
   });
 
@@ -33,7 +36,10 @@ export default function Usuarios() {
         correo: 'juan@gmail.com', 
         contraseña: '123456',
         rol_id: 1, 
-        rol_nombre: 'Administrador', 
+        rol_nombre: 'Administrador',
+        tipo_documento_id: 1,
+        tipo_documento_nombre: 'Cédula de Ciudadanía',
+        documento: '12345678',
         activo: true 
       },
       { 
@@ -43,7 +49,10 @@ export default function Usuarios() {
         correo: 'maria@gmail.com', 
         contraseña: '123456',
         rol_id: 2, 
-        rol_nombre: 'Repostero', 
+        rol_nombre: 'Repostero',
+        tipo_documento_id: 1,
+        tipo_documento_nombre: 'Cédula de Ciudadanía',
+        documento: '87654321',
         activo: true 
       },
       { 
@@ -53,7 +62,10 @@ export default function Usuarios() {
         correo: 'carlos@gmail.com', 
         contraseña: '123456',
         rol_id: 3, 
-        rol_nombre: 'Decorador', 
+        rol_nombre: 'Decorador',
+        tipo_documento_id: 2,
+        tipo_documento_nombre: 'Cédula de Extranjería',
+        documento: '11223344',
         activo: false 
       },
       { 
@@ -63,7 +75,10 @@ export default function Usuarios() {
         correo: 'ana@gmail.com', 
         contraseña: '123456',
         rol_id: 2, 
-        rol_nombre: 'Repostero', 
+        rol_nombre: 'Repostero',
+        tipo_documento_id: 1,
+        tipo_documento_nombre: 'Cédula de Ciudadanía',
+        documento: '55667788',
         activo: true 
       },
       { 
@@ -73,7 +88,10 @@ export default function Usuarios() {
         correo: 'luis@gmail.com', 
         contraseña: '123456',
         rol_id: 1, 
-        rol_nombre: 'Administrador', 
+        rol_nombre: 'Administrador',
+        tipo_documento_id: 3,
+        tipo_documento_nombre: 'Pasaporte',
+        documento: 'AB123456',
         activo: true 
       }
     ];
@@ -85,8 +103,16 @@ export default function Usuarios() {
       { id: 4, nombre: 'Vendedor' }
     ];
 
+    const mockTiposDocumento = [
+      { id: 1, nombre: 'Cédula de Ciudadanía' },
+      { id: 2, nombre: 'Cédula de Extranjería' },
+      { id: 3, nombre: 'Pasaporte' },
+      { id: 4, nombre: 'NIT' }
+    ];
+
     setUsuarios(mockUsuarios);
     setRoles(mockRoles);
+    setTiposDocumento(mockTiposDocumento);
   }, []);
 
   const toggleActivo = (usuario) => {
@@ -116,6 +142,8 @@ export default function Usuarios() {
         correo: '',
         contraseña: '',
         rol_id: '',
+        tipo_documento_id: '',
+        documento: '',
         activo: true
       });
     } else if (tipo === 'editar' && usuario) {
@@ -125,6 +153,8 @@ export default function Usuarios() {
         correo: usuario.correo,
         contraseña: usuario.contraseña,
         rol_id: usuario.rol_id,
+        tipo_documento_id: usuario.tipo_documento_id,
+        documento: usuario.documento,
         activo: usuario.activo
       });
     }
@@ -142,6 +172,8 @@ export default function Usuarios() {
       correo: '',
       contraseña: '',
       rol_id: '',
+      tipo_documento_id: '',
+      documento: '',
       activo: true
     });
   };
@@ -151,7 +183,7 @@ export default function Usuarios() {
   };
 
   const validarFormulario = () => {
-    const { nombres, apellidos, correo, contraseña, rol_id } = formData;
+    const { nombres, apellidos, correo, contraseña, rol_id, tipo_documento_id, documento } = formData;
     
     if (!nombres.trim()) {
       showNotification('Los nombres son obligatorios', 'error');
@@ -177,6 +209,14 @@ export default function Usuarios() {
       showNotification('Debe seleccionar un rol', 'error');
       return false;
     }
+    if (!tipo_documento_id) {
+      showNotification('Debe seleccionar un tipo de documento', 'error');
+      return false;
+    }
+    if (!documento.trim()) {
+      showNotification('El documento es obligatorio', 'error');
+      return false;
+    }
     
     // Validar formato de correo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -195,6 +235,17 @@ export default function Usuarios() {
       showNotification('Ya existe un usuario con este correo', 'error');
       return false;
     }
+
+    // Validar que el documento no esté duplicado
+    const documentoExistente = usuarios.find(usr => 
+      usr.documento === documento && 
+      (modalTipo === 'agregar' || usr.id !== usuarioSeleccionado?.id)
+    );
+    
+    if (documentoExistente) {
+      showNotification('Ya existe un usuario con este documento', 'error');
+      return false;
+    }
     
     return true;
   };
@@ -203,6 +254,7 @@ export default function Usuarios() {
     if (!validarFormulario()) return;
 
     const rolSeleccionado = roles.find(r => r.id === parseInt(formData.rol_id));
+    const tipoDocumentoSeleccionado = tiposDocumento.find(td => td.id === parseInt(formData.tipo_documento_id));
     
     if (modalTipo === 'agregar') {
       const nuevoId = usuarios.length ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
@@ -210,7 +262,9 @@ export default function Usuarios() {
         ...formData,
         id: nuevoId,
         rol_id: parseInt(formData.rol_id),
-        rol_nombre: rolSeleccionado.nombre
+        rol_nombre: rolSeleccionado.nombre,
+        tipo_documento_id: parseInt(formData.tipo_documento_id),
+        tipo_documento_nombre: tipoDocumentoSeleccionado.nombre
       };
       
       setUsuarios([...usuarios, nuevoUsuario]);
@@ -218,7 +272,14 @@ export default function Usuarios() {
     } else if (modalTipo === 'editar') {
       const updated = usuarios.map(usr =>
         usr.id === usuarioSeleccionado.id 
-          ? { ...usr, ...formData, rol_id: parseInt(formData.rol_id), rol_nombre: rolSeleccionado.nombre }
+          ? { 
+              ...usr, 
+              ...formData, 
+              rol_id: parseInt(formData.rol_id), 
+              rol_nombre: rolSeleccionado.nombre,
+              tipo_documento_id: parseInt(formData.tipo_documento_id),
+              tipo_documento_nombre: tipoDocumentoSeleccionado.nombre
+            }
           : usr
       );
       setUsuarios(updated);
@@ -235,16 +296,13 @@ export default function Usuarios() {
     showNotification('Usuario eliminado exitosamente');
   };
 
-  // Función para mostrar el nombre completo en la tabla
-  const nombreCompletoTemplate = (rowData) => {
-    return `${rowData.nombres} ${rowData.apellidos}`;
-  };
-
   const usuariosFiltrados = usuarios.filter(usr =>
     usr.nombres.toLowerCase().includes(filtro.toLowerCase()) ||
     usr.apellidos.toLowerCase().includes(filtro.toLowerCase()) ||
     usr.correo.toLowerCase().includes(filtro.toLowerCase()) ||
-    usr.rol_nombre.toLowerCase().includes(filtro.toLowerCase())
+    usr.rol_nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+    usr.documento.toLowerCase().includes(filtro.toLowerCase()) ||
+    usr.tipo_documento_nombre.toLowerCase().includes(filtro.toLowerCase())
   );
 
   return (
@@ -262,7 +320,7 @@ export default function Usuarios() {
           onClick={() => abrirModal('agregar')}
           type="button"
         >
-          + Agregar Usuario
+          + Agregar 
         </button>
         <SearchBar
           placeholder="Buscar usuario..."
@@ -281,15 +339,34 @@ export default function Usuarios() {
         tableStyle={{ minWidth: '50rem' }}
       >
         <Column 
-                  header="Numero" 
-                  body={(rowData, { rowIndex }) => rowIndex + 1} 
-                  style={{ width: '3rem', textAlign: 'center' }}
-                />
-        <Column header="Nombre Completo" body={nombreCompletoTemplate} />
-        <Column field="correo" header="Correo" />
-        <Column field="rol_nombre" header="Rol" />
+          header="N°" 
+          body={(rowData, { rowIndex }) => rowIndex + 1} 
+          style={{ width: '3rem', textAlign: 'center' }}
+          headerStyle={{ paddingLeft: '1rem' }}
+        />
+        <Column 
+          field="nombres" 
+          header="Nombres" 
+          headerStyle={{ paddingLeft: '2.5rem' }}
+        />
+        <Column 
+          field="apellidos" 
+          header="Apellidos" 
+          headerStyle={{ paddingLeft: '4rem' }}
+        />
+        <Column 
+          field="correo" 
+          header="Correo" 
+          headerStyle={{ paddingLeft: '4rem' }}
+        />
+        <Column 
+          field="rol_nombre" 
+          header="Rol" 
+          headerStyle={{ paddingLeft: '3.5rem' }}
+        />
         <Column
           header="Estado"
+          headerStyle={{ paddingLeft: '1rem' }}
           body={(rowData) => (
             <InputSwitch
               checked={rowData.activo}
@@ -299,10 +376,11 @@ export default function Usuarios() {
         />
         <Column
           header="Acciones"
+          headerStyle={{ paddingLeft: '3rem' }}
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                &#128065; {/* 👁 */}
+                🔍
               </button>
               <button
                 className="admin-button yellow"
@@ -326,33 +404,73 @@ export default function Usuarios() {
       {/* Modal Agregar/Editar */}
       {(modalTipo === 'agregar' || modalTipo === 'editar') && modalVisible && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">
-            {modalTipo === 'agregar' ? 'Agregar Nuevo Usuario' : 'Editar Usuario'}
+          <h2 className="modal-title modal-title-compact">
+            {modalTipo === 'agregar' ? 'Agregar Usuario' : 'Editar Usuario'}
           </h2>
-          <div className="modal-body modal-body-large">
-            <div className="modal-grid modal-grid-large">
+          <div className="modal-body modal-body-compact">
+            <div className="modal-grid modal-grid-compact">
               <div className="modal-field">
-                <label className="modal-label">Nombres:</label>
+                <label className="modal-label">
+                  Tipo Documento<span className="required-asterisk">*</span>:
+                </label>
+                <div className="custom-select-wrapper">
+                  <select
+                    value={formData.tipo_documento_id}
+                    onChange={(e) => handleInputChange('tipo_documento_id', e.target.value)}
+                    className="custom-select"
+                  >
+                    <option value="">Seleccionar</option>
+                    {tiposDocumento.map(tipo => (
+                      <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                    ))}
+                  </select>
+                  <div className="select-arrow">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                      <path d="M6 8L0 2L1.5 0.5L6 5L10.5 0.5L12 2L6 8Z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-field">
+                <label className="modal-label">
+                  Documento<span className="required-asterisk">*</span>:
+                </label>
+                <input
+                  type="text"
+                  value={formData.documento}
+                  onChange={(e) => handleInputChange('documento', e.target.value)}
+                  className="modal-input"
+                  placeholder="Número"
+                />
+              </div>
+              <div className="modal-field">
+                <label className="modal-label">
+                  Nombres<span className="required-asterisk">*</span>:
+                </label>
                 <input
                   type="text"
                   value={formData.nombres}
                   onChange={(e) => handleInputChange('nombres', e.target.value)}
                   className="modal-input"
-                  placeholder="Ej: Juan Carlos"
+                  placeholder="Nombres"
                 />
               </div>
               <div className="modal-field">
-                <label className="modal-label">Apellidos:</label>
+                <label className="modal-label">
+                  Apellidos<span className="required-asterisk">*</span>:
+                </label>
                 <input
                   type="text"
                   value={formData.apellidos}
                   onChange={(e) => handleInputChange('apellidos', e.target.value)}
                   className="modal-input"
-                  placeholder="Ej: Pérez García"
+                  placeholder="Apellidos"
                 />
               </div>
-              <div className="modal-field">
-                <label className="modal-label">Correo Electrónico:</label>
+              <div className="modal-field modal-field-full">
+                <label className="modal-label">
+                  Correo<span className="required-asterisk">*</span>:
+                </label>
                 <input
                   type="email"
                   value={formData.correo}
@@ -361,8 +479,10 @@ export default function Usuarios() {
                   placeholder="ejemplo@correo.com"
                 />
               </div>
-              <div className="modal-field">
-                <label className="modal-label">Contraseña:</label>
+              <div className="modal-field modal-field-full">
+                <label className="modal-label">
+                  Contraseña<span className="required-asterisk">*</span>:
+                </label>
                 <input
                   type="password"
                   value={formData.contraseña}
@@ -371,8 +491,10 @@ export default function Usuarios() {
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
-              <div className="modal-field">
-                <label className="modal-label">Rol del Usuario:</label>
+              <div className="modal-field modal-field-full">
+                <label className="modal-label">
+                  Rol<span className="required-asterisk">*</span>:
+                </label>
                 <div className="custom-select-wrapper">
                   <select
                     value={formData.rol_id}
@@ -385,7 +507,7 @@ export default function Usuarios() {
                     ))}
                   </select>
                   <div className="select-arrow">
-                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
                       <path d="M6 8L0 2L1.5 0.5L6 5L10.5 0.5L12 2L6 8Z" fill="currentColor"/>
                     </svg>
                   </div>
@@ -406,6 +528,8 @@ export default function Usuarios() {
           <h2 className="modal-title">Detalles del Usuario</h2>
           <div className="modal-body">
             <p><strong>ID:</strong> {usuarioSeleccionado.id}</p>
+             <p><strong>Tipo de Documento:</strong> {usuarioSeleccionado.tipo_documento_nombre}</p>
+            <p><strong>Documento:</strong> {usuarioSeleccionado.documento}</p>
             <p><strong>Nombres:</strong> {usuarioSeleccionado.nombres}</p>
             <p><strong>Apellidos:</strong> {usuarioSeleccionado.apellidos}</p>
             <p><strong>Correo:</strong> {usuarioSeleccionado.correo}</p>
@@ -436,35 +560,58 @@ export default function Usuarios() {
       )}
 
       <style jsx>{`
-        .modal-body-large {
-          min-width: 500px;
-          max-width: 500px;
-          padding: 1rem;
+        .required-asterisk {
+          color: #e53935;
+          margin-left: 2px;
+          font-weight: bold;
         }
 
-        .modal-grid-large {
+        .modal-title-compact {
+          padding-left: 1rem;
+          font-size: 1.2rem;
+        }
+
+        .modal-body-compact {
+          min-width: 380px;
+          max-width: 380px;
+          padding: 0.6rem;
+        }
+
+        .modal-grid-compact {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: 0.6rem;
         }
 
         .modal-field {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.2rem;
         }
 
-        .modal-field:nth-child(3),
-        .modal-field:nth-child(4),
-        .modal-field:nth-child(5) {
+        .modal-field-full {
           grid-column: 1 / -1;
         }
 
         .modal-label {
           font-weight: 600;
           color: #333;
-          font-size: 0.9rem;
-          margin-bottom: 0.25rem;
+          font-size: 0.75rem;
+          margin-bottom: 0.1rem;
+        }
+
+        .modal-input {
+          padding: 0.4rem 0.6rem;
+          border: 2px solid #e1e5e9;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          transition: all 0.3s ease;
+          outline: none;
+        }
+
+        .modal-input:focus {
+          border-color: #ff6b9d;
+          box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.1);
         }
 
         .custom-select-wrapper {
@@ -475,11 +622,11 @@ export default function Usuarios() {
 
         .custom-select {
           width: 100%;
-          padding: 0.75rem 2.5rem 0.75rem 1rem;
+          padding: 0.4rem 1.8rem 0.4rem 0.6rem;
           border: 2px solid #e1e5e9;
-          border-radius: 8px;
+          border-radius: 4px;
           background-color: #fff;
-          font-size: 0.9rem;
+          font-size: 0.75rem;
           color: #333;
           appearance: none;
           -webkit-appearance: none;
@@ -491,7 +638,7 @@ export default function Usuarios() {
 
         .custom-select:focus {
           border-color: #ff6b9d;
-          box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+          box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.1);
         }
 
         .custom-select:hover {
@@ -500,7 +647,7 @@ export default function Usuarios() {
 
         .select-arrow {
           position: absolute;
-          right: 1rem;
+          right: 0.6rem;
           top: 50%;
           transform: translateY(-50%);
           pointer-events: none;
@@ -513,19 +660,17 @@ export default function Usuarios() {
         }
 
         @media (max-width: 768px) {
-          .modal-body-large {
+          .modal-body-compact {
             min-width: auto;
             max-width: 90vw;
-            padding: 1.5rem;
+            padding: 0.8rem;
           }
 
-          .modal-grid-large {
+          .modal-grid-compact {
             grid-template-columns: 1fr;
           }
 
-          .modal-field:nth-child(3),
-          .modal-field:nth-child(4),
-          .modal-field:nth-child(5) {
+          .modal-field-full {
             grid-column: 1;
           }
         }

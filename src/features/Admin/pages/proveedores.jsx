@@ -184,7 +184,7 @@ export default function ProveedoresTable() {
           header="Acciones"
           body={(rowData) => (
             <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>🔍</button>
               <button className="admin-button yellow" onClick={() => abrirModal('editar', rowData)}>✏️</button>
               <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
             </>
@@ -196,25 +196,25 @@ export default function ProveedoresTable() {
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">{modalTipo === 'agregar' ? 'Agregar Proveedor' : 'Editar Proveedor'}</h2>
           <div className="modal-body modal-proveedor">
-            <label>Tipo:
+            <label>Tipo*
               <select value={tipoProveedor} onChange={(e) => setTipoProveedor(e.target.value)} className="modal-input">
                 <option value="Natural">Natural</option>
                 <option value="Jurídico">Jurídico</option>
               </select>
             </label>
-            <label>Nombre:
+            <label>Nombre*
               <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="modal-input" />
             </label>
             <label>Contacto:
               <input type="text" value={contacto} onChange={(e) => setContacto(e.target.value)} className="modal-input" />
             </label>
-            <label>Correo:
+            <label>Correo*
               <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} className="modal-input" />
             </label>
             <label>Dirección:
               <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} className="modal-input" />
             </label>
-            <label>{tipoProveedor === 'Natural' ? 'Documento:' : 'NIT:'}
+            <label>{tipoProveedor === 'Natural' ? 'Documento*' : 'NIT*'}
               <input type="text" value={documentoONit} onChange={(e) => setDocumentoONit(e.target.value)} className="modal-input" />
             </label>
           </div>

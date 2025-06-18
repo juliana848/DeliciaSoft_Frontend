@@ -185,7 +185,7 @@ export default function CategoriaTableDemo() {
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                👁
+                🔍
               </button>
               <button className="admin-button yellow" title="Editar" onClick={() => abrirModal('editar', rowData)}>
                 ✏️
@@ -211,7 +211,7 @@ export default function CategoriaTableDemo() {
           <div className="modal-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
-                Nombre:
+                Nombre*
                 <input
                   type="text"
                   value={nombreEditado}
@@ -220,7 +220,7 @@ export default function CategoriaTableDemo() {
                 />
               </label>
               <label>
-                Descripción:
+                Descripción*
                 <textarea
                   value={descripcionEditada}
                   onChange={(e) => setDescripcionEditada(e.target.value)}

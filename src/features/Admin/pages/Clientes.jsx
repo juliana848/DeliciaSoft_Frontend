@@ -283,7 +283,8 @@ export default function Clientes() {
       const nuevoCliente = {
         ...formData,
         idCliente: nuevoId,
-        contrasena: formData.contrasena || '********' // Encriptar en producción
+        contrasena: formData.contrasena || '********', // Encriptar en producción
+        estado: true // Siempre activo al crear
       };
       
       setClientes([...clientes, nuevoCliente]);
@@ -342,15 +343,15 @@ export default function Clientes() {
         onClose={hideNotification}
       />
 
-      <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal('agregar')}
-          type="button"
-          style={{ padding: '10px 18px', fontSize: '15px', fontWeight: '500' }}
-        >
-          + Agregar Cliente
-        </button>
+        <div className="admin-toolbar">
+          <button
+            className="admin-button pink"
+            onClick={() => abrirModal('agregar')}
+            type="button"
+          >
+            + Agregar
+          </button>
+        
         <SearchBar
           placeholder="Buscar cliente..."
           value={filtro}
@@ -367,17 +368,15 @@ export default function Clientes() {
         tableStyle={{ minWidth: '50rem' }}
       >
         <Column 
-          header="Numero" 
+          header="N°" 
+          headerStyle={{ paddingLeft: '1.5rem' }}
           body={(rowData, { rowIndex }) => rowIndex + 1} 
           style={{ width: '3rem', textAlign: 'center' }}
         />
-        <Column field="numeroDocumento" header="Documento" />
-        <Column 
-          header="Nombre Completo" 
-          body={(rowData) => `${rowData.nombre} ${rowData.apellido}`}
-        />
-        <Column field="correo" header="Correo" />
-        <Column field="celular" header="Celular" />
+        <Column field="nombre" header="Nombre"  headerStyle={{ paddingLeft: '2.5rem' }} />
+        <Column field="apellido" header="Apellido"  headerStyle={{ paddingLeft: '2.5rem' }}/>
+        <Column field="correo" header="Correo"  headerStyle={{ paddingLeft: '3rem' }}/>
+        <Column field="celular" header="Celular"  headerStyle={{ paddingLeft: '3rem' }} />
         <Column
           header="Estado"
           body={(rowData) => (
@@ -389,10 +388,11 @@ export default function Clientes() {
         />
         <Column
           header="Acciones"
+           headerStyle={{ paddingLeft: '3.5rem' }}
           body={(rowData) => (
             <>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                &#128065; {/* 👁 */}
+                🔍
               </button>
               <button
                 className="admin-button yellow"
@@ -551,7 +551,7 @@ export default function Clientes() {
           />
         </div>
 
-        {/* Fila 6: Celular y Estado */}
+        {/* Fila 6: Celular y Estado (solo para editar) */}
         <div className="modal-field">
           <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Celular:</label>
           <input
@@ -564,15 +564,18 @@ export default function Clientes() {
           />
         </div>
 
-        <div className="modal-field">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
-            <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>
-            <InputSwitch
-              checked={formData.estado}
-              onChange={(e) => handleInputChange('estado', e.value)}
-            />
+        {/* Estado - Solo mostrar en editar */}
+        {modalTipo === 'editar' && (
+          <div className="modal-field">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
+              <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>
+              <InputSwitch
+                checked={formData.estado}
+                onChange={(e) => handleInputChange('estado', e.value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </div>

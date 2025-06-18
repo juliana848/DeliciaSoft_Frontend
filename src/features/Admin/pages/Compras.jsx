@@ -291,12 +291,13 @@ const generarPDF = (compra) => {
                 paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
                 rowClassName={rowData => rowData.estado === 'anulada' ? 'fila-anulada' : ''}
             >
-                <Column header="N°" body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-                <Column field="proveedor" header="Proveedor" />
-                <Column field="fecha" header="Fecha Compra" />
-                <Column field="total" header="Total" />
+                <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+                <Column field="proveedor" header="Proveedor" headerStyle={{ paddingLeft: '7rem' }}/>
+                <Column field="fecha" header="Fecha Compra" headerStyle={{ paddingLeft: '5rem' }}/>
+                <Column field="total" header="Total" headerStyle={{ paddingLeft: '2rem' }} />
                 <Column
                 header="Acción"
+                headerStyle={{ paddingLeft: '5rem' }}
                 body={rowData => {
                     if (rowData.estado === 'anulada') return <span style={{ color: 'gray' }}>Anulada</span>;
                     return (

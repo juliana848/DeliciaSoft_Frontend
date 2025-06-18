@@ -123,14 +123,14 @@ export default function InsumosTable() {
 
       <h2 className="admin-section-title">Insumos</h2>
       <DataTable value={insumosFiltrados} paginator rows={5} className="admin-table">
-        <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-        <Column field="nombre" header="Nombre" />
-        <Column field="categoria" header="Categoría" />
-        <Column header="Cantidad" body={i => `${i.cantidad} ${i.unidad}`} />
-        <Column header="Estado" body={i => (
+        <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+        <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '6rem' }} />
+        <Column field="categoria" header="Categoría" headerStyle={{ paddingLeft: '4rem' }} />
+        <Column header="Cantidad" headerStyle={{ paddingLeft: '2rem' }} body={i => `${i.cantidad} ${i.unidad}`} />
+        <Column header="Estado"headerStyle={{ paddingLeft: '2rem' }} body={i => (
           <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
         )} />
-        <Column header="Acción" body={i => (
+        <Column header="Acción" headerStyle={{ paddingLeft: '5rem' }} body={i => (
           <div>
             <button className="admin-button gray" title="ver" onClick={() => abrirModal('ver', i)}>🔍</button>
             <button className="admin-button yellow" onClick={() => abrirModal('editar', i)}>✏️</button>

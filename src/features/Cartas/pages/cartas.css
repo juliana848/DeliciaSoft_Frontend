@@ -1,6 +1,6 @@
 /* CARTA GENERAL */
 .carta-container {
-  font-family: sans-serif;
+  font-family: 'Poppins', sans-serif;
   background-color: #ffeaf7;
   padding: 20px;
   color: #333;
@@ -106,32 +106,41 @@
   display: block;
 }
 
-/* PRODUCTOS NORMALES (VERTICALES) */
+/* PRODUCTOS DESTACADOS (GRID DE 4) */
 .productos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .producto {
   background-color: #fff;
   border-radius: 10px;
-  padding: 10px;
+  padding: 20px;
   text-align: center;
-  box-shadow: 0 0 5px #ccc;
+  box-shadow: 0 0 8px #ccc;
   position: relative;
+  transition: transform 0.2s ease;
+}
+
+.producto:hover {
+  transform: scale(1.03);
 }
 
 .etiqueta {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   background-color: #ffd400;
   color: #000;
-  padding: 2px 6px;
-  font-size: 10px;
+  padding: 4px 8px;
+  font-size: 12px;
   font-weight: bold;
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .producto-img {
@@ -147,12 +156,12 @@
   font-weight: bold;
 }
 
-/* DETALLE DE PRODUCTO (HORIZONTAL) */
+/* DETALLE DE PRODUCTO */
 .producto-detalle-container {
   padding: 40px 20px;
   max-width: 900px;
   margin: 0 auto;
-  background-color: #ffeaf7;
+  background: linear-gradient(180deg, #fff1f7 0%, #ffeaf7 100%);
 }
 
 .detalle-titulo {
@@ -160,43 +169,62 @@
   font-size: 2rem;
   margin-bottom: 30px;
   color: #e91e63;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .productos-detalle {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 20px;
+  justify-content: center;
 }
 
 .producto-card {
   display: flex;
   flex-direction: row;
   background-color: #fff;
-  border-radius: 10px;
+  border-radius: 16px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  padding: 16px;
+  padding: 14px;
   align-items: center;
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.producto-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
 }
 
 .producto-card .producto-img {
-  width: 160px;
-  height: 120px;
+  width: 130px;
+  height: 100px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
   flex-shrink: 0;
-  margin-bottom: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .producto-info {
-  margin-left: 20px;
   flex: 1;
   text-align: left;
 }
 
+.producto-info h3 {
+  font-size: 20px;
+  color: #333;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
 .precio-extra {
   font-weight: bold;
-  color: #d41e4f;
+  font-size: 18px;
+  color: #ff4081;
   margin: 4px 0;
 }
 
@@ -204,6 +232,21 @@
   margin-top: 6px;
   color: #444;
   font-size: 14px;
+  line-height: 1.4;
+}
+
+/* NOTA AL CLIENTE */
+.nota-clientes {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #fff0f7;
+  border-left: 4px solid #ff0080;
+  text-align: center;
+  font-style: italic;
+  color: #a3005c;
+  border-radius: 10px;
+  line-height: 1.5;
+  font-size: 15px;
 }
 
 /* RESPONSIVE */
@@ -225,48 +268,9 @@
   }
 
   .productos {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: 1fr;
   }
 
-  .producto-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .producto-card .producto-img {
-    margin-bottom: 10px;
-  }
-
-  .producto-info {
-    margin-left: 0;
-    text-align: center;
-  }
-}
-.nota-clientes {
-  margin-top: 40px;
-  padding: 20px;
-  background-color: #fff0f7;
-  border-left: 4px solid #ff0080;
-  text-align: center;
-  font-style: italic;
-  color: #a3005c;
-  border-radius: 10px;
-}
-
-/* Mejora el espacio entre imagen y texto dentro del producto-card */
-.producto-card {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 30px; /* Agrega separación horizontal */
-}
-
-/* Elimina el margin-left si ya estás usando gap */
-.producto-info {
-  margin-left: 0;
-}
-
-@media (max-width: 768px) {
   .producto-card {
     flex-direction: column;
     align-items: center;
@@ -277,4 +281,15 @@
   .producto-info {
     text-align: center;
   }
+  .boton-agregar {
+  margin-top: 10px;
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 }

@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { CartContext } from "./CartContext";
 
 const mockData = [
   {
@@ -24,7 +26,10 @@ const mockData = [
   },
 ];
 
-const DetalleSandwiches = () => {
+const DetallesSandwiches = () => {
+  const navigate = useNavigate();
+  const { agregarProducto } = useContext(CartContext);
+
   return (
     <div className="producto-detalle-container">
       <h2 className="detalle-titulo">SÁNDWICHES</h2>
@@ -39,6 +44,28 @@ const DetalleSandwiches = () => {
               {producto.descripcion && (
                 <p className="descripcion">{producto.descripcion}</p>
               )}
+              <button
+                onClick={() => {
+                  agregarProducto({ ...producto, cantidad: 1 });
+                  navigate("/pedidos");
+                }}
+                style={{
+                  marginTop: "10px",
+                  backgroundColor: "#ff0080",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                  transition: "background-color 0.3s",
+                }}
+                onMouseOver={(e) => (e.target.style.backgroundColor = "#e60073")}
+                onMouseOut={(e) => (e.target.style.backgroundColor = "#ff0080")}
+              >
+                Agregar a mi pedido 🥪
+              </button>
             </div>
           </div>
         ))}
@@ -49,8 +76,26 @@ const DetalleSandwiches = () => {
         <p>También puedes pedirlos con papas, jugos naturales o un toque picante. 🌶️</p>
         <p>"¡Satisfacción garantizada o más hambre asegurada!" 😋</p>
       </div>
+
+      {/* ✅ Botón de volver a la carta */}
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <button
+          onClick={() => navigate("/Cartas")}
+          style={{
+            backgroundColor: "#ff0080",
+            color: "#fff",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          ⬅ Volver a la carta
+        </button>
+      </div>
     </div>
   );
 };
 
-export default DetalleSandwiches;
+export default DetallesSandwiches;

@@ -1,5 +1,6 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; 
+import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { CartContext } from "./CartContext"; // Asegúrate que el path esté bien
 
 const mockData = [
   {
@@ -76,6 +77,7 @@ const mockData = [
 
 const DetalleMiniDonas = () => {
   const navigate = useNavigate();
+  const { agregarProducto } = useContext(CartContext); // ✅ Integración con el carrito
 
   return (
     <div className="producto-detalle-container">
@@ -95,6 +97,28 @@ const DetalleMiniDonas = () => {
               {producto.descripcion && (
                 <p className="descripcion">{producto.descripcion}</p>
               )}
+              <button
+                onClick={() => {
+                  agregarProducto({ ...producto, cantidad: 1 });
+                  navigate("/pedidos");
+                }}
+                style={{
+                  marginTop: "10px",
+                  backgroundColor: "#ff0080",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                  transition: "background-color 0.3s",
+                }}
+                onMouseOver={(e) => (e.target.style.backgroundColor = "#e60073")}
+                onMouseOut={(e) => (e.target.style.backgroundColor = "#ff0080")}
+              >
+                Agregar a mi pedido 🍩
+              </button>
             </div>
           </div>
         ))}
@@ -106,10 +130,9 @@ const DetalleMiniDonas = () => {
         <p>"Y recuerda, no dejes para mañana lo que te puedes comer hoy" 💖</p>
       </div>
 
-      {/* ✅ Botón para regresar */}
       <div style={{ textAlign: "center", marginTop: "30px" }}>
         <button
-          onClick={() => navigate("/Cartas")} 
+          onClick={() => navigate("/Cartas")}
           style={{
             backgroundColor: "#ff0080",
             color: "#fff",
@@ -128,3 +151,4 @@ const DetalleMiniDonas = () => {
 };
 
 export default DetalleMiniDonas;
+

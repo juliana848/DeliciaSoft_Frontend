@@ -19,6 +19,8 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
       nombre: 'San Benito',
       direccion: 'CALLE 9 #7-34',
       horarios: 'Lunes a Domingo: 9:00 AM - 6:00 PM',
+      horaInicio: '09:00',
+      horaFin: '18:00',
       icon: '🛒'
     },
     {
@@ -26,14 +28,10 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
       nombre: 'San Pablo',
       direccion: 'Carrera 15 #12-45',
       horarios: 'Lunes a Domingo: 10:00 AM - 7:00 PM',
+      horaInicio: '10:00',
+      horaFin: '19:00',
       icon: '🛒'
     }
-  ];
-
-  const horariosDisponibles = [
-    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'
   ];
 
   // Función para agregar una alerta
@@ -59,38 +57,49 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     return regex.test(telefono.replace(/\s/g, ''));
   };
 
-  // Función para validar fecha (mínimo 2 semanas)
+  // Función para validar fecha (mínimo 15 días, máximo 30 días)
   const validarFecha = (fecha) => {
     if (!fecha) return false;
     
     const fechaSeleccionada = new Date(fecha);
     const fechaActual = new Date();
     const fechaMinima = new Date();
-    fechaMinima.setDate(fechaMinima.getDate() + 14); // 2 semanas después
+    const fechaMaxima = new Date();
     
-    return fechaSeleccionada >= fechaMinima;
+    fechaMinima.setDate(fechaMinima.getDate() + 15); // 15 días después
+    fechaMaxima.setDate(fechaMaxima.getDate() + 30); // 30 días después
+    
+    return fechaSeleccionada >= fechaMinima && fechaSeleccionada <= fechaMaxima;
   };
 
-  // Función para validar hora según el día
+  // Función para validar hora según el día y la ubicación
   const validarHora = (fecha, hora) => {
-    if (!fecha || !hora) return false;
+    if (!fecha || !hora || !ubicacionSeleccionada) return false;
     
-    const fechaSeleccionada = new Date(fecha);
-    const diaSemana = fechaSeleccionada.getDay();
-    
-    // Validar horarios según la ubicación seleccionada
     const ubicacion = ubicaciones.find(u => u.id === ubicacionSeleccionada);
     if (!ubicacion) return false;
     
-    const [horaNum] = hora.split(':').map(Number);
+    // Convertir hora a minutos para comparación más fácil
+    const convertirHoraAMinutos = (hora) => {
+      const [horas, minutos] = hora.split(':').map(Number);
+      return horas * 60 + minutos;
+    };
     
-    if (ubicacionSeleccionada === 'san-benito') {
-      return horaNum >= 9 && horaNum < 18;
-    } else if (ubicacionSeleccionada === 'san-pablo') {
-      return horaNum >= 10 && horaNum < 19;
-    }
+    const horaSeleccionada = convertirHoraAMinutos(hora);
+    const horaInicio = convertirHoraAMinutos(ubicacion.horaInicio);
+    const horaFin = convertirHoraAMinutos(ubicacion.horaFin);
     
-    return true;
+    return horaSeleccionada >= horaInicio && horaSeleccionada < horaFin;
+  };
+
+  // Función para obtener el rango de horarios permitidos
+  const obtenerRangoHorarios = () => {
+    if (!ubicacionSeleccionada) return '';
+    
+    const ubicacion = ubicaciones.find(u => u.id === ubicacionSeleccionada);
+    if (!ubicacion) return '';
+    
+    return `${ubicacion.horaInicio} - ${ubicacion.horaFin}`;
   };
 
   // Validaciones en tiempo real
@@ -105,14 +114,15 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     // Validar fecha
     if (datosEntrega.fecha) {
       if (!validarFecha(datosEntrega.fecha)) {
-        nuevosErrores.fecha = 'La fecha debe ser al menos 2 semanas después de hoy';
+        nuevosErrores.fecha = 'La fecha debe estar entre 15 y 30 días desde hoy';
       }
     }
     
     // Validar hora
     if (datosEntrega.hora && datosEntrega.fecha) {
       if (!validarHora(datosEntrega.fecha, datosEntrega.hora)) {
-        nuevosErrores.hora = 'La hora seleccionada no está disponible para esta ubicación';
+        const rangoHorarios = obtenerRangoHorarios();
+        nuevosErrores.hora = `La hora debe estar dentro del horario de atención: ${rangoHorarios}`;
       }
     }
     
@@ -131,6 +141,11 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     setUbicacionSeleccionada(ubicacionId);
     const ubicacion = ubicaciones.find(u => u.id === ubicacionId);
     agregarAlerta('success', `✅ Ubicación "${ubicacion.nombre}" seleccionada correctamente`);
+    
+    // Resetear hora si ya había una seleccionada para revalidar
+    if (datosEntrega.hora) {
+      setDatosEntrega(prev => ({...prev, hora: ''}));
+    }
   };
 
   // Manejar cambio de fecha
@@ -141,7 +156,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
       if (validarFecha(fecha)) {
         agregarAlerta('success', '✅ Fecha válida seleccionada');
       } else {
-        agregarAlerta('error', '❌ La fecha debe ser al menos 2 semanas después de hoy');
+        agregarAlerta('error', '❌ La fecha debe estar entre 15 y 30 días desde hoy');
       }
     }
   };
@@ -150,28 +165,28 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
   const manejarCambioHora = (hora) => {
     setDatosEntrega(prev => ({...prev, hora}));
     
-    if (hora && datosEntrega.fecha) {
+    if (hora && datosEntrega.fecha && ubicacionSeleccionada) {
       if (validarHora(datosEntrega.fecha, hora)) {
         agregarAlerta('success', '✅ Hora válida seleccionada');
       } else {
-        agregarAlerta('error', '❌ La hora no está disponible para esta ubicación');
+        const rangoHorarios = obtenerRangoHorarios();
+        agregarAlerta('error', `❌ La hora debe estar dentro del horario: ${rangoHorarios}`);
       }
     }
   };
 
   // Manejar cambio de teléfono
- const manejarCambioTelefono = (telefono) => {
-  setDatosEntrega(prev => ({...prev, telefono}));
+  const manejarCambioTelefono = (telefono) => {
+    setDatosEntrega(prev => ({...prev, telefono}));
 
-  if (telefono.length === 10) {
-    if (validarTelefono(telefono)) {
-      agregarAlerta('success', '✅ Teléfono válido');
-    } else {
-      agregarAlerta('error', '❌ Ingrese un teléfono celular colombiano válido');
+    if (telefono.length === 10) {
+      if (validarTelefono(telefono)) {
+        agregarAlerta('success', '✅ Teléfono válido');
+      } else {
+        agregarAlerta('error', '❌ Ingrese un teléfono celular colombiano válido');
+      }
     }
-  }
-};
-
+  };
 
   const handleContinue = () => {
     // Validar campos obligatorios
@@ -215,10 +230,14 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
                       datosEntrega.telefono &&
                       Object.keys(errores).length === 0;
 
-  // Calcular fecha mínima (2 semanas después)
+  // Calcular fechas mínima y máxima
   const fechaMinima = new Date();
-  fechaMinima.setDate(fechaMinima.getDate() + 14);
+  fechaMinima.setDate(fechaMinima.getDate() + 15);
   const fechaMinimaString = fechaMinima.toISOString().split('T')[0];
+  
+  const fechaMaxima = new Date();
+  fechaMaxima.setDate(fechaMaxima.getDate() + 30);
+  const fechaMaximaString = fechaMaxima.toISOString().split('T')[0];
 
   return (
     <div className="opciones-entrega-container">
@@ -293,11 +312,12 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
                     type="date" 
                     value={datosEntrega.fecha}
                     min={fechaMinimaString}
+                    max={fechaMaximaString}
                     onChange={(e) => manejarCambioFecha(e.target.value)}
                     className={`form-input ${errores.fecha ? 'error' : ''}`}
                   />
                   {errores.fecha && <span className="error-message">* {errores.fecha}</span>}
-                  <small className="form-help">Mínimo 2 semanas desde hoy</small>
+                  <small className="form-help">Entre 15 y 30 días desde hoy</small>
                 </div>
 
                 <div className="form-group">
@@ -305,19 +325,19 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
                     <span className="label-icon">🕐</span>
                     Hora de entrega *
                   </label>
-                  <select 
+                  <input 
+                    type="time" 
                     value={datosEntrega.hora}
                     onChange={(e) => manejarCambioHora(e.target.value)}
-                    className={`form-select ${errores.hora ? 'error' : ''}`}
-                  >
-                    <option value="">Seleccionar hora</option>
-                    {horariosDisponibles.map(hora => (
-                      <option key={hora} value={hora}>
-                        {hora}
-                      </option>
-                    ))}
-                  </select>
+                    className={`form-input ${errores.hora ? 'error' : ''}`}
+                    step="1800" // Pasos de 30 minutos
+                  />
                   {errores.hora && <span className="error-message">* {errores.hora}</span>}
+                  {ubicacionSeleccionada && (
+                    <small className="form-help">
+                      Horario disponible: {obtenerRangoHorarios()}
+                    </small>
+                  )}
                 </div>
               </div>
 

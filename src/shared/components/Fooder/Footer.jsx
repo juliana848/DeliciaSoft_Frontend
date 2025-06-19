@@ -13,17 +13,17 @@ function Footer() {
 
                 <div className="footer-section about-section">
                     <h3 className="footer-title">Delicias Darsy</h3>
-                    <p className="footer-text">descubre sabores únicos que endulzan cada momento.</p>
+                    <p className="footer-text">Descubre sabores únicos que endulzan cada momento.</p>
                 </div>
 
                 <div className="footer-section empresa-section">
                     <h3 className="footer-title">Nuestra Empresa</h3>
-                    <p className="footer-text"><strong>SEDES</strong></p>
-                    <p className="footer-text"><strong>CONÓCENOS</strong></p>
+                    <p className="footer-text"><strong> <a href="../../../Sedes" rel="noopener noreferrer">Sedes</a></strong></p>
+                    <p className="footer-text"><strong> <a href="../../../Conocenos" rel="noopener noreferrer">Conócenos</a></strong></p>
                 </div>
 
                 <div className="footer-section contacto-section">
-                    <h3 className="footer-title">CONTACTO</h3>
+                    <h3 className="footer-title">Contacto</h3>
                     <p className="footer-text">
                         <a href="https://wa.me/573213098504" target="_blank" rel="noopener noreferrer">📱 +57 321 309 85 04</a>
                     </p>

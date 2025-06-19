@@ -842,7 +842,7 @@ const generarSugerenciaContraseña = (nombres, apellidos) => {
                   onChange={(e) => handleInputChange('documento', e.target.value)}
                   className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
                   placeholder="Número"
-                  maxLength="12"
+                  maxLength="10"
                 />
                 {fieldErrors.documento?.length > 0 && (
                   <div className="field-error">
@@ -907,7 +907,7 @@ const generarSugerenciaContraseña = (nombres, apellidos) => {
                   onChange={(e) => handleInputChange('correo', e.target.value)}
                   className={`modal-input ${fieldErrors.correo?.length ? 'error' : ''}`}
                   placeholder="ejemplo@correo.com"
-                  maxLength="100"
+                  maxLength="20"
                 />
                 {fieldErrors.correo?.length > 0 && (
                   <div className="field-error">
@@ -927,7 +927,7 @@ const generarSugerenciaContraseña = (nombres, apellidos) => {
                     onChange={(e) => handleInputChange('contraseña', e.target.value)}
                     className={`modal-input password-input ${fieldErrors.contraseña?.length ? 'error' : ''}`}
                     placeholder="Contraseña segura"
-                    maxLength="50"
+                    maxLength="20"
                   />
                   <button
                     type="button"
@@ -959,7 +959,7 @@ const generarSugerenciaContraseña = (nombres, apellidos) => {
                       onChange={(e) => handleInputChange('confirmarContraseña', e.target.value)}
                       className={`modal-input password-input ${fieldErrors.confirmarContraseña?.length ? 'error' : ''}`}
                       placeholder="Confirme su contraseña"
-                      maxLength="50"
+                      maxLength="20"
                     />
                     <button
                       type="button"

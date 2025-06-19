@@ -662,7 +662,7 @@ export default function Clientes() {
                     width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
                     borderColor: formErrors.numeroDocumento ? 'red' : '' // Resaltar borde si hay error
                   }}
-                  maxLength={20}
+                  maxLength={10}
                 />
                 {/* Mensaje de error para número de documento */}
                 {formErrors.numeroDocumento && (
@@ -684,7 +684,7 @@ export default function Clientes() {
                     width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
                     borderColor: formErrors.nombre ? 'red' : ''
                   }}
-                  maxLength={30}
+                  maxLength={15}
                 />
                 {formErrors.nombre && (
                   <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.nombre}</small>
@@ -704,7 +704,7 @@ export default function Clientes() {
                     width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
                     borderColor: formErrors.apellido ? 'red' : ''
                   }}
-                  maxLength={30}
+                  maxLength={15}
                 />
                 {formErrors.apellido && (
                   <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.apellido}</small>
@@ -725,7 +725,7 @@ export default function Clientes() {
                     width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
                     borderColor: formErrors.correo ? 'red' : ''
                   }}
-                  maxLength={50}
+                  maxLength={20}
                 />
                 {formErrors.correo && (
                   <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.correo}</small>
@@ -745,7 +745,7 @@ export default function Clientes() {
                     width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
                     borderColor: formErrors.celular ? 'red' : ''
                   }}
-                  maxLength={20}
+                  maxLength={10}
                 />
                 {formErrors.celular && (
                   <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.celular}</small>

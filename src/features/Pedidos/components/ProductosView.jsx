@@ -1,6 +1,7 @@
-import React, { useState, useContext  } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from "../../Cartas/pages/CartContext";
+
 const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
   const [categoriaActiva, setCategoriaActiva] = useState('donas');
   const [modalDetalle, setModalDetalle] = useState(null);
@@ -8,6 +9,31 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false); 
   
+  useEffect(() => {
+    // Recuperar productos temporales al cargar el componente
+    const productosTemporales = localStorage.getItem('productosTemporales');
+    if (productosTemporales) {
+        try {
+            const productos = JSON.parse(productosTemporales);
+            console.log('Productos recuperados:', productos);
+            
+            // Agregar cada producto al contexto
+            productos.forEach(producto => {
+                agregarProductoSeleccionado(producto);
+            });
+            
+            // Limpiar productos temporales
+            localStorage.removeItem('productosTemporales');
+            
+            // Mostrar mensaje de éxito
+            showCustomAlert('success', 'Productos recuperados correctamente');
+        } catch (error) {
+            console.error('Error al recuperar productos:', error);
+            localStorage.removeItem('productosTemporales');
+        }
+    }
+}, []);
+
   const navigate = useNavigate();
    const { 
     carrito, 
@@ -287,11 +313,15 @@ const continuar = () => {
     setShowConfirmation(false);
   };
 
-  // Función para manejar el ir al login
-  const handleGoToLogin = () => {
-    setShowAuthAlert(false);
-    navigate('/iniciar-sesion');
-  };
+
+    // Función para manejar el ir al login
+    const handleGoToLogin = () => {
+        setShowAuthAlert(false);
+        // Guardar productos en localStorage antes de ir al login
+        const todosLosProductos = obtenerTodosLosProductos();
+        localStorage.setItem('productosTemporales', JSON.stringify(todosLosProductos));
+        navigate('/iniciar-sesion');
+    };
 
   // Función para cancelar el ir al login
   const handleCancelLogin = () => {

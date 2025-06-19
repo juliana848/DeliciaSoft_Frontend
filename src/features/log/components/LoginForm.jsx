@@ -132,14 +132,21 @@ const LoginForm = () => {
 
     showCustomAlert('success', 'Inicio de sesión exitoso ✅');
 
-    setTimeout(() => {
+  setTimeout(() => {
       if (userRole === 'admin') {
-        navigate('/admin/pages/Dashboard');
+          navigate('/admin/pages/Dashboard');
       } else {
-        navigate('/');
+          // Verificar si hay productos temporales guardados
+          const productosTemporales = localStorage.getItem('productosTemporales');
+          if (productosTemporales) {
+              navigate('/pedidos');
+              // NO hacer reload aquí para que el useEffect funcione
+          } else {
+              navigate('/');
+              window.location.reload();
+          }
       }
-      window.location.reload();
-    }, 1500);
+  }, 1500);
   };
 
   return (

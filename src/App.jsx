@@ -14,10 +14,11 @@ import Login from './features/log/login';
 import DetalleObleas from "./features/Cartas/pages/DetalleObleas";
 import DetalleMiniDonas from "./features/Cartas/pages/DetalleMiniDonas";
 import DetalleCupcake from "./features/Cartas/pages/DetalleCupcake";
-import detallesArroz from "./features/Cartas/pages/DetallesArrozConLeche";
-import detallesPostres from "./features/Cartas/pages/detallePostres";
-import detallesSandwiches from "./features/Cartas/pages/detallesSandwis";
-import detallesChocolates from "./features/Cartas/pages/detallesChocolates";
+import DetallesArroz from "./features/Cartas/pages/DetallesArrozConLeche";
+import DetallesPostres from "./features/Cartas/pages/detallePostres";
+import DetallesSandwiches from "./features/Cartas/pages/detallesSandwis";
+import DetalleChocolates from "./features/Cartas/pages/detallesChocolates";
+
 
 // Importar páginas de Cliente
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
@@ -111,10 +112,11 @@ function AppContent() {
             <Route path="/detalle-obleas" element={<DetalleObleas />} />
             <Route path="/detalle-mini-donas" element={<DetalleMiniDonas />} />
             <Route path="/detalle-cupcake" element={<DetalleCupcake/>} />
-            <Route path="/detalle-arroz" element={<detallesArroz />} />
-            <Route path="/detalle-postres" element={<detallesPostres />} />
-            <Route path="/detalle-sandwiches" element={<detallesSandwiches />} />
-            <Route path="/detalle-chocolates" element={<detallesChocolates />} />
+            <Route path="/detalle-arroz" element={<DetallesArroz />} />
+            <Route path="/detalle-postres" element={<DetallesPostres />} />
+            <Route path="/detalle-sandwiches" element={<DetallesSandwiches />} />
+            <Route path="/detalle-chocolates" element={<DetalleChocolates />} />
+
             {isAuthenticated && userRole === 'cliente' && (
               <Route path="/perfil" element={<PerfilCliente />} />
             )}

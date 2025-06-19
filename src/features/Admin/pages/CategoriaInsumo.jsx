@@ -151,24 +151,9 @@ export default function CategoriaTableDemo() {
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
       >
-        <Column
-          header="N°"
-          body={(_, { rowIndex }) => rowIndex + 1}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '4rem' }}
-          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
-        />
-        <Column
-          field="nombre"
-          header="Nombre"
-          headerStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
-          bodyStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
-        />
-        <Column
-          field="descripcion"
-          header="Descripción"
-          headerStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
-          bodyStyle={{ textAlign: 'left', verticalAlign: 'middle' }}
-        />
+        <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
+        <Column field="nombre" header="Nombre" />
+        <Column field="descripcion" header="Descripción" />
         <Column
           header="Estados"
           body={(rowData) => (
@@ -177,8 +162,6 @@ export default function CategoriaTableDemo() {
               onChange={() => toggleActivo(rowData)}
             />
           )}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '4rem' }}
-          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
         <Column
           header="Acción"
@@ -195,16 +178,12 @@ export default function CategoriaTableDemo() {
               </button>
             </>
           )}
-          headerStyle={{ textAlign: 'center', verticalAlign: 'middle', paddingLeft: '6rem' }}
-          bodyStyle={{ textAlign: 'center', verticalAlign: 'middle' }}
         />
       </DataTable>
 
-      {/* Modal Agregar/Editar */}
-    {modalVisible && (
-    <Modal visible={modalVisible} onClose={cerrarModal}>
-      {modalTipo === 'agregar' || modalTipo === 'editar' ? (
-        <>
+      {/* Modal Agregar / Editar */}
+      {modalVisible && (modalTipo === 'agregar' || modalTipo === 'editar') && (
+        <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">
             {modalTipo === 'agregar' ? 'Agregar Nueva Categoría' : 'Editar Categoría'}
           </h2>
@@ -212,12 +191,18 @@ export default function CategoriaTableDemo() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
                 Nombre*
-                <input
-                  type="text"
+                <select
                   value={nombreEditado}
                   onChange={(e) => setNombreEditado(e.target.value)}
                   className="modal-input"
-                />
+                >
+                  <option value="">Seleccione una categoría</option>
+                  {categorias.map((cat) => (
+                    <option key={cat.id} value={cat.nombre}>
+                      {cat.nombre}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 Descripción*
@@ -240,35 +225,8 @@ export default function CategoriaTableDemo() {
               Guardar
             </button>
           </div>
-        </>
-      ) : modalTipo === 'visualizar' && categoriaSeleccionada ? (
-        <>
-          <h2 className="modal-title">Detalles Categoría</h2>
-          <div className="modal-body">
-            <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
-            <p><strong>Descripción:</strong> {categoriaSeleccionada.descripcion}</p>
-            <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </>
-      ) : modalTipo === 'eliminar' && categoriaSeleccionada ? (
-        <>
-          <h2 className="modal-title">Confirmar Eliminación</h2>
-          <div className="modal-body">
-            <p>¿Seguro que quieres eliminar la categoría <strong>{categoriaSeleccionada.nombre}</strong>?</p>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
-          </div>
-        </>
-      ) : null}
-    </Modal>
-  )};
-
-
+        </Modal>
+      )}
 
       {/* Modal Visualizar */}
       {modalTipo === 'visualizar' && categoriaSeleccionada && (

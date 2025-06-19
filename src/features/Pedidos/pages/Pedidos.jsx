@@ -115,13 +115,9 @@ const Pedidos = () => {
   };
 
   // Función para cuando se hace clic en "Siguiente" después de seleccionar productos
-  const siguienteDesdeProductos = () => {
-    if (pedidoActual.productos.length > 0) {
-      // Ir a la vista de toppings
-      setVistaActual('toppings');
-    } else {
-      alert('Por favor selecciona al menos un producto');
-    }
+ const siguienteDesdeProductos = () => {
+    // Ir a la vista de toppings
+    setVistaActual('toppings');
   };
 
   // Funciones para manejar la selección en las vistas

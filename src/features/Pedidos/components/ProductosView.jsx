@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useContext  } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { CartContext } from "../../Cartas/pages/CartContext";
 const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
   const [categoriaActiva, setCategoriaActiva] = useState('donas');
   const [modalDetalle, setModalDetalle] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showAuthAlert, setShowAuthAlert] = useState(false); // Nueva alerta para autenticación
+  const [showAuthAlert, setShowAuthAlert] = useState(false); 
   
   const navigate = useNavigate();
+   const { 
+    carrito, 
+    actualizarCantidadCarrito, 
+    eliminarDelCarrito,
+    productosSeleccionados: productosDelContexto,
+    agregarProductoSeleccionado,
+    actualizarCantidadSeleccionado,
+    eliminarProductoSeleccionado
+} = useContext(CartContext);
 
   const categorias = [
     { id: 'fresas', nombre: 'Fresas con Crema', icon: '🍓' },
@@ -150,11 +159,12 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
   };
 
   // Función para verificar si el usuario está autenticado
-  const isUserAuthenticated = () => {
-    const token = localStorage.getItem('authToken');
-    return !!token; // Devuelve true si hay token, false si no
-  };
-
+    const isUserAuthenticated = () => {
+        const token = localStorage.getItem('authToken');
+        console.log('Token encontrado:', token);
+        return !!token; // Devuelve true si hay token, false si no
+    };
+    
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -162,29 +172,71 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     }, 3000);
   };
 
-  const seleccionarProducto = (producto) => {
-    const yaSeleccionado = productosSeleccionados.find(p => p.id === producto.id);
-    
-    if (!yaSeleccionado) {
-      const productoConCantidad = { ...producto, cantidad: 1 };
-      onProductoSeleccionado(productoConCantidad);
-      showCustomAlert('success', `${producto.nombre} ha sido agregado al pedido!`);
-    }
+const seleccionarProducto = (producto) => {
+    const productoConCantidad = { ...producto, cantidad: 1 };
+    // Solo agregar al contexto, no duplicar
+    agregarProductoSeleccionado(productoConCantidad);
+    showCustomAlert('success', `${producto.nombre} ha sido agregado al pedido!`);
+    setTimeout(() => {
+        const resumenElement = document.getElementById('resumen-pedido');
+        if (resumenElement) {
+            resumenElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
+};
+
+  const actualizarCantidadUnificada = (productoId, nuevaCantidad) => {
+      const enProductosSeleccionados = productosSeleccionados.find(p => p.id === productoId);
+      const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
+      
+      if (enProductosSeleccionados) {
+          // Es un producto seleccionado localmente
+          if (nuevaCantidad <= 0) {
+              onEliminarProducto(productoId);
+              eliminarProductoSeleccionado(productoId);
+              showCustomAlert('error', `Producto eliminado del pedido.`);
+          } else {
+              onActualizarCantidad(productoId, nuevaCantidad);
+              actualizarCantidadSeleccionado(productoId, nuevaCantidad);
+              showCustomAlert('success', `Cantidad actualizada.`);
+          }
+      } else if (enProductosContexto) {
+          // Es un producto del contexto
+          if (nuevaCantidad <= 0) {
+              eliminarProductoSeleccionado(productoId);
+              showCustomAlert('error', `Producto eliminado del pedido.`);
+          } else {
+              actualizarCantidadSeleccionado(productoId, nuevaCantidad);
+              showCustomAlert('success', `Cantidad actualizada.`);
+          }
+      } else {
+          // Es un producto del carrito
+          if (nuevaCantidad <= 0) {
+              eliminarDelCarrito(productoId);
+              showCustomAlert('error', `Producto eliminado del pedido.`);
+          } else {
+              actualizarCantidadCarrito(productoId, nuevaCantidad);
+              showCustomAlert('success', `Cantidad actualizada.`);
+          }
+      }
   };
 
-  const actualizarCantidad = (productoId, nuevaCantidad) => {
-    if (nuevaCantidad <= 0) {
-      onEliminarProducto(productoId);
+  const eliminarProductoUnificado = (productoId) => {
+      const enProductosSeleccionados = productosSeleccionados.find(p => p.id === productoId);
+      const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
+      
+      if (enProductosSeleccionados) {
+          // Es un producto seleccionado localmente
+          onEliminarProducto(productoId);
+          eliminarProductoSeleccionado(productoId);
+      } else if (enProductosContexto) {
+          // Es un producto del contexto
+          eliminarProductoSeleccionado(productoId);
+      } else {
+          // Es un producto del carrito
+          eliminarDelCarrito(productoId);
+      }
       showCustomAlert('error', `Producto eliminado del pedido.`);
-    } else {
-      onActualizarCantidad(productoId, nuevaCantidad);
-      showCustomAlert('success', `Cantidad actualizada para el producto.`);
-    }
-  };
-
-  const eliminarProducto = (productoId) => {
-    onEliminarProducto(productoId);
-    showCustomAlert('error', `Producto eliminado del pedido.`);
   };
 
   const abrirModal = (producto) => {
@@ -195,19 +247,36 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     setModalDetalle(null);
   };
 
-  // Función modificada para verificar autenticación antes de continuar
-  const continuar = () => {
-    if (productosSeleccionados.length > 0) {
-      // Verificar si el usuario está autenticado
-      if (!isUserAuthenticated()) {
-        setShowAuthAlert(true); // Mostrar alerta de autenticación
+const continuar = () => {
+    console.log('=== INICIANDO FUNCIÓN CONTINUAR ===');
+    const todosLosProductos = obtenerTodosLosProductos();
+    console.log('Todos los productos obtenidos:', todosLosProductos);
+
+    console.log('Todos los productos obtenidos:', todosLosProductos);
+    
+    const cantidadTotal = todosLosProductos.reduce((total, producto) => total + (producto.cantidad || 1), 0);
+    console.log('Cantidad total calculada:', cantidadTotal);
+    
+    if (cantidadTotal < 10) {
+        showCustomAlert('error', `Necesitas al menos 10 productos en total. Tienes ${cantidadTotal} productos.`);
         return;
-      }
-      setShowConfirmation(true); // Mostrar confirmación si está autenticado
-    } else {
-      showCustomAlert('error', 'Por favor selecciona al menos un producto antes de continuar');
     }
-  };
+
+    if (cantidadTotal > 100) {
+        showCustomAlert('error', `Máximo 100 productos permitidos. Tienes ${cantidadTotal} productos.`);
+        return;
+    }
+
+    // Verificar si el usuario está autenticado
+    if (!isUserAuthenticated()) {
+        console.log('Usuario no autenticado');
+        setShowAuthAlert(true);
+        return;
+    }
+
+    console.log('Todo correcto, mostrando confirmación');
+    setShowConfirmation(true);
+};
 
   const handleConfirmContinue = () => {
     setShowConfirmation(false);
@@ -230,11 +299,42 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
   };
 
   const calcularTotal = () => {
-    return productosSeleccionados.reduce((total, producto) => 
-      total + (producto.precio * producto.cantidad), 0
-    );
+      const totalProductosSeleccionados = productosSeleccionados.reduce((total, producto) => 
+          total + (producto.precio * producto.cantidad), 0
+      );
+      
+      const totalCarrito = carrito.reduce((total, producto) => 
+          total + (producto.precio * producto.cantidad), 0
+      );
+      
+      const totalProductosContexto = productosDelContexto.reduce((total, producto) => 
+          total + (producto.precio * producto.cantidad), 0
+      );
+      
+      return totalProductosSeleccionados + totalCarrito + totalProductosContexto;
   };
 
+ const obtenerTodosLosProductos = () => {
+        // Combinar productos del contexto y del carrito
+        const todosLosProductos = [...productosDelContexto, ...carrito];
+      
+      // Agrupar productos por ID y sumar las cantidades
+      const productosAgrupados = todosLosProductos.reduce((acc, producto) => {
+          const productoExistente = acc.find(p => p.id === producto.id);
+          
+          if (productoExistente) {
+              // Si ya existe, suma la cantidad
+              productoExistente.cantidad += producto.cantidad;
+          } else {
+              // Si no existe, agrega el producto
+              acc.push({ ...producto });
+          }
+          
+          return acc;
+      }, []);
+      
+      return productosAgrupados;
+  };
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
       {/* Custom Alert */}
@@ -317,16 +417,42 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
         ))}
       </div>
 
-      {/* Productos */}
+{/* Productos */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
       }}>
+        {/* Botón especial para fresas */}
+        {categoriaActiva === 'fresas' && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '20px',
+            gridColumn: '1 / -1' // Ocupa todo el ancho del grid
+          }}>
+            <button
+              onClick={() => navigate('/detalle-fresas')}
+              style={{
+                backgroundColor: '#ff6b9d',
+                color: 'white',
+                fontWeight: 'bold',
+                padding: '12px 20px',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              🍓 Ver más fresas →
+            </button>
+          </div>
+        )}
+
         {productos[categoriaActiva]?.map(producto => {
-          const yaSeleccionado = productosSeleccionados.find(p => p.id === producto.id);
-          
+          const yaSeleccionado = obtenerTodosLosProductos().find(p => p.id === producto.id);
+
           return (
             <div
               key={producto.id}
@@ -415,77 +541,78 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
         })}
       </div>
 
-      {/* Resumen */}
-      {productosSeleccionados.length > 0 && (
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          padding: '25px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          marginBottom: '20px'
+{/* Resumen */}
+  {(productosSeleccionados.length > 0 || carrito.length > 0 || productosDelContexto.length > 0) && (
+  <div id="resumen-pedido" style={{
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        padding: '25px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        marginBottom: '20px'
+      }}>
+        <h3 style={{ 
+          fontSize: '20px', 
+          fontWeight: 'bold', 
+          color: '#2c3e50',
+          marginBottom: '20px',
+          margin: '0 0 20px 0'
         }}>
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: 'bold', 
-            color: '#2c3e50',
-            marginBottom: '20px',
-            margin: '0 0 20px 0'
-          }}>
-            Resumen de Pedido ({productosSeleccionados.length} productos)
-          </h3>
-          
-          <div style={{ marginBottom: '20px' }}>
-            {productosSeleccionados.map(producto => (
-              <div
-                key={producto.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '15px 0',
-                  borderBottom: '1px solid #ecf0f1'
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>
-                    {producto.nombre}
-                  </span>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
-                    ${producto.precio.toLocaleString()}
-                  </div>
+          Resumen de Pedido ({obtenerTodosLosProductos().length + carrito.length} productos)
+        </h3>
+        
+        <div style={{ marginBottom: '20px' }}>
+          {/* Todos los productos unificados */}
+          {obtenerTodosLosProductos().map(producto => (
+            <div
+              key={`producto-${producto.id}`}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '15px 0',
+                borderBottom: '1px solid #ecf0f1'
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>
+                  {producto.nombre}
+                </span>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
+                  ${producto.precio.toLocaleString()}
                 </div>
-                
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <button
-                    onClick={() => actualizarCantidad(producto.id, producto.cantidad - 1)}
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button
+                    onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad - 1)}
                     style={{
-                      padding: '5px 10px',
-                      border: 'none',
-                      borderRadius: '5px',
-                      backgroundColor: '#e74c3c',
-                      color: 'white',
-                      cursor: 'pointer'
+                        padding: '5px 10px',
+                        border: 'none',
+                        borderRadius: '5px',
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        cursor: 'pointer'
                     }}
-                  >
-                    -
-                  </button>
-                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
-                  <button
-                    onClick={() => actualizarCantidad(producto.id, producto.cantidad + 1)}
-                    style={{
+                >
+                -
+              </button>
+              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
+              <button
+                  onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad + 1)}
+                  style={{
                       padding: '5px 10px',
                       border: 'none',
                       borderRadius: '5px',
                       backgroundColor: '#2ecc71',
                       color: 'white',
                       cursor: 'pointer'
-                    }}
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => eliminarProducto(producto.id)}
-                    style={{
+                  }}
+              >
+                  +
+              </button>
+              <button
+                  onClick={() => eliminarProductoUnificado(producto.id)}
+                  style={{
                       padding: '8px 16px',
                       border: 'none',
                       borderRadius: '8px',
@@ -495,13 +622,13 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                       backgroundColor: '#e74c3c',
                       color: 'white',
                       transition: 'all 0.3s ease'
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                  <button
-                    onClick={() => abrirModal(producto)}
-                    style={{
+                  }}
+              >
+                  Eliminar
+              </button>
+              <button
+                  onClick={() => abrirModal(producto)}
+                  style={{
                       padding: '8px 16px',
                       border: 'none',
                       borderRadius: '8px',
@@ -511,46 +638,46 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                       backgroundColor: '#3498db',
                       color: 'white',
                       transition: 'all 0.3s ease'
-                    }}
-                  >
-                    Ver detalles
-                  </button>
-                </div>
+                  }}
+              >
+                  Ver detalles
+              </button>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '20px',
+          borderTop: '2px solid #ecf0f1'
+        }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
+            Total: ${calcularTotal().toLocaleString()}
           </div>
           
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: '20px',
-            borderTop: '2px solid #ecf0f1'
-          }}>
-            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
-              Total: ${calcularTotal().toLocaleString()}
-            </div>
-            
-            <button
-              onClick={continuar}
-              style={{
-                padding: '15px 30px',
-                border: 'none',
-                borderRadius: '25px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
-                color: 'white',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
-              }}
-            >
-              Continuar con Personalización →
-            </button>
-          </div>
+          <button
+            onClick={continuar}
+            style={{
+              padding: '15px 30px',
+              border: 'none',
+              borderRadius: '25px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
+              color: 'white',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
+            }}
+          >
+            Continuar con Personalización →
+          </button>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Modal de detalles */}
       {modalDetalle && (

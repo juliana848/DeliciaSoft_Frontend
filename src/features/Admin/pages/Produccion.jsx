@@ -361,7 +361,7 @@ export default function Produccion() {
                         />
                     </DataTable>
 
-                    <Modal visible={modalVisible} onClose={cerrarModal}>
+                                    <Modal visible={modalVisible} onClose={cerrarModal}>
                         {modalTipo === 'visualizar' && procesoSeleccionado && (
                             <div>
                                 <h3>Detalle Proceso #{procesoSeleccionado.id}</h3>
@@ -422,7 +422,13 @@ export default function Produccion() {
                                                     <td>
                                                         <button 
                                                             className="btn-insumos"
-                                                            onClick={() => verInsumosProducto(producto)}
+                                                            onClick={() => {
+                                                                const productoCompleto = productosDisponibles.find(p => p.id === producto.id);
+                                                                if (productoCompleto) {
+                                                                    setProductoDetalleInsumos(productoCompleto);
+                                                                    setMostrarDetalleInsumos(true);
+                                                                }
+                                                            }}
                                                             style={{ 
                                                                 background: '#2196F3', 
                                                                 color: 'white', 
@@ -452,6 +458,153 @@ export default function Produccion() {
                             </div>
                         )}
                     </Modal>
+                     {mostrarModalRecetaDetalle && recetaSeleccionada && (
+                        <Modal visible={mostrarModalRecetaDetalle} onClose={cerrarModalRecetaDetalle}>
+                            <div className="receta-detalle-container">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                                    <img 
+                                        src={recetaSeleccionada.imagen} 
+                                        alt={recetaSeleccionada.nombre}
+                                        width="80" 
+                                        height="80"
+                                        style={{ objectFit: 'cover', borderRadius: '8px' }}
+                                    />
+                                    <div>
+                                        <h2 style={{ margin: '0 0 8px 0' }}>{recetaSeleccionada.nombre}</h2>
+                                        <p style={{ margin: '0', color: '#666' }}>
+                                            {recetaSeleccionada.insumos.length} insumos • {recetaSeleccionada.pasos.length} pasos
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                    <div>
+                                        <h3>📋 Insumos necesarios:</h3>
+                                        <ul style={{ listStyle: 'none', padding: '0' }}>
+                                            {recetaSeleccionada.insumos.map((insumo, index) => (
+                                                <li key={index} style={{ 
+                                                    padding: '8px', 
+                                                    marginBottom: '4px', 
+                                                    backgroundColor: '#f5f5f5', 
+                                                    borderRadius: '4px' 
+                                                }}>
+                                                    • {insumo}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h3>👩‍🍳 Pasos de preparación:</h3>
+                                        <ol style={{ paddingLeft: '20px' }}>
+                                            {recetaSeleccionada.pasos.map((paso, index) => (
+                                                <li key={index} style={{ 
+                                                    padding: '8px 0', 
+                                                    marginBottom: '8px',
+                                                    borderBottom: '1px solid #eee'
+                                                }}>
+                                                    {paso}
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                <div className="modal-footer" style={{ marginTop: '20px' }}>
+                                    <button
+                                        className="modal-btn cancel-btn"
+                                        onClick={cerrarModalRecetaDetalle}
+                                    >
+                                        Cerrar
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+                    )}
+
+                    {/* Modal para ver detalle de insumos desde visualización */}
+                    {mostrarDetalleInsumos && productoDetalleInsumos && (
+                        <Modal visible={mostrarDetalleInsumos} onClose={() => setMostrarDetalleInsumos(false)}>
+                            <div className="insumos-modal-container">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                                    <img 
+                                        src={productoDetalleInsumos.imagen} 
+                                        alt={productoDetalleInsumos.nombre}
+                                        width="80" 
+                                        height="80"
+                                        style={{ objectFit: 'cover', borderRadius: '8px' }}
+                                    />
+                                    <div>
+                                        <h2 style={{ margin: '0 0 8px 0' }}>Insumos para: {productoDetalleInsumos.nombre}</h2>
+                                        <p style={{ margin: '0', color: '#666' }}>
+                                            {productoDetalleInsumos.insumos?.length || 0} insumos necesarios
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <table className="insumos-table" style={{ 
+                                    width: '100%', 
+                                    borderCollapse: 'collapse',
+                                    marginTop: '20px'
+                                }}>
+                                    <thead>
+                                        <tr style={{ backgroundColor: '#f8f9fa' }}>
+                                            <th style={{ 
+                                                padding: '12px', 
+                                                textAlign: 'left', 
+                                                borderBottom: '2px solid #dee2e6',
+                                                fontWeight: 'bold'
+                                            }}>Cantidad</th>
+                                            <th style={{ 
+                                                padding: '12px', 
+                                                textAlign: 'left', 
+                                                borderBottom: '2px solid #dee2e6',
+                                                fontWeight: 'bold'
+                                            }}>Unidad</th>
+                                            <th style={{ 
+                                                padding: '12px', 
+                                                textAlign: 'left', 
+                                                borderBottom: '2px solid #dee2e6',
+                                                fontWeight: 'bold'
+                                            }}>Insumo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {productoDetalleInsumos.insumos?.map((insumo, index) => (
+                                            <tr key={index} style={{ 
+                                                borderBottom: '1px solid #dee2e6'
+                                            }}>
+                                                <td style={{ padding: '12px', fontWeight: 'bold', color: '#495057' }}>
+                                                    {insumo.cantidad || 'N/A'}
+                                                </td>
+                                                <td style={{ padding: '12px', color: '#6c757d' }}>
+                                                    {insumo.unidad || 'N/A'}
+                                                </td>
+                                                <td style={{ padding: '12px', color: '#212529' }}>
+                                                    {insumo.nombre || insumo}
+                                                </td>
+                                            </tr>
+                                        )) || (
+                                            <tr>
+                                                <td colSpan="3" style={{ padding: '12px', textAlign: 'center', color: '#6c757d' }}>
+                                                    No hay insumos disponibles
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                                
+                                <div className="modal-footer" style={{ marginTop: '20px' }}>
+                                    <button
+                                        className="modal-btn cancel-btn"
+                                        onClick={() => setMostrarDetalleInsumos(false)}
+                                    >
+                                        Cerrar
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+                    )}
                 </>
             ) : (
                 <div className="compra-form-container">

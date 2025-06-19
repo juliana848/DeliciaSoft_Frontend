@@ -16,11 +16,6 @@ function ProductosDestacados({ productos, onProductoClick }) {
     return `$${valorNumerico.toLocaleString("es-CO")}`;
   };
 
-  const handleSeleccionar = (item, event) => {
-    event.stopPropagation(); // Evita que se dispare el click del contenedor
-    onProductoClick(item);
-  };
-
   return (
     <div className="productos">
       {productos.map((item, index) => (
@@ -32,14 +27,8 @@ function ProductosDestacados({ productos, onProductoClick }) {
         >
           <div className="etiqueta">DESTACADOS</div>
           <img src={item.imagen} alt={item.nombre} className="producto-img" />
-          <h3>{item.nombre}</h3>
+          <p>{item.nombre}</p>
           <p className="precio">{formatearPrecio(item.precio)}</p>
-          <button 
-            className="btn-seleccionar"
-            onClick={(e) => handleSeleccionar(item, e)}
-          >
-            Seleccionar
-          </button>
         </div>
       ))}
     </div>

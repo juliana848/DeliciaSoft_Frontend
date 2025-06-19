@@ -77,7 +77,7 @@ function CarouselInicio({ buttonStyle }) {
             <img src={image} className="d-block w-100" alt={`Imagen ${index + 1}`} draggable="false" />
             {index === images.length - 1 && (
               <div className="carousel-caption d-none d-md-block">
-                <Link to="/productos" className="btn btn-primary btn-sm" style={buttonStyle}>Ver Productos</Link>
+                <Link to="/cartas" className="btn btn-primary btn-sm" style={buttonStyle}>Ver Productos</Link>
               </div>
             )}
           </div>

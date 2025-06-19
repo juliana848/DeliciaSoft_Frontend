@@ -1,5 +1,6 @@
 import React from 'react';
 import './Cotizacion.css';
+import { Link } from 'react-router-dom';
 import imagenLateral from './ImagenesCotizacion/Cotizacion1.png'; 
 <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet" />
 
@@ -14,24 +15,26 @@ function Cotizacion() {
         <div className="secciones">
           <div className="seccion">
             <div className="numero">1</div>
-            <div className="mini-titulo">Eventos</div>
+            <div className="mini-titulo">Toma una decición</div>
             <div className="texto">
-              Bodas,cumpleaños, celebraciones corporativas.
-            </div>
-          </div>
-          <div className="seccion">
-            <div className="numero">3</div>
-            <div className="mini-titulo">Precios</div>
-            <div className="texto">
-              Precios personalizados, adaptados a tus necesidades.
-              <button className="btn-cotizar">Pedido Ahora</button>
+              Selecciona algun delicioso postre de tu preferencia!
             </div>
           </div>
           <div className="seccion">
             <div className="numero">2</div>
-            <div className="mini-titulo">Detalles</div>
+            <div className="mini-titulo">Seleciona toppings</div>
             <div className="texto">
-              Cantidad, sabores, diseños, fecha de entrega.
+              Elije agregados deliciosos a tus postres para darle ese toque.
+              <Link to="/pedidos">
+                <button className="btn-cotizar">Pedido Ahora</button>
+              </Link>
+            </div>
+          </div>
+          <div className="seccion">
+            <div className="numero">3</div>
+            <div className="mini-titulo">Finaliza Facilmente</div>
+            <div className="texto">
+              finaliza tu pedido con seguridad, ya esta en camino!
             </div>
           </div>
         </div>

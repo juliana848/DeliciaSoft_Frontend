@@ -1,4 +1,3 @@
-// components/InsumoCard.jsx
 import React from 'react';
 
 const InsumoCard = ({ insumo, selected, onToggle }) => {

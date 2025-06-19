@@ -11,7 +11,6 @@ import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
 import logo from '../../../../public/imagenes/logo-delicias-darsy.png'; 
 
-
 export default function ComprasTable() {
     const [compras, setCompras] = useState([]);
     const [filtro, setFiltro] = useState('');
@@ -24,52 +23,49 @@ export default function ComprasTable() {
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
 
+        const generarPDF = (compra) => {
+        const doc = new jsPDF();
 
+        // Título
+        doc.setFontSize(16);
+        doc.text('Detalle de Compra de Insumos', 20, 20);
 
+        // Proveedor y fecha
+        doc.setFontSize(12);
+        doc.text(`Proveedor: ${compra.proveedor}`, 20, 30);
+        doc.text(`Fecha: ${compra.fecha}`, 20, 36);
 
-const generarPDF = (compra) => {
-  const doc = new jsPDF();
+        // Tabla de insumos con colores rosados
+        autoTable(doc, {
+            head: [['Nombre del insumo', 'Cantidad', 'Precio unitario', 'Subtotal']],
+            body: compra.insumos.map(insumo => [
+            insumo.nombre,
+            insumo.cantidad,
+            `$${insumo.precio.toFixed(2)}`,
+            `$${(insumo.cantidad * insumo.precio).toFixed(2)}`
+            ]),
+            startY: 45,
+            styles: {
+            fillColor: [255, 228, 225], 
+            textColor: 0,
+            },
+            headStyles: {
+            fillColor: [255, 105, 180], 
+            textColor: 255,
+            halign: 'center',
+            },
+        });
 
-  // Título
-  doc.setFontSize(16);
-  doc.text('Detalle de Compra de Insumos', 20, 20);
+        // Total al final
+        const total = compra.insumos.reduce(
+            (sum, insumo) => sum + insumo.cantidad * insumo.precio,
+            0
+        );
+        doc.text(`Total: $${total.toFixed(2)}`, 20, doc.lastAutoTable.finalY + 10);
 
-  // Proveedor y fecha
-  doc.setFontSize(12);
-  doc.text(`Proveedor: ${compra.proveedor}`, 20, 30);
-  doc.text(`Fecha: ${compra.fecha}`, 20, 36);
-
-  // Tabla de insumos con colores rosados
-  autoTable(doc, {
-    head: [['Nombre del insumo', 'Cantidad', 'Precio unitario', 'Subtotal']],
-    body: compra.insumos.map(insumo => [
-      insumo.nombre,
-      insumo.cantidad,
-      `$${insumo.precio.toFixed(2)}`,
-      `$${(insumo.cantidad * insumo.precio).toFixed(2)}`
-    ]),
-    startY: 45,
-    styles: {
-      fillColor: [255, 228, 225], // Rosado claro (para filas)
-      textColor: 0,
-    },
-    headStyles: {
-      fillColor: [255, 105, 180], // Rosa fuerte (para encabezado)
-      textColor: 255,
-      halign: 'center',
-    },
-  });
-
-  // Total al final
-  const total = compra.insumos.reduce(
-    (sum, insumo) => sum + insumo.cantidad * insumo.precio,
-    0
-  );
-  doc.text(`Total: $${total.toFixed(2)}`, 20, doc.lastAutoTable.finalY + 10);
-
-  // Guardar PDF
-  doc.save(`compra-${compra.id}.pdf`);
-};
+        // Guardar PDF
+        doc.save(`compra-${compra.id}.pdf`);
+        };
 
     const obtenerFechaActual = () => new Date().toISOString().split('T')[0];
 
@@ -291,13 +287,12 @@ const generarPDF = (compra) => {
                 paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
                 rowClassName={rowData => rowData.estado === 'anulada' ? 'fila-anulada' : ''}
             >
-                <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-                <Column field="proveedor" header="Proveedor" headerStyle={{ paddingLeft: '7rem' }}/>
-                <Column field="fecha" header="Fecha Compra" headerStyle={{ paddingLeft: '5rem' }}/>
-                <Column field="total" header="Total" headerStyle={{ paddingLeft: '2rem' }} />
+                <Column header="N°" body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+                <Column field="proveedor" header="Proveedor" />
+                <Column field="fecha" header="Fecha Compra" />
+                <Column field="total" header="Total" />
                 <Column
                 header="Acción"
-                headerStyle={{ paddingLeft: '5rem' }}
                 body={rowData => {
                     if (rowData.estado === 'anulada') return <span style={{ color: 'gray' }}>Anulada</span>;
                     return (
@@ -308,7 +303,7 @@ const generarPDF = (compra) => {
                         <button 
                         className="admin-button blue" 
                         title="Descargar PDF" 
-                        onClick={() => generarPDF(rowData)}  // ✅ rowData contiene la compra actual
+                        onClick={() => generarPDF(rowData)}  
                     >
                         <i className="fas fa-download" style={{ marginRight: '5px' }}></i>
                     </button>
@@ -363,7 +358,7 @@ const generarPDF = (compra) => {
             </>
         ) : (
                 <div className="compra-form-container">
-                    <h1>Agregar</h1>
+                    <h1>Agregar Compras</h1>
                     
                     <div className="compra-fields-grid">
                         {/* <div className="field-group">
@@ -540,5 +535,3 @@ const generarPDF = (compra) => {
         </div>
     );
 }
-
-    

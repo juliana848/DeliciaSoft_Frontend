@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "./CartContext"; // Asegúrate que el path esté bien
+import { CartContext } from "./CartContext"; 
 
 const mockData = [
   {

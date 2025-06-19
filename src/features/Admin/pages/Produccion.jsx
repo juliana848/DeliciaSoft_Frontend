@@ -390,7 +390,7 @@ export default function Produccion() {
                                                 <tr key={producto.id}>
                                                     <td>
                                                         <img 
-                                                            src={productoCompleto?.imagen || 'https://via.placeholder.com/50'} 
+                                                            src={productoCompleto?.imagen || 'https://i.pinimg.com/736x/04/8f/4d/048f4d769ed7a2bced7360ab15c59561.jpg'} 
                                                             alt={producto.nombre} 
                                                             width="50" 
                                                             height="50"
@@ -458,7 +458,7 @@ export default function Produccion() {
                             </div>
                         )}
                     </Modal>
-                     {mostrarModalRecetaDetalle && recetaSeleccionada && (
+                    {mostrarModalRecetaDetalle && recetaSeleccionada && (
                         <Modal visible={mostrarModalRecetaDetalle} onClose={cerrarModalRecetaDetalle}>
                             <div className="receta-detalle-container">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>

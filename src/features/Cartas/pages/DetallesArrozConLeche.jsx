@@ -1,27 +1,34 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "./CartContext"; // Asegúrate de que este path sea correcto
+import { CartContext } from "./CartContext"; 
 
 const mockData = [
   {
     id: 1,
     nombre: "Arroz con Leche Clásico",
     precio: 5000,
-    imagen: "/imagenes/Cartas/arrozconleche1.jpeg",
+    imagen: "https://i.pinimg.com/736x/93/93/5e/93935e27ddf82e5c9f61f94ba763bbcc.jpg",
     descripcion: "Suave, cremoso, con canela espolvoreada por encima.",
   },
   {
     id: 2,
     nombre: "Arroz con Leche con Coco",
     precio: 6000,
-    imagen: "/imagenes/Cartas/arrozcoco.jpeg",
+    imagen: "https://i.pinimg.com/736x/39/5d/d8/395dd87946906f0570ef9e2d104e859f.jpg",
     descripcion: "Mezcla tropical con coco rallado, sabor inolvidable.",
   },
   {
     id: 3,
     nombre: "Arroz con Leche Frutal",
     precio: 6500,
-    imagen: "/imagenes/Cartas/arrozfrutas.jpeg",
+    imagen: "https://i.pinimg.com/736x/86/bc/f4/86bcf4fd40562d7701a07c63345cfdaf.jpg",
+    descripcion: "Incluye trozos de durazno, fresa y mango para un sabor refrescante.",
+  },
+  {
+    id: 4,
+    nombre: "Arroz con Leche Frutal",
+    precio: 6500,
+    imagen: "https://i.pinimg.com/736x/69/ab/a9/69aba9cca37b5677168471a281ed6f7d.jpg",
     descripcion: "Incluye trozos de durazno, fresa y mango para un sabor refrescante.",
   },
 ];

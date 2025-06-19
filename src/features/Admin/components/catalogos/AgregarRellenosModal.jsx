@@ -1,18 +1,59 @@
 import React, { useState } from 'react';
-import InsumoCard from '../InsumoCard';
-// Asegúrate de que adminStyles.css esté importado en este archivo o en un nivel superior
-// import '../adminStyles.css';
 
+const RellenoCard = ({ relleno, selected, onToggle }) => {
+  return (
+    <div
+      className={`relleno-modal-card ${selected ? 'relleno-modal-card-selected' : ''}`}
+      onClick={onToggle}
+    >
+      <img src={relleno.imagen} alt={relleno.nombre} />
+      <h4>{relleno.nombre}</h4>
+      <p>{`${relleno.unidad} - $${relleno.precio.toFixed(2)}`}</p>
+    </div>
+  );
+};
 
 const AgregarRellenosModal = ({ onClose, onAgregar }) => {
   const [selectedRellenos, setSelectedRellenos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const rellenosData = [
-    { id: 301, nombre: 'Pollo desmechado', unidad: 'g', precio: 9.00, imagen: 'pollo.jpg' },
-    { id: 302, nombre: 'Carne molida', unidad: 'g', precio: 10.50, imagen: 'carne.jpg' },
-    { id: 303, nombre: 'Champiñones', unidad: 'g', precio: 6.75, imagen: 'champi.jpg' },
-  ];
+  {
+    id: 501,
+    nombre: 'Crema pastelera',
+    unidad: 'g',
+    precio: 6.00,
+    imagen: 'https://cdn.pixabay.com/photo/2022/05/27/09/22/pastry-cream-7225199_1280.jpg'
+  },
+  {
+    id: 502,
+    nombre: 'Dulce de leche',
+    unidad: 'g',
+    precio: 5.50,
+    imagen: 'https://cdn.pixabay.com/photo/2021/11/10/18/10/dulce-de-leche-6783187_1280.jpg'
+  },
+  {
+    id: 503,
+    nombre: 'Nutella',
+    unidad: 'g',
+    precio: 8.00,
+    imagen: 'https://cdn.pixabay.com/photo/2017/03/19/13/30/nutella-2154376_1280.jpg'
+  },
+  {
+    id: 504,
+    nombre: 'Arequipe',
+    unidad: 'g',
+    precio: 5.25,
+    imagen: 'https://cdn.pixabay.com/photo/2021/03/22/04/44/dulce-de-leche-6112026_1280.jpg'
+  },
+  {
+    id: 505,
+    nombre: 'Mermelada de fresa',
+    unidad: 'g',
+    precio: 4.50,
+    imagen: 'https://cdn.pixabay.com/photo/2017/01/20/00/30/strawberry-jam-1990177_1280.jpg'
+  },
+];
 
   const filteredRellenos = rellenosData.filter(relleno =>
     relleno.nombre.toLowerCase().includes(searchTerm.toLowerCase())
@@ -32,14 +73,132 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
   };
 
   return (
-    <div className="modal-overlay"> {/* Clase existente, coincide */}
-      <div className="insumos-modal"> {/* Reemplazado de modal-content compras-modal */}
-        <div className="insumos-modal-header"> {/* Reemplazado de modal-header */}
+    <div className="relleno-modal-overlay">
+      <div className="relleno-modal-container">
+        <style>{`
+          .relleno-modal-overlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+          }
+
+          .relleno-modal-container {
+            background: #f5fff9;
+            border-radius: 20px;
+            padding: 25px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease-in-out;
+          }
+
+          .relleno-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          }
+
+          .relleno-modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #2e7d32;
+          }
+
+          .relleno-modal-search input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #a5d6a7;
+            font-size: 16px;
+          }
+
+          .relleno-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+          }
+
+          .relleno-modal-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+            border: 3px solid transparent;
+          }
+
+          .relleno-modal-card:hover {
+            transform: translateY(-4px);
+            border-color: #81c784;
+          }
+
+          .relleno-modal-card-selected {
+            border-color: #388e3c;
+            background: #e8f5e9;
+          }
+
+          .relleno-modal-card img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 8px;
+          }
+
+          .relleno-modal-card h4 {
+            font-size: 16px;
+            color: #2e7d32;
+            margin: 0;
+          }
+
+          .relleno-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+          }
+
+          .relleno-modal-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+          }
+
+          .relleno-modal-btn-cancel {
+            background-color: #f8d7da;
+            color: #721c24;
+          }
+
+          .relleno-modal-btn-add {
+            background-color: #66bb6a;
+            color: white;
+          }
+
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+
+        <div className="relleno-modal-header">
           <h2>Seleccionar Rellenos</h2>
-          <button onClick={onClose} className="insumos-close-btn">&times;</button> {/* Reemplazado de close-btn */}
+          <button onClick={onClose} className="relleno-modal-close-btn">&times;</button>
         </div>
 
-        <div className="insumos-search-bar"> {/* Reemplazado de search-bar */}
+        <div className="relleno-modal-search">
           <input
             type="text"
             placeholder="Buscar relleno..."
@@ -48,20 +207,22 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           />
         </div>
 
-        <div className="insumos-grid"> {/* Clase existente, coincide */}
+        <div className="relleno-modal-grid">
           {filteredRellenos.map(relleno => (
-            <InsumoCard
+            <RellenoCard
               key={relleno.id}
-              insumo={relleno}
+              relleno={relleno}
               selected={selectedRellenos.some(i => i.id === relleno.id)}
               onToggle={() => toggleRelleno(relleno)}
             />
           ))}
         </div>
 
-        <div className="insumos-footer"> {/* Reemplazado de modal-footer */}
-          <button className="insumos-btn cancel" onClick={onClose}>Cancelar</button> {/* Reemplazado de admin-button gray */}
-          <button className="insumos-btn pink" onClick={handleAgregar}> {/* Reemplazado de admin-button pink */}
+        <div className="relleno-modal-footer">
+          <button className="relleno-modal-btn relleno-modal-btn-cancel" onClick={onClose}>
+            Cancelar
+          </button>
+          <button className="relleno-modal-btn relleno-modal-btn-add" onClick={handleAgregar}>
             Agregar ({selectedRellenos.length})
           </button>
         </div>

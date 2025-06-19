@@ -83,14 +83,35 @@ export default function ProveedoresTable() {
       showNotification('Correo no valido', 'error');
       return false;
     }
+
+      const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!correoRegex.test(correo)) {
+      showNotification('Correo no válido', 'error');
+      return false;
+    }
+
+    if (modalTipo === 'agregar') {
+    const yaExiste = proveedores.some(p => p.correo === correo || p.nombre.toLowerCase() === nombre.toLowerCase());
+    if (yaExiste) {
+      showNotification('Ya existe un proveedor con ese nombre o correo', 'error');
+      return false;
+    }
+  }
+
     if (!/^\d+$/.test(contacto)) {
       showNotification('El contacto no es valido', 'error');
       return false;
     }
     if (contacto.length > 10) {
-  showNotification('El campo "Contacto" no puede tener más de 10 dígitos', 'error');
-  return false;
+    showNotification('El campo "Contacto" no puede tener más de 10 dígitos', 'error');
+    return false;
     }
+
+    if (direccion.trim().length < 5) {
+    showNotification('La dirección debe tener al menos 5 caracteres', 'error');
+    return false;
+    }
+
 
     if (contacto.length < 10) {
   showNotification('El campo "Contacto" no puede tener menos de 10 dígitos', 'error');
@@ -110,6 +131,16 @@ export default function ProveedoresTable() {
       showNotification(`${tipoProveedor === 'Natural' ? 'Documento' : 'NIT'} debe contener solo números`, 'error');
       return false;
     }
+    if (nombre.trim().length < 3) {
+      showNotification('El nombre debe tener al menos 3 caracteres', 'error');
+      return false;
+    }
+    if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/.test(nombre)) {
+      showNotification('El nombre solo puede contener letras y espacios', 'error');
+      return false;
+    }
+
+
     return true;
   };
 

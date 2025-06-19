@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Cartas.css";
 
-import CategoriasInicio from "../../Home/pages/components/Categorias/CategoriasInicio";
 import Header from "./Header";
 import Buscador from "./Buscador";
 import ProductosDestacados from "./ProductosDestacados";
@@ -19,8 +18,8 @@ function Cartas() {
     { nombre: "FRESAS CON CREMA", precio: "$7,000", imagen: "/imagenes/Cartas/fresacrema.jpeg" },
     { nombre: "OBLEA", precio: "$3,000", imagen: "/imagenes/Cartas/obleass.jpeg" },
     { nombre: "Mini Donas", precio: "$6,000", imagen: "/imagenes/Cartas/miniDona.jpeg" },
-    { nombre: "Arroz con Leche", precio: "$10,000", imagen: "/imagenes/Cartas/arrozConLeche.jpg" },
     { nombre: "Cupcakes", precio: "$3,000", imagen: "/imagenes/Cartas/cup.jpeg" },
+    { nombre: "Arroz con Leche", precio: "$10,000", imagen: "/imagenes/Cartas/arrozConLeche.jpg" },
     { nombre: "Sandwiches", precio: "$16,500", imagen: "/imagenes/Cartas/sandwches.jpeg" },
     { nombre: "Postres", precio: "$8,000", imagen: "/imagenes/Cartas/postres.jpeg" },
     { nombre: "chocolates", precio: "$1,500", imagen: "/imagenes/Cartas/chocolates.jpeg" },
@@ -38,35 +37,33 @@ function Cartas() {
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
- const handleProductoClick = (producto) => {
-  const nombre = producto.nombre.toLowerCase();
+  const handleProductoClick = (producto) => {
+    const nombre = producto.nombre.toLowerCase();
 
-  if (nombre.includes("fresa")) {
-    navigate("/detalle-fresas");
-  } else if (nombre.includes("oblea")) {
-    navigate("/detalle-obleas");
-  } else if (nombre.includes("mini dona")) {
-    navigate("/detalle-mini-donas");
-  } else if (nombre.includes("cupcake")) {
-    navigate("/detalle-cupcake");
-  } else if (nombre.includes("arroz")) {
-    navigate("/detalle-arroz");
-  } else if (nombre.includes("postres")) {
-    navigate("/detalle-postres");
-  } else if (nombre.includes("sandwich")) {
-    navigate("/detalle-sandwiches");
-  } else if (nombre.includes("chocolate")) {
-    navigate("/detalle-chocolates");
-  }
-};
-  
+    if (nombre.includes("fresa")) {
+      navigate("/detalle-fresas");
+    } else if (nombre.includes("oblea")) {
+      navigate("/detalle-obleas");
+    } else if (nombre.includes("mini dona")) {
+      navigate("/detalle-mini-donas");
+    } else if (nombre.includes("cupcake")) {
+      navigate("/detalle-cupcake");
+    } else if (nombre.includes("arroz")) {
+      navigate("/detalle-arroz");
+    } else if (nombre.includes("postres")) {
+      navigate("/detalle-postres");
+    } else if (nombre.includes("sandwich")) {
+      navigate("/detalle-sandwiches");
+    } else if (nombre.includes("chocolate")) {
+      navigate("/detalle-chocolates");
+    }
+  };
 
   return (
     <div className="carta-container">
       <Header />
       <Buscador value={searchTerm} onChange={setSearchTerm} />
-      <CategoriasInicio />
-      <h2 className="destacados-titulo">Categorias</h2>
+      <h2 className="destacados-titulo">Productos Destacados</h2>
       <ProductosDestacados productos={productosFiltrados} onProductoClick={handleProductoClick} />
       <Cupon onClick={handleImageClick} />
       {modalVisible && <Modal code={code} onClose={closeModal} />}

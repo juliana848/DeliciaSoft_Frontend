@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext  } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CartContext } from "../../Cartas/pages/CartContext";
+
+
+
+
 
 const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
   const [categoriaActiva, setCategoriaActiva] = useState('donas');
@@ -8,7 +13,9 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false); // Nueva alerta para autenticación
   
+  
   const navigate = useNavigate();
+  const { carrito } = useContext(CartContext);
 
   const categorias = [
     { id: 'fresas', nombre: 'Fresas con Crema', icon: '🍓' },
@@ -326,6 +333,27 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
       }}>
         {productos[categoriaActiva]?.map(producto => {
           const yaSeleccionado = productosSeleccionados.find(p => p.id === producto.id);
+
+          {categoriaActiva === 'fresas' && (
+  <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+    <button
+      onClick={() => navigate('/detalle-fresas')}
+      style={{
+        backgroundColor: '#ff6b9d',
+        color: 'white',
+        fontWeight: 'bold',
+        padding: '12px 20px',
+        border: 'none',
+        borderRadius: '12px',
+        cursor: 'pointer',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+      }}
+    >
+      Ver más fresas →
+    </button>
+  </div>
+)}
+
           
           return (
             <div
@@ -706,6 +734,21 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           </div>
         </div>
       )}
+
+      <div>
+      <h2>Mi Pedido</h2>
+      {carrito.length === 0 ? (
+        <p>Tu pedido está vacío</p>
+      ) : (
+        <ul>
+          {carrito.map((producto) => (
+            <li key={producto.id}>
+              {producto.nombre} - ${producto.precio} x {producto.cantidad}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
 
       {/* Alert de Autenticación */}
       {showAuthAlert && (

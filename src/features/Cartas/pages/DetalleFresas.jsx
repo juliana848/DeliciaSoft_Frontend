@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { CartContext } from "./CartContext";
+
 
 const mockData = {
   "fresas-con-crema": [
@@ -77,7 +79,8 @@ const mockData = {
 };
 
 const ProductoDetalle = () => {
-  const navigate = useNavigate(); // hook para navegación
+  const navigate = useNavigate();
+  const { agregarProducto } = useContext(CartContext);
   const productos = mockData["fresas-con-crema"];
 
   return (
@@ -92,6 +95,29 @@ const ProductoDetalle = () => {
               <h3>{producto.nombre}</h3>
               <p className="precio-extra">${producto.precio}</p>
               {producto.descripcion && <p className="descripcion">{producto.descripcion}</p>}
+              <button
+                onClick={() => {
+                  agregarProducto({ ...producto, cantidad: 1 });
+                  navigate("/pedidos");
+                }}
+                style={{
+                  marginTop: "10px",
+                  backgroundColor: "#ff0080",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                  transition: "background-color 0.3s",
+                }}
+                onMouseOver={(e) => (e.target.style.backgroundColor = "#e60073")}
+                onMouseOut={(e) => (e.target.style.backgroundColor = "#ff0080")}
+              >
+                Agregar a mi pedido 🍓
+              </button>
+
             </div>
           </div>
         ))}

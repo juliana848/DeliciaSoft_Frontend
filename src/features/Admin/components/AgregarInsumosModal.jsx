@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import InsumoCard from './InsumoCard';
 import '../adminStyles.css'; 
 
+
 const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const [selectedInsumos, setSelectedInsumos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');

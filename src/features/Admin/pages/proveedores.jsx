@@ -227,29 +227,35 @@ export default function ProveedoresTable() {
       {(modalTipo === 'agregar' || modalTipo === 'editar') && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">{modalTipo === 'agregar' ? 'Agregar Proveedor' : 'Editar Proveedor'}</h2>
-          <div className="modal-body modal-proveedor">
-            <label>Tipo*
-              <select value={tipoProveedor} onChange={(e) => setTipoProveedor(e.target.value)} className="modal-input">
-                <option value="Natural">Natural</option>
-                <option value="Jurídico">Jurídico</option>
-              </select>
-            </label>
-            <label>Nombre*
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="modal-input" />
-            </label>
-            <label>Contacto:
-              <input type="text" value={contacto} onChange={(e) => setContacto(e.target.value)} className="modal-input" />
-            </label>
-            <label>Correo*
-              <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} className="modal-input" />
-            </label>
-            <label>Dirección:
-              <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} className="modal-input" />
-            </label>
-            <label>{tipoProveedor === 'Natural' ? 'Documento*' : 'NIT*'}
-              <input type="text" value={documentoONit} onChange={(e) => setDocumentoONit(e.target.value)} className="modal-input" />
-            </label>
-          </div>
+       <div className="modal-body modal-form-grid">
+  <label>Tipo*
+    <select value={tipoProveedor} onChange={(e) => setTipoProveedor(e.target.value)} className="modal-input">
+      <option value="Natural">Natural</option>
+      <option value="Jurídico">Jurídico</option>
+    </select>
+  </label>
+
+  <label>Nombre*
+    <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="modal-input" />
+  </label>
+
+  <label>Contacto
+    <input type="text" value={contacto} onChange={(e) => setContacto(e.target.value)} className="modal-input" />
+  </label>
+
+  <label>Correo*
+    <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} className="modal-input" />
+  </label>
+
+  <label>Dirección
+    <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} className="modal-input" />
+  </label>
+
+  <label>{tipoProveedor === 'Natural' ? 'Documento*' : 'NIT*'}
+    <input type="text" value={documentoONit} onChange={(e) => setDocumentoONit(e.target.value)} className="modal-input" />
+  </label>
+</div>
+
 
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>

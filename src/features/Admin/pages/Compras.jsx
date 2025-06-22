@@ -23,7 +23,7 @@ export default function ComprasTable() {
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
 
-        const generarPDF = (compra) => {
+    const generarPDF = (compra) => {
         const doc = new jsPDF();
 
         // Título
@@ -65,26 +65,26 @@ export default function ComprasTable() {
 
         // Guardar PDF
         doc.save(`compra-${compra.id}.pdf`);
-        };
+    };
 
     const obtenerFechaActual = () => new Date().toISOString().split('T')[0];
 
     const [compraData, setCompraData] = useState({
-    proveedor: '',
-    fecha_compra: '',
-    fecha_registro: obtenerFechaActual(),
-    observaciones: ''
+        proveedor: '',
+        fecha_compra: '',
+        fecha_registro: obtenerFechaActual(),
+        observaciones: ''
     });
 
-        useEffect(() => {
+    useEffect(() => {
         const mockCompras = [
             {  
                 id:1, 
                 proveedor: 'Dis.Martinez', 
                 fecha: '10/02/2024', 
                 total: 126000,
-                fecha_compra: '10/02/2024',
-                fecha_registro: '11/02/2024',
+                fecha_compra: '2024-02-10',
+                fecha_registro: '2024-02-11',
                 observaciones: 'Pago contado',
                 subtotal: 108621,
                 iva: 17379,
@@ -99,8 +99,8 @@ export default function ComprasTable() {
                 proveedor: 'Dis.Tolu', 
                 fecha: '10/02/2024', 
                 total: 144000,
-                fecha_compra: '10/02/2024',
-                fecha_registro: '11/02/2024',
+                fecha_compra: '2024-02-10',
+                fecha_registro: '2024-02-11',
                 observaciones: 'Transferencia',
                 subtotal: 124137,
                 iva: 19863,
@@ -115,8 +115,8 @@ export default function ComprasTable() {
                 proveedor: 'Sumi.Express', 
                 fecha: '10/02/2024', 
                 total: 458900,
-                fecha_compra: '10/02/2024',
-                fecha_registro: '11/02/2024',
+                fecha_compra: '2024-02-10',
+                fecha_registro: '2024-02-11',
                 observaciones: '',
                 subtotal: 395603,
                 iva: 63297,
@@ -131,8 +131,8 @@ export default function ComprasTable() {
                 proveedor: 'Mate.industriales', 
                 fecha: '10/02/2024', 
                 total: 321700,
-                fecha_compra: '10/02/2024',
-                fecha_registro: '11/02/2024',
+                fecha_compra: '2024-02-10',
+                fecha_registro: '2024-02-11',
                 observaciones: 'Pago parcial',
                 subtotal: 277327,
                 iva: 44373,
@@ -146,21 +146,57 @@ export default function ComprasTable() {
         setCompras(mockCompras);
     }, []);
 
-
     const showNotification = (mensaje, tipo = 'success') => {
         setNotification({ visible: true, mensaje, tipo });
     };
     const hideNotification = () => setNotification({ visible: false, mensaje: '', tipo: 'success' });
 
-    const abrirModal = (tipo, compra) => {
+    const abrirModal = (tipo, compra = null) => {
         setModalTipo(tipo);
         setCompraSeleccionada(compra);
-        setModalVisible(true);
+        
+        if (tipo === 'ver') {
+            // Para ver, cargamos los datos de la compra seleccionada
+            setCompraData({
+                proveedor: compra.proveedor,
+                fecha_compra: compra.fecha_compra,
+                fecha_registro: compra.fecha_registro,
+                observaciones: compra.observaciones || ''
+            });
+            setInsumosSeleccionados(compra.insumos || []);
+            setMostrarAgregarCompra(true);
+        } else if (tipo === 'agregar') {
+            // Para agregar, reiniciamos los datos
+            setCompraData({
+                proveedor: '',
+                fecha_compra: '',
+                fecha_registro: obtenerFechaActual(),
+                observaciones: ''
+            });
+            setInsumosSeleccionados([]);
+            setMostrarAgregarCompra(true);
+        } else if (tipo === 'anular') {
+            setModalVisible(true);
+        }
     };
+
     const cerrarModal = () => {
         setModalVisible(false);
         setModalTipo(null);
         setCompraSeleccionada(null);
+    };
+
+    const cancelarFormulario = () => {
+        setMostrarAgregarCompra(false);
+        setCompraSeleccionada(null);
+        setModalTipo(null);
+        setInsumosSeleccionados([]);
+        setCompraData({
+            proveedor: '',
+            fecha_compra: '',
+            fecha_registro: obtenerFechaActual(),
+            observaciones: ''
+        });
     };
 
     const anularCompra = () => {
@@ -176,10 +212,9 @@ export default function ComprasTable() {
     };
 
     const comprasFiltradas = compras.filter(c =>
-    c.proveedor.toLowerCase().includes(filtro.toLowerCase()) &&
-    (mostrarAnuladas ? c.estado === 'anulada' : c.estado !== 'anulada')
+        c.proveedor.toLowerCase().includes(filtro.toLowerCase()) &&
+        (mostrarAnuladas ? c.estado === 'anulada' : c.estado !== 'anulada')
     );
-
 
     const handleChange = e =>
         setCompraData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -191,11 +226,13 @@ export default function ComprasTable() {
         ]);
         showNotification('Insumos agregados exitosamente');
     };
+
     const handleCantidadChange = (id, value) => {
         setInsumosSeleccionados(prev =>
         prev.map(item => (item.id === id ? { ...item, cantidad: Math.max(1, value) } : item))
         );
     };
+
     const removeInsumo = id => {
         setInsumosSeleccionados(prev => prev.filter(item => item.id !== id));
         showNotification('Insumo eliminado de la lista');
@@ -219,33 +256,26 @@ export default function ComprasTable() {
     };
 
     const guardarCompra = () => {
-    if (!validarFormulario()) return;
-    const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
-    const iva = subtotal * 0.16;
-    const total = subtotal + iva;
-    const nuevaCompra = {
-        id: compras.length + 1,
-        proveedor: compraData.proveedor,
-        fecha: compraData.fecha_compra,
-        fecha_compra: compraData.fecha_compra,
-        fecha_registro: obtenerFechaActual(),
-        observaciones: compraData.observaciones,
-        insumos: insumosSeleccionados,
-        subtotal,
-        iva,
-        total,
-        estado: 'activa'
+        if (!validarFormulario()) return;
+        const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
+        const iva = subtotal * 0.16;
+        const total = subtotal + iva;
+        const nuevaCompra = {
+            id: compras.length + 1,
+            proveedor: compraData.proveedor,
+            fecha: compraData.fecha_compra,
+            fecha_compra: compraData.fecha_compra,
+            fecha_registro: obtenerFechaActual(),
+            observaciones: compraData.observaciones,
+            insumos: insumosSeleccionados,
+            subtotal,
+            iva,
+            total,
+            estado: 'activa'
         };
-    setCompras(prev => [...prev, nuevaCompra]);
-    showNotification('Compra guardada exitosamente');
-    setMostrarAgregarCompra(false);
-    setInsumosSeleccionados([]);
-    setCompraData({
-        proveedor: '',
-        fecha_compra: '',
-        fecha_registro: obtenerFechaActual(),
-        observaciones: ''
-        });
+        setCompras(prev => [...prev, nuevaCompra]);
+        showNotification('Compra guardada exitosamente');
+        cancelarFormulario();
     };
 
     const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
@@ -262,15 +292,11 @@ export default function ComprasTable() {
                 {/* BOTÓN DE AGREGAR COMPRA */}
                 <button 
                     className="admin-button pink" 
-                    onClick={() => { 
-                        setMostrarAgregarCompra(true); 
-                        setCompraData(prev => ({ ...prev, fecha_registro: obtenerFechaActual() })); 
-                    }} 
+                    onClick={() => abrirModal('agregar')} 
                     type="button"
                 >
                     + Agregar
                 </button>
-
 
                 <SearchBar 
                     placeholder="Buscar Compra..." 
@@ -278,7 +304,6 @@ export default function ComprasTable() {
                     onChange={setFiltro} 
                 />
             </div>
-
 
             <h2 className="admin-section-title">Compras</h2>
             <DataTable
@@ -299,49 +324,28 @@ export default function ComprasTable() {
                     <>
                         <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>🔍</button>
                         <button className="admin-button red" title="Anular" onClick={() => abrirModal('anular', rowData)}>🛑</button>
-                        {/* <button className="admin-button blue" title="Exportar PDF" onClick={() => exportarPDF(rowData)}>⬇️</button> */}
                         <button 
-                        className="admin-button blue" 
-                        title="Descargar PDF" 
-                        onClick={() => generarPDF(rowData)}  
-                    >
-                        <i className="fas fa-download" style={{ marginRight: '5px' }}></i>
-                    </button>
-
-
+                            className="admin-button blue" 
+                            title="Descargar PDF" 
+                            onClick={() => generarPDF(rowData)}  
+                        >
+                            <i className="fas fa-download" style={{ marginRight: '5px' }}></i>
+                        </button>
                     </>
                     );
                 }}
                 />
-                
             </DataTable>
             
-        <div style={{ marginTop: '20px', textAlign: 'right' }}>
-            <button 
-                className="modal-btn cancel-btn" 
-                onClick={() => setMostrarAnuladas(prev => !prev)} 
-                type="button"
-            >
-                {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
-            </button>
+            <div style={{ marginTop: '20px', textAlign: 'right' }}>
+                <button 
+                    className="modal-btn cancel-btn" 
+                    onClick={() => setMostrarAnuladas(prev => !prev)} 
+                    type="button"
+                >
+                    {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
+                </button>
             </div>
-
-
-            {modalTipo === 'ver' && compraSeleccionada && (
-                <Modal visible={modalVisible} onClose={cerrarModal}>
-                <h2 className="modal-title">Detalles de Compra</h2>
-                <div className="modal-body">
-                    <p><strong>Proveedor:</strong> {compraSeleccionada.proveedor}</p>
-                    <p><strong>Fecha Compra:</strong> {compraSeleccionada.fecha}</p>
-                    <p><strong>Insumos:</strong> {compraSeleccionada.insumos.map(i => i.nombre).join(', ')}</p>
-                    <p><strong>Total:</strong> {compraSeleccionada.total}</p>
-                    <p><strong>Estado:</strong> {compraSeleccionada.estado === 'anulada' ? 'Desactivada' : 'Activa'}</p>
-                </div>
-                <div className="modal-footer">
-                    <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-                </div>
-                </Modal>
-            )}
 
             {modalTipo === 'anular' && compraSeleccionada && (
                 <Modal visible={modalVisible} onClose={cerrarModal}>
@@ -358,26 +362,16 @@ export default function ComprasTable() {
             </>
         ) : (
                 <div className="compra-form-container">
-                    <h1>Agregar Compras</h1>
+                    <h1>{modalTipo === 'ver' ? 'Detalle de Compra' : 'Agregar Compras'}</h1>
                     
                     <div className="compra-fields-grid">
-                        {/* <div className="field-group">
-                            <label>Cod_Compra:</label>
-                            <input 
-                                type="text" 
-                                name="cod_compra"
-                                value={compraData.cod_compra || ''} 
-                                onChange={handleChange}
-                                disabled
-                            />
-                        </div> */}
-                        
                         <div className="field-group">
                             <label>Proveedor*</label>
                             <select
                                 name="proveedor"
                                 value={compraData.proveedor}
                                 onChange={handleChange}
+                                disabled={modalTipo === 'ver'}
                             >
                                 <option value="">---</option>
                                 <option value="Dis.Martinez">Dis.Martinez</option>
@@ -399,6 +393,7 @@ export default function ComprasTable() {
                                 name="fecha_compra"
                                 value={compraData.fecha_compra}
                                 onChange={handleChange}
+                                disabled={modalTipo === 'ver'}
                             />
                         </div>
                         
@@ -418,65 +413,67 @@ export default function ComprasTable() {
                     
                     <div className="detalle-section">
                         <h2>Detalle*</h2>
-                        
+                                            
                         <table className="compra-detalle-table">
-                            <thead class="p-datatable-thead">
+                            <thead className="p-datatable-thead">
                                 <tr>
                                     <th>Cantidad</th>
                                     <th>Unidad_Medida</th>
                                     <th>Nombre Producto</th>
                                     <th>Precio unitario</th>
-                                    <th>Acción</th>
+                                    <th>Subtotal</th> 
+                                    {modalTipo !== 'ver' && <th>Acción</th>}
                                 </tr>
                             </thead>
-                            <tbody  class="p-datatable">
+                            <tbody className="p-datatable">
                                 {insumosSeleccionados.map((item) => (
-                                    <tr key={item.id}>
-                                        <td>
+                                <tr key={item.id}>
+                                    <td>
+                                        {modalTipo === 'ver' ? (
+                                            item.cantidad
+                                        ) : (
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={item.cantidad}
-                                                onChange={(e) => handleCantidadChange(item.id, parseInt(e.target.value))}
+                                                onChange={(e) =>
+                                                handleCantidadChange(item.id, parseInt(e.target.value))
+                                                }
                                             />
-                                        </td>
-                                        <td>{item.unidad}</td>
-                                        <td>{item.nombre}</td>
-                                        <td>${item.precio?.toFixed(2)}</td>
+                                        )}
+                                    </td>
+                                    <td>{item.unidad}</td>
+                                    <td>{item.nombre}</td>
+                                    <td>${item.precio?.toFixed(2)}</td>
+                                    <td>
+                                        ${((item.cantidad || 0) * (item.precio || 0)).toFixed(2)}
+                                    </td>
+                                    {modalTipo !== 'ver' && (
                                         <td>
-                                            <button 
+                                            <button
                                                 className="btn-eliminar"
                                                 onClick={() => removeInsumo(item.id)}
                                             >
                                                 Eliminar
                                             </button>
                                         </td>
-                                    </tr>
+                                    )}
+                                </tr>
                                 ))}
                             </tbody>
                         </table>
-                        
-                        <button 
-                            className="btn-agregar-insumos"
-                            onClick={() => setMostrarModalInsumos(true)}
-                        >
-                            + Agregar Insumos
-                        </button>
 
-
+                        {modalTipo !== 'ver' && (
+                            <button 
+                                className="btn-agregar-insumos"
+                                onClick={() => setMostrarModalInsumos(true)}
+                            >
+                                + Agregar Insumos
+                            </button>
+                        )}
                     </div>
                     
                     <div className="section-divider"></div>
-                    
-                    {/* <div className="observaciones-section">
-                        <h2>Observaciones</h2>
-                        <textarea
-                            name="observaciones"
-                            value={compraData.observaciones}
-                            onChange={handleChange}
-                            className="observaciones-field"
-                        ></textarea>
-                    </div> */}
                     
                     <div className="compra-totales-grid">
                         <div className="total-item">
@@ -493,38 +490,30 @@ export default function ComprasTable() {
                         </div>
                     </div>
 
-                    {/* Botones abajo */}
                     <div className="compra-header-actions"
                         style={{
                             marginTop: '1rem',
                             display: 'flex',
                             justifyContent: 'flex-end',
-                            gap: '0.5rem' // Espacio entre botones
+                            gap: '0.5rem'
                         }}>
                         <button 
                             className="modal-btn cancel-btn"
-                            onClick={() => {
-                                setMostrarAgregarCompra(false);
-                                setInsumosSeleccionados([]);
-                                setCompraData({
-                                    proveedor: '',
-                                    fecha_compra: '',
-                                    fecha_registro: obtenerFechaActual(),
-                                    
-                                });
-                            }}
+                            onClick={cancelarFormulario}
                         >
-                            Cancelar
+                            {modalTipo === 'ver' ? 'Cerrar' : 'Cancelar'}
                         </button>
-                        <button 
-                            className="modal-btn save-btn"
-                            onClick={guardarCompra}
-                        >
-                            Guardar
-                        </button>
+                        {modalTipo !== 'ver' && (
+                            <button 
+                                className="modal-btn save-btn"
+                                onClick={guardarCompra}
+                            >
+                                Guardar
+                            </button>
+                        )}
                     </div>
                     
-                    {mostrarModalInsumos && (
+                    {mostrarModalInsumos && modalTipo !== 'ver' && (
                         <AgregarInsumosModal
                             onClose={() => setMostrarModalInsumos(false)}
                             onAgregar={agregarInsumos}

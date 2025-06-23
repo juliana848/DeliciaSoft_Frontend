@@ -19,7 +19,6 @@ import DetallesPostres from "./features/Cartas/pages/detallePostres";
 import DetallesSandwiches from "./features/Cartas/pages/detallesSandwis";
 import DetalleChocolates from "./features/Cartas/pages/detallesChocolates";
 
-
 // Importar páginas de Cliente
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 
@@ -27,16 +26,16 @@ import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
 import ComprasTable from './features/Admin/pages/Compras.jsx';
 import InsumosTable from './features/Admin/pages/insumos.jsx';
-import Usuarios from './features/Admin/pages/Usuarios.jsx';
-import Roles from './features/Admin/pages/Roles.jsx';
-import Clientes from './features/Admin/pages/Clientes.jsx';
+import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
+import Roles from './features/Admin/pages/roles/Roles.jsx';
+import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/ventas.jsx';
 import ProveedorTable from './features/Admin/pages/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
-import RecetasTabla from './features/Admin/pages/Recetas.jsx';
+import RecetasTabla from './features/Admin/pages/Recetas/Recetas.jsx';
 import SedesTable from './features/Admin/pages/Sede.jsx';
 
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';

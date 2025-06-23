@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
+import RoleForm from './Components/FormRol'; 
 
 export default function Roles() {
   const [roles, setRoles] = useState([]);
@@ -129,7 +130,7 @@ export default function Roles() {
     setModalVisible(false);
     setRolSeleccionado(null);
     setModalTipo(null);
-    setFormData({
+    setFormData({ // Reset formData after closing modal
       nombre: '',
       descripcion: '',
       permisos: [],
@@ -137,51 +138,11 @@ export default function Roles() {
     });
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handlePermisoChange = (permisoId, checked) => {
-    setFormData(prev => ({
-      ...prev,
-      permisos: checked 
-        ? [...prev.permisos, permisoId]
-        : prev.permisos.filter(id => id !== permisoId)
-    }));
-  };
-
-  const validarFormulario = () => {
-    const { nombre, descripcion } = formData;
-    
-    if (!nombre.trim()) {
-      showNotification('El nombre del rol es obligatorio', 'error');
-      return false;
-    }
-    if (!descripcion.trim()) {
-      showNotification('La descripción es obligatoria', 'error');
-      return false;
-    }
-    
-    const nombreExiste = roles.some(rol => 
-      rol.nombre.toLowerCase() === nombre.trim().toLowerCase() && 
-      (modalTipo === 'agregar' || rol.id !== rolSeleccionado?.id)
-    );
-    
-    if (nombreExiste) {
-      showNotification('Ya existe un rol con este nombre', 'error');
-      return false;
-    }
-    
-    return true;
-  };
-
-  const guardarRol = () => {
-    if (!validarFormulario()) return;
-    
+  const guardarRol = (data) => {
     if (modalTipo === 'agregar') {
       const nuevoId = roles.length ? Math.max(...roles.map(r => r.id)) + 1 : 1;
       const nuevoRol = {
-        ...formData,
+        ...data,
         id: nuevoId,
         tieneUsuarios: false
       };
@@ -191,7 +152,7 @@ export default function Roles() {
     } else if (modalTipo === 'editar') {
       const updated = roles.map(r =>
         r.id === rolSeleccionado.id 
-          ? { ...r, ...formData }
+          ? { ...r, ...data }
           : r
       );
       setRoles(updated);
@@ -214,10 +175,15 @@ export default function Roles() {
     showNotification('Rol eliminado exitosamente');
   };
 
-  const rolesFiltrados = roles.filter(rol =>
-    rol.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    rol.descripcion.toLowerCase().includes(filtro.toLowerCase())
-  );
+  // Filtrar roles por nombre, descripción y también por ID (N°)
+  const rolesFiltrados = roles.filter(rol => {
+    const filterText = filtro.toLowerCase();
+    return (
+      rol.nombre.toLowerCase().includes(filterText) ||
+      rol.descripcion.toLowerCase().includes(filterText) ||
+      rol.id.toString().includes(filterText) // Buscar por N° (ID)
+    );
+  });
 
   const getPermisosNombres = (permisosIds) => {
     return permisos
@@ -225,14 +191,6 @@ export default function Roles() {
       .map(p => p.nombre)
       .join(', ');
   };
-
-  const permisosPorModulo = permisos.reduce((acc, permiso) => {
-    if (!acc[permiso.modulo]) {
-      acc[permiso.modulo] = [];
-    }
-    acc[permiso.modulo].push(permiso);
-    return acc;
-  }, {});
 
   return (
     <div className="admin-wrapper">
@@ -252,7 +210,7 @@ export default function Roles() {
           + Agregar
         </button>
         <SearchBar
-          placeholder="Buscar rol..."
+          placeholder="Buscar rol por nombre, descripción o N°..."
           value={filtro}
           onChange={setFiltro}
         />
@@ -332,139 +290,16 @@ export default function Roles() {
       <Modal visible={modalVisible} onClose={cerrarModal}>
         {/* Modal Agregar/Editar */}
         {(modalTipo === 'agregar' || modalTipo === 'editar') && (
-          <div style={{ width: '800px', maxWidth: '90vw' }}>
-            <h2 style={{ marginTop: 0, marginBottom: '1.5rem'}}>
-              {modalTipo === 'agregar' ? 'Agregar Rol' : 'Editar Rol'}
-            </h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
-              <div>
-                <h3 style={{ color: '#c2185b', marginBottom: '1rem' }}>Información Básica</h3>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    Nombre del Rol 
-                      <span style={{ color: 'red' }}> *</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nombre}
-                    onChange={(e) => handleInputChange('nombre', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '2px solid #f48fb1',
-                      borderRadius: '6px',
-                      outline: 'none'
-                    }}
-                    placeholder="Ej: Administrador"
-                  />
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                    Descripción 
-                    <span style={{ color: 'red' }}> *</span>
-                  </label>
-                  <textarea
-                    value={formData.descripcion}
-                    onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '2px solid #f48fb1',
-                      borderRadius: '6px',
-                      outline: 'none',
-                      minHeight: '60px',
-                      resize: 'vertical'
-                    }}
-                    placeholder="Describe este rol..."
-                  />
-                </div>
-
-                {modalTipo === 'editar' && (
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                      <label style={{ fontWeight: 'bold' }}>Estado Activo:</label>
-                      <InputSwitch
-                        checked={formData.activo}
-                        onChange={(e) => handleInputChange('activo', e.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 style={{ color: '#c2185b', marginBottom: '1rem' }}>Permisos del Sistema</h3>
-                
-                <div style={{
-                  padding: '1rem',
-                  border: '2px solid #f48fb1',
-                  borderRadius: '10px',
-                  backgroundColor: '#fafafa',
-                }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '0.5rem'
-                  }}>
-                    {Object.values(permisosPorModulo).flat().map((permiso) => (
-                      <div key={permiso.id} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.3rem',
-                        borderRadius: '4px'
-                      }}>
-                        <input
-                          type="checkbox"
-                          id={`permiso-${permiso.id}`}
-                          checked={formData.permisos.includes(permiso.id)}
-                          onChange={(e) => handlePermisoChange(permiso.id, e.target.checked)}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        <label
-                          htmlFor={`permiso-${permiso.id}`}
-                          style={{
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            margin: 0,
-                            fontWeight: formData.permisos.includes(permiso.id) ? '600' : 'normal',
-                            color: formData.permisos.includes(permiso.id) ? '#c2185b' : 'inherit'
-                          }}
-                        >
-                          {permiso.nombre}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-
-                  {Object.values(permisosPorModulo).flat().length === 0 && (
-                    <p style={{ textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                      No hay permisos disponibles
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '1rem',
-              marginTop: '2rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid #eee'
-            }}>
-              <button className="modal-btn cancel-btn" onClick={cerrarModal}>
-                Cancelar
-              </button>
-              <button className="modal-btn save-btn" onClick={guardarRol}>
-                Guardar
-              </button>
-            </div>
-          </div>
+          <RoleForm
+            initialData={formData}
+            formType={modalTipo}
+            permisos={permisos}
+            onSave={guardarRol}
+            onCancel={cerrarModal}
+            showNotification={showNotification}
+            allRoles={roles} // Pasar todos los roles para la validación de nombre único
+            currentRoleId={rolSeleccionado?.id} // Pasar el ID del rol actual para la validación en edición
+          />
         )}
 
         {/* Modal Visualizar */}
@@ -479,6 +314,11 @@ export default function Roles() {
               <div className="permisos-visualizar">
                 {getPermisosNombres(rolSeleccionado.permisos || [])}
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <button className="modal-btn cancel-btn" onClick={cerrarModal}>
+                Cerrar
+              </button>
             </div>
           </div>
         )}

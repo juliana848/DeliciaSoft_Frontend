@@ -185,7 +185,7 @@ export default function CategoriaTableDemo() {
       {modalVisible && (modalTipo === 'agregar' || modalTipo === 'editar') && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">
-            {modalTipo === 'agregar' ? 'Agregar Nueva Categoría' : 'Editar Categoría'}
+            {modalTipo === 'agregar' ? 'Agregar Categoria de Insumo' : 'Editar Categoría'}
           </h2>
           <div className="modal-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

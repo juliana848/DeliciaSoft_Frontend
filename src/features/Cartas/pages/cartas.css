@@ -281,15 +281,5 @@
   .producto-info {
     text-align: center;
   }
-  .boton-agregar {
-  margin-top: 10px;
-  background-color: #e91e63;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
+    
 }

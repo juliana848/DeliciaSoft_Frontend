@@ -1,32 +1,32 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "./CartContext"; // Asegúrate de que el path sea correcto
+import { CartContext } from "./CartContext";
 
 const mockData = [
   {
     id: 1,
     nombre: "Brownie con Helado",
     precio: 8500,
-    imagen: "/imagenes/Cartas/browniehelado.jpeg",
+    imagen: "https://i.pinimg.com/736x/a1/83/d8/a183d8d4c60a681db2dd64c22186029f.jpg",
     descripcion: "Brownie caliente con bola de helado de vainilla y topping de chocolate.",
   },
   {
     id: 2,
     nombre: "Chessecake de Fresa",
     precio: 9000,
-    imagen: "/imagenes/Cartas/cheesecakefresa.jpeg",
+    imagen: "https://i.pinimg.com/736x/9a/6f/39/9a6f3999e90707a746579769b4705dc3.jpg",
     descripcion: "Pastel frío con base de galleta y topping de fresa natural.",
   },
   {
     id: 3,
     nombre: "Postre Tres Leches",
     precio: 7000,
-    imagen: "/imagenes/Cartas/tresleches.jpeg",
+    imagen: "https://i.pinimg.com/736x/04/8f/4d/048f4d769ed7a2bced7360ab15c59561.jpg",
     descripcion: "Clásico postre colombiano, esponjoso y bañado en leche condensada.",
   },
 ];
 
-const DetallePostres = () => {
+const DetallesPostres = () => {
   const navigate = useNavigate();
   const { agregarProducto } = useContext(CartContext);
 
@@ -97,4 +97,4 @@ const DetallePostres = () => {
   );
 };
 
-export default DetallePostres;
+export default DetallesPostres;

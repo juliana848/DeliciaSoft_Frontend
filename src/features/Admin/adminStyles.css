@@ -192,6 +192,7 @@
     border: 2px solid #f48fb1;
     border-radius: 8px;
     outline: none;
+    padding-right: 40px;
 }
 
 
@@ -1198,4 +1199,40 @@
   display: flex;
   flex-direction: column;
   font-weight: 500;
+}
+
+/* Contenedor principal para el diseño de dos columnas */
+.usuarios-modal-grid-two-columns {
+  display: grid; /* Usa CSS Grid para un diseño de cuadrícula */
+  grid-template-columns: 1fr 1fr; /* Crea dos columnas de igual ancho */
+  gap: 20px; /* Espacio entre las columnas */
+  padding: 10px; /* Opcional: algún padding interno */
+}
+
+
+.usuarios-modal-column,
+.modal-column {
+  flex-grow: 1; 
+  width: 100%; 
+}
+
+/* Opcional: para pantallas más pequeñas, que las columnas se apilen */
+@media (max-width: 768px) {
+  .usuarios-modal-grid-two-columns {
+    grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
+  }
+}
+
+/* Busca esta regla y modifícala: */
+.admin-button.disabled {
+  opacity: 0.4; /* Cambia por 0.4 para más opacidad */
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Si no existe, agrégala */
+.admin-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }

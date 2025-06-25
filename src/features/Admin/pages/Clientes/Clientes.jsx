@@ -240,77 +240,48 @@ export default function Clientes() {
             />
           )}
         />
-        <Column
-          header="Acciones"
-          headerStyle={{ paddingLeft: '3.5rem' }}
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                🔍
-              </button>
-              <button
-                className="admin-button yellow"
-                title="Editar"
-                onClick={() => abrirModal('editar', rowData)}
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                title="Eliminar"
-                onClick={() => abrirModal('eliminar', rowData)}
-              >
-                🗑️
-              </button>
-            </>
-          )}
-        />
-      </DataTable>
+      <Column
+        header="Acciones"
+        headerStyle={{ paddingLeft: '3.5rem' }}
+        body={(rowData) => (
+          <>
+            <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+              🔍
+            </button>
+            <button
+              className="admin-button yellow"
+              title="Editar"
+              onClick={() => abrirModal('editar', rowData)}
+              disabled={!rowData.estado}
+              style={{ opacity: rowData.estado ? 1 : 0.5, cursor: rowData.estado ? 'pointer' : 'not-allowed' }}
+            >
+              ✏️
+            </button>
+            <button
+              className="admin-button red"
+              title="Eliminar"
+              onClick={() => abrirModal('eliminar', rowData)}
+              disabled={!rowData.estado}
+              style={{ opacity: rowData.estado ? 1 : 0.5, cursor: rowData.estado ? 'pointer' : 'not-allowed' }}
+            >
+              🗑️
+            </button>
+          </>
+        )}
+      />
+            </DataTable>
 
       {/* Use the new ClienteFormModal component */}
-      {(modalTipo === 'agregar' || modalTipo === 'editar') && (
-        <ClienteFormModal
-          visible={modalVisible}
-          onClose={cerrarModal}
-          modalTipo={modalTipo}
-          clienteSeleccionado={clienteSeleccionado}
-          clientes={clientes} // Pass the full clients array for validation
-          onSave={handleSaveCliente}
-          showNotification={showNotification}
-        />
-      )}
-
-      {/* Modal Visualizar */}
-      {modalTipo === 'visualizar' && clienteSeleccionado && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Detalles del Cliente</h2>
-          <div className="modal-body">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              {/* Columna 1 */}
-              <div>
-                <p><strong>ID Cliente:</strong> {clienteSeleccionado.idCliente}</p>
-                <p><strong>Tipo de Documento:</strong> {clienteSeleccionado.tipoDocumento}</p>
-                <p><strong>Número de Documento:</strong> {clienteSeleccionado.numeroDocumento}</p>
-                <p><strong>Nombre:</strong> {clienteSeleccionado.nombre}</p>
-                <p><strong>Apellido:</strong> {clienteSeleccionado.apellido}</p>
-                <p><strong>Correo:</strong> {clienteSeleccionado.correo}</p>
-              </div>
-
-              {/* Columna 2 */}
-              <div>
-                <p><strong>Dirección:</strong> {clienteSeleccionado.direccion}</p>
-                <p><strong>Barrio:</strong> {clienteSeleccionado.barrio}</p>
-                <p><strong>Ciudad:</strong> {clienteSeleccionado.ciudad}</p>
-                <p><strong>Fecha de Nacimiento:</strong> {formatearFecha(clienteSeleccionado.fechaNacimiento)}</p>
-                <p><strong>Celular:</strong> {clienteSeleccionado.celular}</p>
-                <p><strong>Estado:</strong> {clienteSeleccionado.estado ? 'Activo' : 'Inactivo'}</p>
-              </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
+      {(modalTipo === 'agregar' || modalTipo === 'editar' || modalTipo === 'visualizar') && (
+          <ClienteFormModal
+              visible={modalVisible}
+              onClose={cerrarModal}
+              modalTipo={modalTipo}
+              clienteSeleccionado={clienteSeleccionado}
+              clientes={clientes}
+              onSave={handleSaveCliente}
+              showNotification={showNotification}
+          />
       )}
 
       {/* Modal Eliminar - Pregunta inicial */}

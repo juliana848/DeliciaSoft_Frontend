@@ -114,7 +114,7 @@ export default function Roles() {
         permisos: [],
         activo: true
       });
-    } else if (tipo === 'editar' && rol) {
+    } else if ((tipo === 'editar' || tipo === 'visualizar') && rol) {
       setFormData({
         nombre: rol.nombre,
         descripcion: rol.descripcion,
@@ -130,7 +130,7 @@ export default function Roles() {
     setModalVisible(false);
     setRolSeleccionado(null);
     setModalTipo(null);
-    setFormData({ // Reset formData after closing modal
+    setFormData({
       nombre: '',
       descripcion: '',
       permisos: [],
@@ -181,7 +181,7 @@ export default function Roles() {
     return (
       rol.nombre.toLowerCase().includes(filterText) ||
       rol.descripcion.toLowerCase().includes(filterText) ||
-      rol.id.toString().includes(filterText) // Buscar por N° (ID)
+      rol.id.toString().includes(filterText)
     );
   });
 
@@ -259,25 +259,39 @@ export default function Roles() {
           style={{ width: '6rem', textAlign: 'center' }}
         />
         
-        <Column
-          header="Acciones"
-          headerStyle={{ paddingLeft: '5rem' }}
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+       <Column
+        header="Acciones"
+        headerStyle={{ paddingLeft: '5rem' }}
+        body={(rowData) => (
+          <>
+              <button 
+                className="admin-button gray" 
+                title="Visualizar" 
+                onClick={() => abrirModal('visualizar', rowData)}
+              >
                 🔍
               </button>
               <button
-                className="admin-button yellow"
-                title="Editar"
-                onClick={() => abrirModal('editar', rowData)}
+                className={`admin-button ${rowData.activo ? 'yellow' : ''}`} 
+                title={rowData.activo ? "Editar" : "No disponible (rol inactivo)"}
+                onClick={() => rowData.activo && abrirModal('editar', rowData)}
+                disabled={!rowData.activo}
+                style={{
+                  opacity: rowData.activo ? 1 : 0.8,
+                  cursor: rowData.activo ? 'pointer' : 'not-allowed'
+                }}
               >
                 ✏️
               </button>
               <button
-                className="admin-button red"
-                title="Eliminar"
-                onClick={() => abrirModal('eliminar', rowData)}
+                className={`admin-button ${rowData.activo ? 'red' : 'disabled'}`}
+                title={rowData.activo ? "Editar" : "No disponible (rol inactivo)"}
+                onClick={() => rowData.activo && abrirModal('editar', rowData)}
+                disabled={!rowData.activo}
+               style={{
+                  opacity: rowData.activo ? 1 : 0.8,
+                  cursor: rowData.activo ? 'pointer' : 'not-allowed',
+                }}
               >
                 🗑️
               </button>
@@ -288,8 +302,8 @@ export default function Roles() {
       </DataTable>
 
       <Modal visible={modalVisible} onClose={cerrarModal}>
-        {/* Modal Agregar/Editar */}
-        {(modalTipo === 'agregar' || modalTipo === 'editar') && (
+        {/* Modal Agregar/Editar/Visualizar */}
+        {(modalTipo === 'agregar' || modalTipo === 'editar' || modalTipo === 'visualizar') && (
           <RoleForm
             initialData={formData}
             formType={modalTipo}
@@ -297,30 +311,9 @@ export default function Roles() {
             onSave={guardarRol}
             onCancel={cerrarModal}
             showNotification={showNotification}
-            allRoles={roles} // Pasar todos los roles para la validación de nombre único
-            currentRoleId={rolSeleccionado?.id} // Pasar el ID del rol actual para la validación en edición
+            allRoles={roles}
+            currentRoleId={rolSeleccionado?.id}
           />
-        )}
-
-        {/* Modal Visualizar */}
-        {modalTipo === 'visualizar' && rolSeleccionado && (
-          <div className="modal-visualizar-rol">
-            <h2 style={{ marginTop: 0, color: '#000000' }}>Ver Detalles del Rol</h2>
-            <div style={{ margin: '1rem 0' }}>
-              <p><strong>Nombre:</strong> {rolSeleccionado.nombre}</p>
-              <p><strong>Descripción:</strong> {rolSeleccionado.descripcion}</p>
-              <p><strong>Estado:</strong> {rolSeleccionado.activo ? 'Activo' : 'Inactivo'}</p>
-              <p><strong>Permisos:</strong></p>
-              <div className="permisos-visualizar">
-                {getPermisosNombres(rolSeleccionado.permisos || [])}
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-              <button className="modal-btn cancel-btn" onClick={cerrarModal}>
-                Cerrar
-              </button>
-            </div>
-          </div>
         )}
 
         {/* Modal Eliminar */}

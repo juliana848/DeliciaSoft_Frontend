@@ -1,4 +1,3 @@
-// ClienteFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
 
@@ -37,7 +36,7 @@ export default function ClienteFormModal({
         apellido: '',
         correo: '',
         contrasena: '',
-        // confirmarContrasena: '', // Removed for editing mode
+        confirmarContrasena: '', // Siempre incluido
         direccion: '',
         barrio: '',
         ciudad: '',
@@ -52,13 +51,16 @@ export default function ClienteFormModal({
         apellido: '',
         correo: '',
         contrasena: '',
-        // confirmarContrasena: '', // Removed for editing mode
+        confirmarContrasena: '',
         celular: '',
         fechaNacimiento: ''
     });
 
     const [mostrarContrasena, setMostrarContrasena] = useState(false);
-    // const [mostrarConfirmarContrasena, setMostrarConfirmarContrasena] = useState(false); // Removed for editing mode
+    const [mostrarConfirmarContrasena, setMostrarConfirmarContrasena] = useState(false);
+
+    // Determinar si es modo de solo lectura
+    const isReadOnly = modalTipo === 'visualizar';
 
     useEffect(() => {
         // Reset form and errors when modal opens or client changes
@@ -69,7 +71,7 @@ export default function ClienteFormModal({
                 apellido: '',
                 correo: '',
                 contrasena: '',
-                // confirmarContrasena: '', // Removed for editing mode
+                confirmarContrasena: '',
                 celular: '',
                 fechaNacimiento: ''
             });
@@ -82,7 +84,7 @@ export default function ClienteFormModal({
                     apellido: '',
                     correo: '',
                     contrasena: '',
-                    confirmarContrasena: '', // Keep for 'agregar'
+                    confirmarContrasena: '',
                     direccion: '',
                     barrio: '',
                     ciudad: '',
@@ -90,15 +92,15 @@ export default function ClienteFormModal({
                     celular: '',
                     estado: true
                 });
-            } else if (modalTipo === 'editar' && clienteSeleccionado) {
+            } else if ((modalTipo === 'editar' || modalTipo === 'visualizar') && clienteSeleccionado) {
                 setFormData({
                     tipoDocumento: clienteSeleccionado.tipoDocumento,
                     numeroDocumento: clienteSeleccionado.numeroDocumento,
                     nombre: clienteSeleccionado.nombre,
                     apellido: clienteSeleccionado.apellido,
                     correo: clienteSeleccionado.correo,
-                    contrasena: clienteSeleccionado.contrasena, // Populate password here
-                    // confirmarContrasena: '', // Do not set this for 'editar'
+                    contrasena: clienteSeleccionado.contrasena,
+                    confirmarContrasena: '', // No se muestra en editar/visualizar
                     direccion: clienteSeleccionado.direccion,
                     barrio: clienteSeleccionado.barrio,
                     ciudad: clienteSeleccionado.ciudad,
@@ -108,11 +110,13 @@ export default function ClienteFormModal({
                 });
             }
             setMostrarContrasena(false);
-            // setMostrarConfirmarContrasena(false); // Removed for editing mode
+            setMostrarConfirmarContrasena(false);
         }
     }, [visible, modalTipo, clienteSeleccionado]);
 
     const handleInputChange = (field, value) => {
+        if (isReadOnly) return; // No permitir cambios en modo visualizar
+
         let error = '';
         let processedValue = value;
 
@@ -175,7 +179,7 @@ export default function ClienteFormModal({
                     }
                 }
                 break;
-            case 'confirmarContrasena': // Only applicable for 'agregar' mode now
+            case 'confirmarContrasena':
                 if (modalTipo === 'agregar') {
                     if (value.trim() && formData.contrasena !== value) {
                         error = 'Las contraseñas no coinciden.';
@@ -293,19 +297,17 @@ export default function ClienteFormModal({
                 newErrors.confirmarContrasena = 'Las contraseñas no coinciden.';
                 isValid = false;
             }
-        } else if (modalTipo === 'editar') { // Always validate password in edit mode if it's present
-            if (contrasena.trim()) { // Only validate if password field is not empty in edit mode
+        } else if (modalTipo === 'editar') {
+            if (contrasena.trim()) {
                 const erroresContrasena = validarContrasena(contrasena);
                 if (erroresContrasena.length > 0) {
                     newErrors.contrasena = erroresContrasena[0];
                     isValid = false;
                 }
-            } else { // If in edit mode and password field is empty, clear any existing password error
+            } else {
                  newErrors.contrasena = '';
             }
-            // No confirmarContrasena validation needed for 'editar'
         }
-
 
         if (fechaNacimiento) {
             const fechaNac = new Date(fechaNacimiento);
@@ -337,7 +339,22 @@ export default function ClienteFormModal({
         onSave(formData);
     };
 
-    // Estilos básicos para el modal (puedes ajustarlos según tu adminStyles.css)
+    const formatearFecha = (fecha) => {
+        if (!fecha) return '';
+        return new Date(fecha).toLocaleDateString('es-ES');
+    };
+
+    // Función para obtener el título del modal
+    const getTitleModal = () => {
+        switch(modalTipo) {
+            case 'agregar': return 'Agregar Cliente';
+            case 'editar': return 'Editar Cliente';
+            case 'visualizar': return 'Detalles del Cliente';
+            default: return 'Cliente';
+        }
+    };
+
+    // Estilos básicos para el modal
     const modalOverlayStyle = {
         position: 'fixed',
         top: 0,
@@ -367,7 +384,7 @@ export default function ClienteFormModal({
             <div style={modalOverlayStyle}>
                 <div style={modalContentStyle}>
                     <h2 className="modal-title text-base">
-                        {modalTipo === 'agregar' ? 'Agregar Cliente' : 'Editar Cliente'}
+                        {getTitleModal()}
                     </h2>
 
                     <div className="modal-body">
@@ -381,7 +398,15 @@ export default function ClienteFormModal({
                                     value={formData.tipoDocumento}
                                     onChange={(e) => handleInputChange('tipoDocumento', e.target.value)}
                                     className="modal-input text-sm p-1"
-                                    style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
+                                    }}
+                                    disabled={isReadOnly}
                                 >
                                     <option value="CC">Cédula</option>
                                     <option value="TI">TI</option>
@@ -400,12 +425,18 @@ export default function ClienteFormModal({
                                     onChange={(e) => handleInputChange('numeroDocumento', e.target.value)}
                                     className="modal-input text-sm p-1"
                                     style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.numeroDocumento ? 'red' : ''
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.numeroDocumento ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
                                     }}
                                     maxLength={10}
+                                    readOnly={isReadOnly}
                                 />
-                                {formErrors.numeroDocumento && (
+                                {formErrors.numeroDocumento && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.numeroDocumento}</small>
                                 )}
                             </div>
@@ -420,12 +451,18 @@ export default function ClienteFormModal({
                                     onChange={(e) => handleInputChange('nombre', e.target.value)}
                                     className="modal-input text-sm p-1"
                                     style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.nombre ? 'red' : ''
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.nombre ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
                                     }}
                                     maxLength={15}
+                                    readOnly={isReadOnly}
                                 />
-                                {formErrors.nombre && (
+                                {formErrors.nombre && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.nombre}</small>
                                 )}
                             </div>
@@ -440,12 +477,18 @@ export default function ClienteFormModal({
                                     onChange={(e) => handleInputChange('apellido', e.target.value)}
                                     className="modal-input text-sm p-1"
                                     style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.apellido ? 'red' : ''
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.apellido ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
                                     }}
                                     maxLength={15}
+                                    readOnly={isReadOnly}
                                 />
-                                {formErrors.apellido && (
+                                {formErrors.apellido && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.apellido}</small>
                                 )}
                             </div>
@@ -460,12 +503,18 @@ export default function ClienteFormModal({
                                     onChange={(e) => handleInputChange('correo', e.target.value)}
                                     className="modal-input text-sm p-1"
                                     style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.correo ? 'red' : ''
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.correo ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
                                     }}
                                     maxLength={20}
+                                    readOnly={isReadOnly}
                                 />
-                                {formErrors.correo && (
+                                {formErrors.correo && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.correo}</small>
                                 )}
                             </div>
@@ -480,17 +529,23 @@ export default function ClienteFormModal({
                                     onChange={(e) => handleInputChange('celular', e.target.value)}
                                     className="modal-input text-sm p-1"
                                     style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.celular ? 'red' : ''
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.celular ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
                                     }}
                                     maxLength={10}
+                                    readOnly={isReadOnly}
                                 />
-                                {formErrors.celular && (
+                                {formErrors.celular && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.celular}</small>
                                 )}
                             </div>
 
-                            {/* Contraseña field - always present, required only for 'agregar' */}
+                            {/* Contraseña field */}
                             <div className="modal-field">
                                 <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
                                     Contraseña: {modalTipo === 'agregar' && <span style={{ color: 'red' }}>*</span>}
@@ -498,7 +553,7 @@ export default function ClienteFormModal({
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type={mostrarContrasena ? "text" : "password"}
-                                        value={formData.contrasena}
+                                        value={isReadOnly ? '********' : formData.contrasena}
                                         onChange={(e) => handleInputChange('contrasena', e.target.value)}
                                         className="modal-input text-sm p-1"
                                         style={{
@@ -507,10 +562,13 @@ export default function ClienteFormModal({
                                             fontSize: '12px',
                                             padding: '2px 25px 2px 4px',
                                             paddingRight: '25px',
-                                            borderColor: formErrors.contrasena ? 'red' : ''
+                                            borderColor: formErrors.contrasena ? 'red' : '',
+                                            backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                            color: isReadOnly ? '#666' : 'black'
                                         }}
                                         placeholder={modalTipo === 'editar' ? 'Opcional (dejar vacío para mantener la actual)' : '8+ chars, 1 mayúscula, 1 especial'}
                                         maxLength={20}
+                                        readOnly={isReadOnly}
                                     />
                                     <button
                                         type="button"
@@ -522,9 +580,9 @@ export default function ClienteFormModal({
                                             transform: 'translateY(-50%)',
                                             background: 'none',
                                             border: 'none',
-                                            cursor: 'pointer',
+                                            cursor: isReadOnly ? 'default' : 'pointer',
                                             fontSize: '12px',
-                                            color: '#666',
+                                            color: isReadOnly ? '#ccc' : '#666',
                                             padding: '0',
                                             width: '16px',
                                             height: '16px',
@@ -533,61 +591,107 @@ export default function ClienteFormModal({
                                             justifyContent: 'center'
                                         }}
                                         title={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        disabled={isReadOnly}
                                     >
                                         {mostrarContrasena ? '👁️' : '👁️‍🗨️'}
                                     </button>
                                 </div>
-                                {formErrors.contrasena && (
+                                {formErrors.contrasena && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.contrasena}</small>
                                 )}
                             </div>
 
                             <div className="modal-field">
-                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Fecha Nacimiento:</label>
-                                <input
-                                    type="date"
-                                    value={formData.fechaNacimiento}
-                                    onChange={(e) => handleInputChange('fechaNacimiento', e.target.value)}
-                                    className="modal-input text-sm p-1"
-                                    style={{
-                                        width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px',
-                                        borderColor: formErrors.fechaNacimiento ? 'red' : ''
-                                    }}
-                                />
-                                {formErrors.fechaNacimiento && (
+                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+                                    Fecha Nacimiento:
+                                </label>
+                                {isReadOnly ? (
+                                    <input
+                                        type="text"
+                                        value={formatearFecha(formData.fechaNacimiento)}
+                                        className="modal-input text-sm p-1"
+                                        style={{
+                                            width: '100%', 
+                                            height: '28px', 
+                                            fontSize: '12px', 
+                                            padding: '2px 4px',
+                                            backgroundColor: '#f5f5f5',
+                                            color: '#666'
+                                        }}
+                                        readOnly
+                                    />
+                                ) : (
+                                    <input
+                                        type="date"
+                                        value={formData.fechaNacimiento}
+                                        onChange={(e) => handleInputChange('fechaNacimiento', e.target.value)}
+                                        className="modal-input text-sm p-1"
+                                        style={{
+                                            width: '100%', 
+                                            height: '28px', 
+                                            fontSize: '12px', 
+                                            padding: '2px 4px',
+                                            borderColor: formErrors.fechaNacimiento ? 'red' : ''
+                                        }}
+                                    />
+                                )}
+                                {formErrors.fechaNacimiento && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.fechaNacimiento}</small>
                                 )}
                             </div>
 
                             {/* Confirmar Contraseña field - ONLY for 'agregar' mode */}
-                            {modalTipo === 'agregar' && (
-                                <div className="modal-field">
-                                    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
-                                        Confirmar Contraseña: <span style={{ color: 'red' }}>*</span>
-                                    </label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type={"password"} // Always hide this in 'agregar' since we are not supporting eye icon here. Or use another state
-                                            value={formData.confirmarContrasena}
-                                            onChange={(e) => handleInputChange('confirmarContrasena', e.target.value)}
-                                            className="modal-input text-sm p-1"
-                                            style={{
-                                                width: '100%',
-                                                height: '28px',
-                                                fontSize: '12px',
-                                                padding: '2px 4px',
-                                                borderColor: formErrors.confirmarContrasena ? 'red' : ''
-                                            }}
-                                            placeholder="Confirme la contraseña"
-                                            maxLength={20}
-                                        />
-                                        {/* No eye icon for confirmarContrasena as per request */}
-                                    </div>
-                                    {formErrors.confirmarContrasena && (
-                                        <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.confirmarContrasena}</small>
-                                    )}
-                                </div>
-                            )}
+{modalTipo === 'agregar' && (
+    <div className="modal-field">
+        <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+            Confirmar Contraseña: <span style={{ color: 'red' }}>*</span>
+        </label>
+        <div style={{ position: 'relative' }}>
+            <input
+                type={mostrarConfirmarContrasena ? "text" : "password"}
+                value={formData.confirmarContrasena}
+                onChange={(e) => handleInputChange('confirmarContrasena', e.target.value)}
+                className="modal-input text-sm p-1"
+                style={{
+                    width: '100%',
+                    height: '28px',
+                    fontSize: '12px',
+                    padding: '2px 25px 2px 4px',
+                    borderColor: formErrors.confirmarContrasena ? 'red' : ''
+                }}
+                placeholder="Confirme la contraseña"
+                maxLength={20}
+            />
+            <button
+                type="button"
+                onClick={() => setMostrarConfirmarContrasena(!mostrarConfirmarContrasena)}
+                style={{
+                    position: 'absolute',
+                    right: '5px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    color: '#666',
+                    padding: '0',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+                title={mostrarConfirmarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+                {mostrarConfirmarContrasena ? '👁️' : '👁️‍🗨️'}
+            </button>
+        </div>
+        {formErrors.confirmarContrasena && (
+            <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.confirmarContrasena}</small>
+        )}
+    </div>
+)}
 
                             <div className="modal-field">
                                 <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Dirección:</label>
@@ -625,7 +729,7 @@ export default function ClienteFormModal({
                                 />
                             </div>
 
-                            {modalTipo === 'editar' && (
+                            {(modalTipo === 'editar' || modalTipo === 'visualizar') && ( 
                                 <div className="modal-field">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
                                         <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>

@@ -26,7 +26,7 @@ const validationUtils = {
 
   hasValidNameLength: (value) => {
     const trimmed = value.trim();
-    return trimmed.length >= 2 && trimmed.length <= 15; // Cambiado de 50 a 15
+    return trimmed.length >= 2 && trimmed.length <= 15;
   },
 
   noMultipleSpaces: (value) => {
@@ -45,13 +45,7 @@ const validationUtils = {
   },
 
   isValidEmailDomain: (email) => {
-    // Lista de dominios comunes válidos (puedes expandir esta lista)
-    const validDomains = [
-      'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 
-      'empresa.com', 'corporativo.co', 'admin.com'
-    ];
     const domain = email.split('@')[1]?.toLowerCase();
-    // Permitir cualquier dominio válido, no solo los de la lista
     return domain && domain.includes('.') && domain.length > 3;
   },
 
@@ -183,7 +177,7 @@ const validarFormularioCompleto = (formData, modalTipo, usuarios, usuarioSelecci
     errors.push('Los nombres son obligatorios');
   } else {
     if (!validationUtils.hasValidNameLength(nombres)) {
-      errors.push('Los nombres deben tener entre 2 y 15 caracteres'); // Actualizado
+      errors.push('Los nombres deben tener entre 2 y 15 caracteres');
     }
     if (!validationUtils.isValidName(nombres)) {
       errors.push('Los nombres solo pueden contener letras y espacios');
@@ -201,7 +195,7 @@ const validarFormularioCompleto = (formData, modalTipo, usuarios, usuarioSelecci
     errors.push('Los apellidos son obligatorios');
   } else {
     if (!validationUtils.hasValidNameLength(apellidos)) {
-      errors.push('Los apellidos deben tener entre 2 y 15 caracteres'); // Actualizado
+      errors.push('Los apellidos deben tener entre 2 y 15 caracteres');
     }
     if (!validationUtils.isValidName(apellidos)) {
       errors.push('Los apellidos solo pueden contener letras y espacios');
@@ -323,7 +317,7 @@ const validarCampoEnTiempoReal = (campo, valor, formData, usuarios, usuarioSelec
         errors.push('Solo se permiten letras y espacios');
       }
       if (valor && !validationUtils.hasValidNameLength(valor)) {
-        errors.push('Debe tener entre 2 y 15 caracteres'); // Actualizado
+        errors.push('Debe tener entre 2 y 15 caracteres');
       }
       break;
 
@@ -332,7 +326,7 @@ const validarCampoEnTiempoReal = (campo, valor, formData, usuarios, usuarioSelec
         errors.push('Solo se permiten letras y espacios');
       }
       if (valor && !validationUtils.hasValidNameLength(valor)) {
-        errors.push('Debe tener entre 2 y 15 caracteres'); // Actualizado
+        errors.push('Debe tener entre 2 y 15 caracteres');
       }
       break;
 
@@ -404,24 +398,12 @@ const mostrarErrores = (errores, setNotification) => {
   }
 };
 
-// Función para obtener sugerencias de contraseña segura
-const generarSugerenciaContraseña = (nombres, apellidos) => {
-  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-  const primeraLetraNombre = nombres?.charAt(0)?.toUpperCase() || 'A';
-  const primeraLetraApellido = apellidos?.charAt(0)?.toUpperCase() || 'B';
-  const numeros = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  const especiales = '!@#$%^&*'[Math.floor(Math.random() * 8)];
-  
-  return `${primeraLetraNombre}${primeraLetraApellido}${numeros}${especiales}`;
-};
-
-
 export default function UsuariosForm({
   modalTipo,
   usuarioSeleccionado,
   roles,
   tiposDocumento,
-  usuarios, // All users for unique validations
+  usuarios,
   onSave,
   onCancel,
   setNotification,
@@ -441,14 +423,16 @@ export default function UsuariosForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const isReadOnly = modalTipo === 'visualizar';
+
   useEffect(() => {
-    if (modalTipo === 'editar' && usuarioSeleccionado) {
+    if ((modalTipo === 'editar' || modalTipo === 'visualizar') && usuarioSeleccionado) {
       setFormData({
         nombres: usuarioSeleccionado.nombres,
         apellidos: usuarioSeleccionado.apellidos,
         correo: usuarioSeleccionado.correo,
-        contraseña: usuarioSeleccionado.contraseña, // Or a placeholder if not editing password directly
-        confirmarContraseña: '', // Always clear for editing
+        contraseña: usuarioSeleccionado.contraseña,
+        confirmarContraseña: '',
         rol_id: usuarioSeleccionado.rol_id,
         tipo_documento_id: usuarioSeleccionado.tipo_documento_id,
         documento: usuarioSeleccionado.documento,
@@ -468,13 +452,14 @@ export default function UsuariosForm({
         activo: true
       });
     }
-    setFieldErrors({}); // Clear errors when modal opens/changes type
+    setFieldErrors({});
   }, [modalTipo, usuarioSeleccionado]);
 
   const handleInputChange = (field, value) => {
+    if (isReadOnly) return;
+
     let cleanedValue = value;
     if (field === 'documento') {
-      // Remove any non-numeric characters and spaces
       cleanedValue = value.replace(/[^0-9]/g, '');
     }
     
@@ -508,6 +493,8 @@ export default function UsuariosForm({
   };
 
   const handleSave = () => {
+    if (isReadOnly) return;
+
     const validation = validarFormularioCompleto(
       formData, 
       modalTipo, 
@@ -524,221 +511,268 @@ export default function UsuariosForm({
   };
 
   return (
-    <div className="modal-body modal-body-compact">
-      <div className="modal-grid modal-grid-compact">
-        <div className="modal-field">
-          <label className="modal-label">
-            Tipo Documento<span className="required-asterisk">*</span>:
-          </label>
-          <div className="custom-select-wrapper">
+ <div className="usuarios-modal-body usuarios-modal-body-compact">
+  <div className="usuarios-modal-grid-two-columns">
+        {/* COLUMNA 1 */}
+        <div className="usuarios-modal-column">
+          {/* Tipo de Documento */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Tipo de Documento<span className="required">*</span>:
+            </label>
             <select
               value={formData.tipo_documento_id}
               onChange={(e) => handleInputChange('tipo_documento_id', e.target.value)}
-              className={`custom-select ${fieldErrors.tipo_documento_id?.length ? 'error' : ''}`}
+              className={`modal-input ${fieldErrors.tipo_documento_id?.length ? 'error' : ''}`}
+              disabled={isReadOnly}
             >
               <option value="">Seleccionar</option>
               {tiposDocumento.map(tipo => (
                 <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
               ))}
             </select>
-            <div className="select-arrow">
-              <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
-                <path d="M6 8L0 2L1.5 0.5L6 5L10.5 0.5L12 2L6 8Z" fill="currentColor"/>
-              </svg>
-            </div>
+            {fieldErrors.tipo_documento_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.tipo_documento_id[0]}
+              </div>
+            )}
           </div>
-          {fieldErrors.tipo_documento_id?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.tipo_documento_id[0]}
-            </div>
-          )}
-        </div>
-        
-        <div className="modal-field">
-          <label className="modal-label">
-            Documento<span className="required-asterisk">*</span>:
-          </label>
-          <input
-            type="text" // Keep as text to allow filtering in JS, but restrict input
-            value={formData.documento}
-            onChange={(e) => handleInputChange('documento', e.target.value)}
-            className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
-            placeholder="Número"
-            maxLength="10"
-            inputMode="numeric" // Suggest numeric keyboard on mobile devices
-            pattern="[0-9]*" // HTML5 pattern for numeric input
-          />
-          {fieldErrors.documento?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.documento[0]}
-            </div>
-          )}
-          {formData.tipo_documento_id && (
-            <div className="field-hint">
-              {formData.tipo_documento_id === 1 && 'Cédula: 7-10 dígitos'}
-              {formData.tipo_documento_id === 2 && 'Cédula Extranjería: 6-10 dígitos'}
-              {formData.tipo_documento_id === 3 && 'Pasaporte: 6-12 caracteres alfanuméricos'}
-              {formData.tipo_documento_id === 4 && 'NIT: 9-11 dígitos'}
-            </div>
-          )}
-        </div>
-        
-        <div className="modal-field">
-          <label className="modal-label">
-            Nombres<span className="required-asterisk">*</span>:
-          </label>
-          <input
-            type="text"
-            value={formData.nombres}
-            onChange={(e) => handleInputChange('nombres', e.target.value)}
-            className={`modal-input ${fieldErrors.nombres?.length ? 'error' : ''}`}
-            placeholder="Nombres"
-            maxLength="15"
-          />
-          {fieldErrors.nombres?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.nombres[0]}
-            </div>
-          )}
-        </div>
-        
-        <div className="modal-field">
-          <label className="modal-label">
-            Apellidos<span className="required-asterisk">*</span>:
-          </label>
-          <input
-            type="text"
-            value={formData.apellidos}
-            onChange={(e) => handleInputChange('apellidos', e.target.value)}
-            className={`modal-input ${fieldErrors.apellidos?.length ? 'error' : ''}`}
-            placeholder="Apellidos"
-            maxLength="15"
-          />
-          {fieldErrors.apellidos?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.apellidos[0]}
-            </div>
-          )}
-        </div>
-        
-        <div className="modal-field modal-field-full">
-          <label className="modal-label">
-            Correo<span className="required-asterisk">*</span>:
-          </label>
-          <input
-            type="email"
-            value={formData.correo}
-            onChange={(e) => handleInputChange('correo', e.target.value)}
-            className={`modal-input ${fieldErrors.correo?.length ? 'error' : ''}`}
-            placeholder="ejemplo@correo.com"
-            maxLength="20"
-          />
-          {fieldErrors.correo?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.correo[0]}
-            </div>
-          )}
-        </div>
-        
-        <div className="modal-field">
-          <label className="modal-label">
-            Contraseña<span className="required-asterisk">*</span>:
-          </label>
-          <div className="password-input-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={formData.contraseña}
-              onChange={(e) => handleInputChange('contraseña', e.target.value)}
-              className={`modal-input password-input ${fieldErrors.contraseña?.length ? 'error' : ''}`}
-              placeholder="Contraseña segura"
-              maxLength="20"
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-              title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
-            </button>
-          </div>
-          {fieldErrors.contraseña?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.contraseña.slice(0, 2).map((error, index) => (
-                <div key={index}>• {error}</div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {modalTipo === 'agregar' && (
+          {/* Nombres */}
           <div className="modal-field">
             <label className="modal-label">
-              Confirmar Contraseña<span className="required-asterisk">*</span>:
+              Nombre<span className="required">*</span>:
             </label>
-            <div className="password-input-wrapper">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmarContraseña}
-                onChange={(e) => handleInputChange('confirmarContraseña', e.target.value)}
-                className={`modal-input password-input ${fieldErrors.confirmarContraseña?.length ? 'error' : ''}`}
-                placeholder="Confirme su contraseña"
-                maxLength="20"
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-              >
-                {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            {fieldErrors.confirmarContraseña?.length > 0 && (
-              <div className="field-error">
-                {fieldErrors.confirmarContraseña[0]}
-              </div>
-            )}
-            {formData.contraseña && formData.confirmarContraseña && 
-             formData.contraseña === formData.confirmarContraseña && (
-              <div className="field-success">
-                ✓ Las contraseñas coinciden
+            <input
+              type="text"
+              value={formData.nombres}
+              onChange={(e) => handleInputChange('nombres', e.target.value)}
+              className={`modal-input ${fieldErrors.nombres?.length ? 'error' : ''}`}
+              placeholder="Nombres"
+              maxLength="15"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.nombres?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.nombres[0]}
               </div>
             )}
           </div>
-        )}
-        
-        <div className="modal-field modal-field-full">
-          <label className="modal-label">
-            Rol<span className="required-asterisk">*</span>:
-          </label>
-          <div className="custom-select-wrapper">
+
+          {/* Correo */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Correo<span className="required">*</span>:
+            </label>
+            <input
+              type="email"
+              value={formData.correo}
+              onChange={(e) => handleInputChange('correo', e.target.value)}
+              className={`modal-input ${fieldErrors.correo?.length ? 'error' : ''}`}
+              placeholder="ejemplo@correo.com"
+              maxLength="100"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.correo?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.correo[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Contraseña */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Contraseña<span className="required">*</span>:
+            </label>
+           <div className="password-container" style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={formData.contraseña}
+                onChange={(e) => handleInputChange('contraseña', e.target.value)}
+                className={`modal-input ${fieldErrors.contraseña?.length ? 'error' : ''}`}
+                placeholder="8+ chars, 1 mayúscula, 1 special"
+                maxLength="50"
+                readOnly={isReadOnly}
+              />
+              {!isReadOnly && (
+               <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      zIndex: 1
+                    }}
+                  >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              )}
+            </div>
+            {fieldErrors.contraseña?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.contraseña.slice(0, 2).map((error, index) => (
+                  <div key={index}>• {error}</div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rol */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Rol<span className="required">*</span>:
+            </label>
             <select
               value={formData.rol_id}
               onChange={(e) => handleInputChange('rol_id', e.target.value)}
-              className={`custom-select ${fieldErrors.rol_id?.length ? 'error' : ''}`}
+              className={`modal-input ${fieldErrors.rol_id?.length ? 'error' : ''}`}
+              disabled={isReadOnly}
             >
               <option value="">Seleccionar rol</option>
               {roles.map(rol => (
                 <option key={rol.id} value={rol.id}>{rol.nombre}</option>
               ))}
             </select>
-            <div className="select-arrow">
-              <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
-                <path d="M6 8L0 2L1.5 0.5L6 5L10.5 0.5L12 2L6 8Z" fill="currentColor"/>
-              </svg>
-            </div>
+            {fieldErrors.rol_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.rol_id[0]}
+              </div>
+            )}
           </div>
-          {fieldErrors.rol_id?.length > 0 && (
-            <div className="field-error">
-              {fieldErrors.rol_id[0]}
+        </div>
+
+        {/* COLUMNA 2 */}
+        <div className="modal-column">
+          {/* N° Documento */}
+          <div className="modal-field">
+            <label className="modal-label">
+              N° Documento<span className="required">*</span>:
+            </label>
+            <input
+              type="text"
+              value={formData.documento}
+              onChange={(e) => handleInputChange('documento', e.target.value)}
+              className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
+              placeholder="Número"
+              maxLength="12"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.documento?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.documento[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Apellidos */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Apellido<span className="required">*</span>:
+            </label>
+            <input
+              type="text"
+              value={formData.apellidos}
+              onChange={(e) => handleInputChange('apellidos', e.target.value)}
+              className={`modal-input ${fieldErrors.apellidos?.length ? 'error' : ''}`}
+              placeholder="Apellidos"
+              maxLength="15"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.apellidos?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.apellidos[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Confirmar Contraseña - Solo en agregar */}
+          {modalTipo === 'agregar' && (
+            <div className="modal-field">
+              <label className="modal-label">
+                Confirmar Contraseña<span className="required">*</span>:
+              </label>
+             <div className="password-container" style={{ position: 'relative' }}>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmarContraseña}
+                  onChange={(e) => handleInputChange('confirmarContraseña', e.target.value)}
+                  className={`modal-input ${fieldErrors.confirmarContraseña?.length ? 'error' : ''}`}
+                  placeholder="Confirme la contraseña"
+                  maxLength="50"
+                />
+              <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      zIndex: 1
+                    }}
+                  >
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {fieldErrors.confirmarContraseña?.length > 0 && (
+                <div className="error-message">
+                  {fieldErrors.confirmarContraseña[0]}
+                </div>
+              )}
+              {formData.contraseña && formData.confirmarContraseña && 
+               formData.contraseña === formData.confirmarContraseña && (
+                <div className="success-message">
+                  ✓ Las contraseñas coinciden
+                </div>
+              )}
             </div>
           )}
-        </div>
-      </div>
+
+           {/* Estado */}
+          {modalTipo !== 'agregar' && (
+            <div className="modal-field">
+              <label className="modal-label">Estado:</label>
+              <div className="switch-container">
+                <InputSwitch
+                  checked={formData.activo}
+                  onChange={(e) => handleInputChange('activo', e.value)}
+                  disabled={isReadOnly}
+                />
+                <span className="switch-label">
+                  {formData.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+           </div>
+          )}
+         </div>
+       </div>
+
       <div className="modal-footer">
-        <button className="modal-btn cancel-btn" onClick={onCancel}>Cancelar</button>
-        <button className="modal-btn save-btn" onClick={handleSave}>Guardar</button>
+        <button className="modal-btn cancel-btn" onClick={onCancel}>
+          {isReadOnly ? 'Cerrar' : 'Cancelar'}
+        </button>
+        {!isReadOnly && (
+          <button className="modal-btn save-btn" onClick={handleSave}>
+            Guardar
+          </button>
+        )}
       </div>
     </div>
   );

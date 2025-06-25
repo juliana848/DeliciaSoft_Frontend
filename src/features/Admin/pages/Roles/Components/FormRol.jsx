@@ -8,6 +8,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     descripcion: { valido: false, mensaje: '' }
   });
 
+  const isReadOnly = formType === 'visualizar';
+
   // Effect para inicializar el formulario o re-validar al cambiar los datos iniciales
   useEffect(() => {
     setFormData(initialData);
@@ -18,7 +20,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
         descripcion: validarDescripcion(initialData.descripcion)
       });
     } else {
-      // Resetear validaciones para el modo agregar
+      // Resetear validaciones para el modo agregar o visualizar
       setValidaciones({
         nombre: { valido: false, mensaje: '' },
         descripcion: { valido: false, mensaje: '' }
@@ -85,6 +87,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   };
 
   const manejarCambioNombre = (valor) => {
+    if (isReadOnly) return;
+    
     const soloLetras = valor.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
     const sinEspaciosMultiples = soloLetras.replace(/\s+/g, ' ');
     setFormData(prev => ({ ...prev, nombre: sinEspaciosMultiples }));
@@ -93,6 +97,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   };
 
   const handleInputChange = (field, value) => {
+    if (isReadOnly) return;
+    
     if (field === 'nombre') {
       manejarCambioNombre(value);
     } else if (field === 'descripcion') {
@@ -105,6 +111,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   };
 
   const handlePermisoChange = (permisoId, checked) => {
+    if (isReadOnly) return;
+    
     setFormData(prev => ({
       ...prev,
       permisos: checked
@@ -137,17 +145,26 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validarFormulario()) {
+    if (!isReadOnly && validarFormulario()) {
       onSave(formData);
     }
   };
 
   const formularioValido = validaciones.nombre.valido && validaciones.descripcion.valido;
 
+  const getTitleByType = () => {
+    switch (formType) {
+      case 'agregar': return 'Agregar Rol';
+      case 'editar': return 'Editar Rol';
+      case 'visualizar': return 'Ver Detalles del Rol';
+      default: return 'Rol';
+    }
+  };
+
   return (
     <div style={{ width: '800px', maxWidth: '90vw' }}>
-      <h2 style={{ marginTop: 0, marginBottom: '1.5rem'}}>
-        {formType === 'agregar' ? 'Agregar Rol' : 'Editar Rol'}
+      <h2 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#000000' }}>
+        {getTitleByType()}
       </h2>
 
       <form onSubmit={handleSubmit}>
@@ -158,23 +175,29 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 Nombre del Rol
-                  <span style={{ color: 'red' }}> *</span>
+                {!isReadOnly && <span style={{ color: 'red' }}> *</span>}
               </label>
               <input
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => handleInputChange('nombre', e.target.value)}
+                readOnly={isReadOnly}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: `2px solid ${validaciones.nombre.valido ? '#4caf50' : (validaciones.nombre.mensaje ? '#f44336' : '#f48fb1')}`,
+                  border: isReadOnly 
+                    ? '2px solid #e0e0e0' 
+                    : `2px solid ${validaciones.nombre.valido ? '#4caf50' : (validaciones.nombre.mensaje ? '#f44336' : '#f48fb1')}`,
                   borderRadius: '6px',
                   outline: 'none',
-                  backgroundColor: validaciones.nombre.valido ? '#f1f8e9' : (validaciones.nombre.mensaje ? '#ffebee' : 'white')
+                  backgroundColor: isReadOnly 
+                    ? '#f5f5f5' 
+                    : validaciones.nombre.valido ? '#f1f8e9' : (validaciones.nombre.mensaje ? '#ffebee' : 'white'),
+                  cursor: isReadOnly ? 'default' : 'text'
                 }}
-                placeholder="Ej: Administrador"
+                placeholder={isReadOnly ? '' : "Ej: Administrador"}
               />
-              {validaciones.nombre.mensaje && (
+              {!isReadOnly && validaciones.nombre.mensaje && (
                 <small style={{
                   color: validaciones.nombre.valido ? '#4caf50' : '#f44336',
                   fontSize: '0.8rem',
@@ -184,32 +207,40 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   {validaciones.nombre.mensaje}
                 </small>
               )}
-              <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
-                Solo se permiten letras y espacios
-              </small>
+              {!isReadOnly && (
+                <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
+                  Solo se permiten letras y espacios
+                </small>
+              )}
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 Descripción
-                <span style={{ color: 'red' }}> *</span>
+                {!isReadOnly && <span style={{ color: 'red' }}> *</span>}
               </label>
               <textarea
                 value={formData.descripcion}
                 onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                readOnly={isReadOnly}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: `2px solid ${validaciones.descripcion.valido ? '#4caf50' : (validaciones.descripcion.mensaje ? '#f44336' : '#f48fb1')}`,
+                  border: isReadOnly 
+                    ? '2px solid #e0e0e0' 
+                    : `2px solid ${validaciones.descripcion.valido ? '#4caf50' : (validaciones.descripcion.mensaje ? '#f44336' : '#f48fb1')}`,
                   borderRadius: '6px',
                   outline: 'none',
                   minHeight: '60px',
-                  resize: 'vertical',
-                  backgroundColor: validaciones.descripcion.valido ? '#f1f8e9' : (validaciones.descripcion.mensaje ? '#ffebee' : 'white')
+                  resize: isReadOnly ? 'none' : 'vertical',
+                  backgroundColor: isReadOnly 
+                    ? '#f5f5f5' 
+                    : validaciones.descripcion.valido ? '#f1f8e9' : (validaciones.descripcion.mensaje ? '#ffebee' : 'white'),
+                  cursor: isReadOnly ? 'default' : 'text'
                 }}
-                placeholder="Describe este rol..."
+                placeholder={isReadOnly ? '' : "Describe este rol..."}
               />
-              {validaciones.descripcion.mensaje && (
+              {!isReadOnly && validaciones.descripcion.mensaje && (
                 <small style={{
                   color: validaciones.descripcion.valido ? '#4caf50' : '#f44336',
                   fontSize: '0.8rem',
@@ -219,23 +250,36 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   {validaciones.descripcion.mensaje}
                 </small>
               )}
-              <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
-                {formData.descripcion.length}/200 caracteres
-              </small>
+              {!isReadOnly && (
+                <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
+                  {formData.descripcion.length}/200 caracteres
+                </small>
+              )}
             </div>
 
-            {formType === 'editar' && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                  <label style={{ fontWeight: 'bold' }}>Estado Activo:</label>
+          {/* Campo Estado */}
+          {(formType === 'editar' || formType === 'visualizar') && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                <label style={{ fontWeight: 'bold' }}>Estado:</label>
+                {(formType === 'editar' && !isReadOnly) || formType === 'visualizar' ? (
                   <InputSwitch
                     checked={formData.activo}
                     onChange={(e) => handleInputChange('activo', e.value)}
+                    disabled={isReadOnly}
                   />
-                </div>
+                ) : (
+                  <span style={{
+                    color: formData.activo ? '#4caf50' : '#f44336',
+                    fontWeight: 'bold'
+                  }}>
+                    {formData.activo ? 'Activo' : 'Inactivo'}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+      </div>
 
           <div>
             <h3 style={{ color: '#c2185b', marginBottom: '1rem' }}>Permisos del Sistema</h3>
@@ -244,7 +288,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
               padding: '1rem',
               border: '2px solid #f48fb1',
               borderRadius: '10px',
-              backgroundColor: '#fafafa',
+              backgroundColor: isReadOnly ? '#f8f8f8' : '#fafafa',
               maxHeight: '300px',
               overflowY: 'auto'
             }}>
@@ -266,13 +310,18 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                       id={`permiso-${permiso.id}`}
                       checked={formData.permisos.includes(permiso.id)}
                       onChange={(e) => handlePermisoChange(permiso.id, e.target.checked)}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      disabled={isReadOnly}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px', 
+                        cursor: isReadOnly ? 'default' : 'pointer' 
+                      }}
                     />
                     <label
                       htmlFor={`permiso-${permiso.id}`}
                       style={{
                         fontSize: '0.9rem',
-                        cursor: 'pointer',
+                        cursor: isReadOnly ? 'default' : 'pointer',
                         margin: 0,
                         fontWeight: formData.permisos.includes(permiso.id) ? '600' : 'normal',
                         color: formData.permisos.includes(permiso.id) ? '#c2185b' : 'inherit'
@@ -302,19 +351,21 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
           borderTop: '1px solid #eee'
         }}>
           <button className="modal-btn cancel-btn" type="button" onClick={onCancel}>
-            Cancelar
+            {isReadOnly ? 'Cerrar' : 'Cancelar'}
           </button>
-          <button
-            className={`modal-btn ${formularioValido ? 'save-btn' : 'save-btn-disabled'}`}
-            type="submit"
-            disabled={!formularioValido}
-            style={{
-              opacity: formularioValido ? 1 : 0.5,
-              cursor: formularioValido ? 'pointer' : 'not-allowed'
-            }}
-          >
-            Guardar
-          </button>
+          {!isReadOnly && (
+            <button
+              className={`modal-btn ${formularioValido ? 'save-btn' : 'save-btn-disabled'}`}
+              type="submit"
+              disabled={!formularioValido}
+              style={{
+                opacity: formularioValido ? 1 : 0.5,
+                cursor: formularioValido ? 'pointer' : 'not-allowed'
+              }}
+            >
+              Guardar
+            </button>
+          )}
         </div>
       </form>
     </div>

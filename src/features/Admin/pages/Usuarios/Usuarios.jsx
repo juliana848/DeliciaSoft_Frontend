@@ -123,6 +123,12 @@ export default function Usuarios() {
   };
 
   const abrirModal = (tipo, usuario = null) => {
+    // Bloquear edición y eliminación si el usuario está desactivado
+    if ((tipo === 'editar' || tipo === 'eliminar') && usuario && !usuario.activo) {
+      showNotification('No se puede realizar esta acción en un usuario desactivado', 'error');
+      return;
+    }
+    
     setModalTipo(tipo);
     setUsuarioSeleccionado(usuario);
     setModalVisible(true);
@@ -270,20 +276,26 @@ export default function Usuarios() {
           headerStyle={{ paddingLeft: '3rem' }}
           body={(rowData) => (
             <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+            <button 
+                className="admin-button gray" 
+                title="Visualizar" 
+                onClick={() => abrirModal('visualizar', rowData)}
+              >
                 🔍
               </button>
               <button
-                className="admin-button yellow"
-                title="Editar"
+                className={`admin-button yellow ${!rowData.activo ? 'disabled' : ''}`}
+                title={!rowData.activo ? "Usuario desactivado" : "Editar"}
                 onClick={() => abrirModal('editar', rowData)}
+                disabled={!rowData.activo}
               >
                 ✏️
               </button>
               <button
-                className="admin-button red"
-                title="Eliminar"
+                className={`admin-button red ${!rowData.activo ? 'disabled' : ''}`}
+                title={!rowData.activo ? "Usuario desactivado" : "Eliminar"}
                 onClick={() => abrirModal('eliminar', rowData)}
+                disabled={!rowData.activo}
               >
                 🗑️
               </button>
@@ -292,43 +304,24 @@ export default function Usuarios() {
         />
       </DataTable>
 
-      {/* Modal Agregar/Editar */}
-      {(modalTipo === 'agregar' || modalTipo === 'editar') && modalVisible && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title modal-title-compact">
-            {modalTipo === 'agregar' ? 'Agregar Usuario' : 'Editar Usuario'}
-          </h2>
-          <UsuariosForm
-            modalTipo={modalTipo}
-            usuarioSeleccionado={usuarioSeleccionado}
-            roles={roles}
-            tiposDocumento={tiposDocumento}
-            usuarios={usuarios} // Pass all users for unique validations
-            onSave={guardarUsuario}
-            onCancel={cerrarModal}
-            setNotification={setNotification}
-          />
-        </Modal>
-      )}
-
-      {/* Modales de Visualizar y Eliminar (mantener si son simples) */}
-      {modalTipo === 'visualizar' && modalVisible && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title modal-title-compact">Detalles del Usuario</h2>
-          <div className="modal-body modal-body-compact">
-            <p><strong>Nombres:</strong> {usuarioSeleccionado?.nombres}</p>
-            <p><strong>Apellidos:</strong> {usuarioSeleccionado?.apellidos}</p>
-            <p><strong>Correo:</strong> {usuarioSeleccionado?.correo}</p>
-            <p><strong>Rol:</strong> {usuarioSeleccionado?.rol_nombre}</p>
-            <p><strong>Tipo Documento:</strong> {usuarioSeleccionado?.tipo_documento_nombre}</p>
-            <p><strong>Documento:</strong> {usuarioSeleccionado?.documento}</p>
-            <p><strong>Estado:</strong> {usuarioSeleccionado?.activo ? 'Activo' : 'Inactivo'}</p>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
-      )}
+      {/* Modal Agregar/Editar con el nuevo formulario */}
+       {(modalTipo === 'agregar' || modalTipo === 'editar' || modalTipo === 'visualizar') && modalVisible && (
+      <Modal visible={modalVisible} onClose={cerrarModal}>
+        <h2 className="modal-title modal-title-compact">
+          {modalTipo === 'agregar' ? 'Agregar Usuario' : modalTipo === 'editar' ? 'Editar Usuario' : 'Detalles del Usuario'}
+        </h2>
+        <UsuariosForm
+          modalTipo={modalTipo} // Esto hará que UsuariosForm sepa si es 'visualizar'
+          usuarioSeleccionado={usuarioSeleccionado}
+          roles={roles}
+          tiposDocumento={tiposDocumento}
+          usuarios={usuarios}
+          onSave={guardarUsuario}
+          onCancel={cerrarModal}
+          setNotification={setNotification}
+        />
+      </Modal>
+    )}
 
       {modalTipo === 'eliminar' && modalVisible && (
         <Modal visible={modalVisible} onClose={cerrarModal}>

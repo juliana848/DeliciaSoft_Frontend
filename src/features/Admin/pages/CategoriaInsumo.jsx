@@ -1,4 +1,3 @@
-// ... otros imports
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -30,33 +29,29 @@ export default function CategoriaTableDemo() {
     setCategorias(mockCategorias);
   }, []);
 
-  // Validar en tiempo real
   useEffect(() => {
-  const nuevosErrores = { nombre: '', descripcion: '' };
+    const nuevosErrores = { nombre: '', descripcion: '' };
 
-  // Validación del nombre
-  if (!nombreEditado.trim()) {
-    nuevosErrores.nombre = 'El nombre es obligatorio';
-  } else if (nombreEditado.trim().length < 3) {
-    nuevosErrores.nombre = 'El nombre debe tener al menos 3 caracteres';
-  } else if (nombreEditado.trim().length > 50) {
-    nuevosErrores.nombre = 'El nombre no puede superar los 50 caracteres';
-  } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
-    nuevosErrores.nombre = 'El nombre solo puede contener letras y espacios';
-  }
+    if (!nombreEditado.trim()) {
+      nuevosErrores.nombre = 'El nombre es obligatorio';
+    } else if (nombreEditado.trim().length < 3) {
+      nuevosErrores.nombre = 'El nombre debe tener al menos 3 caracteres';
+    } else if (nombreEditado.trim().length > 50) {
+      nuevosErrores.nombre = 'El nombre no puede superar los 50 caracteres';
+    } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
+      nuevosErrores.nombre = 'El nombre solo puede contener letras y espacios';
+    }
 
-  // Validación de la descripción
-  if (!descripcionEditada.trim()) {
-    nuevosErrores.descripcion = 'La descripción es obligatoria';
-  } else if (descripcionEditada.trim().length < 10) {
-    nuevosErrores.descripcion = 'La descripción debe tener al menos 10 caracteres';
-  } else if (descripcionEditada.trim().length > 200) {
-    nuevosErrores.descripcion = 'La descripción no puede superar los 200 caracteres';
-  }
+    if (!descripcionEditada.trim()) {
+      nuevosErrores.descripcion = 'La descripción es obligatoria';
+    } else if (descripcionEditada.trim().length < 10) {
+      nuevosErrores.descripcion = 'La descripción debe tener al menos 10 caracteres';
+    } else if (descripcionEditada.trim().length > 200) {
+      nuevosErrores.descripcion = 'La descripción no puede superar los 200 caracteres';
+    }
 
-  setErrores(nuevosErrores);
-}, [nombreEditado, descripcionEditada]);
-
+    setErrores(nuevosErrores);
+  }, [nombreEditado, descripcionEditada]);
 
   const toggleActivo = (categoria) => {
     const updated = categorias.map(cat =>
@@ -144,9 +139,17 @@ export default function CategoriaTableDemo() {
     showNotification('Categoría agregada exitosamente');
   };
 
-  const categoriasFiltradas = categorias.filter(cat =>
-    cat.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const normalizar = (texto) =>
+    texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  const categoriasFiltradas = categorias.filter(cat => {
+    const texto = normalizar(filtro);
+    return (
+      normalizar(cat.nombre).includes(texto) ||
+      normalizar(cat.descripcion).includes(texto) ||
+      (cat.activo ? 'activo' : 'inactivo').includes(texto)
+    );
+  });
 
   return (
     <div className="admin-wrapper">

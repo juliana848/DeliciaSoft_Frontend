@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import InsumoCard from './InsumoCard';
 import '../adminStyles.css'; 
 
-
 const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const [selectedInsumos, setSelectedInsumos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoria, setSelectedCategoria] = useState('Todas');
 
   const insumosData = [
     {
@@ -13,6 +13,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       nombre: 'Crema de leche',
       unidad: 'L',
       precio: 25.50,
+      categoria: 'Lácteos',
       imagen: 'https://alqueria.com.co/sites/default/files/styles/200x274/public/2022-12/dummie-Crema-de-leche-Alqueria-180g.png?h=f214ce63&itok=H2mVvO_G'
     },
     {
@@ -20,6 +21,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       nombre: 'Arroz',
       unidad: 'Kg',
       precio: 12.00,
+      categoria: 'Cereales',
       imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtheyuV01b9_za2ouNGHTbL1XlJsQA85Q&s'
     },
     {
@@ -27,12 +29,32 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       nombre: 'Harina de trigo',
       unidad: 'Kg',
       precio: 15.75,
+      categoria: 'Harinas',
       imagen: 'https://olimpica.vtexassets.com/arquivos/ids/617052/7701008629240.jpg?v=637626523850430000'
+    },
+    {
+      id: 2323234,
+      nombre: 'Fresas',
+      unidad: 'Kg',
+      precio: 18.00,
+      categoria: 'Frutas',
+      imagen: 'https://upload.wikimedia.org/wikipedia/commons/2/29/PerfectStrawberry.jpg'
+    },
+    {
+      id: 2323235,
+      nombre: 'Leche entera',
+      unidad: 'L',
+      precio: 22.00,
+      categoria: 'Lácteos',
+      imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJVhI6leNnj0FWig5Z4uPFhq-lZafYWFkfYQ&s'
     }
   ];
 
+  const categorias = ['Todas', ...new Set(insumosData.map(i => i.categoria))];
+
   const filteredInsumos = insumosData.filter(insumo =>
-    insumo.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    insumo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategoria === 'Todas' || insumo.categoria === selectedCategoria)
   );
 
   const toggleInsumo = (insumo) => {
@@ -63,6 +85,16 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          <select
+            value={selectedCategoria}
+            onChange={(e) => setSelectedCategoria(e.target.value)}
+            className="insumos-categoria-select"
+          >
+            {categorias.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
 
         <div className="insumos-grid">

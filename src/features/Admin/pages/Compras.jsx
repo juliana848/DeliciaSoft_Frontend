@@ -22,6 +22,13 @@ export default function ComprasTable() {
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
+    
+    // Estados para validaciones en tiempo real
+    const [errores, setErrores] = useState({
+        proveedor: '',
+        fecha_compra: '',
+        insumos: ''
+    });
 
     const generarPDF = (compra) => {
         const doc = new jsPDF();
@@ -151,6 +158,31 @@ export default function ComprasTable() {
     };
     const hideNotification = () => setNotification({ visible: false, mensaje: '', tipo: 'success' });
 
+    // Función para validar fecha en tiempo real
+    const validarFecha = (fecha) => {
+        if (!fecha) return 'La fecha de compra es obligatoria';
+        const fechaCompra = new Date(fecha);
+        const fechaActual = new Date();
+        fechaActual.setHours(23, 59, 59, 999); // Final del día actual
+        
+        if (fechaCompra > fechaActual) {
+            return 'La fecha de compra no puede ser mayor al día presente';
+        }
+        return '';
+    };
+
+    // Función para validar proveedor en tiempo real
+    const validarProveedor = (proveedor) => {
+        if (!proveedor.trim()) return 'Debe seleccionar un proveedor';
+        return '';
+    };
+
+    // Función para validar insumos en tiempo real
+    const validarInsumos = (insumos) => {
+        if (insumos.length === 0) return 'Debe agregar al menos un insumo';
+        return '';
+    };
+
     const abrirModal = (tipo, compra = null) => {
         setModalTipo(tipo);
         setCompraSeleccionada(compra);
@@ -174,6 +206,12 @@ export default function ComprasTable() {
                 observaciones: ''
             });
             setInsumosSeleccionados([]);
+            // Limpiar errores
+            setErrores({
+                proveedor: '',
+                fecha_compra: '',
+                insumos: ''
+            });
             setMostrarAgregarCompra(true);
         } else if (tipo === 'anular') {
             setModalVisible(true);
@@ -197,6 +235,11 @@ export default function ComprasTable() {
             fecha_registro: obtenerFechaActual(),
             observaciones: ''
         });
+        setErrores({
+            proveedor: '',
+            fecha_compra: '',
+            insumos: ''
+        });
     };
 
     const anularCompra = () => {
@@ -216,14 +259,26 @@ export default function ComprasTable() {
         (mostrarAnuladas ? c.estado === 'anulada' : c.estado !== 'anulada')
     );
 
-    const handleChange = e =>
-        setCompraData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleChange = e => {
+        const { name, value } = e.target;
+        setCompraData(prev => ({ ...prev, [name]: value }));
+        
+        // Validación en tiempo real
+        if (name === 'proveedor') {
+            setErrores(prev => ({ ...prev, proveedor: validarProveedor(value) }));
+        } else if (name === 'fecha_compra') {
+            setErrores(prev => ({ ...prev, fecha_compra: validarFecha(value) }));
+        }
+    };
 
     const agregarInsumos = nuevos => {
-        setInsumosSeleccionados(prev => [
-        ...prev,
-        ...nuevos.filter(n => !prev.some(i => i.id === n.id))
-        ]);
+        const nuevosInsumos = [
+            ...insumosSeleccionados,
+            ...nuevos.filter(n => !insumosSeleccionados.some(i => i.id === n.id))
+        ];
+        setInsumosSeleccionados(nuevosInsumos);
+        // Validar insumos en tiempo real
+        setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
         showNotification('Insumos agregados exitosamente');
     };
 
@@ -234,23 +289,36 @@ export default function ComprasTable() {
     };
 
     const removeInsumo = id => {
-        setInsumosSeleccionados(prev => prev.filter(item => item.id !== id));
+        const nuevosInsumos = insumosSeleccionados.filter(item => item.id !== id);
+        setInsumosSeleccionados(nuevosInsumos);
+        // Validar insumos en tiempo real
+        setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
         showNotification('Insumo eliminado de la lista');
     };
+    
 
     const validarFormulario = () => {
-        const { proveedor, fecha_compra } = compraData;
-        if (!proveedor.trim()) {
-        showNotification('Debe seleccionar un proveedor', 'error');
-        return false;
+        const errorProveedor = validarProveedor(compraData.proveedor);
+        const errorFecha = validarFecha(compraData.fecha_compra);
+        const errorInsumos = validarInsumos(insumosSeleccionados);
+        
+        setErrores({
+            proveedor: errorProveedor,
+            fecha_compra: errorFecha,
+            insumos: errorInsumos
+        });
+        
+        if (errorProveedor) {
+            showNotification(errorProveedor, 'error');
+            return false;
         }
-        if (!fecha_compra) {
-        showNotification('La fecha de compra es obligatoria', 'error');
-        return false;
+        if (errorFecha) {
+            showNotification(errorFecha, 'error');
+            return false;
         }
-        if (insumosSeleccionados.length === 0) {
-        showNotification('Debe agregar al menos un insumo', 'error');
-        return false;
+        if (errorInsumos) {
+            showNotification(errorInsumos, 'error');
+            return false;
         }
         return true;
     };
@@ -281,7 +349,6 @@ export default function ComprasTable() {
     const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
-
     return (
         <div className="admin-wrapper">
         <Notification visible={notification.visible} mensaje={notification.mensaje} tipo={notification.tipo} onClose={hideNotification} />
@@ -299,11 +366,26 @@ export default function ComprasTable() {
                 </button>
 
                 <SearchBar 
-                    placeholder="Buscar Compra..." 
+                    placeholder="Buscar Compras" 
                     value={filtro} 
                     onChange={setFiltro} 
                 />
             </div>
+
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                marginBottom: '10px' 
+            }}>
+                <button 
+                    className="modal-btn cancel-btn" 
+                    onClick={() => setMostrarAnuladas(prev => !prev)} 
+                    type="button"
+                >
+                    {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
+                </button>
+            </div>
+
 
             <h2 className="admin-section-title">Compras</h2>
             <DataTable
@@ -336,16 +418,6 @@ export default function ComprasTable() {
                 }}
                 />
             </DataTable>
-            
-            <div style={{ marginTop: '20px', textAlign: 'right' }}>
-                <button 
-                    className="modal-btn cancel-btn" 
-                    onClick={() => setMostrarAnuladas(prev => !prev)} 
-                    type="button"
-                >
-                    {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
-                </button>
-            </div>
 
             {modalTipo === 'anular' && compraSeleccionada && (
                 <Modal visible={modalVisible} onClose={cerrarModal}>
@@ -362,7 +434,28 @@ export default function ComprasTable() {
             </>
         ) : (
                 <div className="compra-form-container">
-                    <h1>{modalTipo === 'ver' ? 'Detalle de Compra' : 'Agregar Compras'}</h1>
+                    {/* BOTÓN ANULAR MOVIDO A LA PARTE SUPERIOR */}
+                    <div className="compra-header-actions" style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '1rem'
+                    }}>
+                        <h1>{modalTipo === 'ver' ? 'Detalle de Compra' : 'Agregar Compras'}</h1>
+                        {modalTipo === 'ver' && compraSeleccionada && compraSeleccionada.estado === 'activa' && (
+                            <button 
+                                className="admin-button red" 
+                                title="Anular Compra"
+                                onClick={() => {
+                                    setModalTipo('anular');
+                                    setModalVisible(true);
+                                }}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                🛑 Anular
+                            </button>
+                        )}
+                    </div>
                     
                     <div className="compra-fields-grid">
                         <div className="field-group">
@@ -372,6 +465,7 @@ export default function ComprasTable() {
                                 value={compraData.proveedor}
                                 onChange={handleChange}
                                 disabled={modalTipo === 'ver'}
+                                style={{ borderColor: errores.proveedor ? 'red' : '' }}
                             >
                                 <option value="">---</option>
                                 <option value="Dis.Martinez">Dis.Martinez</option>
@@ -384,6 +478,11 @@ export default function ComprasTable() {
                                 <option value="Moldes & utensilios">Moldes & utensilios</option>
                                 <option value="Dulces Delicias">Dulces Delicias</option>
                             </select>
+                            {errores.proveedor && (
+                                <small style={{ color: 'red', fontSize: '12px' }}>
+                                    {errores.proveedor}
+                                </small>
+                            )}
                         </div>
                         
                         <div className="field-group">
@@ -394,7 +493,14 @@ export default function ComprasTable() {
                                 value={compraData.fecha_compra}
                                 onChange={handleChange}
                                 disabled={modalTipo === 'ver'}
+                                max={obtenerFechaActual()}
+                                style={{ borderColor: errores.fecha_compra ? 'red' : '' }}
                             />
+                            {errores.fecha_compra && (
+                                <small style={{ color: 'red', fontSize: '12px' }}>
+                                    {errores.fecha_compra}
+                                </small>
+                            )}
                         </div>
                         
                         <div className="field-group">
@@ -413,6 +519,11 @@ export default function ComprasTable() {
                     
                     <div className="detalle-section">
                         <h2>Detalle*</h2>
+                        {errores.insumos && (
+                            <small style={{ color: 'red', fontSize: '12px', display: 'block', marginBottom: '10px' }}>
+                                {errores.insumos}
+                            </small>
+                        )}
                                             
                         <table className="compra-detalle-table">
                             <thead className="p-datatable-thead">
@@ -518,6 +629,29 @@ export default function ComprasTable() {
                             onClose={() => setMostrarModalInsumos(false)}
                             onAgregar={agregarInsumos}
                         />
+                    )}
+
+                    {/* MODAL DE ANULAR DESDE EL DETALLE - MOVIDO FUERA DEL FORMULARIO */}
+                    {modalTipo === 'anular' && compraSeleccionada && modalVisible && (
+                        <Modal visible={modalVisible} onClose={() => {
+                            cerrarModal();
+                            setModalTipo('ver');
+                        }}>
+                        <h2 className="modal-title">Confirmar Anulación</h2>
+                        <div className="modal-body">
+                            <p>¿Seguro que deseas anular la compra del proveedor <strong>{compraSeleccionada.proveedor}</strong>?</p>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="modal-btn cancel-btn" onClick={() => {
+                                cerrarModal();
+                                setModalTipo('ver'); 
+                            }}>Cancelar</button>
+                            <button className="modal-btn save-btn" onClick={() => {
+                                anularCompra();
+                                cancelarFormulario(); 
+                            }}>Anular</button>
+                        </div>
+                        </Modal>
                     )}
                 </div>
             )}

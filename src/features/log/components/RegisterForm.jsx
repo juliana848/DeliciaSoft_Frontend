@@ -19,6 +19,16 @@ const RegisterForm = () => {
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Límites de caracteres para cada campo
+  const fieldLimits = {
+    nombre: 50,
+    apellido: 50,
+    correo: 100,
+    documento: 15,
+    contacto: 15,
+    password: 50
+  };
+
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -36,6 +46,8 @@ const RegisterForm = () => {
           error = `${name === 'nombre' ? 'Nombre' : 'Apellido'} es requerido`;
         } else if (value.trim().length < 2) {
           error = `${name === 'nombre' ? 'Nombre' : 'Apellido'} debe tener al menos 2 caracteres`;
+        } else if (value.length > fieldLimits[name]) {
+          error = `${name === 'nombre' ? 'Nombre' : 'Apellido'} no puede exceder ${fieldLimits[name]} caracteres`;
         } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
           error = 'Solo se permiten letras y espacios';
         }
@@ -44,6 +56,8 @@ const RegisterForm = () => {
       case 'correo':
         if (!value.trim()) {
           error = 'Correo electrónico es requerido';
+        } else if (value.length > fieldLimits.correo) {
+          error = `Correo no puede exceder ${fieldLimits.correo} caracteres`;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
           error = 'Formato de correo electrónico inválido';
         }
@@ -60,6 +74,8 @@ const RegisterForm = () => {
           error = 'Número de documento es requerido';
         } else if (value.length < 6) {
           error = 'Número de documento debe tener al menos 6 dígitos';
+        } else if (value.length > fieldLimits.documento) {
+          error = `Número de documento no puede exceder ${fieldLimits.documento} dígitos`;
         } else if (!/^\d+$/.test(value)) {
           error = 'Solo se permiten números';
         }
@@ -70,6 +86,8 @@ const RegisterForm = () => {
           error = 'Número de contacto es requerido';
         } else if (value.length < 10) {
           error = 'Número de contacto debe tener al menos 10 dígitos';
+        } else if (value.length > fieldLimits.contacto) {
+          error = `Número de contacto no puede exceder ${fieldLimits.contacto} dígitos`;
         } else if (!/^\d+$/.test(value)) {
           error = 'Solo se permiten números';
         }
@@ -80,6 +98,8 @@ const RegisterForm = () => {
           error = 'Contraseña es requerida';
         } else if (value.length < 8) {
           error = 'Contraseña debe tener al menos 8 caracteres';
+        } else if (value.length > fieldLimits.password) {
+          error = `Contraseña no puede exceder ${fieldLimits.password} caracteres`;
         } else if (!/(?=.*[A-Z])/.test(value)) {
           error = 'Contraseña debe tener al menos una mayúscula';
         } else if (!/(?=.*[!@#$%^&*])/.test(value)) {
@@ -101,13 +121,20 @@ const RegisterForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Aplicar límite de caracteres antes de actualizar el estado
+    let limitedValue = value;
+    if (fieldLimits[name] && value.length > fieldLimits[name]) {
+      limitedValue = value.substring(0, fieldLimits[name]);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: limitedValue,
     }));
 
     // Validar campo en tiempo real
-    const error = validateField(name, value);
+    const error = validateField(name, limitedValue);
     setFieldErrors(prev => ({
       ...prev,
       [name]: error
@@ -242,8 +269,10 @@ const RegisterForm = () => {
                 placeholder="Número de documento"
                 value={formData.documento}
                 onChange={handleChange}
+                maxLength={fieldLimits.documento}
                 className={fieldErrors.documento ? 'error' : ''}
               />
+              <small className="char-counter">{formData.documento.length}/{fieldLimits.documento}</small>
               {fieldErrors.documento && <span className="error-message">{fieldErrors.documento}</span>}
             </div>
           </>
@@ -259,8 +288,10 @@ const RegisterForm = () => {
                 placeholder="Nombre"
                 value={formData.nombre}
                 onChange={handleChange}
+                maxLength={fieldLimits.nombre}
                 className={fieldErrors.nombre ? 'error' : ''}
               />
+              <small className="char-counter">{formData.nombre.length}/{fieldLimits.nombre}</small>
               {fieldErrors.nombre && <span className="error-message">{fieldErrors.nombre}</span>}
             </div>
             <div className="form-group">
@@ -270,8 +301,10 @@ const RegisterForm = () => {
                 placeholder="Apellido"
                 value={formData.apellido}
                 onChange={handleChange}
+                maxLength={fieldLimits.apellido}
                 className={fieldErrors.apellido ? 'error' : ''}
               />
+              <small className="char-counter">{formData.apellido.length}/{fieldLimits.apellido}</small>
               {fieldErrors.apellido && <span className="error-message">{fieldErrors.apellido}</span>}
             </div>
           </>
@@ -287,8 +320,10 @@ const RegisterForm = () => {
                 placeholder="Correo electrónico"
                 value={formData.correo}
                 onChange={handleChange}
+                maxLength={fieldLimits.correo}
                 className={fieldErrors.correo ? 'error' : ''}
               />
+              <small className="char-counter">{formData.correo.length}/{fieldLimits.correo}</small>
               {fieldErrors.correo && <span className="error-message">{fieldErrors.correo}</span>}
             </div>
             <div className="form-group">
@@ -298,8 +333,10 @@ const RegisterForm = () => {
                 placeholder="Número de contacto"
                 value={formData.contacto}
                 onChange={handleChange}
+                maxLength={fieldLimits.contacto}
                 className={fieldErrors.contacto ? 'error' : ''}
               />
+              <small className="char-counter">{formData.contacto.length}/{fieldLimits.contacto}</small>
               {fieldErrors.contacto && <span className="error-message">{fieldErrors.contacto}</span>}
             </div>
           </>
@@ -315,8 +352,10 @@ const RegisterForm = () => {
                 placeholder="Contraseña"
                 value={formData.password}
                 onChange={handleChange}
+                maxLength={fieldLimits.password}
                 className={fieldErrors.password ? 'error' : ''}
               />
+              <small className="char-counter">{formData.password.length}/{fieldLimits.password}</small>
               {fieldErrors.password && <span className="error-message">{fieldErrors.password}</span>}
             </div>
             <div className="form-group">
@@ -383,19 +422,19 @@ const RegisterForm = () => {
       )}
 
       <form className="login-form" onSubmit={handleSubmit}>
-        {/* Indicador de progreso */}
-        <div className="progress-indicator">
-          <div className="progress-bar">
+        {/* Indicador de progreso con clase específica */}
+        <div className="registro-step-indicator">
+          <div className="registro-progress-bar">
             <div 
-              className="progress-fill" 
+              className="registro-progress-fill" 
               style={{ width: `${(currentStep / 4) * 100}%` }}
             ></div>
           </div>
-          <span className="step-text">Paso {currentStep} de 4</span>
+          <span className="registro-step-text">Paso {currentStep} de 4</span>
         </div>
 
         {/* Título del paso actual */}
-        <div className="step-title">
+        <div className="registro-step-title">
           {currentStep === 1 && "Tipo y Número de Documento"}
           {currentStep === 2 && "Información Personal"}
           {currentStep === 3 && "Correo y Contacto"}
@@ -437,6 +476,7 @@ const RegisterForm = () => {
         .form-group {
           width: 100%;
           margin-bottom: 15px;
+          position: relative;
         }
 
         .error-message {
@@ -446,44 +486,62 @@ const RegisterForm = () => {
           display: block;
         }
 
+        .char-counter {
+          position: absolute;
+          right: 5px;
+          top: 35px;
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.6);
+          background-color: rgba(255, 255, 255, 0.3);
+          padding: 2px 6px;
+          border-radius: 3px;
+        }
+
         .containerlog input.error,
         .select-documento.error {
           border: 2px solid #dc3545 !important;
-          background-color: #fff5f5 !important;
+          background-color:rgb(255, 255, 255) !important;
         }
 
-        .progress-indicator {
+        /* Estilos específicos para el indicador de pasos del registro */
+        .registro-step-indicator {
           width: 100%;
           margin-bottom: 20px;
         }
 
-        .progress-bar {
+        .registro-progress-bar {
           width: 100%;
-          height: 6px;
-          background-color: rgba(255, 255, 255, 0.3);
-          border-radius: 3px;
+          height: 8px;
+          background-color: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
           overflow: hidden;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .progress-fill {
+        .registro-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #ff58a6, #fc0278);
-          transition: width 0.3s ease;
+          background: linear-gradient(90deg, #ff58a6, #fc0278, #ff007b);
+          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 4px rgba(255, 88, 166, 0.3);
         }
 
-        .step-text {
-          font-size: 12px;
-          color: #fff;
-          font-weight: 500;
-        }
-
-        .step-title {
-          color: #fff;
-          font-size: 16px;
+        .registro-step-text {
+          font-size: 13px;
+          color:rgb(220, 53, 192) !important;
           font-weight: 600;
-          margin-bottom: 15px;
           text-align: center;
+          display: block;
+        }
+
+        .registro-step-title {
+          color: #fff;
+          font-size: 18px;
+          font-weight: 700;
+          margin-bottom: 20px;
+          text-align: center;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          letter-spacing: 0.5px;
         }
 
         .form-navigation {
@@ -513,7 +571,8 @@ const RegisterForm = () => {
         }
 
         .prev-button:hover {
-          background-color: rgb(255, 255, 255);
+          background-color: rgba(255, 255, 255, 0.2);
+          transform: translateY(-1px);
         }
 
         .next-button {
@@ -529,21 +588,21 @@ const RegisterForm = () => {
 
         .password-requirements {
           font-size: 11px;
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(0, 0, 0, 0.8);
           margin-top: 10px;
-          background-color: rgba(255, 255, 255, 0.2);
-          padding: 10px;
-          border-radius: 5px;
+          background-color: rgba(255, 255, 255, 0.15);
+          padding: 12px;
+          border-radius: 6px;
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .password-requirements ul {
-          margin: 5px 0;
+          margin: 8px 0;
           padding-left: 15px;
         }
 
         .password-requirements li {
-          margin: 2px 0;
+          margin: 4px 0;
           transition: color 0.3s ease;
         }
       `}</style>

@@ -551,18 +551,18 @@
     color: white;
 }
 
-/* Estilos para los botones pequeños de eliminar (la 'x') */
+
 .btn-small.btn-eliminar-nested {
-    background-color: #ef9a9a; /* Un rojo claro */
-    color: #b71c1c; /* Rojo oscuro */
-    border: 1px solid #e57373; /* Borde rojo */
-    padding: 2px 5px; /* Padding más pequeño */
-    font-size: 10px; /* Fuente más pequeña */
-    margin-left: 8px; /* Más espacio para separarlo del texto */
-    border-radius: 50%; /* Botón redondo */
-    width: 20px; /* Ancho fijo */
-    height: 20px; /* Alto fijo */
-    display: inline-flex; /* Centrar contenido */
+    background-color: #ef9a9a; 
+    color: #b71c1c; 
+    border: 1px solid #e57373;
+    padding: 2px 5px; 
+    font-size: 10px; 
+    margin-left: 8px; 
+    border-radius: 50%; 
+    width: 20px; 
+    height: 20px; 
+    display: inline-flex; 
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
@@ -702,7 +702,6 @@
     border: 1px solid #f48fb1;
 }
 
-/* === SOLO para AgregarInsumosModal === */
 .insumos-modal {
   max-width: 900px;
   margin: 0 auto;
@@ -1149,7 +1148,7 @@
 
 .productos-table th,
 .productos-table td {
-  border: 1px solid #ccc;
+  border: 1px solid #cccccc;
   padding: 8px;
   text-align: left;
 }
@@ -1189,50 +1188,19 @@
   width: 160px;
 }
 
+
 .modal-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr); /* 2 columnas iguales */
+  gap: 1rem 2rem; /* espacio entre filas y columnas */
   margin-top: 1rem;
+  width: 100%;
 }
+
 .modal-form-grid label {
   display: flex;
   flex-direction: column;
   font-weight: 500;
 }
 
-/* Contenedor principal para el diseño de dos columnas */
-.usuarios-modal-grid-two-columns {
-  display: grid; /* Usa CSS Grid para un diseño de cuadrícula */
-  grid-template-columns: 1fr 1fr; /* Crea dos columnas de igual ancho */
-  gap: 20px; /* Espacio entre las columnas */
-  padding: 10px; /* Opcional: algún padding interno */
-}
 
-
-.usuarios-modal-column,
-.modal-column {
-  flex-grow: 1; 
-  width: 100%; 
-}
-
-/* Opcional: para pantallas más pequeñas, que las columnas se apilen */
-@media (max-width: 768px) {
-  .usuarios-modal-grid-two-columns {
-    grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
-  }
-}
-
-/* Busca esta regla y modifícala: */
-.admin-button.disabled {
-  opacity: 0.4; /* Cambia por 0.4 para más opacidad */
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Si no existe, agrégala */
-.admin-button.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}

@@ -17,12 +17,6 @@ const InsumoCard = ({ insumo, selected, onToggle }) => {
         <p>Unidad: {insumo.unidad}</p>
         <p>Precio: ${insumo.precio.toFixed(2)}</p>
       </div>
-      <input 
-        type="checkbox" 
-        checked={selected}
-        onChange={onToggle}
-        onClick={e => e.stopPropagation()}
-      />
     </div>
   );
 };

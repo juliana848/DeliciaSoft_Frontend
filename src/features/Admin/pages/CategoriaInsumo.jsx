@@ -16,6 +16,7 @@ export default function CategoriaTableDemo() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [nombreEditado, setNombreEditado] = useState('');
   const [descripcionEditada, setDescripcionEditada] = useState('');
+  const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
 
   useEffect(() => {
     const mockCategorias = [
@@ -27,6 +28,30 @@ export default function CategoriaTableDemo() {
     ];
     setCategorias(mockCategorias);
   }, []);
+
+  useEffect(() => {
+    const nuevosErrores = { nombre: '', descripcion: '' };
+
+    if (!nombreEditado.trim()) {
+      nuevosErrores.nombre = 'El nombre es obligatorio';
+    } else if (nombreEditado.trim().length < 3) {
+      nuevosErrores.nombre = 'El nombre debe tener al menos 3 caracteres';
+    } else if (nombreEditado.trim().length > 50) {
+      nuevosErrores.nombre = 'El nombre no puede superar los 50 caracteres';
+    } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
+      nuevosErrores.nombre = 'El nombre solo puede contener letras y espacios';
+    }
+
+    if (!descripcionEditada.trim()) {
+      nuevosErrores.descripcion = 'La descripción es obligatoria';
+    } else if (descripcionEditada.trim().length < 10) {
+      nuevosErrores.descripcion = 'La descripción debe tener al menos 10 caracteres';
+    } else if (descripcionEditada.trim().length > 200) {
+      nuevosErrores.descripcion = 'La descripción no puede superar los 200 caracteres';
+    }
+
+    setErrores(nuevosErrores);
+  }, [nombreEditado, descripcionEditada]);
 
   const toggleActivo = (categoria) => {
     const updated = categorias.map(cat =>
@@ -64,15 +89,13 @@ export default function CategoriaTableDemo() {
     setModalTipo(null);
     setNombreEditado('');
     setDescripcionEditada('');
+    setErrores({ nombre: '', descripcion: '' });
   };
 
   const validarFormulario = () => {
-    if (!nombreEditado.trim()) {
-      showNotification('El nombre es obligatorio', 'error');
-      return false;
-    }
-    if (!descripcionEditada.trim()) {
-      showNotification('La descripción es obligatoria', 'error');
+    if (errores.nombre || errores.descripcion) {
+      if (errores.nombre) showNotification(errores.nombre, 'error');
+      if (errores.descripcion) showNotification(errores.descripcion, 'error');
       return false;
     }
     return true;
@@ -102,7 +125,6 @@ export default function CategoriaTableDemo() {
     if (!validarFormulario()) return;
 
     const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
-
     setCategorias([
       ...categorias,
       {
@@ -117,9 +139,17 @@ export default function CategoriaTableDemo() {
     showNotification('Categoría agregada exitosamente');
   };
 
-  const categoriasFiltradas = categorias.filter(cat =>
-    cat.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
+  const normalizar = (texto) =>
+    texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  const categoriasFiltradas = categorias.filter(cat => {
+    const texto = normalizar(filtro);
+    return (
+      normalizar(cat.nombre).includes(texto) ||
+      normalizar(cat.descripcion).includes(texto) ||
+      (cat.activo ? 'activo' : 'inactivo').includes(texto)
+    );
+  });
 
   return (
     <div className="admin-wrapper">
@@ -191,18 +221,19 @@ export default function CategoriaTableDemo() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
                 Nombre*
-                <select
+                <input
+                  list="categorias-list"
                   value={nombreEditado}
                   onChange={(e) => setNombreEditado(e.target.value)}
                   className="modal-input"
-                >
-                  <option value="">Seleccione una categoría</option>
+                  placeholder="Seleccione o escriba una categoría"
+                />
+                {errores.nombre && <p className="error">{errores.nombre}</p>}
+                <datalist id="categorias-list">
                   {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre}
-                    </option>
+                    <option key={cat.id} value={cat.nombre} />
                   ))}
-                </select>
+                </datalist>
               </label>
               <label>
                 Descripción*
@@ -213,6 +244,7 @@ export default function CategoriaTableDemo() {
                   rows={3}
                   style={{ resize: 'vertical' }}
                 />
+                {errores.descripcion && <p className="error">{errores.descripcion}</p>}
               </label>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
+import GoogleAddressAutocomplete from '../../../../../shared/components/GoogleAddressAutocomplete';
 
 // Función para validar contraseña con requisitos de seguridad
 const validarContrasena = (contrasena) => {
@@ -693,41 +694,81 @@ export default function ClienteFormModal({
     </div>
 )}
 
-                            <div className="modal-field">
-                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Dirección:</label>
-                                <input
-                                    type="text"
-                                    value={formData.direccion}
-                                    onChange={(e) => handleInputChange('direccion', e.target.value)}
-                                    className="modal-input text-sm p-1"
-                                    style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                                    maxLength={50}
-                                />
-                            </div>
+                          <div className="modal-field">
+    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+        Dirección: <span style={{ color: 'red' }}>*</span>
+    </label>
+  <GoogleAddressAutocomplete
+    value={formData.direccion}
+    onChange={(value) => handleInputChange('direccion', value)}
+    placeholder="Ingrese su dirección"
+    className="modal-input text-sm p-1"
+    style={{
+        width: '100%', 
+        height: '28px', 
+        fontSize: '12px', 
+        padding: '2px 4px',
+        borderColor: formErrors.direccion ? 'red' : '',
+        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+        color: isReadOnly ? '#666' : 'black'
+    }}
+    disabled={isReadOnly}
+    onPlaceSelect={(place) => {
+        console.log('Place selected:', place); 
+        
+        setFormData(prev => ({ 
+            ...prev, 
+            direccion: place.formatted_address || prev.direccion,
+            barrio: place.barrio || prev.barrio,
+            ciudad: place.ciudad || prev.ciudad
+        }));
+    }}
+/>
 
-                            <div className="modal-field">
-                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
-                                <input
-                                    type="text"
-                                    value={formData.barrio}
-                                    onChange={(e) => handleInputChange('barrio', e.target.value)}
-                                    className="modal-input text-sm p-1"
-                                    style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                                    maxLength={30}
-                                />
-                            </div>
+    {formErrors.direccion && !isReadOnly && (
+        <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.direccion}</small>
+    )}
+</div>
 
-                            <div className="modal-field">
-                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
-                                <input
-                                    type="text"
-                                    value={formData.ciudad}
-                                    onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                                    className="modal-input text-sm p-1"
-                                    style={{ width: '100%', height: '28px', fontSize: '12px', padding: '2px 4px' }}
-                                    maxLength={30}
-                                />
-                            </div>
+<div className="modal-field">
+    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
+    <input
+        type="text"
+        value={formData.barrio}
+        onChange={(e) => handleInputChange('barrio', e.target.value)}
+        className="modal-input text-sm p-1"
+        style={{ 
+            width: '100%', 
+            height: '28px', 
+            fontSize: '12px', 
+            padding: '2px 4px',
+            backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+            color: isReadOnly ? '#666' : 'black'
+        }}
+        maxLength={30}
+        readOnly={isReadOnly}
+    />
+</div>
+
+<div className="modal-field">
+    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
+    <input
+        type="text"
+        value={formData.ciudad}
+        onChange={(e) => handleInputChange('ciudad', e.target.value)}
+        className="modal-input text-sm p-1"
+        style={{ 
+            width: '100%', 
+            height: '28px', 
+            fontSize: '12px', 
+            padding: '2px 4px',
+            backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+            color: isReadOnly ? '#666' : 'black'
+        }}
+        maxLength={30}
+        readOnly={isReadOnly}
+    />
+</div>
 
                             {(modalTipo === 'editar' || modalTipo === 'visualizar') && ( 
                                 <div className="modal-field">

@@ -212,7 +212,7 @@ export default function Clientes() {
           onChange={setFiltro}
         />
       </div>
-      <h2 className="admin-section-title">Clientes</h2>
+      <h2 className="admin-section-title">Gestión de Clientes</h2>
       <DataTable
         value={clientesFiltrados}
         className="admin-table"

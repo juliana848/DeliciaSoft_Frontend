@@ -226,7 +226,7 @@ export default function Usuarios() {
         />
       </div>
 
-      <h2 className="admin-section-title">Usuarios</h2>
+      <h2 className="admin-section-title">Gestión de Usuarios</h2>
       <DataTable
         value={usuariosFiltrados}
         className="admin-table"

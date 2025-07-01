@@ -216,7 +216,7 @@ export default function Roles() {
         />
       </div>
 
-      <h2 className="admin-section-title">Roles</h2>
+      <h2 className="admin-section-title">Gestión de Roles</h2>
       <DataTable
         value={rolesFiltrados}
         className="admin-table"

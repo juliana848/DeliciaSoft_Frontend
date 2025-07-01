@@ -23,7 +23,6 @@ export default function ComprasTable() {
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
     
-    // Estados para validaciones en tiempo real
     const [errores, setErrores] = useState({
         proveedor: '',
         fecha_compra: '',
@@ -33,16 +32,15 @@ export default function ComprasTable() {
     const generarPDF = (compra) => {
         const doc = new jsPDF();
 
-        // Título
         doc.setFontSize(16);
         doc.text('Detalle de Compra de Insumos', 20, 20);
 
-        // Proveedor y fecha
+
         doc.setFontSize(12);
         doc.text(`Proveedor: ${compra.proveedor}`, 20, 30);
         doc.text(`Fecha: ${compra.fecha}`, 20, 36);
 
-        // Tabla de insumos con colores rosados
+
         autoTable(doc, {
             head: [['Nombre del insumo', 'Cantidad', 'Precio unitario', 'Subtotal']],
             body: compra.insumos.map(insumo => [
@@ -63,14 +61,12 @@ export default function ComprasTable() {
             },
         });
 
-        // Total al final
         const total = compra.insumos.reduce(
             (sum, insumo) => sum + insumo.cantidad * insumo.precio,
             0
         );
         doc.text(`Total: $${total.toFixed(2)}`, 20, doc.lastAutoTable.finalY + 10);
 
-        // Guardar PDF
         doc.save(`compra-${compra.id}.pdf`);
     };
 
@@ -158,7 +154,7 @@ export default function ComprasTable() {
     };
     const hideNotification = () => setNotification({ visible: false, mensaje: '', tipo: 'success' });
 
-    // Función para validar fecha en tiempo real
+
     const validarFecha = (fecha) => {
         if (!fecha) return 'La fecha de compra es obligatoria';
         const fechaCompra = new Date(fecha);
@@ -171,13 +167,11 @@ export default function ComprasTable() {
         return '';
     };
 
-    // Función para validar proveedor en tiempo real
     const validarProveedor = (proveedor) => {
         if (!proveedor.trim()) return 'Debe seleccionar un proveedor';
         return '';
     };
 
-    // Función para validar insumos en tiempo real
     const validarInsumos = (insumos) => {
         if (insumos.length === 0) return 'Debe agregar al menos un insumo';
         return '';
@@ -188,7 +182,7 @@ export default function ComprasTable() {
         setCompraSeleccionada(compra);
         
         if (tipo === 'ver') {
-            // Para ver, cargamos los datos de la compra seleccionada
+
             setCompraData({
                 proveedor: compra.proveedor,
                 fecha_compra: compra.fecha_compra,
@@ -198,7 +192,7 @@ export default function ComprasTable() {
             setInsumosSeleccionados(compra.insumos || []);
             setMostrarAgregarCompra(true);
         } else if (tipo === 'agregar') {
-            // Para agregar, reiniciamos los datos
+
             setCompraData({
                 proveedor: '',
                 fecha_compra: '',
@@ -206,7 +200,7 @@ export default function ComprasTable() {
                 observaciones: ''
             });
             setInsumosSeleccionados([]);
-            // Limpiar errores
+
             setErrores({
                 proveedor: '',
                 fecha_compra: '',
@@ -263,7 +257,6 @@ export default function ComprasTable() {
         const { name, value } = e.target;
         setCompraData(prev => ({ ...prev, [name]: value }));
         
-        // Validación en tiempo real
         if (name === 'proveedor') {
             setErrores(prev => ({ ...prev, proveedor: validarProveedor(value) }));
         } else if (name === 'fecha_compra') {
@@ -277,7 +270,6 @@ export default function ComprasTable() {
             ...nuevos.filter(n => !insumosSeleccionados.some(i => i.id === n.id))
         ];
         setInsumosSeleccionados(nuevosInsumos);
-        // Validar insumos en tiempo real
         setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
         showNotification('Insumos agregados exitosamente');
     };
@@ -291,7 +283,6 @@ export default function ComprasTable() {
     const removeInsumo = id => {
         const nuevosInsumos = insumosSeleccionados.filter(item => item.id !== id);
         setInsumosSeleccionados(nuevosInsumos);
-        // Validar insumos en tiempo real
         setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
         showNotification('Insumo eliminado de la lista');
     };
@@ -372,22 +363,19 @@ export default function ComprasTable() {
                 />
             </div>
 
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
-                marginBottom: '10px' 
-            }}>
-                <button 
-                    className="modal-btn cancel-btn" 
-                    onClick={() => setMostrarAnuladas(prev => !prev)} 
-                    type="button"
-                >
-                    {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
-                </button>
-            </div>
+<div className="admin-section-header">
+  <h2 className="admin-tab">Compras</h2>
+
+  <button
+    className="admin-tab"
+    onClick={() => setMostrarAnuladas(prev => !prev)}
+    type="button"
+  >
+    {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
+  </button>
+</div>
 
 
-            <h2 className="admin-section-title">Compras</h2>
             <DataTable
                 value={comprasFiltradas}
                 className="admin-table"

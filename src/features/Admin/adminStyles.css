@@ -1204,3 +1204,59 @@
 }
 
 
+/* En tu adminStyles.css */
+
+.ventas-header-container {
+    display: flex;
+    justify-content: space-between; /* This will push the filter buttons to the right */
+    align-items: flex-end; /* Align items to the bottom, useful if titles are different heights */
+    margin-bottom: 0; /* Remove bottom margin to "stick" to the table */
+    padding-bottom: 0; /* Remove padding */
+    border-bottom: 1px solid #ddd; /* Optional: A line to separate from the table */
+}
+
+.admin-section-title {
+    margin: 0; /* Remove default margins */
+    padding-bottom: 10px; /* Add some padding if needed */
+}
+
+.filter-buttons-container {
+    display: flex;
+    margin-bottom: -1px; /* Overlap slightly with the border below it to make them "stick" */
+}
+
+.filter-tab {
+    background-color: #333; /* Dark background */
+    color: white; /* White text */
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin-left: 0; /* No margin between buttons */
+    border-radius: 5px 5px 0 0; /* Rounded top corners */
+    position: relative;
+    top: 1px; /* Adjust to align visually with border */
+    transition: all 0.2s ease-in-out; /* Smooth transition for hover/active */
+    font-weight: bold; /* Make text bold */
+    margin-right: 2px; /* Small gap between filter buttons */
+}
+
+.filter-tab:last-child {
+    margin-right: 0; 
+}
+
+
+.filter-tab:hover {
+    background-color: #555; 
+}
+
+.filter-tab.filter-tab-active {
+    top: 0px; 
+    background-color: #444; 
+    border-bottom: 2px solid #ff69b4;  
+    z-index: 1; 
+}
+
+.admin-table {
+    margin-top: 0; 
+    border-top: none;  
+}

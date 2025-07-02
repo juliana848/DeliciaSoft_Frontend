@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import '../../features/Admin/adminStyles.css';
 
 const GoogleAddressAutocomplete = ({ 
     value, 
@@ -32,21 +33,17 @@ const GoogleAddressAutocomplete = ({
 
     useEffect(() => {
         if (isLoaded && inputRef.current && !disabled) {
-            // Configurar autocompletado
             const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
                 types: ['address'],
-                componentRestrictions: { country: 'co' }, // Restringir a Colombia
+                componentRestrictions: { country: 'co' },
                 fields: ['address_components', 'formatted_address', 'geometry', 'name']
             });
 
             autocompleteRef.current = autocomplete;
 
-            // Escuchar cuando se selecciona un lugar
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
-                
                 if (place.formatted_address) {
-                    // Extraer componentes de la dirección
                     const addressComponents = place.address_components || [];
                     let barrio = '';
                     let ciudad = '';
@@ -61,19 +58,18 @@ const GoogleAddressAutocomplete = ({
                         }
                     });
 
-                    // Llamar callbacks
-                   onChange(place.formatted_address);
-                        if (onPlaceSelect) {
-                            onPlaceSelect({
-                                ...place,
-                                address_components: addressComponents,
-                                barrio: barrio,
-                                ciudad: ciudad,
-                                coordenadas: {
-                                    lat: place.geometry?.location?.lat(),
-                                    lng: place.geometry?.location?.lng()
-                                }
-                            });
+                    onChange(place.formatted_address);
+                    if (onPlaceSelect) {
+                        onPlaceSelect({
+                            ...place,
+                            address_components: addressComponents,
+                            barrio,
+                            ciudad,
+                            coordenadas: {
+                                lat: place.geometry?.location?.lat(),
+                                lng: place.geometry?.location?.lng()
+                            }
+                        });
                     }
                     setShowSuggestions(false);
                 }
@@ -91,7 +87,6 @@ const GoogleAddressAutocomplete = ({
         const inputValue = e.target.value;
         onChange(inputValue);
 
-        // Si Google Places está cargado y hay texto, mostrar sugerencias
         if (isLoaded && inputValue.length > 2) {
             const service = new window.google.maps.places.AutocompleteService();
             service.getPlacePredictions({
@@ -100,7 +95,7 @@ const GoogleAddressAutocomplete = ({
                 types: ['address']
             }, (predictions, status) => {
                 if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-                    setSuggestions(predictions.slice(0, 5)); // Mostrar máximo 5 sugerencias
+                    setSuggestions(predictions.slice(0, 5));
                     setShowSuggestions(true);
                 } else {
                     setSuggestions([]);
@@ -120,7 +115,6 @@ const GoogleAddressAutocomplete = ({
             fields: ['address_components', 'formatted_address', 'geometry', 'name']
         }, (place, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-                // Extraer componentes
                 const addressComponents = place.address_components || [];
                 let barrio = '';
                 let ciudad = '';
@@ -136,18 +130,18 @@ const GoogleAddressAutocomplete = ({
                 });
 
                 onChange(place.formatted_address);
-                    if (onPlaceSelect) {
-                        onPlaceSelect({
-                            ...place,
-                            address_components: addressComponents,
-                            barrio: barrio,
-                            ciudad: ciudad,
-                            coordenadas: {
-                                lat: place.geometry?.location?.lat(),
-                                lng: place.geometry?.location?.lng()
-                            }
-                        });
-                    }
+                if (onPlaceSelect) {
+                    onPlaceSelect({
+                        ...place,
+                        address_components: addressComponents,
+                        barrio,
+                        ciudad,
+                        coordenadas: {
+                            lat: place.geometry?.location?.lat(),
+                            lng: place.geometry?.location?.lng()
+                        }
+                    });
+                }
                 setShowSuggestions(false);
             }
         });
@@ -164,21 +158,10 @@ const GoogleAddressAutocomplete = ({
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder={isLoaded ? placeholder : "Cargando Google Maps..."}
                 disabled={disabled || !isLoaded}
-                style={{
-                    width: '100%',
-                    height: '28px',
-                    fontSize: '12px',
-                    padding: '2px 4px',
-                    borderColor: error ? 'red' : '#ccc',
-                    border: '1px solid',
-                    borderRadius: '4px',
-                    backgroundColor: disabled ? '#f5f5f5' : 'white',
-                    color: disabled ? '#666' : 'black',
-                    ...style
-                }}
+                className={`modal-input ${error ? 'error' : ''}`}
+                style={style}
             />
-            
-            {/* Sugerencias dropdown */}
+
             {showSuggestions && suggestions.length > 0 && (
                 <div style={{
                     position: 'absolute',
@@ -202,10 +185,7 @@ const GoogleAddressAutocomplete = ({
                                 padding: '8px 12px',
                                 cursor: 'pointer',
                                 borderBottom: index < suggestions.length - 1 ? '1px solid #eee' : 'none',
-                                fontSize: '12px',
-                                ':hover': {
-                                    backgroundColor: '#f5f5f5'
-                                }
+                                fontSize: '12px'
                             }}
                             onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
                             onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
@@ -220,15 +200,13 @@ const GoogleAddressAutocomplete = ({
                     ))}
                 </div>
             )}
-            
-            {/* Error message */}
+
             {error && (
                 <small style={{ color: 'red', fontSize: '10px', display: 'block', marginTop: '2px' }}>
                     {error}
                 </small>
             )}
-            
-            {/* Loading indicator */}
+
             {!isLoaded && (
                 <small style={{ color: '#666', fontSize: '10px', display: 'block', marginTop: '2px' }}>
                     Cargando Google Maps...

@@ -1202,218 +1202,201 @@
   flex-direction: column;
   font-weight: 500;
 }
+/* =================== ESTILOS VISTA VENTAS =================== */
 
+.ventas-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 1px solid #ddd;
+}
 
-/* Modal Wide Styles */
+.admin-section-title {
+    margin: 0;
+    padding-bottom: 10px;
+}
+
+.filter-buttons-container {
+    display: flex;
+    margin-bottom: -1px;
+}
+
+.filter-tab {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin-left: 0;
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    top: 1px;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+.filter-tab:last-child {
+    margin-right: 0;
+}
+
+.filter-tab:hover {
+    background-color: #555;
+}
+
+.filter-tab.filter-tab-active {
+    top: 0px;
+    background-color: #444;
+    border-bottom: 2px solid #ff69b4;
+    z-index: 1;
+}
+
+.admin-table {
+    margin-top: 0;
+    border-top: none;
+}
+
+/* =================== ESTILOS MODAL =================== */
+
 .modal-wide {
-  max-width: 800px !important;
-  width: 90% !important;
+    max-width: 800px !important;
+    width: 90% !important;
 }
 
 .modal-form-grid-wide {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
 .modal-form-grid-wide label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 500;
-  margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    margin-bottom: 0;
 }
 
 .modal-form-grid-wide .modal-input {
-  margin-top: 8px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
 }
 
 .modal-form-grid-wide .modal-input:focus {
-  outline: none;
-  border-color: #007ad9;
-  box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
+    outline: none;
+    border-color: #007ad9;
+    box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
 }
 
 .modal-form-grid-wide .modal-input.error {
-  border-color: #dc3545;
+    border-color: #dc3545;
 }
 
 .modal-form-grid-wide .modal-input.error:focus {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
 }
 
-.error-message {
-  color: #dc3545;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
-}
-
-/* Placeholder styles */
-.modal-form-grid-wide .modal-input::placeholder {
-  color: #6c757d;
-  opacity: 0.7;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .modal-form-grid-wide {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .modal-wide {
-    width: 95% !important;
-    max-width: none !important;
-  }
-}
-
-/* Input states*/
 .modal-form-grid-wide .modal-input:valid {
-  border-color: #e556ae;
-  border-radius: 12px;
-  border-width: 2px;
-
-} 
+    border-color: #e556ae;
+    border-radius: 12px;
+    border-width: 2px;
+}
 
 .modal-form-grid-wide .modal-input:invalid:not(:focus):not(:placeholder-shown) {
-  border-color: #dc3545;
+    border-color: #dc3545;
 }
 
-/* Select styling */
 .modal-form-grid-wide select.modal-input {
-  cursor: pointer;
-  background-color: white;
+    cursor: pointer;
+    background-color: white;
 }
 
 .modal-form-grid-wide select.modal-input:focus {
-  border-color: #e95fc4;
-  box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
+    border-color: #e95fc4;
+    box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
 }
- .modal-wide {
-          max-width: 800px !important;
-          width: 90% !important;
-        }
 
-        .modal-form-grid-wide {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          margin-bottom: 20px;
-        }
+.modal-form-grid-wide .modal-input::placeholder {
+    color: #6c757d;
+    opacity: 0.7;
+}
 
-        .modal-form-grid-wide label {
-          display: flex;
-          flex-direction: column;
-          font-weight: 500;
-          margin-bottom: 0;
-        }
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
 
-        .modal-form-grid-wide .modal-input {
-          margin-top: 8px;
-          padding: 10px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-size: 14px;
-          transition: border-color 0.3s ease;
-        }
+@media (max-width: 768px) {
+    .modal-form-grid-wide {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
 
-        .modal-form-grid-wide .modal-input:focus {
-          outline: none;
-          border-color: #007ad9;
-          box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
-        }
+    .modal-wide {
+        width: 95% !important;
+        max-width: none !important;
+    }
 
-        .modal-form-grid-wide .modal-input.error {
-          border-color: #dc3545;
-        }
+    .usuarios-modal-grid-two-columns {
+        grid-template-columns: 1fr;
+    }
+}
 
-        .modal-form-grid-wide .modal-input.error:focus {
-          border-color: #dc3545;
-          box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
-        }
+/* =================== DISEÑO 2 COLUMNAS EN MODAL =================== */
 
-        .error-message {
-          color: #dc3545;
-          font-size: 12px;
-          margin-top: 4px;
-          display: block;
-        }
-
-        @media (max-width: 768px) {
-          .modal-form-grid-wide {
-            grid-template-columns: 1fr;
-            gap: 15px;
-          }
-          
-          .modal-wide {
-            width: 95% !important;
-            max-width: none !important;
-          }
-        }
-
-/* Contenedor principal para el diseño de dos columnas */
 .usuarios-modal-grid-two-columns {
-  display: grid; /* Usa CSS Grid para un diseño de cuadrícula */
-  grid-template-columns: 1fr 1fr; /* Crea dos columnas de igual ancho */
-  gap: 20px; /* Espacio entre las columnas */
-  padding: 10px; /* Opcional: algún padding interno */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 10px;
 }
-
 
 .usuarios-modal-column,
 .modal-column {
-  flex-grow: 1; 
-  width: 100%; 
+    flex-grow: 1;
+    width: 100%;
 }
 
-/* Opcional: para pantallas más pequeñas, que las columnas se apilen */
-@media (max-width: 768px) {
-  .usuarios-modal-grid-two-columns {
-    grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
-  }
-}
+/* =================== BOTÓN DESHABILITADO =================== */
 
-/* Busca esta regla y modifícala: */
 .admin-button.disabled {
-  opacity: 0.4; /* Cambia por 0.4 para más opacidad */
-  cursor: not-allowed;
-  pointer-events: none;
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
-/* Si no existe, agrégala */
-.admin-button.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
+/* =================== TÍTULO DE SECCIÓN =================== */
 
 .admin-section-header {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-bottom: -0.2rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: -0.2rem;
 }
 
-/* Estilo base para pestañas */
+/* =================== ESTILO DE PESTAÑAS =================== */
+
 .admin-tab {
-  all: unset; /* Elimina todo estilo nativo */
-  background-color: #000;
-  color: #fff;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 1.5rem;
-  font-weight: normal;
-  padding: 0.5rem 1rem;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  line-height: 1.2;
-  display: inline-block;
-  cursor: pointer;
-  user-select: none;
+    all: unset;
+    background-color: #000;
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.5rem;
+    font-weight: normal;
+    padding: 0.5rem 1rem;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    line-height: 1.2;
+    display: inline-block;
+    cursor: pointer;
+    user-select: none;
 }

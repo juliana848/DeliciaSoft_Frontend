@@ -29,7 +29,7 @@ import InsumosTable from './features/Admin/pages/insumos.jsx';
 import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
 import Roles from './features/Admin/pages/roles/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
-import Ventas from './features/Admin/pages/ventas.jsx';
+import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
 import ProveedorTable from './features/Admin/pages/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';

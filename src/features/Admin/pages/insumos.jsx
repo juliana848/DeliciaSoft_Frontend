@@ -162,7 +162,7 @@ export default function InsumosTable() {
         <SearchBar value={filtro} onChange={setFiltro} placeholder="Buscar insumo..." />
       </div>
 
-      <h2 className="admin-section-title">Insumos</h2>
+      <h2 className="admin-section-title">Gestión de Insumos</h2>
 
       {stockBajo && (
         <div className="stock-alert">

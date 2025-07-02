@@ -6,6 +6,7 @@ import '../adminStyles.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
+import GoogleAddressAutocomplete from '../../../shared/components/GoogleAddressAutocomplete';
 
 export default function ProveedoresTable() {
   const [proveedores, setProveedores] = useState([]);
@@ -26,6 +27,7 @@ export default function ProveedoresTable() {
   const [tipoDocumento, setTipoDocumento] = useState('CC');
   const [nombreEmpresa, setNombreEmpresa] = useState('');
   const [nombreContacto, setNombreContacto] = useState('');
+  const [datosUbicacion, setDatosUbicacion] = useState(null);
 
   // Validation states
   const [errors, setErrors] = useState({});
@@ -266,6 +268,11 @@ export default function ProveedoresTable() {
     }
   };
 
+  const handlePlaceSelect = (placeData) => {
+  setDatosUbicacion(placeData);
+  console.log('Datos de ubicación:', placeData);
+};
+
   const abrirModal = (tipo, proveedor = null) => {
     setModalTipo(tipo);
     setProveedorSeleccionado(proveedor);
@@ -284,6 +291,7 @@ export default function ProveedoresTable() {
       setTipoDocumento(proveedor.tipoDocumento || (proveedor.tipo === 'Natural' ? 'CC' : 'NIT'));
       setNombreEmpresa(proveedor.nombreEmpresa || '');
       setNombreContacto(proveedor.nombreContacto || '');
+      setDatosUbicacion(null);
     } else if (tipo === 'agregar') {
       setTipoProveedor('Natural');
       setNombre('');
@@ -476,7 +484,7 @@ export default function ProveedoresTable() {
           <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
         </div>
 
-        <h2 className="admin-section-title">Proveedores</h2>
+        <h2 className="admin-section-title"> Gestión de Proveedores</h2>
         <DataTable value={proveedoresFiltrados} className="admin-table" paginator rows={5}>
           <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
           <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }}/>
@@ -606,16 +614,21 @@ export default function ProveedoresTable() {
                 </label>
 
                 <label>Dirección*
-                  <input 
-                    type="text" 
-                    value={direccion} 
-                    onChange={(e) => handleFieldChange('direccion', e.target.value)}
-                    onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
-                    className={`modal-input ${errors.direccion ? 'error' : ''}`}
-                    placeholder="Dirección completa"
+                  <GoogleAddressAutocomplete
+                    value={direccion}
+                    onChange={(value) => handleFieldChange('direccion', value)}
+                    onPlaceSelect={handlePlaceSelect}
+                    placeholder="Ingrese la dirección"
+                    error={errors.direccion}
+                    style={{ 
+                      height: '40px',
+                      fontSize: '14px',
+                      padding: '8px 12px'
+                    }}
                   />
                   {errors.direccion && <span className="error-message">{errors.direccion}</span>}
                 </label>
+
 
                             <label>{tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*'}
               <input 

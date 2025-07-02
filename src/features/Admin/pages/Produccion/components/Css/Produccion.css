@@ -1,0 +1,93 @@
+.produccion-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #d81b60;
+}
+
+.produccion-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.produccion-button {
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  box-shadow: 0 2px 5px rgba(233, 30, 99, 0.3);
+}
+
+.produccion-button:hover {
+  background-color: #c2185b;
+}
+
+.produccion-table {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+
+.produccion-detalle-modal h3 {
+  color: #880e4f;
+  margin-bottom: 15px;
+}
+
+.produccion-producto-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.produccion-producto-table th,
+.produccion-producto-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.produccion-producto-table th {
+  background-color: #f8bbd0;
+  color: #333;
+}
+
+.produccion-producto-table td img {
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.produccion-insumo-btn {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.produccion-insumo-btn:hover {
+  background-color: #1976d2;
+}
+
+.produccion-receta-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.produccion-receta-btn:hover {
+  background-color: #388e3c;
+}

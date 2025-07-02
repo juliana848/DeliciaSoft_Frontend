@@ -156,8 +156,7 @@ export default function CategoriaProductos() {
         />
       </div>
 
-      <h2 className="admin-section-title">Categorías de Productos</h2>
-
+      <h2 className="admin-section-title">Gestión de categorías de productos</h2>
   <DataTable
     value={categoriasFiltradas}
     className="admin-table"

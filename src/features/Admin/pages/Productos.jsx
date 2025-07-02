@@ -234,25 +234,26 @@ export default function Productos() {
   };
 
   // Guardar edición producto
-  const guardarEdicion = () => {
-    if (!validarFormulario()) return;
-    const catObj = categorias.find(c => c.id.toString() === categoriaEditada);
-    const prodEditados = productos.map(p => (
-      p.id === productoSeleccionado.id
-        ? {
-            ...p,
-            nombre: nombreEditado,
-            precio: parseFloat(precioEditado),
-            idCategoriaProducto: parseInt(categoriaEditada),
-            categoria: catObj.nombre,
-            recetas: recetasSeleccionadas
-          }
-        : p
-    ));
-    setProductos(prodEditados);
-    cerrarModal();
-    showNotification('Producto editado con éxito');
-  };
+ const guardarEdicion = () => {
+  if (!validarFormulario()) return;
+  const catObj = categorias.find(c => c.id.toString() === categoriaEditada);
+  const prodEditados = productos.map(p => (
+    p.id === productoSeleccionado.id
+      ? {
+          ...p,
+          nombre: nombreEditado,
+          precio: parseFloat(precioEditado),
+          idCategoriaProducto: parseInt(categoriaEditada),
+          categoria: catObj.nombre,
+          recetas: recetasSeleccionadas,
+          estado: productoSeleccionado.estado
+        }
+      : p
+  ));
+  setProductos(prodEditados);
+  cerrarModal();
+  showNotification('Producto editado con éxito');
+};
 
   // Eliminar producto
   const eliminarProducto = () => {
@@ -338,40 +339,42 @@ export default function Productos() {
           bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
           style={{ width: '50px' }}
         />
-        <Column
-          header="Acción"
-          body={(row) => (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                className="admin-button gray"
-                onClick={() => abrirModal('visualizar', row)}
-                aria-label="Ver producto"
-                title="Ver producto"
-              >
-                🔍
-              </button>
-              <button
-                className="admin-button yellow"
-                onClick={() => abrirModal('editar', row)}
-                aria-label="Editar producto"
-                title="Editar producto"
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                onClick={() => abrirModal('eliminar', row)}
-                aria-label="Eliminar producto"
-                title="Eliminar producto"
-              >
-                🗑️
-              </button>
-            </div>
-          )}
-          headerStyle={{ textAlign: 'right', paddingLeft:'65px'}}
-          bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
-          style={{ width: '250px' }}
-        />
+      <Column
+        header="Acción"
+        body={(row) => (
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="admin-button gray"
+              onClick={() => abrirModal('visualizar', row)}
+              aria-label="Ver producto"
+              title="Ver producto"
+            >
+              🔍
+            </button>
+            <button
+              className={`admin-button ${row.estado ? 'yellow' : 'yellow-disabled'}`}
+              onClick={() => row.estado && abrirModal('editar', row)}
+              aria-label="Editar producto"
+              title="Editar producto"
+              disabled={!row.estado}
+            >
+              ✏️
+            </button>
+            <button
+              className={`admin-button ${row.estado ? 'red' : 'red-disabled'}`}
+              onClick={() => row.estado && abrirModal('eliminar', row)}
+              aria-label="Eliminar producto"
+              title="Eliminar producto"
+              disabled={!row.estado}
+            >
+              🗑️
+            </button>
+          </div>
+        )}
+        headerStyle={{ textAlign: 'right', paddingLeft:'65px'}}
+        bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
+        style={{ width: '250px' }}
+      />
       </DataTable>
 
       {/* Modal agregar/editar producto */}
@@ -405,6 +408,23 @@ export default function Productos() {
                 </option>
               ))}
             </select>
+            {modalTipo === 'editar' && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>Estado:</span>
+                  <InputSwitch
+                    checked={productoSeleccionado?.estado || false}
+                    onChange={(e) => {
+                      setProductoSeleccionado({
+                        ...productoSeleccionado,
+                        estado: e.value
+                      });
+                    }}
+                  />
+                  <span>{productoSeleccionado?.estado ? 'Activo' : 'Inactivo'}</span>
+                </label>
+              </div>
+            )}
 
             <button
               className="modal-input-button"
@@ -520,55 +540,66 @@ export default function Productos() {
       )}
 
       {/* Modal visualizar */}
-      {modalTipo === 'visualizar' && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2>Detalles del Producto</h2>
-          <p>
-            <strong>Nombre:</strong> {productoSeleccionado?.nombre}
-          </p>
-          <p>
-            <strong>Precio:</strong> {formatearPrecio(productoSeleccionado?.precio || 0)}
-          </p>
-          <p>
-            <strong>Categoría:</strong> {productoSeleccionado?.categoria}
-          </p>
+     {modalTipo === 'visualizar' && (
+  <Modal visible={modalVisible} onClose={cerrarModal}>
+    <h2>Detalles del Producto</h2>
+    <div className="modal-content">
+      <input
+        type="text"
+        value={productoSeleccionado?.nombre || ''}
+        readOnly
+        className="modal-input"
+      />
+      <input
+        type="text"
+        value={formatearPrecio(productoSeleccionado?.precio || 0)}
+        readOnly
+        className="modal-input"
+      />
+      <input
+        type="text"
+        value={productoSeleccionado?.categoria || ''}
+        readOnly
+        className="modal-input"
+      />
+      
+      <div style={{ marginTop: '0.5rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span>Estado:</span>
+          <InputSwitch
+            checked={productoSeleccionado?.estado || false}
+            disabled={true}
+          />
+          <span>{productoSeleccionado?.estado ? 'Activo' : 'Inactivo'}</span>
+        </label>
+      </div>
 
-          <h3 className='red-title'>--| Recetas Asociadas |--</h3>
-            {productoSeleccionado?.recetas?.length > 0 ? (
-              productoSeleccionado.recetas.map((r) => (
-                <div key={r.id} className="detalle-receta-visualizar">
-                  {r.imagen && (
-                    <img
-                      src={r.imagen}
-                      alt={r.nombre}
-                      className="w-full h-40 object-cover rounded-lg mb-2"
-                    />
-                  )}
-                  <h4>{r.nombre}</h4>
-                  <p>
-                    <strong>Insumos:</strong> {r.insumos.join(', ')}
-                  </p>
-                  <p>
-                    <strong>Pasos:</strong>
-                  </p>
-                  <ol>
-                    {r.pasos.map((paso, i) => (
-                      <li key={i}>{paso}</li>
-                    ))}
-                  </ol>
-                </div>
-              ))
-            ) : (
-              <p>No hay recetas asociadas.</p>
-            )}
+      <div className="modal-input-button" style={{ marginTop: '0.5rem', padding: '10px', background: '#f5f5f5', borderRadius: '5px' }}>
+        📖 Recetas Asociadas ({productoSeleccionado?.recetas?.length || 0})
+      </div>
 
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>
-              Cerrar
-            </button>
-          </div>
-        </Modal>
+      {/* Mostrar resumen de recetas seleccionadas */}
+      {productoSeleccionado?.recetas?.length > 0 && (
+        <div className="resumen-recetas">
+          <h4>Recetas asociadas:</h4>
+          <ul>
+            {productoSeleccionado.recetas.map((r) => (
+              <li key={r.id}>
+                <strong>{r.nombre}</strong> - {r.insumos.length} insumos, {r.pasos.length} pasos
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
+    </div>
+
+    <div className="modal-footer">
+      <button className="modal-btn cancel-btn" onClick={cerrarModal}>
+        Cerrar
+      </button>
+    </div>
+  </Modal>
+)}
     </div>
   );
 }

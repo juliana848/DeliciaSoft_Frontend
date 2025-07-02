@@ -171,7 +171,7 @@ export default function CategoriaTableDemo() {
         />
       </div>
 
-      <h2 className="admin-section-title">Categoria Insumos</h2>
+      <h2 className="admin-section-title">Gestión de Categoria Insumos</h2>
 
       <DataTable
         value={categoriasFiltradas}

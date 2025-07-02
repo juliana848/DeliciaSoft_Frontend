@@ -297,7 +297,7 @@ export default function Productos() {
         <SearchBar placeholder="Buscar productos..." value={filtro} onChange={setFiltro} />
       </div>
 
-      <h2 className="admin-section-title">Productos</h2>
+      <h2 className="admin-section-title">Gestión de productos</h2>
 
       <DataTable value={productosFiltrados} paginator rows={5} className="admin-table">
         <Column

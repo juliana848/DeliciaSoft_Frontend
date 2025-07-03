@@ -1,5 +1,5 @@
 // ventas.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // ADDED: useMemo
 import '../../adminStyles.css'; // Asegúrate de que este archivo CSS exista
 
 // Importar los nuevos componentes
@@ -20,7 +20,7 @@ import AppNotification from '../../components/Notification';
 import SearchBar from '../../components/SearchBar'; // ADDED: Import SearchBar
 
 export default function Ventas() {
-    const [ventas, setVentas] = useState([]);
+    const [allSales, setAllSales] = useState([]); // RENAMED: from 'ventas' to 'allSales' to hold all data
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [modalTipo, setModalTipo] = useState(null);
@@ -66,8 +66,8 @@ export default function Ventas() {
     const [abonoSeleccionado, setAbonoSeleccionado] = useState(null);
     const [mostrarModalDetalleAbono, setMostrarModalDetalleAbono] = useState(false);
 
-    // New state for filter type - Default to 'directa'
-    const [filtroTipoVenta, setFiltroTipoVenta] = useState('directa'); // 'directa', 'pedido'
+    // State for filter type - Default to 'directa'
+    const [filtroTipoVenta, setFiltroTipoVenta] = useState('directa'); // 'directa', 'pedido', 'anulado'
 
     useEffect(() => {
         const mockVentas = [
@@ -77,7 +77,7 @@ export default function Ventas() {
                 sede: 'San Benito',
                 metodo_pago: 'Efectivo',
                 estado: 'Venta directa',
-                tipo_venta: 'directa', // ADDED: Explicit tipo_venta
+                tipo_venta: 'directa',
                 fecha_venta: '01/06/2025',
                 fecha_finalizacion: '01/06/2025',
                 productos: [
@@ -112,9 +112,9 @@ export default function Ventas() {
                 sede: 'San Pablo',
                 metodo_pago: 'Transferencia',
                 estado: 'En proceso',
-                tipo_venta: 'pedido', // ADDED: Explicit tipo_venta
+                tipo_venta: 'pedido',
                 fecha_venta: '02/06/2025',
-                fecha_entrega: '07/06/2025', // ADDED: Example for pedido
+                fecha_entrega: '07/06/2025',
                 fecha_finalizacion: '',
                 productos: [
                     {
@@ -140,9 +140,9 @@ export default function Ventas() {
                 sede: 'San Benito',
                 metodo_pago: 'Efectivo',
                 estado: 'Por pagar',
-                tipo_venta: 'pedido', // ADDED: Explicit tipo_venta
+                tipo_venta: 'pedido',
                 fecha_venta: '03/06/2025',
-                fecha_entrega: '10/06/2025', // ADDED: Example for pedido
+                fecha_entrega: '10/06/2025',
                 fecha_finalizacion: '',
                 productos: [
                     { id: 301, nombre: 'Utensilios', cantidad: 1, precio: 50000, adiciones: [], salsas: [], sabores: [] },
@@ -158,9 +158,9 @@ export default function Ventas() {
                 sede: 'San Pablo',
                 metodo_pago: 'Transferencia',
                 estado: 'Terminado',
-                tipo_venta: 'pedido', // ADDED: Explicit tipo_venta
+                tipo_venta: 'pedido',
                 fecha_venta: '04/06/2025',
-                fecha_entrega: '05/06/2025', // ADDED: Example for pedido
+                fecha_entrega: '05/06/2025',
                 fecha_finalizacion: '05/06/2025',
                 productos: [
                     { id: 401, nombre: 'Harina integral', cantidad: 8, precio: 10000, adiciones: [], salsas: [], sabores: [] },
@@ -176,9 +176,9 @@ export default function Ventas() {
                 sede: 'San Benito',
                 metodo_pago: 'Efectivo',
                 estado: 'Por entregar',
-                tipo_venta: 'pedido', // ADDED: Explicit tipo_venta
+                tipo_venta: 'pedido',
                 fecha_venta: '05/06/2025',
-                fecha_entrega: '08/06/2025', // ADDED: Example for pedido
+                fecha_entrega: '08/06/2025',
                 fecha_finalizacion: '',
                 productos: [
                     { id: 501, nombre: 'Colorantes', cantidad: 5, precio: 5000, adiciones: [], salsas: [], sabores: [] },
@@ -222,7 +222,7 @@ export default function Ventas() {
                 total: 64260
             }
         ];
-        setVentas(mockVentas);
+        setAllSales(mockVentas); // Set all sales data here
     }, []);
 
     const validarFormularioVenta = () => {
@@ -398,6 +398,7 @@ export default function Ventas() {
         if (!abonoData.fecha || abonoData.fecha.trim() === '') {
             errores.fecha = 'La fecha es requerida';
         }
+
         return errores;
     };
 
@@ -419,13 +420,8 @@ export default function Ventas() {
         const errores = validarAbono();
         if (Object.keys(errores).length > 0) {
             setErroresValidacion(errores);
-
             const camposFaltantes = Object.entries(errores).map(([campo, mensaje]) => {
-                const nombresCampos = {
-                    metodo_pago: 'Método de Pago',
-                    total_pagado: 'Total Pagado',
-                    fecha: 'Fecha'
-                };
+                const nombresCampos = { metodo_pago: 'Método de Pago', total_pagado: 'Total Pagado', fecha: 'Fecha' };
                 return `${nombresCampos[campo] || campo}: ${mensaje}`;
             });
             showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
@@ -441,44 +437,31 @@ export default function Ventas() {
         };
 
         setAbonos(prev => [...prev, nuevoAbono]);
-
+        
         // Update the sale's state if fully paid or partially paid
-        setVentas(prevVentas => prevVentas.map(venta => {
+        setAllSales(prevSales => prevSales.map(venta => { // UPDATED: Changed from setVentas to setAllSales
             if (venta.id === ventaSeleccionada.id) {
                 const montoActualPagado = (venta.abonos || []).reduce((sum, abono) => sum + parseFloat(abono.total_pagado), 0);
                 const nuevoTotalPagado = montoActualPagado + parseFloat(abonoData.total_pagado);
-
                 let nuevoEstado = venta.estado;
                 if (nuevoTotalPagado >= venta.total) {
                     nuevoEstado = 'Terminado'; // Or 'Pagado', depending on desired state
-                } else if (nuevoTotalPagado > 0) {
-                    nuevoEstado = 'Por pagar'; // Indicate partial payment
+                } else if (nuevoTotalPagado > 0 && venta.estado !== 'Terminado' && venta.estado !== 'Anulado') {
+                    // Only change to 'Por pagar' if not already Terminado or Anulado
+                    nuevoEstado = 'Por pagar';
                 }
-
-                return {
-                    ...venta,
-                    abonos: [...(venta.abonos || []), nuevoAbono],
-                    estado: nuevoEstado // Update sale state based on payment
-                };
+                return { ...venta, abonos: [...(venta.abonos || []), nuevoAbono], estado: nuevoEstado };
             }
             return venta;
         }));
-
         showNotification('Abono agregado exitosamente', 'success');
         setMostrarModalAgregarAbono(false);
-        setAbonoData({
-            metodo_pago: '',
-            total_pagado: '',
-            fecha: new Date().toISOString().split('T')[0],
-            comprobante_imagen: null
-        });
+        setAbonoData({ metodo_pago: '', total_pagado: '', fecha: new Date().toISOString().split('T')[0], comprobante_imagen: null });
         setErroresValidacion({});
     };
 
     const anularAbono = (id) => {
-        setAbonos(prev => prev.map(abono =>
-            abono.id === id ? { ...abono, anulado: true } : abono
-        ));
+        setAbonos(prev => prev.map(abono => abono.id === id ? { ...abono, anulado: true } : abono ));
         showNotification('Abono anulado exitosamente', 'success');
     };
 
@@ -534,247 +517,65 @@ export default function Ventas() {
     };
 
     const anularVenta = () => {
-        setVentas(prev => prev.map(v => v.id === ventaSeleccionada.id ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() } : v));
+        setAllSales(prev => prev.map(v => // UPDATED: Changed from setVentas to setAllSales
+            v.id === ventaSeleccionada.id ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() } : v
+        ));
         cerrarModal();
         showNotification('Venta anulada exitosamente');
     };
 
-    const ventasFiltradas = ventas
-        .filter(v => {
-            const lowerCaseFiltro = filtro.toLowerCase();
+    // Filtered sales based on search and tab selection
+    const ventasFiltradas = useMemo(() => {
+        const lowerCaseFiltro = filtro.toLowerCase();
+        return allSales.filter(venta => { // UPDATED: Filter from allSales
             const matchesSearch = (
-                (v.cliente || '').toLowerCase().includes(lowerCaseFiltro) ||
-                (v.sede || '').toLowerCase().includes(lowerCaseFiltro) ||
-                (v.id && String(v.id).includes(lowerCaseFiltro))
+                (venta.cliente || '').toLowerCase().includes(lowerCaseFiltro) ||
+                (venta.sede || '').toLowerCase().includes(lowerCaseFiltro) ||
+                (venta.id && String(venta.id).includes(lowerCaseFiltro))
             );
 
-            // Only filter by the selected type ('directa' or 'pedido')
-            return matchesSearch && v.tipo_venta === filtroTipoVenta;
+            if (filtroTipoVenta === 'directa') {
+                return matchesSearch && venta.tipo_venta === 'directa' && venta.estado !== 'Anulado'; // EXCLUDES Anulado
+            } else if (filtroTipoVenta === 'pedido') {
+                return matchesSearch && venta.tipo_venta === 'pedido' && venta.estado !== 'Anulado'; // EXCLUDES Anulado
+            } else if (filtroTipoVenta === 'anulado') {
+                return matchesSearch && venta.estado === 'Anulado'; // ONLY Anulado
+            }
+            return false; // Should not reach here if filtroTipoVenta is always one of the three
         })
-        .sort((a, b) => {
-            // Sort 'Anulado' sales to the end within their respective tipo_venta groups
+        .sort((a, b) => { // Keep sorting logic
+            // Example sorting: Anulled sales always at the end
             if (a.estado === 'Anulado' && b.estado !== 'Anulado') {
-                return 1; // 'a' (Anulado) comes after 'b'
+                return 1;
             }
-            if (a.estado !== 'Anulado' && b.estado === 'Anulado') {
-                return -1; // 'a' comes before 'b' (Anulado)
+            if (b.estado === 'Anulado' && a.estado !== 'Anulado') {
+                return -1;
             }
-            // If both are 'Anulado' or both are not 'Anulado', maintain original order or secondary sort
+            // Add your default sorting logic here if needed, e.g., by date
             return 0;
         });
+    }, [allSales, filtro, filtroTipoVenta]); // Dependencies for useMemo
 
-    const removeInsumo = (id) => {
-        setInsumosSeleccionados(prev => prev.filter(item => item.id !== id));
-        showNotification('Producto eliminado');
+    // Handler for changes in Estado column in VentasListar
+    const manejarCambioEstado = (ventaActualizada, nuevoEstado) => {
+        setAllSales(prevSales => prevSales.map(venta => { // UPDATED: Update allSales
+            if (venta.id === ventaActualizada.id) {
+                return { ...venta, estado: nuevoEstado };
+            }
+            return venta;
+        }));
+        showNotification(`Estado de venta ${ventaActualizada.id} actualizado a ${nuevoEstado}`, 'success');
     };
 
-    const handleCantidadChange = (id, cantidad) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === id ? { ...item, cantidad: parseInt(cantidad) || 0 } : item
-        ));
-    };
-
-    const abrirModalAdiciones = (productId) => {
-        setProductoEditandoId(productId);
-        setMostrarModalAdiciones(true);
-    };
-
-    const abrirModalSalsas = (productId) => {
-        setProductoEditandoId(productId);
-        setMostrarModalSalsas(true);
-    };
-
-    const abrirModalRellenos = (productId) => {
-        setProductoEditandoId(productId);
-        setMostrarModalRellenos(true);
-    };
-
-    const getRowClassName = (data) => {
-        return {
-            'anulado-row': data.estado === 'Anulado'
-        };
-    };
-
-    const subtotal = insumosSeleccionados.reduce((sum, item) => {
-        const adicionesCost = item.adiciones.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0);
-        const salsasCost = item.salsas.reduce((acc, sal) => acc + (sal.precio * (sal.cantidad || 1)), 0);
-        const rellenosCost = item.sabores.reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0);
-        const itemTotal = (item.precio * item.cantidad) + adicionesCost + salsasCost + rellenosCost;
-        return sum + itemTotal;
-    }, 0);
-
-    const iva = subtotal * 0.16;
-    const total = subtotal + iva;
-
-    const manejarCambioEstado = (venta, nuevoEstado) => {
-        setVentas(prev => prev.map(v => v.id === venta.id ? { ...v, estado: nuevoEstado } : v
-        ));
-        showNotification(`Estado actualizado a "${nuevoEstado}"`);
-    };
-
-    const guardarVenta = () => {
-        const errores = validarFormularioVenta();
-        if (Object.keys(errores).length > 0) {
-            setErroresValidacion(errores);
-            const camposFaltantes = Object.entries(errores).map(([campo, mensaje]) => {
-                const nombresCampos = {
-                    tipo_venta: 'Tipo de Venta',
-                    cliente: 'Cliente',
-                    sede: 'Sede',
-                    metodo_pago: 'Método de Pago',
-                    fecha_venta: 'Fecha de Venta',
-                    fecha_entrega: 'Fecha de Entrega', // ADDED: Field name for error message
-                    productos: 'Productos'
-                };
-                return `${nombresCampos[campo] || campo}: ${mensaje}`;
-            });
-            showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
-            return;
-        }
-
-        const nuevaVenta = {
-            id: ventas.length > 0 ? Math.max(...ventas.map(v => v.id)) + 1 : 1, // Ensure unique ID
-            ...ventaData,
-            productos: insumosSeleccionados.map(item => ({
-                id: item.id,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precio: item.precio,
-                adiciones: item.adiciones,
-                salsas: item.salsas,
-                sabores: item.sabores,
-            })),
-            subtotal: subtotal,
-            iva: iva,
-            total: total,
-            estado: ventaData.tipo_venta === 'directa' ? 'Venta directa' : 'Pendiente', // Use 'directa' or 'pedido' for consistency
-            fecha_finalizacion: ventaData.tipo_venta === 'directa' ? new Date().toLocaleDateString() : ''
-        };
-
-        setVentas(prev => [...prev, nuevaVenta]);
-        showNotification('Venta guardada correctamente', 'success');
-        setVentaData({
-            cod_venta: '00000000',
-            tipo_venta: '',
-            cliente: '',
-            sede: '',
-            metodo_pago: '',
-            fecha_venta: new Date().toISOString().split('T')[0],
-            fecha_entrega: '',
-            fecha_registro: '',
-            observaciones: ''
-        });
-        setInsumosSeleccionados([]);
-        setErroresValidacion({});
-        setMostrarAgregarVenta(false); // Hide the form after saving
-    };
-
-    const handleAbonoChange = (e) => {
-        const { name, value } = e.target;
-        setAbonoData(prev => ({ ...prev, [name]: value }));
-        if (erroresValidacion[name]) {
-            setErroresValidacion(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
-    };
-
-    const agregarInsumos = (nuevosInsumos) => {
-        setInsumosSeleccionados(prev => [
-            ...prev,
-            ...nuevosInsumos
-                .filter(nuevo => !prev.some(i => i.id === nuevo.id))
-                .map(item => ({ ...item, cantidad: 1, adiciones: [], salsas: [], sabores: [] }))
-        ]);
-        if (erroresValidacion.productos) {
-            setErroresValidacion(prev => {
-                const newErrors = { ...prev };
-                delete newErrors.productos;
-                return newErrors;
-            });
-        }
-        showNotification('Productos agregados exitosamente');
-    };
-
-    const agregarAdiciones = (nuevasAdiciones) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoEditandoId ?
-                {
-                    ...item,
-                    adiciones: [
-                        ...item.adiciones,
-                        ...nuevasAdiciones.filter(nuevo => !item.adiciones.some(a => a.id === nuevo.id))
-                    ]
-                } : item
-        ));
-        showNotification('Adiciones agregadas exitosamente');
-        setMostrarModalAdiciones(false);
-        setProductoEditandoId(null);
-    };
-
-    const agregarSalsas = (nuevasSalsas) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoEditandoId ?
-                {
-                    ...item,
-                    salsas: [
-                        ...item.salsas,
-                        ...nuevasSalsas.filter(nuevo => !item.salsas.some(s => s.id === nuevo.id))
-                    ]
-                } : item
-        ));
-        showNotification('Salsas agregadas exitosamente');
-        setMostrarModalSalsas(false);
-        setProductoEditandoId(null);
-    };
-
-    const agregarRellenos = (nuevosRellenos) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoEditandoId ?
-                {
-                    ...item,
-                    sabores: [
-                        ...item.sabores,
-                        ...nuevosRellenos.filter(nuevo => !item.sabores.some(r => r.id === nuevo.id))
-                    ]
-                } : item
-        ));
-        showNotification('Rellenos agregados exitosamente');
-        setMostrarModalRellenos(false);
-        setProductoEditandoId(null);
-    };
-
-    const removeAdicion = (productoId, adicionId) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoId ?
-                { ...item, adiciones: item.adiciones.filter(a => a.id !== adicionId) } : item
-        ));
-        showNotification('Adición eliminada');
-    };
-
-    const removeSalsa = (productoId, salsaId) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoId ?
-                { ...item, salsas: item.salsas.filter(s => s.id !== salsaId) } : item
-        ));
-        showNotification('Salsa eliminada');
-    };
-
-    const removeRelleno = (productoId, rellenoId) => {
-        setInsumosSeleccionados(prev => prev.map(item =>
-            item.id === productoId ?
-                { ...item, sabores: item.sabores.filter(r => r.id !== rellenoId) } : item
-        ));
-        showNotification('Relleno eliminado');
+    const getRowClassName = (rowData) => {
+        return rowData.estado === 'Anulado' ? 'row-anulado' : ''; // Apply CSS class for anulled rows
     };
 
 
     return (
-        <div className="admin-container" style={{ padding: '20px', backgroundColor: 'rgb(251, 234, 242)', minHeight: '100vh' }}>
+                <div className="admin-container" style={{ padding: '20px', backgroundColor: 'rgb(251, 234, 242)', minHeight: '100vh' }}>
 
-
+            {/* Notification Component */}
             <AppNotification
                 visible={notification.visible}
                 mensaje={notification.mensaje}
@@ -782,22 +583,138 @@ export default function Ventas() {
                 onClose={hideNotification}
             />
 
-            {!mostrarAgregarVenta ? (
-                <>
+            {mostrarAgregarVenta ? (
+                <VentasCrear
+                    ventaData={ventaData}
+                    handleChange={(e) => setVentaData({ ...ventaData, [e.target.name]: e.target.value })}
+                    erroresValidacion={erroresValidacion}
+                    insumosSeleccionados={insumosSeleccionados}
+                    toggleNestedDetails={toggleNestedDetails}
+                    nestedDetailsVisible={nestedDetailsVisible}
+                    handleCantidadChange={(id, cantidad) => {
+                        setInsumosSeleccionados(prev => prev.map(item => item.id === id ? { ...item, cantidad } : item));
+                    }}
+                    abrirModalAdiciones={(id) => { setProductoEditandoId(id); setMostrarModalAdiciones(true); }}
+                    abrirModalSalsas={(id) => { setProductoEditandoId(id); setMostrarModalSalsas(true); }}
+                    abrirModalRellenos={(id) => { setProductoEditandoId(id); setMostrarModalRellenos(true); }}
+                    removeInsumo={(id) => setInsumosSeleccionados(prev => prev.filter(item => item.id !== id))}
+                    removeAdicion={(productoId, adicionId) => {
+                        setInsumosSeleccionados(prev => prev.map(prod =>
+                            prod.id === productoId ? { ...prod, adiciones: prod.adiciones.filter(ad => ad.id !== adicionId) } : prod
+                        ));
+                    }}
+                    removeSalsa={(productoId, salsaId) => {
+                        setInsumosSeleccionados(prev => prev.map(prod =>
+                            prod.id === productoId ? { ...prod, salsas: prod.salsas.filter(s => s.id !== salsaId) } : prod
+                        ));
+                    }}
+                    removeRelleno={(productoId, rellenoId) => {
+                        setInsumosSeleccionados(prev => prev.map(prod =>
+                            prod.id === productoId ? { ...prod, sabores: prod.sabores.filter(r => r.id !== rellenoId) } : prod
+                        ));
+                    }}
+                    setMostrarModalInsumos={setMostrarModalInsumos}
+                    subtotal={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)}
+                    iva={(insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19}
+                    total={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19}
+                    guardarVenta={() => {
+                        const errores = validarFormularioVenta();
+                        if (Object.keys(errores).length > 0) {
+                            setErroresValidacion(errores);
+                            const camposFaltantes = Object.entries(errores).map(([campo, mensaje]) => {
+                                const nombresCampos = {
+                                    tipo_venta: 'Tipo de Venta', cliente: 'Cliente', sede: 'Sede',
+                                    metodo_pago: 'Método de Pago', fecha_venta: 'Fecha de Venta',
+                                    fecha_entrega: 'Fecha de Entrega', productos: 'Productos'
+                                };
+                                return `${nombresCampos[campo] || campo}: ${mensaje}`;
+                            });
+                            showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
+                            return;
+                        }
 
-                    <div className="admin-button-container" style={{ marginBottom: '15px' }}>
-                        <button
-                            className="admin-button pink"
-                            onClick={() => setMostrarAgregarVenta(true)}
-                            type="button"
-                        >
+                        const nuevaVenta = {
+                            id: allSales.length > 0 ? Math.max(...allSales.map(v => v.id)) + 1 : 1, // Use allSales
+                            ...ventaData,
+                            productos: insumosSeleccionados,
+                            subtotal: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0),
+                            iva: (insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19,
+                            total: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19,
+                            fecha_registro: new Date().toLocaleDateString(),
+                            estado: ventaData.tipo_venta === 'directa' ? 'Venta directa' : 'Pendiente'
+                        };
+
+                        setAllSales(prev => [...prev, nuevaVenta]); // Use setAllSales
+                        showNotification('Venta guardada exitosamente');
+                        setMostrarAgregarVenta(false);
+                        setVentaData({
+                            cod_venta: '00000000',
+                            tipo_venta: '',
+                            cliente: '',
+                            sede: '',
+                            metodo_pago: '',
+                            fecha_venta: new Date().toISOString().split('T')[0],
+                            fecha_entrega: '',
+                            fecha_registro: '',
+                            observaciones: ''
+                        });
+                        setInsumosSeleccionados([]);
+                        setErroresValidacion({});
+                    }}
+                    setMostrarAgregarVenta={setMostrarAgregarVenta}
+                    mostrarModalInsumos={mostrarModalInsumos}
+                    agregarInsumos={(nuevosInsumos) => {
+                        setInsumosSeleccionados(prev => {
+                            const newInsumos = [...prev];
+                            nuevosInsumos.forEach(nuevo => {
+                                const existingIndex = newInsumos.findIndex(item => item.id === nuevo.id);
+                                if (existingIndex > -1) {
+                                    newInsumos[existingIndex].cantidad += nuevo.cantidad;
+                                } else {
+                                    newInsumos.push({ ...nuevo, adiciones: [], salsas: [], sabores: [] });
+                                }
+                            });
+                            return newInsumos;
+                        });
+                    }}
+                    mostrarModalAdiciones={mostrarModalAdiciones}
+                    agregarAdiciones={(adicionesToAdd) => {
+                        setInsumosSeleccionados(prev => prev.map(item =>
+                            item.id === productoEditandoId ? { ...item, adiciones: adicionesToAdd } : item
+                        ));
+                        setMostrarModalAdiciones(false);
+                        setProductoEditandoId(null);
+                    }}
+                    mostrarModalSalsas={mostrarModalSalsas}
+                    agregarSalsas={(salsasToAdd) => {
+                        setInsumosSeleccionados(prev => prev.map(item =>
+                            item.id === productoEditandoId ? { ...item, salsas: salsasToAdd } : item
+                        ));
+                        setMostrarModalSalsas(false);
+                        setProductoEditandoId(null);
+                    }}
+                    mostrarModalRellenos={mostrarModalRellenos}
+                    agregarRellenos={(rellenosToAdd) => {
+                        setInsumosSeleccionados(prev => prev.map(item =>
+                            item.id === productoEditandoId ? { ...item, sabores: rellenosToAdd } : item
+                        ));
+                        setMostrarModalRellenos(false);
+                        setProductoEditandoId(null);
+                    }}
+                    setProductoEditandoId={setProductoEditandoId}
+                    productoEditandoId={productoEditandoId}
+                />
+            ) : (
+                <>
+                    <div className="admin-toolbar">
+                        <button className="admin-button pink" onClick={() => setMostrarAgregarVenta(true)}>
                             + Agregar
                         </button>
-                                            <SearchBar
-                        filtro={filtro}
-                        setFiltro={setFiltro}
-                        placeholder="Buscar por cliente, sede, o ID de venta..."
-                    />
+                        <SearchBar
+                            filtro={filtro}
+                            setFiltro={setFiltro}
+                            placeholder="Buscar por cliente, sede o N° de venta"
+                        />
                     </div>
 
                     <VentasListar
@@ -814,45 +731,6 @@ export default function Ventas() {
                         setFiltroTipoVenta={setFiltroTipoVenta}
                     />
                 </>
-            ) : (
-                <VentasCrear
-                    ventaData={ventaData}
-                    handleChange={(e) => {
-                        const { name, value } = e.target;
-                        setVentaData(prev => ({ ...prev, [name]: value }));
-                        if (erroresValidacion && erroresValidacion.hasOwnProperty(name)) {
-                            setErroresValidacion(prev => ({ ...prev, [name]: '' }));
-                        }
-                    }}
-                    erroresValidacion={erroresValidacion}
-                    insumosSeleccionados={insumosSeleccionados}
-                    toggleNestedDetails={toggleNestedDetails}
-                    nestedDetailsVisible={nestedDetailsVisible}
-                    handleCantidadChange={handleCantidadChange}
-                    abrirModalAdiciones={abrirModalAdiciones}
-                    abrirModalSalsas={abrirModalSalsas}
-                    abrirModalRellenos={abrirModalRellenos}
-                    removeInsumo={removeInsumo}
-                    removeAdicion={removeAdicion}
-                    removeSalsa={removeSalsa}
-                    removeRelleno={removeRelleno}
-                    setMostrarModalInsumos={setMostrarModalInsumos}
-                    subtotal={subtotal}
-                    iva={iva}
-                    total={total}
-                    guardarVenta={guardarVenta}
-                    setMostrarAgregarVenta={setMostrarAgregarVenta}
-                    mostrarModalInsumos={mostrarModalInsumos}
-                    agregarInsumos={agregarInsumos}
-                    mostrarModalAdiciones={mostrarModalAdiciones}
-                    agregarAdiciones={agregarAdiciones}
-                    mostrarModalSalsas={mostrarModalSalsas}
-                    agregarSalsas={agregarSalsas}
-                    mostrarModalRellenos={mostrarModalRellenos}
-                    agregarRellenos={agregarRellenos}
-                    setProductoEditandoId={setProductoEditandoId}
-                    productoEditandoId={productoEditandoId}
-                />
             )}
 
             <VentasDetalleModal
@@ -860,7 +738,7 @@ export default function Ventas() {
                 onClose={cerrarModal}
                 ventaSeleccionada={ventaSeleccionada}
                 showProductOptions={showProductOptions}
-                setShowProductOptions={setShowProductOptions}
+                setShowProductOptions={toggleProductOptions}
             />
 
             <VentasAnularModal
@@ -887,7 +765,7 @@ export default function Ventas() {
                     setErroresValidacion({});
                 }}
                 abonoData={abonoData}
-                handleAbonoChange={handleAbonoChange}
+                handleAbonoChange={(e) => setAbonoData({ ...abonoData, [e.target.name]: e.target.value })}
                 erroresValidacion={erroresValidacion}
                 handleImageUpload={handleImageUpload}
                 agregarAbono={agregarAbono}

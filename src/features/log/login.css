@@ -1,9 +1,9 @@
 .toggle-left {
-  background-color: #ff007b; /* Rosa más claro para registro */
+  background-color: #ff007b;
 }
 
 .toggle-right {
-  background-color: #fc0278;
+  background-color: #ff007b;
 }
 
 * {
@@ -99,7 +99,8 @@
 }
 
 .sign-in {
-  background-image: url('https://th.bing.com/th/id/OIP.SA16p_-iTwhNSJOobUU4mAHaFS?rs=1&pid=ImgDetMain');
+  background-image: url('https://th.bing.com/th/id/OIP.SA16p_-iTwhNSJOobUU4mAHaFS?rs=1&pid=ImgDetMain'); 
+  background-color: #e4e3e4;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -113,7 +114,8 @@
 }
 
 .sign-up {
-  background-image: url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg');
+  background-image: url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg'); 
+  background-color: #e4e3e4;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

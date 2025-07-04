@@ -1,3 +1,4 @@
+// AgregarAdicionesModal.jsx
 import React, { useState } from 'react';
 
 const AdicionCard = ({ adicion, selected, onToggle }) => {
@@ -16,6 +17,8 @@ const AdicionCard = ({ adicion, selected, onToggle }) => {
 const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   const [selectedAdiciones, setSelectedAdiciones] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for dropdown visibility
 
   const adicionesData = [
 {
@@ -23,42 +26,52 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   nombre: 'Mini malvaviscos',
   unidad: 'g',
   precio: 5.20,
-  imagen: 'https://media.istockphoto.com/id/628530120/es/foto/fondo-de-mini-malvaviscos-rosas-y-blancos.jpg?s=612x612&w=0&k=20&c=w-ZmM7gE9Jegs9uBnit5FMiU9HEhptX-8LYMhm3glJg='
+  imagen: 'https://media.istockphoto.com/id/628530120/es/foto/fondo-de-mini-malvaviscos-rosas-y-blancos.jpg?s=612x612&w=0&k=20&c=w-ZmM7gE9Jegs9uBnit5FMiU9HEHptX-8LYMhm3glJg=',
+  category: 'Malvaviscos'
 },
 {
   id: 308,
   nombre: 'Chocolatina rallada',
   unidad: 'g',
   precio: 6.00,
-  imagen: 'https://thumbs.dreamstime.com/b/piel-de-chocolate-rallado-en-blanco-pila-bloques-sobre-fondo-151707432.jpg'
+  imagen: 'https://thumbs.dreamstime.com/b/piel-de-chocolate-rallado-en-blanco-pila-bloques-sobre-fondo-151707432.jpg',
+  category: 'Chocolates'
 },
 {
   id: 309,
   nombre: 'Frambuesas frescas',
   unidad: 'unidad',
   precio: 7.50,
-  imagen: 'https://editorial.aristeguinoticias.com/wp-content/uploads/2024/03/enfermedades-frambuesa-232024.jpg'
+  imagen: 'https://editorial.aristeguinoticias.com/wp-content/uploads/2024/03/enfermedades-frambuesa-232024.jpg',
+  category: 'Frutas'
 },
 {
   id: 310,
   nombre: 'Rodajas de fresa',
   unidad: 'unidad',
   precio: 6.25,
-  imagen: 'https://st3.depositphotos.com/15352324/33625/i/450/depositphotos_336259748-stock-photo-strawberry-slices-fresh-berries-macro.jpg'
+  imagen: 'https://st3.depositphotos.com/15352324/33625/i/450/depositphotos_336259748-stock-photo-strawberry-slices-fresh-berries-macro.jpg',
+  category: 'Frutas'
 },
 {
   id: 311,
   nombre: 'Galletas oreo',
   unidad: 'g',
   precio: 3.95,
-  imagen: 'https://www.pediatriamildias.com/wp-content/uploads/2022/09/Blog53.jpg'
+  imagen: 'https://www.pediatriamildias.com/wp-content/uploads/2022/09/Blog53.jpg',
+  category: 'Galletas'
 },
 
 
   ];
 
+  const categoriasData = [
+    'Todos', 'Malvaviscos', 'Chocolates', 'Frutas', 'Galletas'
+  ];
+
   const filteredAdiciones = adicionesData.filter(adicion =>
-    adicion.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    adicion.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === 'Todos' || adicion.category === selectedCategory)
   );
 
   const toggleAdicion = (adicion) => {
@@ -114,12 +127,73 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             color: #d63384;
           }
 
-          .adicion-modal-search input {
-            width: 100%;
+          .adicion-modal-search-container { /* New class for search and filter */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+          }
+
+          .adicion-modal-search-container input {
+            flex-grow: 1; /* Allows input to take available space */
             padding: 10px;
             border-radius: 10px;
             border: 2px solid #ffb6c1;
             font-size: 16px;
+          }
+
+          .adicion-modal-filter-btn { /* New button style */
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #ff69b4;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          }
+
+          .adicion-modal-filter-btn:hover {
+            background-color: #d63384;
+          }
+
+          .adicion-modal-categories-dropdown { /* New dropdown style */
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #ffe4ec;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+            min-width: 150px;
+          }
+
+          .adicion-modal-category-btn {
+            padding: 8px 15px;
+            border: 1px solid #ff69b4;
+            border-radius: 8px;
+            background-color: #ffe4ec;
+            color: #d63384;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, color 0.2s;
+            text-align: left;
+          }
+
+          .adicion-modal-category-btn.selected {
+            background-color: #ff69b4;
+            color: white;
+          }
+
+          .adicion-modal-category-btn:hover:not(.selected) {
+            background-color: #ffb6c1;
           }
 
           .adicion-modal-grid {
@@ -200,13 +274,36 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
           <button onClick={onClose} className="adicion-modal-close-btn">&times;</button>
         </div>
 
-        <div className="adicion-modal-search">
+        <div className="adicion-modal-search-container"> {/* Updated class */}
           <input
             type="text"
             placeholder="Buscar adición..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <button
+            className="adicion-modal-filter-btn"
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          >
+            Categorías
+            {showCategoryDropdown ? ' ▲' : ' ▼'}
+          </button>
+          {showCategoryDropdown && (
+            <div className="adicion-modal-categories-dropdown">
+              {categoriasData.map(category => (
+                <button
+                  key={category}
+                  className={`adicion-modal-category-btn ${selectedCategory === category ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setShowCategoryDropdown(false); // Close dropdown after selection
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="adicion-modal-grid">

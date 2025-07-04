@@ -15,21 +15,21 @@ export default function VentasListar({
     notification,
     hideNotification,
     getRowClassName,
-    filtroTipoVenta, // New prop
-    setFiltroTipoVenta // New prop
+    filtroTipoVenta, 
+    setFiltroTipoVenta 
 }) {
     return (
         <>
-            <AppNotification // Renamed component usage
+            <AppNotification
                 visible={notification.visible}
                 mensaje={notification.mensaje}
                 tipo={notification.tipo}
                 onClose={hideNotification}
             />
 
-            <div className="ventas-header-container"> {/* New container for title and buttons */}
-                <h2 className="admin-section-title">Ventas</h2>
-                <div className="filter-buttons-container"> {/* Container for filter buttons */}
+            <div className="ventas-header-container">
+                <h2 className="admin-section-title"> Gestión de Ventas</h2>
+                <div className="filter-buttons-container">
                     <button
                         className={`filter-tab ${filtroTipoVenta === 'directa' ? 'filter-tab-active' : ''}`}
                         onClick={() => setFiltroTipoVenta('directa')}
@@ -41,6 +41,13 @@ export default function VentasListar({
                         onClick={() => setFiltroTipoVenta('pedido')}
                     >
                         Pedidos
+                    </button>
+                    {/* New button for Anulados */}
+                    <button
+                        className={`filter-tab ${filtroTipoVenta === 'anulado' ? 'filter-tab-active' : ''}`}
+                        onClick={() => setFiltroTipoVenta('anulado')}
+                    >
+                        Anulados
                     </button>
                 </div>
             </div>
@@ -63,21 +70,28 @@ export default function VentasListar({
                 <Column field="cliente" header="Cliente" headerStyle={{ paddingLeft: '4rem' }}/>
                 <Column field="sede" header="Sede" headerStyle={{ paddingLeft: '2.5rem' }}/>
                 <Column field="fecha_venta" header="Fecha" headerStyle={{ paddingLeft: '2.5rem' }}/>
-                <Column field="total" header="Total" headerStyle={{ paddingLeft: '1.5rem' }} />
+                <Column field="total" header="Total" headerStyle={{ paddingLeft: '1.5rem'}} />
                 <Column header="Estado" headerStyle={{ paddingLeft: '2.5rem' }} body={(rowData) => (
                     <select
                         value={rowData.estado}
                         onChange={(e) => manejarCambioEstado(rowData, e.target.value)}
                         className="admin-select"
-                        disabled={rowData.estado === 'Anulado' || rowData.estado === 'Terminado'}
+                        // Disable dropdown if current filter is 'anulado', status is 'Anulado'/'Terminado', OR if it's a 'directa' sale
+                        disabled={filtroTipoVenta === 'anulado' || rowData.estado === 'Anulado' || rowData.estado === 'Terminado' || rowData.tipo_venta === 'directa'}
                     >
-                        {rowData.tipo_venta === 'directa' && (
+                        {/* Options for 'Anulado' status - only show "Anulado" if it's the current state */}
+                        {rowData.estado === 'Anulado' && (
+                            <option value="Anulado">Anulado</option>
+                        )}
+
+                        {/* Options for 'directa' sales, if not already Anulado */}
+                        {rowData.tipo_venta === 'directa' && rowData.estado !== 'Anulado' && (
                             <>
                                 <option value="Venta directa">Venta directa</option>
-                                <option value="Anulado">Anulado</option>
                             </>
                         )}
-                        {rowData.tipo_venta === 'pedido' && (
+                        {/* Options for 'pedido' sales, if not in 'Anulado' tab AND not already Anulado */}
+                        {rowData.tipo_venta === 'pedido' && rowData.estado !== 'Anulado' && (
                             <>
                                 <option value="Pendiente">Pendiente</option>
                                 <option value="En proceso">En proceso</option>
@@ -85,7 +99,6 @@ export default function VentasListar({
                                 <option value="Entregado">Entregado</option>
                                 <option value="Por pagar">Por pagar</option>
                                 <option value="Terminado">Terminado</option>
-                                <option value="Anulado">Anulado</option>
                             </>
                         )}
                     </select>
@@ -94,38 +107,51 @@ export default function VentasListar({
                     header="Acciones"
                     body={(rowData) => (
                         <>
-                            <button
-                                className="admin-button primary"
-                                title="Visualizar"
-                                onClick={() => abrirModal('visualizar', rowData)}
-                            >
-                                🔍
-                            </button>
-                            <button
-                                className="admin-button red"
-                                title="Anular"
-                                onClick={() => abrirModal('anular', rowData)}
-                                disabled={rowData.estado === 'Anulado'}
-                            >🛑</button>
-                            <button
-                                className="admin-button blue"
-                                title="Descargar PDF"
-                                onClick={() => generarPDFVenta(rowData)}
-                            >
-                                ⬇️
-                            </button>
-                            {/* Conditionally render the Abonos button */}
-                            {rowData.estado !== 'Venta directa' && rowData.estado !== 'Anulado' && (
+                            {/* Solo mostrar el botón "Visualizar" si la venta está anulada o si el filtro es 'anulado' */}
+                            {(filtroTipoVenta === 'anulado' || rowData.estado === 'Anulado') ? (
                                 <button
-                                    className="admin-button green"
-                                    title="Abonos"
-                                    onClick={() => {
-                                        setVentaSeleccionada(rowData);
-                                        setMostrarModalAbonos(true);
-                                    }}
+                                    className="admin-button primary"
+                                    title="Visualizar"
+                                    onClick={() => abrirModal('visualizar', rowData)}
                                 >
-                                    💰
+                                    🔍
                                 </button>
+                            ) : (
+                                <>
+                                    {/* Mostrar los otros botones solo si no está en la pestaña "Anulados" y la venta no está anulada */}
+                                    <button
+                                        className="admin-button primary"
+                                        title="Visualizar"
+                                        onClick={() => abrirModal('visualizar', rowData)}
+                                    >
+                                        🔍
+                                    </button>
+                                    <button
+                                        className="admin-button red"
+                                        title="Anular"
+                                        onClick={() => abrirModal('anular', rowData)}
+                                        disabled={rowData.estado === 'Anulado'} // Deshabilitar si ya está anulada
+                                    >🛑</button>
+                                    <button
+                                        className="admin-button blue"
+                                        title="Descargar PDF"
+                                        onClick={() => generarPDFVenta(rowData)}
+                                    >
+                                        ⬇️
+                                    </button>
+                                    {rowData.estado !== 'Venta directa' && rowData.estado !== 'Anulado' && (
+                                        <button
+                                            className="admin-button green"
+                                            title="Abonos"
+                                            onClick={() => {
+                                                setVentaSeleccionada(rowData);
+                                                setMostrarModalAbonos(true);
+                                            }}
+                                        >
+                                            💰
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </>
                     )}

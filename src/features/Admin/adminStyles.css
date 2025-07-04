@@ -1202,7 +1202,6 @@
   flex-direction: column;
   font-weight: 500;
 }
-/* =================== ESTILOS VISTA VENTAS =================== */
 
 .ventas-header-container {
     display: flex;
@@ -1258,7 +1257,6 @@
     border-top: none;
 }
 
-/* =================== ESTILOS MODAL =================== */
 
 .modal-wide {
     max-width: 800px !important;
@@ -1351,7 +1349,6 @@
     }
 }
 
-/* =================== DISEÑO 2 COLUMNAS EN MODAL =================== */
 
 .usuarios-modal-grid-two-columns {
     display: grid;
@@ -1366,7 +1363,6 @@
     width: 100%;
 }
 
-/* =================== BOTÓN DESHABILITADO =================== */
 
 .admin-button.disabled {
     opacity: 0.4;
@@ -1374,7 +1370,6 @@
     pointer-events: none;
 }
 
-/* =================== TÍTULO DE SECCIÓN =================== */
 
 .admin-section-header {
     display: flex;
@@ -1383,7 +1378,6 @@
     margin-bottom: -0.2rem;
 }
 
-/* =================== ESTILO DE PESTAÑAS =================== */
 
 .admin-tab {
     all: unset;
@@ -1399,4 +1393,99 @@
     display: inline-block;
     cursor: pointer;
     user-select: none;
+}
+
+.detalle-venta-modal .modal-content-columns {
+    display: flex; /* This creates the two columns */
+    gap: 30px; /* Space between the two columns */
+    margin-top: 20px;
+    flex-grow: 1; /* Allows columns section to fill available vertical space */
+    overflow-y: auto; /* Add vertical scroll to the content columns if they overflow */
+    padding-right: 15px; /* Space for the scrollbar */
+    padding-bottom: 15px; /* Space at the bottom */
+}
+
+.detalle-venta-modal .modal-content-columns .column {
+    flex: 1; /* Makes both columns take equal width */
+    padding: 15px;
+    border: 1px solid #eee; /* Light border for column separation */
+    border-radius: 6px;
+    display: flex; /* Make column a flex container for its content */
+    flex-direction: column;
+}
+
+
+
+.detalle-venta-modal .modal-content-columns .column p {
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+
+
+
+.detalle-venta-modal .productos-lista-scrollable .producto-item-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .producto-info {
+    flex-grow: 1;
+    font-size: 0.95em;
+    color: #444;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .product-options-show-btn {
+    background-color: #e556ae; /* Green button for "Ver Opciones" */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s ease;
+    margin-left: 15px; /* Space from product info */
+    flex-shrink: 0;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .product-options-show-btn:hover {
+    background-color: #f141ad;
+}
+
+
+.detalle-venta-modal .resumen-venta p {
+    margin: 5px 0;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.detalle-venta-modal .modal-footer {
+    text-align: right;
+    margin-top: 20px;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.stock-alert {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px 15px;
+  border: 1px solid #ffeeba;
+  border-radius: 5px;
+  margin: 1rem 0;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+/* Styles for the disabled state */
+.admin-button.disabled-button {
+    opacity: 0.3; /* Adjusted to be more faded (less opaque) */
+    cursor: not-allowed;
 }

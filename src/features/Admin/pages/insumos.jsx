@@ -65,31 +65,58 @@ export default function InsumosTable() {
     setForm({ nombre: '', categoria: '', cantidad: '', unidad: '', imagen: '', estado: true });
   };
 
+  const validateField = (name, value) => {
+    let error = null;
+    
+    switch (name) {
+      case 'nombre':
+        if (!value.trim()) {
+          error = 'El nombre es obligatorio';
+        } else if (!opcionesNombre.includes(value)) {
+          error = 'Nombre inválido. Selecciona una opción válida';
+        }
+        break;
+      
+      case 'categoria':
+        if (!value.trim()) {
+          error = 'La categoría es obligatoria';
+        } else if (!opcionesCategoria.includes(value)) {
+          error = 'Categoría inválida. Selecciona una opción válida';
+        }
+        break;
+      
+      case 'unidad':
+        if (!value.trim()) {
+          error = 'La unidad es obligatoria';
+        } else if (!opcionesUnidad.includes(value)) {
+          error = 'Unidad inválida. Selecciona una opción válida';
+        }
+        break;
+      
+      case 'cantidad':
+        if (!value.toString().trim()) {
+          error = 'La cantidad es obligatoria';
+        } else if (isNaN(value) || Number(value) <= 0) {
+          error = 'La cantidad debe ser un número mayor a 0';
+        } else if (Number(value) > 10000) {
+          error = 'La cantidad no puede ser mayor a 10,000';
+        }
+        break;
+    }
+    
+    return error;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
 
-    if (name === 'nombre') {
-      setErrors(prev => ({
-        ...prev,
-        nombre: value && !opcionesNombre.includes(value) ? 'Nombre inválido' : null
-      }));
-    } else if (name === 'categoria') {
-      setErrors(prev => ({
-        ...prev,
-        categoria: value && !opcionesCategoria.includes(value) ? 'Categoría inválida' : null
-      }));
-    } else if (name === 'unidad') {
-      setErrors(prev => ({
-        ...prev,
-        unidad: value && !opcionesUnidad.includes(value) ? 'Unidad inválida' : null
-      }));
-    } else if (name === 'cantidad') {
-      setErrors(prev => ({
-        ...prev,
-        cantidad: value && (isNaN(value) || Number(value) <= 0) ? 'Cantidad inválida' : null
-      }));
-    }
+    // Validación en tiempo real
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
   };
 
   const convertirABase64 = (file, callback) => {
@@ -100,15 +127,26 @@ export default function InsumosTable() {
   };
 
   const validarFormulario = () => {
-    if (
-      errors.nombre || errors.categoria || errors.unidad || errors.cantidad ||
-      !form.nombre || !form.categoria || !form.unidad || !form.cantidad
-    ) {
-      showNotification('Por favor corrige los campos inválidos', 'error');
+    // Validar todos los campos
+    const erroresValidacion = {
+      nombre: validateField('nombre', form.nombre),
+      categoria: validateField('categoria', form.categoria),
+      unidad: validateField('unidad', form.unidad),
+      cantidad: validateField('cantidad', form.cantidad)
+    };
+
+    setErrors(erroresValidacion);
+
+    // Verificar si hay algún error
+    const hasErrors = Object.values(erroresValidacion).some(error => error !== null);
+    
+    if (hasErrors) {
+      showNotification('Por favor corrige los errores en el formulario', 'error');
       return false;
     }
 
-    if (!form.imagen.trim()) {
+    // Validar imagen solo para agregar o si se está editando y no tenía imagen
+    if (!form.imagen || !form.imagen.trim()) {
       showNotification('La imagen es obligatoria', 'error');
       return false;
     }
@@ -156,7 +194,11 @@ export default function InsumosTable() {
         tipo={notification.tipo}
         onClose={hideNotification}
       />
-
+      {stockBajo && (
+        <div className="stock-alert">
+          ⚠ Hay insumos con stock bajo. Revisa la lista para reponerlos.
+        </div>
+      )}
       <div className="admin-toolbar">
         <button className="admin-button pink" onClick={() => abrirModal('agregar')}>+ Agregar</button>
         <SearchBar value={filtro} onChange={setFiltro} placeholder="Buscar insumo..." />
@@ -164,11 +206,7 @@ export default function InsumosTable() {
 
       <h2 className="admin-section-title">Gestión de Insumos</h2>
 
-      {stockBajo && (
-        <div className="stock-alert">
-          ⚠️ Hay insumos con stock bajo. Revisa la lista para reponerlos.
-        </div>
-      )}
+
 
       <DataTable value={insumosFiltrados} paginator rows={5} className="admin-table">
         <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
@@ -178,16 +216,43 @@ export default function InsumosTable() {
         <Column header="Estado" body={i => (
           <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
         )} />
-        <Column header="Acción" body={i => (
-          <div>
-            <button className="admin-button gray" onClick={() => abrirModal('ver', i)}>🔍</button>
-            <button className="admin-button yellow" onClick={() => abrirModal('editar', i)}>✏️</button>
-            <button className="admin-button red" onClick={() => abrirModal('eliminar', i)}>🗑️</button>
-          </div>
-        )} />
+        <Column
+          header="Acción"
+          body={(rowData) => (
+            <>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>
+                🔍
+              </button>
+              <button 
+                className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`} 
+                title="Editar" 
+                onClick={() => rowData.estado && abrirModal('editar', rowData)}
+                disabled={!rowData.estado}
+                style={{ 
+                  opacity: !rowData.estado ? 0.5 : 1, 
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                ✏️
+              </button>
+              <button 
+                className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`} 
+                title="Eliminar" 
+                onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+                disabled={!rowData.estado}
+                style={{ 
+                  opacity: !rowData.estado ? 0.5 : 1, 
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                🗑️
+              </button>
+            </>
+          )}
+        />
       </DataTable>
 
-    {modal.visible && (
+      {modal.visible && (
         <Modal visible={modal.visible} onClose={cerrarModal}>
           <h2 className="modal-title">
             {modal.tipo === 'agregar' && 'Agregar Insumo'}
@@ -201,14 +266,73 @@ export default function InsumosTable() {
               <p>¿Eliminar <strong>{modal.insumo?.nombre}</strong>?</p>
             ) : modal.tipo === 'ver' ? (
               <div className="modal-form-grid">
-                <p><strong>Nombre:</strong> {modal.insumo?.nombre}</p>
-                <p><strong>Categoría:</strong> {modal.insumo?.categoria}</p>
-                <p><strong>Cantidad:</strong> {modal.insumo?.cantidad} {modal.insumo?.unidad}</p>
-                <p><strong>Estado:</strong> {modal.insumo?.estado ? 'Activo' : 'Inactivo'}</p>
+                <label>
+                  Nombre*
+                  <input
+                    value={modal.insumo?.nombre || ''}
+                    className="modal-input"
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  />
+                </label>
+
+                <label>
+                  Categoría*
+                  <input
+                    value={modal.insumo?.categoria || ''}
+                    className="modal-input"
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  />
+                </label>
+
+                <label>
+                  Cantidad*
+                  <input
+                    value={modal.insumo?.cantidad || ''}
+                    className="modal-input"
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  />
+                </label>
+
+                <label>
+                  Unidad*
+                  <input
+                    value={modal.insumo?.unidad || ''}
+                    className="modal-input"
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  />
+                </label>
+
+                <label style={{ gridColumn: '1 / -1' }}>
+                  Estado
+                  <input
+                    value={modal.insumo?.estado ? 'Activo' : 'Inactivo'}
+                    className="modal-input"
+                    readOnly
+                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                  />
+                </label>
+
                 {modal.insumo?.imagen && (
                   <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
-                    <strong>Imagen:</strong>
-                    <img src={modal.insumo.imagen} alt={modal.insumo.nombre} style={{ maxWidth: '100%', maxHeight: '150px', marginTop: '5px' }} />
+                    <label>
+                      Imagen
+                      <div style={{ marginTop: '5px' }}>
+                        <img 
+                          src={modal.insumo.imagen} 
+                          alt={modal.insumo.nombre} 
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '150px', 
+                            border: '1px solid #ddd',
+                            borderRadius: '4px' 
+                          }} 
+                        />
+                      </div>
+                    </label>
                   </div>
                 )}
               </div>

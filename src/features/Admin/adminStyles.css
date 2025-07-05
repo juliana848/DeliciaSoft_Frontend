@@ -1759,7 +1759,7 @@
   background-color: #000;
   color: #fff;
   font-family: 'Fredoka', sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.5rem;    
   font-weight: normal;
   padding: 0.5rem 1rem;
   border-top-left-radius: 12px;
@@ -1769,3 +1769,28 @@
   cursor: pointer;
   user-select: none;
 }
+
+.compra-fields-grid {
+  display: flex;
+  gap: 12px; /* espacio entre campos */
+  flex-wrap: nowrap;
+}
+
+.field-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-group label {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.field-group select,
+.field-group input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+

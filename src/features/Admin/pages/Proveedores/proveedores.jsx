@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
 
 export default function ProveedoresTable() {
   const [proveedores, setProveedores] = useState([]);
@@ -22,10 +22,10 @@ export default function ProveedoresTable() {
   const [correo, setCorreo] = useState('');
   const [direccion, setDireccion] = useState('');
   const [documentoONit, setDocumentoONit] = useState('');
-  // Nuevos campos agregados
   const [tipoDocumento, setTipoDocumento] = useState('CC');
   const [nombreEmpresa, setNombreEmpresa] = useState('');
   const [nombreContacto, setNombreContacto] = useState('');
+  const [estadoProveedor, setEstadoProveedor] = useState(true); // Nuevo estado para el switch
 
   // Validation states
   const [errors, setErrors] = useState({});
@@ -229,6 +229,9 @@ export default function ProveedoresTable() {
       case 'documentoONit':
         setDocumentoONit(value);
         break;
+      case 'estadoProveedor':
+        setEstadoProveedor(value);
+        break;
     }
 
     // Real-time validation
@@ -284,6 +287,7 @@ export default function ProveedoresTable() {
       setTipoDocumento(proveedor.tipoDocumento || (proveedor.tipo === 'Natural' ? 'CC' : 'NIT'));
       setNombreEmpresa(proveedor.nombreEmpresa || '');
       setNombreContacto(proveedor.nombreContacto || '');
+      setEstadoProveedor(proveedor.estado); // Cargar estado actual
     } else if (tipo === 'agregar') {
       setTipoProveedor('Natural');
       setNombre('');
@@ -294,6 +298,7 @@ export default function ProveedoresTable() {
       setTipoDocumento('CC');
       setNombreEmpresa('');
       setNombreContacto('');
+      setEstadoProveedor(true); // Por defecto activo
     }
     setModalVisible(true);
   };
@@ -395,9 +400,7 @@ export default function ProveedoresTable() {
     }
 
     return true;
-  };
-
-  const guardarProveedor = () => {
+  };const guardarProveedor = () => {
     if (!validarCampos()) return;
 
     if (modalTipo === 'agregar') {
@@ -409,7 +412,7 @@ export default function ProveedoresTable() {
         contacto,
         correo,
         direccion,
-        estado: true,
+        estado: estadoProveedor, // Usar el estado del switch
         extra: documentoONit,
         tipoDocumento
       };
@@ -431,6 +434,7 @@ export default function ProveedoresTable() {
               contacto, 
               correo, 
               direccion, 
+              estado: estadoProveedor, // Usar el estado del switch
               extra: documentoONit,
               tipoDocumento,
               ...(tipoProveedor === 'Jurídico' ? { 
@@ -456,13 +460,38 @@ export default function ProveedoresTable() {
     cerrarModal();
   };
 
-  const proveedoresFiltrados = proveedores.filter(p =>
-    p.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
+  // Filtrado mejorado por todos los campos visibles
+  const proveedoresFiltrados = proveedores.filter(p => {
+    const filtroLower = filtro.toLowerCase();
+    
+    // Campos principales que siempre se buscan
+    const nombre = p.nombre?.toLowerCase() || '';
+    const tipo = p.tipo?.toLowerCase() || '';
+    const contacto = p.contacto?.toLowerCase() || '';
+    const correo = p.correo?.toLowerCase() || '';
+    const direccion = p.direccion?.toLowerCase() || '';
+    const tipoDocumento = p.tipoDocumento?.toLowerCase() || '';
+    const documento = p.extra?.toLowerCase() || '';
+    const estado = p.estado ? 'activo' : 'inactivo';
+    
+    // Campos específicos para jurídico
+    const nombreEmpresa = p.nombreEmpresa?.toLowerCase() || '';
+    const nombreContacto = p.nombreContacto?.toLowerCase() || '';
+    
+    return nombre.includes(filtroLower) ||
+            tipo.includes(filtroLower) ||
+            contacto.includes(filtroLower) ||
+            correo.includes(filtroLower) ||
+            direccion.includes(filtroLower) ||
+            tipoDocumento.includes(filtroLower) ||
+            documento.includes(filtroLower) ||
+            estado.includes(filtroLower) ||
+            nombreEmpresa.includes(filtroLower) ||
+            nombreContacto.includes(filtroLower);
+    });
 
   return (
     <>
-
       <div className="admin-wrapper">
         <Notification
           visible={notification.visible}
@@ -490,7 +519,41 @@ export default function ProveedoresTable() {
               <InputSwitch checked={rowData.estado} onChange={() => toggleEstado(rowData)} />
             )}
           />
-          <Column
+                  <Column
+          header="Acción"
+          body={(rowData) => (
+            <>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>
+                🔍
+              </button>
+              <button 
+                className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`} 
+                title="Editar" 
+                onClick={() => rowData.estado && abrirModal('editar', rowData)}
+                disabled={!rowData.estado}
+                style={{ 
+                  opacity: !rowData.estado ? 0.5 : 1, 
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                ✏️
+              </button>
+              <button 
+                className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`} 
+                title="Eliminar" 
+                onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+                disabled={!rowData.estado}
+                style={{ 
+                  opacity: !rowData.estado ? 0.5 : 1, 
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                🗑️
+              </button>
+            </>
+          )}
+        />
+          {/* <Column
             header="Acciones" 
             headerStyle={{ paddingLeft: '2rem' }}
             body={(rowData) => (
@@ -500,7 +563,7 @@ export default function ProveedoresTable() {
                 <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
               </>
             )}
-          />
+          /> */}
         </DataTable>
 
         {(modalTipo === 'agregar' || modalTipo === 'editar') && (
@@ -508,7 +571,8 @@ export default function ProveedoresTable() {
             <h2 className="modal-title">{modalTipo === 'agregar' ? 'Agregar Proveedor' : 'Editar Proveedor'}</h2>
             <div className="modal-body">
               <div className="modal-form-grid-wide">
-                <label>Tipo*
+                {/* Orden corregido: Tipo de Proveedor */}
+                <label>Tipo de Proveedor*
                   <select 
                     value={tipoProveedor} 
                     onChange={(e) => handleFieldChange('tipoProveedor', e.target.value)} 
@@ -519,6 +583,7 @@ export default function ProveedoresTable() {
                   </select>
                 </label>
 
+                {/* Tipo de Documento */}
                 <label>Tipo de Documento*
                   <select 
                     value={tipoDocumento} 
@@ -540,8 +605,23 @@ export default function ProveedoresTable() {
                   </select>
                 </label>
 
+                {/* Número de Documento */}
+                <label>{tipoProveedor === 'Natural' ? 'Número de Documento*' : (tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
+                  <input 
+                    type="text" 
+                    value={documentoONit} 
+                    onChange={(e) => handleFieldChange('documentoONit', e.target.value)}
+                    onBlur={(e) => handleFieldBlur('documentoONit', e.target.value)}
+                    className={`modal-input ${errors.documentoONit ? 'error' : ''}`}
+                    placeholder={tipoProveedor === 'Natural' ? 'Número de documento' : (tipoDocumento === 'RUT' ? 'Número de RUT' : 'Número de NIT')}
+                    maxLength={tipoProveedor === 'Natural' ? '10' : (tipoDocumento === 'RUT' ? '10' : '12')}
+                  />
+                  {errors.documentoONit && <span className="error-message">{errors.documentoONit}</span>}
+                </label>
+
+                {/* Campos específicos según tipo */}
                 {tipoProveedor === 'Natural' ? (
-                  <label>Nombre*
+                  <label>Nombre Completo*
                     <input 
                       type="text" 
                       value={nombre} 
@@ -554,14 +634,14 @@ export default function ProveedoresTable() {
                   </label>
                 ) : (
                   <>
-                    <label>Nombre de Empresa*
+                    <label>Razón Social*
                       <input 
                         type="text" 
                         value={nombreEmpresa} 
                         onChange={(e) => handleFieldChange('nombreEmpresa', e.target.value)}
                         onBlur={(e) => handleFieldBlur('nombreEmpresa', e.target.value)}
                         className={`modal-input ${errors.nombreEmpresa ? 'error' : ''}`}
-                        placeholder="Ingrese el nombre de la empresa"
+                        placeholder="Ingrese la razón social"
                       />
                       {errors.nombreEmpresa && <span className="error-message">{errors.nombreEmpresa}</span>}
                     </label>
@@ -580,7 +660,8 @@ export default function ProveedoresTable() {
                   </>
                 )}
 
-                <label>Contacto*
+                {/* Contacto */}
+                <label>Teléfono*
                   <input 
                     type="text" 
                     value={contacto} 
@@ -593,7 +674,8 @@ export default function ProveedoresTable() {
                   {errors.contacto && <span className="error-message">{errors.contacto}</span>}
                 </label>
 
-                <label>Correo*
+                {/* Correo */}
+                <label>Correo Electrónico*
                   <input 
                     type="email" 
                     value={correo} 
@@ -605,6 +687,7 @@ export default function ProveedoresTable() {
                   {errors.correo && <span className="error-message">{errors.correo}</span>}
                 </label>
 
+                {/* Dirección */}
                 <label>Dirección*
                   <input 
                     type="text" 
@@ -617,18 +700,20 @@ export default function ProveedoresTable() {
                   {errors.direccion && <span className="error-message">{errors.direccion}</span>}
                 </label>
 
-                            <label>{tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*'}
-              <input 
-                type="text" 
-                value={documentoONit} 
-                onChange={(e) => handleFieldChange('documentoONit', e.target.value)}
-                onBlur={(e) => handleFieldBlur('documentoONit', e.target.value)}
-                className={`modal-input ${errors.documentoONit ? 'error' : ''}`}
-                placeholder={tipoDocumento === 'RUT' ? 'Número de RUT' : 'Número de NIT'}
-                maxLength={tipoDocumento === 'RUT' ? '10' : '12'}
-              />
-              {errors.documentoONit && <span className="error-message">{errors.documentoONit}</span>}
-            </label>
+                {/* Switch de Estado - Solo en modo editar */}
+                {modalTipo === 'editar' && (
+                  <label>Estado
+                    <div className="switch-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+                      <span style={{ color: estadoProveedor ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>
+                        {estadoProveedor ? 'Activo' : 'Inactivo'}
+                      </span>
+                      <InputSwitch 
+                        checked={estadoProveedor} 
+                        onChange={(e) => handleFieldChange('estadoProveedor', e.value)} 
+                      />
+                    </div>
+                  </label>
+                )}
 
               </div>
             </div>
@@ -641,24 +726,76 @@ export default function ProveedoresTable() {
         )}
 
         {modalTipo === 'visualizar' && proveedorSeleccionado && (
-          <Modal visible={modalVisible} onClose={cerrarModal}>
+          <Modal visible={modalVisible} onClose={cerrarModal} className="modal-wide">
             <h2 className="modal-title">Detalles del Proveedor</h2>
             <div className="modal-body">
-              <p><strong>Tipo:</strong> {proveedorSeleccionado.tipo}</p>
-              <p><strong>Tipo de Documento:</strong> {proveedorSeleccionado.tipoDocumento}</p>
-              {proveedorSeleccionado.tipo === 'Natural' ? (
-                                  <p><strong>Nombre:</strong> {proveedorSeleccionado.nombre}</p>
-              ) : (
-                <>
-                  <p><strong>Nombre de Empresa:</strong> {proveedorSeleccionado.nombreEmpresa}</p>
-                  <p><strong>Nombre del Contacto:</strong> {proveedorSeleccionado.nombreContacto}</p>
-                </>
-              )}
-              <p><strong>Contacto:</strong> {proveedorSeleccionado.contacto}</p>
-              <p><strong>Correo:</strong> {proveedorSeleccionado.correo}</p>
-              <p><strong>Dirección:</strong> {proveedorSeleccionado.direccion}</p>
-              <p><strong>{proveedorSeleccionado.tipo === 'Natural' ? 'Documento' : 'NIT'}:</strong> {proveedorSeleccionado.extra}</p>
-              <p><strong>Estado:</strong> {proveedorSeleccionado.estado ? 'Activo' : 'Inactivo'}</p>
+              <div className="modal-form-grid-wide">
+                <label>Tipo de Proveedor*
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.tipo}
+                  </div>
+                </label>
+
+                <label>Tipo de Documento*
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.tipoDocumento}
+                  </div>
+                </label>
+
+                <label>{proveedorSeleccionado.tipo === 'Natural' ? 'Número de Documento*' : (proveedorSeleccionado.tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.extra}
+                  </div>
+                </label>
+
+                {proveedorSeleccionado.tipo === 'Natural' ? (
+                  <label>Nombre Completo*
+                    <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                      {proveedorSeleccionado.nombre}
+                    </div>
+                  </label>
+                ) : (
+                  <>
+                    <label>Razón Social*
+                      <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                        {proveedorSeleccionado.nombreEmpresa}
+                      </div>
+                    </label>
+
+                    <label>Nombre del Contacto*
+                      <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                        {proveedorSeleccionado.nombreContacto}
+                      </div>
+                    </label>
+                  </>
+                )}
+
+                <label>Teléfono*
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.contacto}
+                  </div>
+                </label>
+
+                <label>Correo Electrónico*
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.correo}
+                  </div>
+                </label>
+
+                <label>Dirección*
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    {proveedorSeleccionado.direccion}
+                  </div>
+                </label>
+
+                <label>Estado
+                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    <span style={{ color: proveedorSeleccionado.estado ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>
+                      {proveedorSeleccionado.estado ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
             <div className="modal-footer">
               <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
@@ -670,7 +807,7 @@ export default function ProveedoresTable() {
           <Modal visible={modalVisible} onClose={cerrarModal}>
             <h2 className="modal-title">Confirmar Eliminación</h2>
             <div className="modal-body">
-              <p>¿Seguro que quieres eliminar al proveedor <strong>{proveedorSeleccionado.nombre}</strong>?</p>
+              <p>¿Seguro que quieres eliminar al proveedor <strong>{proveedorSeleccionado.nombre || proveedorSeleccionado.nombreEmpresa}</strong>?</p>
             </div>
             <div className="modal-footer">
               <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>

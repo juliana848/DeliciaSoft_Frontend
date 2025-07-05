@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
@@ -17,6 +17,9 @@ export default function CategoriaTableDemo() {
   const [nombreEditado, setNombreEditado] = useState('');
   const [descripcionEditada, setDescripcionEditada] = useState('');
   const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
+  
+  // Nuevo estado para controlar si la edición/eliminación está habilitada
+  const [isEditDeleteEnabled, setIsEditDeleteEnabled] = useState(true);
 
   useEffect(() => {
     const mockCategorias = [
@@ -70,6 +73,12 @@ export default function CategoriaTableDemo() {
   };
 
   const abrirModal = (tipo, categoria) => {
+    // Verificar si la edición/eliminación está deshabilitada
+    if ((tipo === 'editar' || tipo === 'eliminar') && !isEditDeleteEnabled) {
+      showNotification('Las funciones de edición y eliminación están deshabilitadas', 'error');
+      return;
+    }
+
     setModalTipo(tipo);
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
@@ -164,6 +173,9 @@ export default function CategoriaTableDemo() {
         <button className="admin-button pink" onClick={() => abrirModal('agregar')} type="button">
           + Agregar
         </button>
+        
+
+
         <SearchBar
           placeholder="Buscar categoría..."
           value={filtro}
@@ -173,43 +185,72 @@ export default function CategoriaTableDemo() {
 
       <h2 className="admin-section-title">Categoria Insumos</h2>
 
-      <DataTable
-        value={categoriasFiltradas}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-      >
-        <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
-        <Column field="nombre" header="Nombre" />
-        <Column field="descripcion" header="Descripción" />
-        <Column
-          header="Estados"
-          body={(rowData) => (
-            <InputSwitch
-              checked={rowData.activo}
-              onChange={() => toggleActivo(rowData)}
-            />
-          )}
-        />
-        <Column
-          header="Acción"
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                🔍
-              </button>
-              <button className="admin-button yellow" title="Editar" onClick={() => abrirModal('editar', rowData)}>
-                ✏️
-              </button>
-              <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>
-                🗑️
-              </button>
-            </>
-          )}
-        />
-      </DataTable>
+    <DataTable
+  value={categoriasFiltradas}
+  className="admin-table"
+  paginator
+  rows={5}
+  rowsPerPageOptions={[5, 10, 25, 50]}
+  tableStyle={{ minWidth: '50rem' }}
+>
+  <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
+  <Column field="nombre" header="Nombre" />
+  <Column field="descripcion" header="Descripción" />
+  <Column
+    header="Estados"
+    body={(rowData) => (
+      <InputSwitch
+        checked={rowData.activo}
+        onChange={() => toggleActivo(rowData)}
+      />
+    )}
+  />
+  <Column
+    header="Acción"
+     body={(rowData) => {
+      const isEnabled = rowData.activo;
+
+      return (
+        <>
+          <button 
+            className="admin-button gray" 
+            title="Visualizar" 
+            onClick={() => abrirModal('visualizar', rowData)}
+          >
+            🔍
+          </button>
+
+          <button 
+            className="admin-button yellow"
+            title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
+            onClick={() => isEnabled && abrirModal('editar', rowData)}
+            disabled={!isEnabled}
+            style={{
+              opacity: isEnabled ? 1 : 0.50,
+              cursor: isEnabled ? 'pointer' : 'not-allowed'
+            }}
+          >
+            ✏️
+          </button>
+
+          <button 
+            className="admin-button red"
+            title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
+            onClick={() => isEnabled && abrirModal('eliminar', rowData)}
+            disabled={!isEnabled}
+            style={{
+              opacity: isEnabled ? 1 : 0.50,
+              cursor: isEnabled ? 'pointer' : 'not-allowed'
+            }}
+          >
+            🗑️
+          </button>
+        </>
+      );
+    }}
+  />
+</DataTable>
+
 
       {/* Modal Agregar / Editar */}
       {modalVisible && (modalTipo === 'agregar' || modalTipo === 'editar') && (
@@ -265,9 +306,36 @@ export default function CategoriaTableDemo() {
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Detalles Categoría</h2>
           <div className="modal-body">
-            <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
-            <p><strong>Descripción:</strong> {categoriaSeleccionada.descripcion}</p>
-            <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label>
+                Nombre*
+                <input
+                  value={categoriaSeleccionada.nombre}
+                  className="modal-input"
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                />
+              </label>
+              <label>
+                Descripción*
+                <textarea
+                  value={categoriaSeleccionada.descripcion}
+                  className="modal-input textarea"
+                  rows={3}
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed', resize: 'vertical' }}
+                />
+              </label>
+              <label>
+                Estado
+                <input
+                  value={categoriaSeleccionada.activo ? 'Activo' : 'Inactivo'}
+                  className="modal-input"
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                />
+              </label>
+            </div>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>

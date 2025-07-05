@@ -23,14 +23,14 @@ import DetalleChocolates from "./features/Cartas/pages/detallesChocolates";
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 
 // Importar páginas de Admin
-import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo';
-import ComprasTable from './features/Admin/pages/Compras.jsx';
-import InsumosTable from './features/Admin/pages/insumos.jsx';
+import CategoriaInsumo from './features/Admin/pages/CategoriaInsumo/CategoriaInsumo.jsx';
+import ComprasTable from './features/Admin/pages/Compras/Compras.jsx';
+import InsumosTable from './features/Admin/pages/Insumos/insumos.jsx';
 import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
 import Roles from './features/Admin/pages/roles/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/ventas.jsx';
-import ProveedorTable from './features/Admin/pages/proveedores.jsx';
+import ProveedorTable from './features/Admin/pages/Proveedores/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos.jsx';

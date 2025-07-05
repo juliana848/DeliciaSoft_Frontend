@@ -27,7 +27,7 @@
 }
 
 .containerlog p {
-  font-size: 14px;
+  font-size: 20px;
   line-height: 20px;
   letter-spacing: 0.3px;
   margin: 20px 0;
@@ -37,13 +37,13 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 20px;
+  padding: 130px;
 }
 
 .texto-informativo {
   display: block;
-  font-size: 13px;
-  color: #000000;
+  font-size: 17px;
+  color: #f6ff00;
   margin-top: 10px;
   margin-bottom: 10px;
   font-style: italic;
@@ -97,10 +97,11 @@
   height: 100%;
   transition: all 0.6s ease-in-out;
 }
-
 .sign-in {
-  background-image: url('https://th.bing.com/th/id/OIP.SA16p_-iTwhNSJOobUU4mAHaFS?rs=1&pid=ImgDetMain'); 
-  background-color: #e4e3e4;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), /* This creates the overlay */
+    url('https://th.bing.com/th/id/OIP.SA16p_-iTwhNSJOobUU4mAHaFS?rs=1&pid=ImgDetMain'); 
+  background-color: #e4e3e4; /* Still useful for fallback or blend */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -109,12 +110,10 @@
   z-index: 2;
 }
 
-.containerlog.active .sign-in {
-  transform: translateX(100%);
-}
-
 .sign-up {
-  background-image: url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg'); 
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* Adjust rgba alpha for desired transparency */
+    url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg'); 
   background-color: #e4e3e4;
   background-size: cover;
   background-position: center;
@@ -123,6 +122,10 @@
   width: 50%;
   opacity: 0;
   z-index: 1;
+}
+
+.containerlog.active .sign-in {
+  transform: translateX(100%);
 }
 
 .containerlog.active .sign-up {
@@ -205,9 +208,9 @@
 }
 
 .forgot-password:hover {
-  background-color: rgba(130, 128, 128, 0.35);
+  background-color: rgba(0, 0, 0, 0.35);
   border-color: #000000;
-  color: #ffffff;
+  color: #ff0000;
 }
 
 .select-documento {
@@ -351,9 +354,9 @@
 /* Estilos para la información de requisitos de contraseña */
 .password-requirements {
   font-size: 12px;
-  color: #666;
+  color: #000000;
   margin-top: 10px;
-  background-color: #f8f9fa;
+  background-color: #0080ff;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #dee2e6;

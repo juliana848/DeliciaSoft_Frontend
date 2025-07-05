@@ -527,8 +527,8 @@ const RegisterForm = () => {
         }
 
         .registro-step-text {
-          font-size: 13px;
-          color:rgb(220, 53, 192) !important;
+          font-size: 15px;
+          color:rgb(255, 255, 255) !important;
           font-weight: 600;
           text-align: center;
           display: block;
@@ -577,7 +577,7 @@ const RegisterForm = () => {
 
         .next-button {
           background-color: #ff58a6;
-          color: #fff;
+          color: #fff;x
           margin-left: auto;
         }
 
@@ -587,10 +587,10 @@ const RegisterForm = () => {
         }
 
         .password-requirements {
-          font-size: 11px;
+          font-size: 12px;
           color: rgba(0, 0, 0, 0.8);
           margin-top: 10px;
-          background-color: rgba(255, 255, 255, 0.15);
+          background-color:rgb(255, 255, 255);
           padding: 12px;
           border-radius: 6px;
           border: 1px solid rgba(255, 255, 255, 0.1);

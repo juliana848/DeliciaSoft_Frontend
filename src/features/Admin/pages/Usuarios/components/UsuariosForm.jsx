@@ -625,29 +625,6 @@ export default function UsuariosForm({
               </div>
             )}
           </div>
-
-          {/* Rol */}
-          <div className="modal-field">
-            <label className="modal-label">
-              Rol<span className="required">*</span>:
-            </label>
-            <select
-              value={formData.rol_id}
-              onChange={(e) => handleInputChange('rol_id', e.target.value)}
-              className={`modal-input ${fieldErrors.rol_id?.length ? 'error' : ''}`}
-              disabled={isReadOnly}
-            >
-              <option value="">Seleccionar rol</option>
-              {roles.map(rol => (
-                <option key={rol.id} value={rol.id}>{rol.nombre}</option>
-              ))}
-            </select>
-            {fieldErrors.rol_id?.length > 0 && (
-              <div className="error-message">
-                {fieldErrors.rol_id[0]}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* COLUMNA 2 */}
@@ -692,6 +669,29 @@ export default function UsuariosForm({
             {fieldErrors.apellidos?.length > 0 && (
               <div className="error-message">
                 {fieldErrors.apellidos[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Rol */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Rol<span className="required">*</span>:
+            </label>
+            <select
+              value={formData.rol_id}
+              onChange={(e) => handleInputChange('rol_id', e.target.value)}
+              className={`modal-input ${fieldErrors.rol_id?.length ? 'error' : ''}`}
+              disabled={isReadOnly}
+            >
+              <option value="">Seleccionar rol</option>
+              {roles.map(rol => (
+                <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+              ))}
+            </select>
+            {fieldErrors.rol_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.rol_id[0]}
               </div>
             )}
           </div>

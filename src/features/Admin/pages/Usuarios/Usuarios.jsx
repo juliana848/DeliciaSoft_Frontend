@@ -128,6 +128,11 @@ export default function Usuarios() {
       showNotification('No se puede realizar esta acción en un usuario desactivado', 'error');
       return;
     }
+    // Bloquear eliminación si el usuario tiene el rol de Administrador
+    if (tipo === 'eliminar' && usuario && usuario.rol_nombre === 'Administrador') {
+      showNotification('No se puede eliminar un usuario con el rol de Administrador', 'error');
+      return;
+    }
     
     setModalTipo(tipo);
     setUsuarioSeleccionado(usuario);

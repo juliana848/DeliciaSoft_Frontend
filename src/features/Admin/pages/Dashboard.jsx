@@ -457,8 +457,8 @@ const styles = {
     },
     toggleButtonComprasActive: {
       padding: '6px 12px',
-      border: '1px solid #FFB6C1', 
-      backgroundColor: '#FFB6C1', 
+      border: '1px solid #A9A9A9', /* Changed from #CCCCCC to #A9A9A9 */
+      backgroundColor: '#A9A9A9', /* Changed from #CCCCCC to #A9A9A9 */
       color: 'white',
       fontSize: '11px',
       cursor: 'pointer',
@@ -623,7 +623,7 @@ const styles = {
                       <div style={{...styles.colorIndicator, backgroundColor: '#FF1493'}}></div>Ventas
                     </button>
                     <button style={mostrarCompras ? styles.toggleButtonComprasActive : styles.toggleButtonCompras} onClick={() => setMostrarCompras(!mostrarCompras)}>
-                      <div style={{...styles.colorIndicator, backgroundColor: '#FFB6C1'}}></div>Compras
+                      <div style={{...styles.colorIndicator, backgroundColor: '#A9A9A9'}}></div>Compras {/* Changed from #CCCCCC to #A9A9A9 */}
                     </button>
                   </div>
                 </div>
@@ -635,7 +635,7 @@ const styles = {
                   <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(value) => `${(value / 1000)}k`} />
                   <Tooltip content={<CustomTooltip />} />
                   {mostrarVentas && <Bar dataKey="ventas" fill="#FF1493" radius={[2, 2, 0, 0]} name="Ventas" />}
-                  {mostrarCompras && <Bar dataKey="compras" fill="#FFB6C1" radius={[2, 2, 0, 0]} name="Compras" />}
+                  {mostrarCompras && <Bar dataKey="compras" fill="#A9A9A9" radius={[2, 2, 0, 0]} name="Compras" />} {/* Changed from #CCCCCC to #A9A9A9 */}
                 </BarChart>
               </ResponsiveContainer>
             </div>

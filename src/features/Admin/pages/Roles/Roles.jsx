@@ -175,7 +175,6 @@ export default function Roles() {
     showNotification('Rol eliminado exitosamente');
   };
 
-  // Filtrar roles por nombre, descripción y también por ID (N°)
   const rolesFiltrados = roles.filter(rol => {
     const filterText = filtro.toLowerCase();
     return (
@@ -285,8 +284,8 @@ export default function Roles() {
               </button>
               <button
                 className={`admin-button ${rowData.activo ? 'red' : 'disabled'}`}
-                title={rowData.activo ? "Editar" : "No disponible (rol inactivo)"}
-                onClick={() => rowData.activo && abrirModal('editar', rowData)}
+                title={rowData.activo ? "Eliminar" : "No disponible (rol inactivo)"}  
+                onClick={() => rowData.activo && abrirModal('eliminar', rowData)}  
                 disabled={!rowData.activo}
                style={{
                   opacity: rowData.activo ? 1 : 0.8,

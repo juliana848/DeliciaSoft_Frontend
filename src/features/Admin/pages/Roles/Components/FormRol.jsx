@@ -10,17 +10,14 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
   const isReadOnly = formType === 'visualizar';
 
-  // Effect para inicializar el formulario o re-validar al cambiar los datos iniciales
   useEffect(() => {
     setFormData(initialData);
-    // Realizar validaciones iniciales si es un formulario de edición
     if (formType === 'editar' && initialData) {
       setValidaciones({
         nombre: validarNombre(initialData.nombre),
         descripcion: validarDescripcion(initialData.descripcion)
       });
     } else {
-      // Resetear validaciones para el modo agregar o visualizar
       setValidaciones({
         nombre: { valido: false, mensaje: '' },
         descripcion: { valido: false, mensaje: '' }
@@ -140,6 +137,11 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
       return false;
     }
 
+    if (formData.permisos.length === 0) {
+      showNotification('Debe seleccionar al menos un permiso para el rol', 'error');
+      return false;
+    }
+
     return true;
   };
 
@@ -150,7 +152,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     }
   };
 
-  const formularioValido = validaciones.nombre.valido && validaciones.descripcion.valido;
+  const formularioValido = validaciones.nombre.valido && validaciones.descripcion.valido && formData.permisos.length > 0;
 
   const getTitleByType = () => {
     switch (formType) {
@@ -339,6 +341,11 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                 </p>
               )}
             </div>
+            {!isReadOnly && formData.permisos.length === 0 && (
+              <small style={{ color: '#f44336', fontSize: '0.8rem', display: 'block', marginTop: '0.5rem' }}>
+                Debe seleccionar al menos un permiso.
+              </small>
+            )}
           </div>
         </div>
 

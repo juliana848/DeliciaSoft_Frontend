@@ -1489,3 +1489,158 @@
     opacity: 0.3; /* Adjusted to be more faded (less opaque) */
     cursor: not-allowed;
 }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.section-title {
+  color: #c2185b;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  font-weight: bold;
+}
+
+.estado-activo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .modal-roles-container {
+    max-width: 95vw;
+    padding: 1rem;
+    max-height: 90vh;
+  }
+
+  .modal-roles-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    height: auto;
+  }
+
+  .permisos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .permisos-container {
+    max-height: 200px;
+  }
+}
+
+.admin-section-title {
+  background-color: #000;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: fit-content;
+  margin-bottom: -0.2rem;
+  user-select: none;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem;
+}
+
+
+.admin-table .p-dropdown {
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+  background-color: white;
+  color: black;
+}
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem; /* Espacio entre columnas y filas */
+}
+
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.productos-table th,
+.productos-table td {
+  border: 1px solid #cccccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.productos-table th {
+  background-color: #f5f5f5;
+}
+
+.insumo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: 0.3s;
+}
+
+.insumo-image img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.insumos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+  justify-items: center;
+}
+
+.insumo-card {
+  width: 160px;
+}
+
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columnas iguales */
+  gap: 1rem 2rem; /* espacio entre filas y columnas */
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}

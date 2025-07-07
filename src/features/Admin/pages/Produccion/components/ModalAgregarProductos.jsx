@@ -14,7 +14,7 @@ export default function ModalAgregarProductos({
     if (yaSeleccionado) {
       setProductosSeleccionados(prev => prev.filter(p => p.id !== producto.id));
     } else {
-      setProductosSeleccionados(prev => [...prev, { ...producto, cantidad: 1, receta: null }]);
+    setProductosSeleccionados(prev => [...prev, { ...producto, cantidad: 1, receta: producto.receta || null }]);
     }
   };
 

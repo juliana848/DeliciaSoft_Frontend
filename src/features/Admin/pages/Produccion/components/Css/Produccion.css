@@ -91,3 +91,22 @@
 .produccion-receta-btn:hover {
   background-color: #388e3c;
 }
+
+.filter-tab {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin-left: 0;
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    top: 1px;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+.modal-footer {
+  margin-top: 20px;
+}

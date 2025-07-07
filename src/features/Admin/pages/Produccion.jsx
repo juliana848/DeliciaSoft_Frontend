@@ -401,33 +401,28 @@ const cambiarCantidad = (id, nuevaCantidad) => {
 };
 
 const numeroPedidos = procesos.filter(p => p.tipoProduccion === 'pedido').length;
-const verInsumosProducto = (producto) => {
-  const productoBase = productosDisponibles.find(p => p.id === producto.id);
 
-  if (!productoBase || !productoBase.insumos) {
-    console.warn("Producto base no encontrado o sin insumos:", producto);
-    return;
-  }
+const verInsumosProducto = (producto) => {
+  const base = productosDisponibles.find(p => p.id === producto.id);
+  if (!base || !base.insumos) return;
 
   const cantidad = producto.cantidad || 1;
 
-  const insumosMultiplicados = productoBase.insumos.map(insumo => ({
+  const insumosMultiplicados = base.insumos.map(insumo => ({
     ...insumo,
-    cantidad: typeof insumo.cantidad === 'number'
-      ? parseFloat((insumo.cantidad * cantidad).toFixed(2))
-      : insumo.cantidad
+    cantidad: parseFloat(insumo.cantidad) * cantidad
   }));
 
   const productoConInsumos = {
-    ...productoBase,
-    cantidad,
-    sede: producto.sede || '',
+    ...producto,
+    imagen: base.imagen, // asegura imagen
     insumos: insumosMultiplicados
   };
 
   setProductoDetalleInsumos(productoConInsumos);
   setMostrarDetalleInsumos(true);
 };
+
 
     const guardarProceso = () => {
         if (productosSeleccionados.length === 0) {
@@ -851,66 +846,77 @@ const renderEstadoSelect = (rowData, campo, forzarDeshabilitado = false) => {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {procesoSeleccionado.productos.map((producto) => {
-                                        const productoCompleto = productosDisponibles.find(p => p.id === producto.id);
-                                        return (
-                                        <tr key={producto.id}>
-                                            <td>
-                                            <img 
-                                                src={productoCompleto?.imagen || 'Image Not Found'} 
-                                                alt={producto.nombre} 
-                                                width="50" 
-                                                height="50"
-                                                style={{ objectFit: 'cover', borderRadius: '4px' }}
-                                            />
-                                            </td>
-                                            <td>{producto.nombre}</td>
-                                            <td>{producto.sede}</td>
-                                            <td>{producto.cantidad}</td>
-                                            <td>
-                                            {producto.receta ? (
-                                                <button 
-                                                className="btn-receta"
-                                                onClick={() => abrirModalRecetaDetalle(producto.receta)}
-                                                style={{ 
-                                                    background: '#4CAF50', 
-                                                    color: 'white', 
-                                                    border: 'none', 
-                                                    padding: '5px 10px', 
-                                                    borderRadius: '4px',
-                                                    cursor: 'pointer'
-                                                }}
-                                                >
-                                                📖 {producto.receta.nombre}
-                                                </button>
-                                            ) : (
-                                                <span style={{ color: '#999' }}>Sin receta</span>
-                                            )}
-                                            </td>
-                                            <td>
-                                            <button 
-                                                className="btn-insumos"
-                                                onClick={() => {
-                                                const productoCompleto = productosDisponibles.find(p => p.id === producto.id);
-                                                if (productoCompleto) {
-                                                    setMostrarDetalleInsumos(true);
-                                                }
-                                                }}
-                                                style={{ 
-                                                background: '#2196F3', 
-                                                color: 'white', 
-                                                border: 'none', 
-                                                padding: '5px 10px', 
-                                                borderRadius: '4px',
-                                                cursor: 'pointer'
-                                                }}
-                                            >
-                                                📋 Ver insumos
-                                            </button>
-                                            </td>
-                                        </tr>
-                                        );
-                                    })}
+{procesoSeleccionado.productos.map((item) => {
+  const productoCompleto = productosDisponibles.find(p => p.id === item.id);
+  return (
+    <tr key={item.id}>
+      <td>
+        <img
+          src={productoCompleto?.imagen || 'https://via.placeholder.com/50'}
+          alt={item.nombre}
+          width="50"
+          height="50"
+          style={{ objectFit: 'cover', borderRadius: '4px' }}
+        />
+      </td>
+      <td>{item.nombre}</td>
+      <td>{item.sede}</td>
+      <td>{item.cantidad}</td>
+      <td>
+        {item.receta ? (
+          <button
+            className="btn-receta"
+            onClick={() => abrirModalRecetaDetalle(item.receta)}
+            style={{
+              background: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              padding: '5px 10px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            📖 {item.receta.nombre}
+          </button>
+        ) : (
+          <span style={{ color: '#999' }}>Sin receta</span>
+        )}
+      </td>
+      <td>
+        <button
+          className="btn-insumos"
+          onClick={() => {
+            setProductoDetalleInsumos({
+              ...item,
+              insumos:
+                item.insumos ||
+                productoCompleto?.insumos?.map(insumo => ({
+                  ...insumo,
+                  cantidad: parseFloat(insumo.cantidad) * (item.cantidad || 1)
+                })) ||
+                [],
+              imagen: item.imagen || productoCompleto?.imagen,
+              cantidad: item.cantidad || 1
+            });
+            setMostrarDetalleInsumos(true);
+          }}
+          style={{
+            background: '#2196F3',
+            color: 'white',
+            border: 'none',
+            padding: '5px 10px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          📋 Ver insumos
+        </button>
+      </td>
+    </tr>
+  );
+})}
+
+
                                     </tbody>
                                 </table>
                                 </div>
@@ -1046,28 +1052,20 @@ const renderEstadoSelect = (rowData, campo, forzarDeshabilitado = false) => {
                                         </tr>
                                     </thead>
 <tbody>
-  {productoDetalleInsumos.insumos?.map((insumo, index) => {
-    const multiplicador = productoDetalleInsumos?.cantidad || 1;
-    const cantidadMultiplicada = typeof insumo.cantidad === 'number'
-      ? (insumo.cantidad * multiplicador).toFixed(2)
-      : insumo.cantidad;
+{productoDetalleInsumos.insumos?.map((insumo, index) => {
+  const cantidadBase = parseFloat(insumo.cantidad) || 0;
+  const cantidadMultiplicada = (cantidadBase * (productoDetalleInsumos.cantidad || 1)).toFixed(2);
 
-    return (
-      <tr key={index} style={{ borderBottom: '1px solid #dee2e6' }}>
-        <td style={{ padding: '12px', fontWeight: 'bold', color: '#495057' }}>
-          {cantidadMultiplicada}
-        </td>
-        <td style={{ padding: '12px', color: '#6c757d' }}>
-          {insumo.unidad || 'N/A'}
-        </td>
-        <td style={{ padding: '12px', color: '#212529' }}>
-          {insumo.nombre || insumo}
-        </td>
-      </tr>
-    );
-  })}
+  return (
+    <tr key={index}>
+      <td style={{ padding: '12px', fontWeight: 'bold' }}>{cantidadMultiplicada}</td>
+      <td>{insumo.unidad || 'N/A'}</td>
+      <td>{insumo.nombre || insumo}</td>
+    </tr>
+  );
+})}
+
 </tbody>
-
                                 </table>
                                 
                                 <div className="modal-footer" style={{ marginTop: '20px' }}>
@@ -1251,22 +1249,21 @@ const renderEstadoSelect = (rowData, campo, forzarDeshabilitado = false) => {
                                             </div>
                                             </td>
                                             <td>
-                                            <button 
-                                                type="button"
-                                                className="btn-insumos"
-                                                onClick={() => verInsumosProducto(item)}
-                                                style={{ 
-                                                background: '#2196F3', 
-                                                color: 'white', 
-                                                border: 'none', 
-                                                padding: '3px 6px',
-                                                fontSize: '15px',
-                                                borderRadius: '3px',
-                                                cursor: 'pointer'
-                                                }}
-                                            >
-                                                📋 Insumos
-                                            </button>
+                                            <button
+                                            className="btn-insumos"
+                                            onClick={() => verInsumosProducto(producto)}
+                                            style={{ 
+                                              background: '#2196F3',
+                                              color: 'white',
+                                              border: 'none',
+                                              padding: '4px 6px',
+                                              fontSize: '15px',
+                                              borderRadius: '4px',
+                                              cursor: 'pointer'
+                                            }}
+                                          >
+                                            📋 insumos
+                                          </button>
                                             </td>
                                             <td>
                                             <button

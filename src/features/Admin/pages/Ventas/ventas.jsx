@@ -6,10 +6,10 @@ import '../../adminStyles.css'; // Asegúrate de que este archivo CSS exista
 import VentasListar from './VentasListar';
 import VentasCrear from './VentasCrear';
 import VentasAnularModal from './VentasAnularModal';
-import VentasDetalleModal from './VentasDetalleModal';
 import VentasAbonosModal from './VentasAbonosModal';
 import VentasAgregarAbonoModal from './VentasAgregarAbonoModal';
 import VentasDetalleAbonoModal from './VentasDetalleAbonoModal';
+import VentasVerDetalle from './VentasVerDetalle'; // Agrega esta línea para el nuevo componente
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -27,17 +27,17 @@ export default function Ventas() {
     const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
     const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
 
-    const [mostrarModalAdiciones, setMostrarModalAdiciones] = useState(false);
-    const [mostrarModalSalsas, setMostrarModalSalsas] = useState(false);
-    const [mostrarModalRellenos, setMostrarModalRellenos] = useState(false);
-    const [productoEditandoId, setProductoEditandoId] = useState(null);
-    const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
-
-    const [showProductOptions, setShowProductOptions] = useState({});
-
     const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false); // This controls visibility of VentasCrear
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
+    const [mostrarVerDetalle, setMostrarVerDetalle] = useState(false); // Nuevo estado para VentasVerDetalle
+
+    // Función para "Ver Detalle"
+    const verDetalleVenta = (venta) => {
+        setVentaSeleccionada(venta);
+        setMostrarVerDetalle(true); // Mostrar la vista de detalle
+        setMostrarAgregarVenta(false); // Asegurarse de que no se muestre la vista de crear
+    };
 
     const [erroresValidacion, setErroresValidacion] = useState({});
 
@@ -437,7 +437,7 @@ export default function Ventas() {
         };
 
         setAbonos(prev => [...prev, nuevoAbono]);
-        
+
         // Update the sale's state if fully paid or partially paid
         setAllSales(prevSales => prevSales.map(venta => { // UPDATED: Changed from setVentas to setAllSales
             if (venta.id === ventaSeleccionada.id) {
@@ -470,30 +470,6 @@ export default function Ventas() {
         setMostrarModalDetalleAbono(true);
     };
 
-    const toggleProductOptions = (productId) => {
-        setShowProductOptions(prev => {
-            const newState = {};
-            if (prev[productId]) {
-                return {};
-            } else {
-                newState[productId] = true;
-                return newState;
-            }
-        });
-    };
-
-    const toggleNestedDetails = (productId) => {
-        setNestedDetailsVisible(prev => {
-            const newState = {};
-            if (prev[productId]) {
-                return {};
-            } else {
-                newState[productId] = true;
-                return newState;
-            }
-        });
-    };
-
     const showNotification = (mensaje, tipo = 'success') => {
         setNotification({ visible: true, mensaje, tipo });
     };
@@ -506,14 +482,12 @@ export default function Ventas() {
         setModalTipo(tipo);
         setVentaSeleccionada(venta);
         setModalVisible(true);
-        setShowProductOptions({});
     };
 
     const cerrarModal = () => {
         setModalVisible(false);
         setVentaSeleccionada(null);
         setModalTipo(null);
-        setShowProductOptions({});
     };
 
     const anularVenta = () => {
@@ -543,17 +517,17 @@ export default function Ventas() {
             }
             return false; // Should not reach here if filtroTipoVenta is always one of the three
         })
-        .sort((a, b) => { // Keep sorting logic
-            // Example sorting: Anulled sales always at the end
-            if (a.estado === 'Anulado' && b.estado !== 'Anulado') {
-                return 1;
-            }
-            if (b.estado === 'Anulado' && a.estado !== 'Anulado') {
-                return -1;
-            }
-            // Add your default sorting logic here if needed, e.g., by date
-            return 0;
-        });
+            .sort((a, b) => { // Keep sorting logic
+                // Example sorting: Anulled sales always at the end
+                if (a.estado === 'Anulado' && b.estado !== 'Anulado') {
+                    return 1;
+                }
+                if (b.estado === 'Anulado' && a.estado !== 'Anulado') {
+                    return -1;
+                }
+                // Add your default sorting logic here if needed, e.g., by date
+                return 0;
+            });
     }, [allSales, filtro, filtroTipoVenta]); // Dependencies for useMemo
 
     // Handler for changes in Estado column in VentasListar
@@ -573,7 +547,7 @@ export default function Ventas() {
 
 
     return (
-                <div className="admin-container" style={{ padding: '20px', backgroundColor: 'rgb(251, 234, 242)', minHeight: '100vh' }}>
+        <div className="admin-container" style={{ padding: '20px', backgroundColor: 'rgb(251, 234, 242)', minHeight: '100vh' }}>
 
             {/* Notification Component */}
             <AppNotification
@@ -589,14 +563,9 @@ export default function Ventas() {
                     handleChange={(e) => setVentaData({ ...ventaData, [e.target.name]: e.target.value })}
                     erroresValidacion={erroresValidacion}
                     insumosSeleccionados={insumosSeleccionados}
-                    toggleNestedDetails={toggleNestedDetails}
-                    nestedDetailsVisible={nestedDetailsVisible}
                     handleCantidadChange={(id, cantidad) => {
                         setInsumosSeleccionados(prev => prev.map(item => item.id === id ? { ...item, cantidad } : item));
                     }}
-                    abrirModalAdiciones={(id) => { setProductoEditandoId(id); setMostrarModalAdiciones(true); }}
-                    abrirModalSalsas={(id) => { setProductoEditandoId(id); setMostrarModalSalsas(true); }}
-                    abrirModalRellenos={(id) => { setProductoEditandoId(id); setMostrarModalRellenos(true); }}
                     removeInsumo={(id) => setInsumosSeleccionados(prev => prev.filter(item => item.id !== id))}
                     removeAdicion={(productoId, adicionId) => {
                         setInsumosSeleccionados(prev => prev.map(prod =>
@@ -677,32 +646,14 @@ export default function Ventas() {
                             return newInsumos;
                         });
                     }}
-                    mostrarModalAdiciones={mostrarModalAdiciones}
-                    agregarAdiciones={(adicionesToAdd) => {
-                        setInsumosSeleccionados(prev => prev.map(item =>
-                            item.id === productoEditandoId ? { ...item, adiciones: adicionesToAdd } : item
-                        ));
-                        setMostrarModalAdiciones(false);
-                        setProductoEditandoId(null);
+                />
+            ) : mostrarVerDetalle ? ( // Nueva condición para mostrar VentasVerDetalle
+                <VentasVerDetalle
+                    ventaSeleccionada={ventaSeleccionada}
+                    onBackToList={() => {
+                        setMostrarVerDetalle(false); // Ocultar la vista de detalle
+                        setVentaSeleccionada(null); // Limpiar la venta seleccionada
                     }}
-                    mostrarModalSalsas={mostrarModalSalsas}
-                    agregarSalsas={(salsasToAdd) => {
-                        setInsumosSeleccionados(prev => prev.map(item =>
-                            item.id === productoEditandoId ? { ...item, salsas: salsasToAdd } : item
-                        ));
-                        setMostrarModalSalsas(false);
-                        setProductoEditandoId(null);
-                    }}
-                    mostrarModalRellenos={mostrarModalRellenos}
-                    agregarRellenos={(rellenosToAdd) => {
-                        setInsumosSeleccionados(prev => prev.map(item =>
-                            item.id === productoEditandoId ? { ...item, sabores: rellenosToAdd } : item
-                        ));
-                        setMostrarModalRellenos(false);
-                        setProductoEditandoId(null);
-                    }}
-                    setProductoEditandoId={setProductoEditandoId}
-                    productoEditandoId={productoEditandoId}
                 />
             ) : (
                 <>
@@ -729,18 +680,12 @@ export default function Ventas() {
                         getRowClassName={getRowClassName}
                         filtroTipoVenta={filtroTipoVenta}
                         setFiltroTipoVenta={setFiltroTipoVenta}
+                        verDetalleVenta={verDetalleVenta}
                     />
                 </>
             )}
 
-            <VentasDetalleModal
-                visible={modalVisible && modalTipo === 'visualizar'}
-                onClose={cerrarModal}
-                ventaSeleccionada={ventaSeleccionada}
-                showProductOptions={showProductOptions}
-                setShowProductOptions={toggleProductOptions}
-            />
-
+            {/* Tus otros modales (VentasAnularModal, VentasAbonosModal, etc.) van aquí. Asegúrate de que no se muestren si mostrarVerDetalle es true, aunque su visibilidad ya debería estar controlada por sus propios estados. */}
             <VentasAnularModal
                 visible={modalVisible && modalTipo === 'anular'}
                 onClose={cerrarModal}

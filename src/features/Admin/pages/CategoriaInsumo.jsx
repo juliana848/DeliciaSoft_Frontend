@@ -16,7 +16,11 @@ export default function CategoriaTableDemo() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [nombreEditado, setNombreEditado] = useState('');
   const [descripcionEditada, setDescripcionEditada] = useState('');
+  const [estadoEditado, setEstadoEditado] = useState(true); // Nuevo estado para el switch
   const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
+  
+  // Nuevo estado para controlar si la edición/eliminación está habilitada
+  const [isEditDeleteEnabled, setIsEditDeleteEnabled] = useState(true);
 
   useEffect(() => {
     const mockCategorias = [
@@ -70,15 +74,23 @@ export default function CategoriaTableDemo() {
   };
 
   const abrirModal = (tipo, categoria) => {
+    // Verificar si la edición/eliminación está deshabilitada
+    if ((tipo === 'editar' || tipo === 'eliminar') && !isEditDeleteEnabled) {
+      showNotification('Las funciones de edición y eliminación están deshabilitadas', 'error');
+      return;
+    }
+
     setModalTipo(tipo);
     setCategoriaSeleccionada(categoria);
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
       setDescripcionEditada(categoria.descripcion);
+      setEstadoEditado(categoria.activo); // Establecer el estado actual
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
       setDescripcionEditada('');
+      setEstadoEditado(true); // Por defecto activo para nuevas categorías
     }
     setModalVisible(true);
   };
@@ -89,6 +101,7 @@ export default function CategoriaTableDemo() {
     setModalTipo(null);
     setNombreEditado('');
     setDescripcionEditada('');
+    setEstadoEditado(true);
     setErrores({ nombre: '', descripcion: '' });
   };
 
@@ -106,7 +119,7 @@ export default function CategoriaTableDemo() {
 
     const updated = categorias.map(cat =>
       cat.id === categoriaSeleccionada.id
-        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada }
+        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada, activo: estadoEditado }
         : cat
     );
     setCategorias(updated);
@@ -164,6 +177,7 @@ export default function CategoriaTableDemo() {
         <button className="admin-button pink" onClick={() => abrirModal('agregar')} type="button">
           + Agregar
         </button>
+        
         <SearchBar
           placeholder="Buscar categoría..."
           value={filtro}
@@ -195,19 +209,47 @@ export default function CategoriaTableDemo() {
         />
         <Column
           header="Acción"
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                🔍
-              </button>
-              <button className="admin-button yellow" title="Editar" onClick={() => abrirModal('editar', rowData)}>
-                ✏️
-              </button>
-              <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>
-                🗑️
-              </button>
-            </>
-          )}
+          body={(rowData) => {
+            const isEnabled = rowData.activo;
+
+            return (
+              <>
+                <button 
+                  className="admin-button gray" 
+                  title="Visualizar" 
+                  onClick={() => abrirModal('visualizar', rowData)}
+                >
+                  🔍
+                </button>
+
+                <button 
+                  className="admin-button yellow"
+                  title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
+                  onClick={() => isEnabled && abrirModal('editar', rowData)}
+                  disabled={!isEnabled}
+                  style={{
+                    opacity: isEnabled ? 1 : 0.50,
+                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  ✏️
+                </button>
+
+                <button 
+                  className="admin-button red"
+                  title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
+                  onClick={() => isEnabled && abrirModal('eliminar', rowData)}
+                  disabled={!isEnabled}
+                  style={{
+                    opacity: isEnabled ? 1 : 0.50,
+                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  🗑️
+                </button>
+              </>
+            );
+          }}
         />
       </DataTable>
 
@@ -246,6 +288,20 @@ export default function CategoriaTableDemo() {
                 />
                 {errores.descripcion && <p className="error">{errores.descripcion}</p>}
               </label>
+              
+              {/* Switch de estado solo en modal de editar */}
+              {modalTipo === 'editar' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ margin: 0 }}>Estado:</label>
+                  <InputSwitch
+                    checked={estadoEditado}
+                    onChange={(e) => setEstadoEditado(e.value)}
+                  />
+                  <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                    {estadoEditado ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="modal-footer">
@@ -265,9 +321,36 @@ export default function CategoriaTableDemo() {
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Detalles Categoría</h2>
           <div className="modal-body">
-            <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
-            <p><strong>Descripción:</strong> {categoriaSeleccionada.descripcion}</p>
-            <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label>
+                Nombre*
+                <input
+                  value={categoriaSeleccionada.nombre}
+                  className="modal-input"
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                />
+              </label>
+              <label>
+                Descripción*
+                <textarea
+                  value={categoriaSeleccionada.descripcion}
+                  className="modal-input textarea"
+                  rows={3}
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed', resize: 'vertical' }}
+                />
+              </label>
+              <label>
+                Estado
+                <input
+                  value={categoriaSeleccionada.activo ? 'Activo' : 'Inactivo'}
+                  className="modal-input"
+                  readOnly
+                  style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                />
+              </label>
+            </div>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>

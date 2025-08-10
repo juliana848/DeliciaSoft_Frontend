@@ -565,7 +565,7 @@ export default function ComprasTable() {
                                                 className="btn-eliminar"
                                                 onClick={() => removeInsumo(item.id)}
                                             >
-                                                Eliminar
+                                                🗑️
                                             </button>
                                         </td>
                                     )}

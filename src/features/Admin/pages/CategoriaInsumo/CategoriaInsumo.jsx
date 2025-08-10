@@ -16,6 +16,7 @@ export default function CategoriaTableDemo() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [nombreEditado, setNombreEditado] = useState('');
   const [descripcionEditada, setDescripcionEditada] = useState('');
+  const [estadoEditado, setEstadoEditado] = useState(true); // Nuevo estado para el switch
   const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
   
   // Nuevo estado para controlar si la edición/eliminación está habilitada
@@ -84,10 +85,12 @@ export default function CategoriaTableDemo() {
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
       setDescripcionEditada(categoria.descripcion);
+      setEstadoEditado(categoria.activo); // Establecer el estado actual
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
       setDescripcionEditada('');
+      setEstadoEditado(true); // Por defecto activo para nuevas categorías
     }
     setModalVisible(true);
   };
@@ -98,6 +101,7 @@ export default function CategoriaTableDemo() {
     setModalTipo(null);
     setNombreEditado('');
     setDescripcionEditada('');
+    setEstadoEditado(true);
     setErrores({ nombre: '', descripcion: '' });
   };
 
@@ -115,7 +119,7 @@ export default function CategoriaTableDemo() {
 
     const updated = categorias.map(cat =>
       cat.id === categoriaSeleccionada.id
-        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada }
+        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada, activo: estadoEditado }
         : cat
     );
     setCategorias(updated);
@@ -174,8 +178,6 @@ export default function CategoriaTableDemo() {
           + Agregar
         </button>
         
-
-
         <SearchBar
           placeholder="Buscar categoría..."
           value={filtro}
@@ -185,72 +187,71 @@ export default function CategoriaTableDemo() {
 
       <h2 className="admin-section-title">Categoria Insumos</h2>
 
-    <DataTable
-  value={categoriasFiltradas}
-  className="admin-table"
-  paginator
-  rows={5}
-  rowsPerPageOptions={[5, 10, 25, 50]}
-  tableStyle={{ minWidth: '50rem' }}
->
-  <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
-  <Column field="nombre" header="Nombre" />
-  <Column field="descripcion" header="Descripción" />
-  <Column
-    header="Estados"
-    body={(rowData) => (
-      <InputSwitch
-        checked={rowData.activo}
-        onChange={() => toggleActivo(rowData)}
-      />
-    )}
-  />
-  <Column
-    header="Acción"
-     body={(rowData) => {
-      const isEnabled = rowData.activo;
+      <DataTable
+        value={categoriasFiltradas}
+        className="admin-table"
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{ minWidth: '50rem' }}
+      >
+        <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
+        <Column field="nombre" header="Nombre" />
+        <Column field="descripcion" header="Descripción" />
+        <Column
+          header="Estados"
+          body={(rowData) => (
+            <InputSwitch
+              checked={rowData.activo}
+              onChange={() => toggleActivo(rowData)}
+            />
+          )}
+        />
+        <Column
+          header="Acción"
+          body={(rowData) => {
+            const isEnabled = rowData.activo;
 
-      return (
-        <>
-          <button 
-            className="admin-button gray" 
-            title="Visualizar" 
-            onClick={() => abrirModal('visualizar', rowData)}
-          >
-            🔍
-          </button>
+            return (
+              <>
+                <button 
+                  className="admin-button gray" 
+                  title="Visualizar" 
+                  onClick={() => abrirModal('visualizar', rowData)}
+                >
+                  🔍
+                </button>
 
-          <button 
-            className="admin-button yellow"
-            title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
-            onClick={() => isEnabled && abrirModal('editar', rowData)}
-            disabled={!isEnabled}
-            style={{
-              opacity: isEnabled ? 1 : 0.50,
-              cursor: isEnabled ? 'pointer' : 'not-allowed'
-            }}
-          >
-            ✏️
-          </button>
+                <button 
+                  className="admin-button yellow"
+                  title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
+                  onClick={() => isEnabled && abrirModal('editar', rowData)}
+                  disabled={!isEnabled}
+                  style={{
+                    opacity: isEnabled ? 1 : 0.50,
+                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  ✏️
+                </button>
 
-          <button 
-            className="admin-button red"
-            title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
-            onClick={() => isEnabled && abrirModal('eliminar', rowData)}
-            disabled={!isEnabled}
-            style={{
-              opacity: isEnabled ? 1 : 0.50,
-              cursor: isEnabled ? 'pointer' : 'not-allowed'
-            }}
-          >
-            🗑️
-          </button>
-        </>
-      );
-    }}
-  />
-</DataTable>
-
+                <button 
+                  className="admin-button red"
+                  title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
+                  onClick={() => isEnabled && abrirModal('eliminar', rowData)}
+                  disabled={!isEnabled}
+                  style={{
+                    opacity: isEnabled ? 1 : 0.50,
+                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  🗑️
+                </button>
+              </>
+            );
+          }}
+        />
+      </DataTable>
 
       {/* Modal Agregar / Editar */}
       {modalVisible && (modalTipo === 'agregar' || modalTipo === 'editar') && (
@@ -287,6 +288,20 @@ export default function CategoriaTableDemo() {
                 />
                 {errores.descripcion && <p className="error">{errores.descripcion}</p>}
               </label>
+              
+              {/* Switch de estado solo en modal de editar */}
+              {modalTipo === 'editar' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label style={{ margin: 0 }}>Estado:</label>
+                  <InputSwitch
+                    checked={estadoEditado}
+                    onChange={(e) => setEstadoEditado(e.value)}
+                  />
+                  <span style={{ fontSize: '0.9rem', color: '#666' }}>
+                    {estadoEditado ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="modal-footer">

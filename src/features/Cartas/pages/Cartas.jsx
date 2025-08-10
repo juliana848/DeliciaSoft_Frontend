@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Cartas.css";
+import "./cartas.css";
 
 import Header from "./Header";
 import Buscador from "./Buscador";

@@ -17,7 +17,7 @@ export default function ModalAgregar({
   };
 
   return (
-    <div className="compra-form-container">
+    <div className="compra-form-container-produccion">
       <h1>Agregar Producción</h1>
 
       <form

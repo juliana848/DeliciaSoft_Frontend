@@ -115,7 +115,7 @@ export default function VentasListar({
                                     title="Ver Detalle"
                                     onClick={() => verDetalleVenta(rowData)}
                                 >
-                                    👁️
+                                    🔍
                                 </button>
                             ) : (
                                 <>
@@ -125,7 +125,7 @@ export default function VentasListar({
                                         title="Ver Detalle"
                                         onClick={() => verDetalleVenta(rowData)}
                                     >
-                                        👁️
+                                        🔍
                                     </button>
                                     <button
                                         className="admin-button red"

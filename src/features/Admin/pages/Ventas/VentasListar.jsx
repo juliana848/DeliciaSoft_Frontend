@@ -15,8 +15,9 @@ export default function VentasListar({
     notification,
     hideNotification,
     getRowClassName,
-    filtroTipoVenta, 
-    setFiltroTipoVenta 
+    filtroTipoVenta,
+    setFiltroTipoVenta,
+    verDetalleVenta, // Añade esta prop
 }) {
     return (
         <>
@@ -107,22 +108,22 @@ export default function VentasListar({
                     header="Acciones"
                     body={(rowData) => (
                         <>
-                            {/* Solo mostrar el botón "Visualizar" si la venta está anulada o si el filtro es 'anulado' */}
+                            {/* Show "Ver Detalle" button if the sale is anulled OR if the current filter is 'anulado' */}
                             {(filtroTipoVenta === 'anulado' || rowData.estado === 'Anulado') ? (
                                 <button
-                                    className="admin-button primary"
-                                    title="Visualizar"
-                                    onClick={() => abrirModal('visualizar', rowData)}
+                                    className="admin-button blue"
+                                    title="Ver Detalle"
+                                    onClick={() => verDetalleVenta(rowData)}
                                 >
                                     🔍
                                 </button>
                             ) : (
                                 <>
-                                    {/* Mostrar los otros botones solo si no está en la pestaña "Anulados" y la venta no está anulada */}
+                                    {/* Existing buttons for non-anulled sales */}
                                     <button
-                                        className="admin-button primary"
-                                        title="Visualizar"
-                                        onClick={() => abrirModal('visualizar', rowData)}
+                                        className="admin-button blue"
+                                        title="Ver Detalle"
+                                        onClick={() => verDetalleVenta(rowData)}
                                     >
                                         🔍
                                     </button>
@@ -130,7 +131,7 @@ export default function VentasListar({
                                         className="admin-button red"
                                         title="Anular"
                                         onClick={() => abrirModal('anular', rowData)}
-                                        disabled={rowData.estado === 'Anulado'} // Deshabilitar si ya está anulada
+                                        disabled={rowData.estado === 'Anulado'}
                                     >🛑</button>
                                     <button
                                         className="admin-button blue"

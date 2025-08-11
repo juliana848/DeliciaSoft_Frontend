@@ -1644,3 +1644,19 @@
   flex-direction: column;
   font-weight: 500;
 }
+
+.compra-header-actions {
+    display: flex; /* Makes the container a flex container */
+    justify-content: flex-end; /* Aligns items to the end of the flex container (right side) */
+    gap: 10px; /* Adds some space between the buttons */
+    margin-top: 20px; /* Adds some space above the buttons, adjust as needed */
+}
+
+/* Optional: If you want to ensure they are always at the very bottom right,
+   you might need to adjust the parent container's styling as well to allow for full height */
+.compra-form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes content to top and buttons to bottom */
+    min-height: 100vh; /* Example: ensure the form container takes full viewport height */
+}

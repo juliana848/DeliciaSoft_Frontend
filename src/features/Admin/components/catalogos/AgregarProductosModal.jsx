@@ -25,7 +25,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 401,
     nombre: 'Cupcake de vainilla',
     unidad: 'Unidad',
-    precio: 4.00,
+    precio: 400,
     imagen: 'https://tartademanzanacasera.com/wp-content/uploads/2016/08/dsc09806.jpg?w=640',
     category: 'Cupcakes'
   },
@@ -33,7 +33,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 402,
     nombre: 'Brownie de chocolate',
     unidad: 'Unidad',
-    precio: 5.50,
+    precio: 550,
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEYDXeu4DuVeL_YVd83AojeR2MsHX2HUHvKA&s',
     category: 'Brownies'
   },
@@ -41,7 +41,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 404,
     nombre: 'Donut glaseada',
     unidad: 'Unidad',
-    precio: 3.75,
+    precio: 375,
     imagen: 'https://www.gourmet.cl/wp-content/uploads/2014/06/donuts.jpg',
     category: 'Donuts'
   },
@@ -49,7 +49,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 405,
     nombre: 'Galleta con chispas',
     unidad: 'Unidad',
-    precio: 2.50,
+    precio: 250,
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTG1noJhDelkKB0X8LtMPJs5WMZIm6RtcJ-Eg&s',
     category: 'Galletas'
   },
@@ -57,7 +57,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 406,
     nombre: 'pastel de limón',
     unidad: 'Porción',
-    precio: 6.25,
+    precio: 625,
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvhOdEL5AmZteVbscGI-tJa7FH6akomOSIKw&s',
     category: 'Pasteles'
   },
@@ -65,7 +65,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
     id: 407,
     nombre: 'Muffin de arándanos',
     unidad: 'Unidad',
-    precio: 4.25,
+    precio: 425,
     imagen: 'https://osojimix.com/wp-content/uploads/2021/04/MUFFINS-DE-ARANDANOS.jpg',
     category: 'Muffins'
   },

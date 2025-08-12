@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// Assuming InsumoCard is a similar component to AdicionCard, adjust if needed
-import InsumoCard from './InsumoCard'; 
+import InsumoCard from './InsumoCard';
 
 const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const [selectedInsumos, setSelectedInsumos] = useState([]);
@@ -13,15 +12,17 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       id: 2323232,
       nombre: 'Crema de leche',
       unidad: 'L',
-      precio: 25.50,
-      category: 'Lácteos', // Changed to 'category' for consistency
+      precio: 12000,
+      cantidad: 100, // Nuevo campo de cantidad
+      category: 'Lácteos',
       imagen: 'https://alqueria.com.co/sites/default/files/styles/200x274/public/2022-12/dummie-Crema-de-leche-Alqueria-180g.png?h=f214ce63&itok=H2mVvO_G'
     },
     {
       id: 2323231,
       nombre: 'Arroz',
       unidad: 'Kg',
-      precio: 12.00,
+      precio: 12000,
+      cantidad: 100, // Nuevo campo de cantidad
       category: 'Cereales',
       imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ALtheyuV01b9_za2ouNGHTbL1XlJsQA85Q&s'
     },
@@ -29,7 +30,8 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       id: 2323233,
       nombre: 'Harina de trigo',
       unidad: 'Kg',
-      precio: 15.75,
+      precio: 15750,
+      cantidad: 100, // Nuevo campo de cantidad
       category: 'Harinas',
       imagen: 'https://olimpica.vtexassets.com/arquivos/ids/617052/7701008629240.jpg?v=637626523850430000'
     },
@@ -37,7 +39,8 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       id: 2323234,
       nombre: 'Fresas',
       unidad: 'Kg',
-      precio: 18.00,
+      precio: 18000,
+      cantidad: 100, // Nuevo campo de cantidad
       category: 'Frutas',
       imagen: 'https://upload.wikimedia.org/wikipedia/commons/2/29/PerfectStrawberry.jpg'
     },
@@ -45,17 +48,18 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       id: 2323235,
       nombre: 'Leche entera',
       unidad: 'L',
-      precio: 22.00,
+      precio: 22000,
+      cantidad: 100, // Nuevo campo de cantidad
       category: 'Lácteos',
       imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJVhI6leNnj0FWig5Z4uPFhq-lZafYWFkfYQ&s'
     }
   ];
 
-  const categoriasData = ['Todos', ...new Set(insumosData.map(i => i.category))]; // Changed to 'category' for consistency
+  const categoriasData = ['Todos', ...new Set(insumosData.map(i => i.category))];
 
   const filteredInsumos = insumosData.filter(insumo =>
     insumo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory === 'Todos' || insumo.category === selectedCategory) // Changed to 'category' for consistency
+    (selectedCategory === 'Todos' || insumo.category === selectedCategory)
   );
 
   const toggleInsumo = (insumo) => {
@@ -72,8 +76,8 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   };
 
   return (
-    <div className="adicion-modal-overlay"> {/* Reused class */}
-      <div className="adicion-modal-container"> {/* Reused class */}
+    <div className="adicion-modal-overlay">
+      <div className="adicion-modal-container">
         <style>{`
           .adicion-modal-overlay {
             background-color: rgba(0, 0, 0, 0.4);
@@ -187,7 +191,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             margin: 20px 0;
           }
 
-          .adicion-modal-card { /* Reused class */
+          .adicion-modal-card {
             background: #fff;
             border-radius: 16px;
             padding: 10px;
@@ -198,17 +202,17 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             border: 3px solid transparent;
           }
 
-          .adicion-modal-card:hover { /* Reused class */
+          .adicion-modal-card:hover {
             transform: translateY(-4px);
             border-color: #ff69b4;
           }
 
-          .adicion-modal-card-selected { /* Reused class */
+          .adicion-modal-card-selected {
             border-color: #d63384;
             background: #ffe4ec;
           }
 
-          .adicion-modal-card img { /* Reused class */
+          .adicion-modal-card img {
             width: 100px;
             height: 100px;
             object-fit: cover;
@@ -216,7 +220,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             margin-bottom: 8px;
           }
 
-          .adicion-modal-card h4 { /* Reused class */
+          .adicion-modal-card h4 {
             font-size: 16px;
             color: #d63384;
             margin: 0;

@@ -1,6 +1,5 @@
-// ventas.jsx
-import React, { useState, useEffect, useMemo } from 'react'; // ADDED: useMemo
-import '../../adminStyles.css'; // Asegúrate de que este archivo CSS exista
+import React, { useState, useEffect, useMemo } from 'react';
+import '../../adminStyles.css';
 
 // Importar los nuevos componentes
 import VentasListar from './VentasListar';
@@ -9,38 +8,27 @@ import VentasAnularModal from './VentasAnularModal';
 import VentasAbonosModal from './VentasAbonosModal';
 import VentasAgregarAbonoModal from './VentasAgregarAbonoModal';
 import VentasDetalleAbonoModal from './VentasDetalleAbonoModal';
-import VentasVerDetalle from './VentasVerDetalle'; // Agrega esta línea para el nuevo componente
+import VentasVerDetalle from './VentasVerDetalle';
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
 
-// Renamed import from Notification to AppNotification
 import AppNotification from '../../components/Notification';
-import SearchBar from '../../components/SearchBar'; // ADDED: Import SearchBar
+import SearchBar from '../../components/SearchBar';
 
 export default function Ventas() {
-    const [allSales, setAllSales] = useState([]); // RENAMED: from 'ventas' to 'allSales' to hold all data
+    const [allSales, setAllSales] = useState([]);
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [modalTipo, setModalTipo] = useState(null);
     const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
     const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
-
-    const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false); // This controls visibility of VentasCrear
+    const [mostrarAgregarVenta, setMostrarAgregarVenta] = useState(false);
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
-    const [mostrarVerDetalle, setMostrarVerDetalle] = useState(false); // Nuevo estado para VentasVerDetalle
-
-    // Función para "Ver Detalle"
-    const verDetalleVenta = (venta) => {
-        setVentaSeleccionada(venta);
-        setMostrarVerDetalle(true); // Mostrar la vista de detalle
-        setMostrarAgregarVenta(false); // Asegurarse de que no se muestre la vista de crear
-    };
-
+    const [mostrarVerDetalle, setMostrarVerDetalle] = useState(false);
     const [erroresValidacion, setErroresValidacion] = useState({});
-
     const [ventaData, setVentaData] = useState({
         cod_venta: '00000000',
         tipo_venta: '',
@@ -62,12 +50,29 @@ export default function Ventas() {
         fecha: new Date().toISOString().split('T')[0],
         comprobante_imagen: null
     });
-
     const [abonoSeleccionado, setAbonoSeleccionado] = useState(null);
     const [mostrarModalDetalleAbono, setMostrarModalDetalleAbono] = useState(false);
+    const [filtroTipoVenta, setFiltroTipoVenta] = useState('directa');
 
-    // State for filter type - Default to 'directa'
-    const [filtroTipoVenta, setFiltroTipoVenta] = useState('directa'); // 'directa', 'pedido', 'anulado'
+    const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
+
+    const toggleNestedDetails = (itemId) => {
+        setNestedDetailsVisible(prevState => ({
+            ...prevState,
+            [itemId]: !prevState[itemId]
+        }));
+    };
+    
+    const [mostrarModalAdiciones, setMostrarModalAdiciones] = useState(false);
+    const [mostrarModalSalsas, setMostrarModalSalsas] = useState(false);
+    const [mostrarModalRellenos, setMostrarModalRellenos] = useState(false);
+    const [productoEditandoId, setProductoEditandoId] = useState(null);
+    
+    // **AÑADE ESTA NUEVA FUNCIÓN**
+    const verDetalleVenta = (venta) => {
+        setVentaSeleccionada(venta);
+        setMostrarVerDetalle(true);
+    };
 
     useEffect(() => {
         const mockVentas = [
@@ -222,65 +227,94 @@ export default function Ventas() {
                 total: 64260
             }
         ];
-        setAllSales(mockVentas); // Set all sales data here
+        setAllSales(mockVentas);
     }, []);
+
+    const abrirModalAdiciones = (productoId) => {
+        setProductoEditandoId(productoId);
+        setMostrarModalAdiciones(true);
+    };
+
+    const agregarAdiciones = (nuevasAdiciones) => {
+        setInsumosSeleccionados(prev => prev.map(prod =>
+            prod.id === productoEditandoId
+                ? { ...prod, adiciones: nuevasAdiciones }
+                : prod
+        ));
+        setMostrarModalAdiciones(false);
+    };
+
+    const abrirModalSalsas = (productoId) => {
+        setProductoEditandoId(productoId);
+        setMostrarModalSalsas(true);
+    };
+
+    const agregarSalsas = (nuevasSalsas) => {
+        setInsumosSeleccionados(prev => prev.map(prod =>
+            prod.id === productoEditandoId
+                ? { ...prod, salsas: nuevasSalsas }
+                : prod
+        ));
+        setMostrarModalSalsas(false);
+    };
+
+    const abrirModalRellenos = (productoId) => {
+        setProductoEditandoId(productoId);
+        setMostrarModalRellenos(true);
+    };
+
+    const agregarRellenos = (nuevosRellenos) => {
+        setInsumosSeleccionados(prev => prev.map(prod =>
+            prod.id === productoEditandoId
+                ? { ...prod, sabores: nuevosRellenos }
+                : prod
+        ));
+        setMostrarModalRellenos(false);
+    };
 
     const validarFormularioVenta = () => {
         const errores = {};
-
         if (!ventaData.tipo_venta || ventaData.tipo_venta.trim() === '') {
             errores.tipo_venta = 'El tipo de venta es requerido';
         }
-
         if (!ventaData.cliente || ventaData.cliente.trim() === '') {
             errores.cliente = 'Debe seleccionar un cliente';
         }
-
         if (!ventaData.sede || ventaData.sede.trim() === '') {
             errores.sede = 'Debe seleccionar una sede';
         }
-
         if (!ventaData.metodo_pago || ventaData.metodo_pago.trim() === '') {
             errores.metodo_pago = 'Debe seleccionar un método de pago';
         }
-
         if (!ventaData.fecha_venta || ventaData.fecha_venta.trim() === '') {
             errores.fecha_venta = 'La fecha de venta es requerida';
         }
-
         if (ventaData.tipo_venta === 'pedido' && (!ventaData.fecha_entrega || ventaData.fecha_entrega.trim() === '')) {
             errores.fecha_entrega = 'La fecha de entrega es requerida para pedidos';
         }
-
         if (insumosSeleccionados.length === 0) {
             errores.productos = 'Debe agregar al menos un producto';
         }
-
         return errores;
     };
 
     const generarPDFVenta = (venta) => {
         const doc = new jsPDF();
-
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('FACTURA DE VENTA', 20, 20);
-
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text('Delicias Darsy', 20, 30);
         doc.text('Medellín, Antioquia', 20, 35);
-
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text('INFORMACIÓN DE LA VENTA', 20, 50);
-
         doc.setFont('helvetica', 'normal');
         doc.text(`Cliente: ${venta.cliente}`, 20, 60);
         doc.text(`Sede: ${venta.sede}`, 20, 67);
         doc.text(`Método de Pago: ${venta.metodo_pago}`, 20, 74);
         doc.text(`Estado: ${venta.estado}`, 20, 81);
-
         doc.text(`Número de Venta: ${venta.id}`, 120, 60);
         doc.text(`Fecha de Venta: ${venta.fecha_venta}`, 120, 67);
         if (venta.fecha_entrega) {
@@ -289,18 +323,13 @@ export default function Ventas() {
         if (venta.fecha_finalizacion) {
             doc.text(`Fecha Finalización: ${venta.fecha_finalizacion}`, 120, venta.fecha_entrega ? 81 : 74);
         }
-
-
         const productosData = venta.productos.map(producto => {
             const subtotalProducto = producto.cantidad * producto.precio;
-
             let totalAdiciones = 0;
             if (producto.adiciones && producto.adiciones.length > 0) {
                 totalAdiciones = producto.adiciones.reduce((sum, adicion) => sum + adicion.precio, 0) * producto.cantidad;
             }
-
             const totalConAdiciones = subtotalProducto + totalAdiciones;
-
             return [
                 producto.nombre,
                 producto.cantidad,
@@ -334,22 +363,17 @@ export default function Ventas() {
                 5: { halign: 'right', cellWidth: 25 }
             }
         });
-
         let currentY = doc.lastAutoTable.finalY + 10;
-
         const productosConAdiciones = venta.productos.filter(p => p.adiciones && p.adiciones.length > 0);
-
         if (productosConAdiciones.length > 0) {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('Detalles de Adiciones:', 20, currentY);
             currentY += 7;
-
             doc.setFont('helvetica', 'normal');
             productosConAdiciones.forEach(producto => {
                 doc.text(`• ${producto.nombre}:`, 25, currentY);
                 currentY += 5;
-
                 producto.adiciones.forEach(adicion => {
                     doc.text(`  - ${adicion.nombre}: $${adicion.precio.toFixed(2)}`, 30, currentY);
                     currentY += 4;
@@ -358,47 +382,37 @@ export default function Ventas() {
             });
             currentY += 5;
         }
-
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
-
         const totalStartX = 130;
         doc.text(`Subtotal:`, totalStartX, currentY);
         doc.text(`$${venta.subtotal.toFixed(2)}`, totalStartX + 40, currentY);
-
         doc.text(`IVA:`, totalStartX, currentY + 7);
         doc.text(`$${venta.iva.toFixed(2)}`, totalStartX + 40, currentY + 7);
-
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.text(`TOTAL:`, totalStartX, currentY + 17);
         doc.text(`$${venta.total.toFixed(2)}`, totalStartX + 40, currentY + 17);
-
         const pageHeight = doc.internal.pageSize.height;
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text('¡Gracias por su compra!', 20, pageHeight - 25);
         doc.text(`Generado el: ${new Date().toLocaleDateString('es-CO')}`, 20, pageHeight - 20);
         doc.text(`Hora: ${new Date().toLocaleTimeString('es-CO')}`, 20, pageHeight - 15);
-
         doc.save(`venta-${venta.id}-${venta.cliente.replace(/\s+/g, '_')}.pdf`);
     };
 
     const validarAbono = () => {
         const errores = {};
-
         if (!abonoData.metodo_pago || abonoData.metodo_pago.trim() === '') {
             errores.metodo_pago = 'El método de pago es requerido';
         }
-
         if (!abonoData.total_pagado || parseFloat(abonoData.total_pagado) <= 0) {
             errores.total_pagado = 'El monto debe ser mayor a 0';
         }
-
         if (!abonoData.fecha || abonoData.fecha.trim() === '') {
             errores.fecha = 'La fecha es requerida';
         }
-
         return errores;
     };
 
@@ -427,27 +441,22 @@ export default function Ventas() {
             showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
             return;
         }
-
         const nuevoAbono = {
             id: abonos.length > 0 ? Math.max(...abonos.map(a => a.id)) + 1 : 1,
             id_venta: ventaSeleccionada.id,
             ...abonoData,
-            fecha: new Date().toLocaleDateString(), // Ensure date is formatted consistently
+            fecha: new Date().toLocaleDateString(),
             anulado: false
         };
-
         setAbonos(prev => [...prev, nuevoAbono]);
-
-        // Update the sale's state if fully paid or partially paid
-        setAllSales(prevSales => prevSales.map(venta => { // UPDATED: Changed from setVentas to setAllSales
+        setAllSales(prevSales => prevSales.map(venta => {
             if (venta.id === ventaSeleccionada.id) {
                 const montoActualPagado = (venta.abonos || []).reduce((sum, abono) => sum + parseFloat(abono.total_pagado), 0);
                 const nuevoTotalPagado = montoActualPagado + parseFloat(abonoData.total_pagado);
                 let nuevoEstado = venta.estado;
                 if (nuevoTotalPagado >= venta.total) {
-                    nuevoEstado = 'Terminado'; // Or 'Pagado', depending on desired state
+                    nuevoEstado = 'Terminado';
                 } else if (nuevoTotalPagado > 0 && venta.estado !== 'Terminado' && venta.estado !== 'Anulado') {
-                    // Only change to 'Por pagar' if not already Terminado or Anulado
                     nuevoEstado = 'Por pagar';
                 }
                 return { ...venta, abonos: [...(venta.abonos || []), nuevoAbono], estado: nuevoEstado };
@@ -461,7 +470,7 @@ export default function Ventas() {
     };
 
     const anularAbono = (id) => {
-        setAbonos(prev => prev.map(abono => abono.id === id ? { ...abono, anulado: true } : abono ));
+        setAbonos(prev => prev.map(abono => abono.id === id ? { ...abono, anulado: true } : abono));
         showNotification('Abono anulado exitosamente', 'success');
     };
 
@@ -491,48 +500,43 @@ export default function Ventas() {
     };
 
     const anularVenta = () => {
-        setAllSales(prev => prev.map(v => // UPDATED: Changed from setVentas to setAllSales
+        setAllSales(prev => prev.map(v =>
             v.id === ventaSeleccionada.id ? { ...v, estado: 'Anulado', fecha_finalizacion: new Date().toLocaleDateString() } : v
         ));
         cerrarModal();
         showNotification('Venta anulada exitosamente');
     };
 
-    // Filtered sales based on search and tab selection
     const ventasFiltradas = useMemo(() => {
         const lowerCaseFiltro = filtro.toLowerCase();
-        return allSales.filter(venta => { // UPDATED: Filter from allSales
+        return allSales.filter(venta => {
             const matchesSearch = (
                 (venta.cliente || '').toLowerCase().includes(lowerCaseFiltro) ||
                 (venta.sede || '').toLowerCase().includes(lowerCaseFiltro) ||
                 (venta.id && String(venta.id).includes(lowerCaseFiltro))
             );
-
             if (filtroTipoVenta === 'directa') {
-                return matchesSearch && venta.tipo_venta === 'directa' && venta.estado !== 'Anulado'; // EXCLUDES Anulado
+                return matchesSearch && venta.tipo_venta === 'directa' && venta.estado !== 'Anulado';
             } else if (filtroTipoVenta === 'pedido') {
-                return matchesSearch && venta.tipo_venta === 'pedido' && venta.estado !== 'Anulado'; // EXCLUDES Anulado
+                return matchesSearch && venta.tipo_venta === 'pedido' && venta.estado !== 'Anulado';
             } else if (filtroTipoVenta === 'anulado') {
-                return matchesSearch && venta.estado === 'Anulado'; // ONLY Anulado
+                return matchesSearch && venta.estado === 'Anulado';
             }
-            return false; // Should not reach here if filtroTipoVenta is always one of the three
+            return false;
         })
-            .sort((a, b) => { // Keep sorting logic
-                // Example sorting: Anulled sales always at the end
-                if (a.estado === 'Anulado' && b.estado !== 'Anulado') {
-                    return 1;
-                }
-                if (b.estado === 'Anulado' && a.estado !== 'Anulado') {
-                    return -1;
-                }
-                // Add your default sorting logic here if needed, e.g., by date
-                return 0;
-            });
-    }, [allSales, filtro, filtroTipoVenta]); // Dependencies for useMemo
+        .sort((a, b) => {
+            if (a.estado === 'Anulado' && b.estado !== 'Anulado') {
+                return 1;
+            }
+            if (b.estado === 'Anulado' && a.estado !== 'Anulado') {
+                return -1;
+            }
+            return 0;
+        });
+    }, [allSales, filtro, filtroTipoVenta]);
 
-    // Handler for changes in Estado column in VentasListar
     const manejarCambioEstado = (ventaActualizada, nuevoEstado) => {
-        setAllSales(prevSales => prevSales.map(venta => { // UPDATED: Update allSales
+        setAllSales(prevSales => prevSales.map(venta => {
             if (venta.id === ventaActualizada.id) {
                 return { ...venta, estado: nuevoEstado };
             }
@@ -542,21 +546,17 @@ export default function Ventas() {
     };
 
     const getRowClassName = (rowData) => {
-        return rowData.estado === 'Anulado' ? 'row-anulado' : ''; // Apply CSS class for anulled rows
+        return rowData.estado === 'Anulado' ? 'row-anulado' : '';
     };
-
 
     return (
         <div className="admin-container" style={{ padding: '20px', backgroundColor: 'rgb(251, 234, 242)', minHeight: '100vh' }}>
-
-            {/* Notification Component */}
             <AppNotification
                 visible={notification.visible}
                 mensaje={notification.mensaje}
                 tipo={notification.tipo}
                 onClose={hideNotification}
             />
-
             {mostrarAgregarVenta ? (
                 <VentasCrear
                     ventaData={ventaData}
@@ -583,9 +583,9 @@ export default function Ventas() {
                         ));
                     }}
                     setMostrarModalInsumos={setMostrarModalInsumos}
-                    subtotal={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)}
-                    iva={(insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19}
-                    total={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19}
+                    subtotal={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)}
+                    iva={(insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19}
+                    total={insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19}
                     guardarVenta={() => {
                         const errores = validarFormularioVenta();
                         if (Object.keys(errores).length > 0) {
@@ -601,31 +601,22 @@ export default function Ventas() {
                             showNotification(`Faltan campos por completar:\n${camposFaltantes.join('\n')}`, 'error');
                             return;
                         }
-
                         const nuevaVenta = {
-                            id: allSales.length > 0 ? Math.max(...allSales.map(v => v.id)) + 1 : 1, // Use allSales
+                            id: allSales.length > 0 ? Math.max(...allSales.map(v => v.id)) + 1 : 1,
                             ...ventaData,
                             productos: insumosSeleccionados,
-                            subtotal: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0),
-                            iva: (insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19,
-                            total: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + item.adiciones.reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19,
+                            subtotal: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0),
+                            iva: (insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0)) * 0.19,
+                            total: insumosSeleccionados.reduce((sum, item) => sum + (item.cantidad * item.precio) + (item.adiciones || []).reduce((acc, ad) => acc + ad.precio, 0) * item.cantidad, 0) * 1.19,
                             fecha_registro: new Date().toLocaleDateString(),
                             estado: ventaData.tipo_venta === 'directa' ? 'Venta directa' : 'Pendiente'
                         };
-
-                        setAllSales(prev => [...prev, nuevaVenta]); // Use setAllSales
+                        setAllSales(prev => [...prev, nuevaVenta]);
                         showNotification('Venta guardada exitosamente');
                         setMostrarAgregarVenta(false);
                         setVentaData({
-                            cod_venta: '00000000',
-                            tipo_venta: '',
-                            cliente: '',
-                            sede: '',
-                            metodo_pago: '',
-                            fecha_venta: new Date().toISOString().split('T')[0],
-                            fecha_entrega: '',
-                            fecha_registro: '',
-                            observaciones: ''
+                            cod_venta: '00000000', tipo_venta: '', cliente: '', sede: '', metodo_pago: '',
+                            fecha_venta: new Date().toISOString().split('T')[0], fecha_entrega: '', fecha_registro: '', observaciones: ''
                         });
                         setInsumosSeleccionados([]);
                         setErroresValidacion({});
@@ -646,13 +637,26 @@ export default function Ventas() {
                             return newInsumos;
                         });
                     }}
+                    nestedDetailsVisible={nestedDetailsVisible}
+                    toggleNestedDetails={toggleNestedDetails}
+                    mostrarModalAdiciones={mostrarModalAdiciones}
+                    agregarAdiciones={agregarAdiciones}
+                    abrirModalAdiciones={abrirModalAdiciones}
+                    mostrarModalSalsas={mostrarModalSalsas}
+                    agregarSalsas={agregarSalsas}
+                    abrirModalSalsas={abrirModalSalsas}
+                    mostrarModalRellenos={mostrarModalRellenos}
+                    agregarRellenos={agregarRellenos}
+                    abrirModalRellenos={abrirModalRellenos}
+                    setProductoEditandoId={setProductoEditandoId}
+                    productoEditandoId={productoEditandoId}
                 />
-            ) : mostrarVerDetalle ? ( // Nueva condición para mostrar VentasVerDetalle
+            ) : mostrarVerDetalle ? (
                 <VentasVerDetalle
                     ventaSeleccionada={ventaSeleccionada}
                     onBackToList={() => {
-                        setMostrarVerDetalle(false); // Ocultar la vista de detalle
-                        setVentaSeleccionada(null); // Limpiar la venta seleccionada
+                        setMostrarVerDetalle(false);
+                        setVentaSeleccionada(null);
                     }}
                 />
             ) : (
@@ -667,7 +671,6 @@ export default function Ventas() {
                             placeholder="Buscar por cliente, sede o N° de venta"
                         />
                     </div>
-
                     <VentasListar
                         ventasFiltradas={ventasFiltradas}
                         abrirModal={abrirModal}
@@ -680,19 +683,17 @@ export default function Ventas() {
                         getRowClassName={getRowClassName}
                         filtroTipoVenta={filtroTipoVenta}
                         setFiltroTipoVenta={setFiltroTipoVenta}
+                        // **ESTA FUNCIÓN AHORA SÍ ESTÁ DEFINIDA**
                         verDetalleVenta={verDetalleVenta}
                     />
                 </>
             )}
-
-            {/* Tus otros modales (VentasAnularModal, VentasAbonosModal, etc.) van aquí. Asegúrate de que no se muestren si mostrarVerDetalle es true, aunque su visibilidad ya debería estar controlada por sus propios estados. */}
             <VentasAnularModal
                 visible={modalVisible && modalTipo === 'anular'}
                 onClose={cerrarModal}
                 ventaSeleccionada={ventaSeleccionada}
                 anularVenta={anularVenta}
             />
-
             <VentasAbonosModal
                 visible={mostrarModalAbonos}
                 onClose={() => setMostrarModalAbonos(false)}
@@ -702,7 +703,6 @@ export default function Ventas() {
                 verDetalleAbono={verDetalleAbono}
                 anularAbono={anularAbono}
             />
-
             <VentasAgregarAbonoModal
                 visible={mostrarModalAgregarAbono}
                 onClose={() => {
@@ -716,7 +716,6 @@ export default function Ventas() {
                 agregarAbono={agregarAbono}
                 ventaSeleccionada={ventaSeleccionada}
             />
-
             <VentasDetalleAbonoModal
                 visible={mostrarModalDetalleAbono}
                 onClose={() => setMostrarModalDetalleAbono(false)}

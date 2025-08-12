@@ -5,8 +5,650 @@ import { InputSwitch } from "primereact/inputswitch";
 import Modal from "../components/modal";
 import SearchBar from "../components/SearchBar";
 import Notification from "../components/Notification";
-import { Dropdown } from "primereact/dropdown"; // Necesario para el dropdown de unidades
-import "../adminStyles.css"; // Asegúrate de que los estilos personalizados estén correctos
+import RecetaForm from "./Recetas/components/Agregarproduc";
+import "../adminStyles.css";
+
+// Mock data for insumos - Moved to top for better access
+const mockInsumosDisponibles = [
+  {
+    id: 1,
+    nombre: "Harina de Trigo",
+    categoria: "Harinas",
+    IdUnidadMedida: 1,
+    precio: 15.75,
+    imagen:
+      "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 2,
+    nombre: "Azúcar Blanca",
+    categoria: "Endulzantes",
+    IdUnidadMedida: 1,
+    precio: 12.5,
+    imagen:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuGrIouJPuNNVZvvsEjT5hjhfeA-6IasCyVw&sr",
+  },
+  {
+    id: 3,
+    nombre: "Levadura Seca",
+    categoria: "Fermentos",
+    IdUnidadMedida: 2,
+    precio: 8.25,
+    imagen:
+      "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 4,
+    nombre: "Huevos A",
+    categoria: "Lácteos",
+    IdUnidadMedida: 5,
+    precio: 18.9,
+    imagen:
+      "https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 5,
+    nombre: "Mantequilla sin sal",
+    categoria: "Lácteos",
+    IdUnidadMedida: 2,
+    precio: 22.4,
+    imagen:
+      "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 6,
+    nombre: "Leche Entera",
+    categoria: "Lácteos",
+    IdUnidadMedida: 3,
+    precio: 25.5,
+    imagen:
+      "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 7,
+    nombre: "Chocolate Semiamargo",
+    categoria: "Saborizantes",
+    IdUnidadMedida: 2,
+    precio: 35.75,
+    imagen:
+      "https://images.unsplash.com/photo-1511381939415-e44015466834?w=200&h=200&fit=crop&crop=center",
+  },
+  {
+    id: 8,
+    nombre: "Esencia de Vainilla",
+    categoria: "Saborizantes",
+    IdUnidadMedida: 4,
+    precio: 12.8,
+    imagen:
+      "https://sip.pochteca.net/media/blog/f/r/fragancia-de-vainilla-aroma-de-mexico-para-el-mundo.jpg",
+  },
+  {
+    id: 9,
+    nombre: "Sal Refinada",
+    categoria: "Condimentos",
+    IdUnidadMedida: 2,
+    precio: 4.5,
+    imagen:
+      "https://pinero.storage.googleapis.com/wp-content/uploads/2024/02/01165014/4-17.jpg",
+  },
+  {
+    id: 10,
+    nombre: "Aceite Vegetal",
+    categoria: "Grasas",
+    IdUnidadMedida: 3,
+    precio: 18.25,
+    imagen:
+      "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=200&h=200&fit=crop&crop=center",
+  },
+];
+
+// Mock data for unidades de medida
+const unidadesDeMedida = [
+  { id: 1, nombre: "gramos" },
+  { id: 2, nombre: "ml" },
+  { id: 3, nombre: "litros" },
+  { id: 4, nombre: "gotas" },
+  { id: 5, nombre: "unidades" },
+  { id: 6, nombre: "kilogramos" },
+];
+
+// Componente modal de visualización con el mismo diseño
+const VisualizarProductoModal = ({
+  visible,
+  onClose,
+  producto,
+  onToggleDetalle,
+  detalleVisible,
+  unidadesDeMedida, // Pass units of measure
+}) => {
+  const formatearPrecio = (precio) =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(precio);
+
+  // Helper to get unit name from IdUnidadMedida
+  const getUnidadMedidaNombre = (id) => {
+    const unidad = unidadesDeMedida.find((u) => u.id === id);
+    return unidad ? unidad.nombre : "unidad";
+  };
+
+  if (!visible || !producto) return null;
+
+  return (
+    <div
+      className="modal-overlay-fixed"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        className="modal-content-fixed"
+        style={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          overflow: "auto",
+          position: "relative",
+          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        <div style={{ padding: "2rem" }}>
+          {/* Header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "2rem",
+              borderBottom: "2px solid #f1f1f1",
+              paddingBottom: "1rem",
+            }}
+          >
+            <h2
+              style={{
+                color: "#2c3e50",
+                margin: 0,
+                fontSize: "1.5rem",
+                fontWeight: "600",
+              }}
+            >
+              Detalles del Producto
+            </h2>
+            <button
+              onClick={onClose}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.5rem",
+                cursor: "pointer",
+                color: "#7f8c8d",
+                padding: "0.5rem",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Información básica del producto */}
+          <div style={{ marginBottom: "2rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1.5rem",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Nombre del Producto
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: "#2c3e50",
+                  }}
+                >
+                  {producto.nombre}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Precio
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: "#000",
+                    fontWeight: "600",
+                  }}
+                >
+                  {formatearPrecio(producto.precio || 0)}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Categoría
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: "#2c3e50",
+                  }}
+                >
+                  {producto.categoria}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Estado
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: producto.estado ? "#27ae60" : "#e74c3c",
+                    fontWeight: "600",
+                  }}
+                >
+                  {producto.estado ? "Activo" : "Inactivo"}
+                </div>
+              </div>
+            </div>
+
+            {/* Inventario */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1.5rem",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Cantidad en San Pablo
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: "#2c3e50",
+                  }}
+                >
+                  {producto.cantidadSanPablo || 0} unidades
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Cantidad en San Benito
+                </label>
+                <div
+                  style={{
+                    padding: "0.75rem",
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    color: "#2c3e50",
+                  }}
+                >
+                  {producto.cantidadSanBenito || 0} unidades
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección de Recetas */}
+          <div style={{ marginBottom: "2rem" }}>
+            <h3
+              style={{
+                color: "#000",
+                fontSize: "1.2rem",
+                fontWeight: "600",
+                marginBottom: "1rem",
+                textAlign: "center",
+                borderBottom: "2px solid #000",
+                paddingBottom: "0.5rem",
+              }}
+            >
+              Recetas Asociadas
+            </h3>
+
+            {producto.recetas?.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                {producto.recetas.map((receta) => (
+                  <div
+                    key={receta.id}
+                    style={{
+                      border: "1px solid #e9ecef",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      backgroundColor: "#ffffff",
+                    }}
+                  >
+                    {/* Header de la receta */}
+                    <div
+                      onClick={() => onToggleDetalle(receta.id)}
+                      style={{
+                        padding: "1rem",
+                        backgroundColor: "#f8f9fa",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderBottom: "1px solid #e9ecef",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1rem",
+                        }}
+                      >
+                        {receta.imagen && (
+                          <img
+                            src={receta.imagen}
+                            alt={receta.nombre}
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                            }}
+                          />
+                        )}
+                        <h4
+                          style={{
+                            margin: 0,
+                            color: "#2c3e50",
+                            fontSize: "1.1rem",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {receta.nombre}
+                        </h4>
+                      </div>
+                      <span
+                        style={{
+                          color: "#7f8c8d",
+                          fontSize: "1.2rem",
+                          transform:
+                            detalleVisible === receta.id
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}
+                      >
+                        ▼
+                      </span>
+                    </div>
+
+                    {/* Detalles de la receta (colapsable) */}
+                    {detalleVisible === receta.id && (
+                      <div style={{ padding: "1.5rem" }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "1.5rem",
+                          }}
+                        >
+                          {/* Insumos */}
+                          <div>
+                            <h5
+                              style={{
+                                color: "#34495e",
+                                marginBottom: "0.5rem",
+                                fontSize: "1rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              Insumos necesarios:
+                            </h5>
+                            <ul
+                              style={{
+                                listStyle: "none",
+                                padding: 0,
+                                margin: 0,
+                                backgroundColor: "#f8f9fa",
+                                borderRadius: "6px",
+                                padding: "0.75rem",
+                              }}
+                            >
+                              {receta.insumos?.length > 0 ? (
+                                receta.insumos.map((insumo, index) => (
+                                  <li
+                                    key={index}
+                                    style={{
+                                      padding: "0.25rem 0",
+                                      color: "#2c3e50",
+                                      fontSize: "0.9rem",
+                                      borderBottom:
+                                        index < receta.insumos.length - 1
+                                          ? "1px solid #e9ecef"
+                                          : "none",
+                                    }}
+                                  >
+                                    • {insumo.cantidad}{" "}
+                                    {getUnidadMedidaNombre(
+                                      insumo.IdUnidadMedida
+                                    )}{" "}
+                                    de {insumo.nombre}
+                                  </li>
+                                ))
+                              ) : (
+                                <li
+                                  style={{
+                                    padding: "0.25rem 0",
+                                    color: "#7f8c8d",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  No hay insumos especificados.
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+
+                          {/* Pasos */}
+                          <div>
+                            <h5
+                              style={{
+                                color: "#34495e",
+                                marginBottom: "0.5rem",
+                                fontSize: "1rem",
+                                fontWeight: "600",
+                              }}
+                            >
+                              Pasos de preparación:
+                            </h5>
+                            <ol
+                              style={{
+                                padding: 0,
+                                margin: 0,
+                                backgroundColor: "#f8f9fa",
+                                borderRadius: "6px",
+                                padding: "0.75rem",
+                                paddingLeft: "1.5rem",
+                              }}
+                            >
+                              {receta.pasos?.length > 0 ? (
+                                receta.pasos.map((paso, index) => (
+                                  <li
+                                    key={index}
+                                    style={{
+                                      padding: "0.25rem 0",
+                                      color: "#2c3e50",
+                                      fontSize: "0.9rem",
+                                      marginBottom: "0.5rem",
+                                    }}
+                                  >
+                                    {paso}
+                                  </li>
+                                ))
+                              ) : (
+                                <li
+                                  style={{
+                                    padding: "0.25rem 0",
+                                    color: "#7f8c8d",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  No hay pasos de preparación especificados.
+                                </li>
+                              )}
+                            </ol>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "2rem",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "8px",
+                  color: "#7f8c8d",
+                }}
+              >
+                No hay recetas asociadas a este producto.
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              paddingTop: "1rem",
+              borderTop: "1px solid #e9ecef",
+            }}
+          >
+            <button
+              onClick={onClose}
+              style={{
+                padding: "0.75rem 2rem",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                fontWeight: "500",
+                transition: "background-color 0.2s ease",
+              }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#5a6268")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#6c757d")}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Productos() {
   // Estados generales
@@ -24,31 +666,10 @@ export default function Productos() {
   const [modalTipo, setModalTipo] = useState(null);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
 
-  // Formularios de producto
-  const [nombreEditado, setNombreEditado] = useState("");
-  const [precioEditado, setPrecioEditado] = useState("");
-  const [categoriaEditada, setCategoriaEditada] = useState("");
-  // Estados para cantidad por sede (solo visible en editar/visualizar)
-  const [cantidadSanPablo, setCantidadSanPablo] = useState("");
-  const [cantidadSanBenito, setCantidadSanBenito] = useState("");
+  // Toggle mostrar detalle de pasos e insumos de una receta (in visualization modal)
+  const [recetaDetalleVisible, setRecetaDetalleVisible] = useState(null);
 
-  // Modal para CREAR recetas desde productos
-  const [modalCrearRecetaVisible, setModalCrearRecetaVisible] = useState(false);
-  const [nuevaRecetaNombre, setNuevaRecetaNombre] = useState("");
-  const [nuevaRecetaEspecificaciones, setNuevaRecetaEspecificaciones] =
-    useState("");
-  const [recetasSeleccionadas, setRecetasSeleccionadas] = useState([]); // Recetas asociadas al producto actual
-
-  // Estados para el Modal de Agregar Insumos
-  const [modalAgregarInsumosVisible, setModalAgregarInsumosVisible] =
-    useState(false);
-  const [filtroInsumos, setFiltroInsumos] = useState("");
-  const [insumosDisponibles, setInsumosDisponibles] = useState([]);
-  const [unidadesMedida, setUnidadesMedida] = useState([]);
-  const [insumosSeleccionadosParaReceta, setInsumosSeleccionadosParaReceta] =
-    useState(new Map()); // Map<id_insumo, {insumo_obj, cantidad, unidad_id}>
-
-  // Mock inicial para categorías, productos, insumos y unidades
+  // Mock initial for categorías y productos
   useEffect(() => {
     const mockCategorias = [
       { id: 301, nombre: "Fresas con crema" },
@@ -60,90 +681,7 @@ export default function Productos() {
     ];
     setCategorias(mockCategorias);
 
-    const mockUnidadesMedida = [
-      { label: "Seleccionar unidad...", value: "", disabled: true },
-      { label: "Kilogramos", value: 1, text: "kg" },
-      { label: "Gramos", value: 2, text: "gr" },
-      { label: "Litros", value: 3, text: "litros" },
-      { label: "Mililitros", value: 4, text: "ml" },
-      { label: "Unidades", value: 5, text: "unidad" },
-    ];
-    setUnidadesMedida(mockUnidadesMedida);
-
-    const mockInsumos = [
-      {
-        id: 1,
-        nombre: "Harina de Trigo",
-        IdCategoriaInsumo: 1,
-        categoria: "Panadería",
-        estado: true,
-      },
-      {
-        id: 2,
-        nombre: "Azúcar Blanca",
-        IdCategoriaInsumo: 1,
-        categoria: "Panadería",
-        estado: true,
-      },
-      {
-        id: 3,
-        nombre: "Levadura Seca",
-        IdCategoriaInsumo: 1,
-        categoria: "Panadería",
-        estado: true,
-      },
-      {
-        id: 4,
-        nombre: "Huevos A",
-        IdCategoriaInsumo: 2,
-        categoria: "Lácteos y Huevos",
-        estado: true,
-      },
-      {
-        id: 5,
-        nombre: "Leche Entera",
-        IdCategoriaInsumo: 2,
-        categoria: "Lácteos y Huevos",
-        estado: true,
-      },
-      {
-        id: 6,
-        nombre: "Mantequilla sin sal",
-        IdCategoriaInsumo: 2,
-        categoria: "Lácteos y Huevos",
-        estado: true,
-      },
-      {
-        id: 7,
-        nombre: "Esencia de Vainilla",
-        IdCategoriaInsumo: 3,
-        categoria: "Especias y Condimentos",
-        estado: true,
-      },
-      {
-        id: 8,
-        nombre: "Cacao en Polvo",
-        IdCategoriaInsumo: 1,
-        categoria: "Panadería",
-        estado: true,
-      },
-      {
-        id: 9,
-        nombre: "Sal",
-        IdCategoriaInsumo: 3,
-        categoria: "Especias y Condimentos",
-        estado: true,
-      },
-      {
-        id: 10,
-        nombre: "Agua",
-        IdCategoriaInsumo: 4,
-        categoria: "Bebidas",
-        estado: true,
-      },
-    ];
-    setInsumosDisponibles(mockInsumos);
-
+    // Initial mock data for products with detailed insumos
     const mockProductos = [
       {
         id: 1,
@@ -152,48 +690,27 @@ export default function Productos() {
         idCategoriaProducto: 305,
         categoria: "Pasteles",
         estado: true,
-        cantidadSanPablo: 15,
-        cantidadSanBenito: 10,
         recetas: [
           {
-            Idreceta: 201,
-            NombreReceta: "Receta Especial Torta Chocolate",
-            Especificaciones:
-              "Receta personalizada para la torta de chocolate con nuestro toque especial.",
-            estado: true,
-            tieneRelaciones: false,
-            insumos: [
-              {
-                id: 1,
-                nombre: "Harina de Trigo",
-                Cantidad: 400,
-                unidad: "gr",
-                IdUnidadMedida: 2,
-              },
-              {
-                id: 8,
-                nombre: "Cacao en Polvo",
-                Cantidad: 80,
-                unidad: "gr",
-                IdUnidadMedida: 2,
-              },
-              {
-                id: 2,
-                nombre: "Azúcar Blanca",
-                Cantidad: 200,
-                unidad: "gr",
-                IdUnidadMedida: 2,
-              },
-              {
-                id: 4,
-                nombre: "Huevos A",
-                Cantidad: 4,
-                unidad: "unidad",
-                IdUnidadMedida: 5,
-              },
+            id: 1,
+            nombre: "Receta Base Chocolate",
+            pasos: [
+              "Derretir chocolate",
+              "Mezclar con harina",
+              "Hornear 40 min",
             ],
+            insumos: [
+              { id: 7, nombre: "Chocolate Semiamargo", cantidad: 200, IdUnidadMedida: 1 }, // gramos
+              { id: 1, nombre: "Harina de Trigo", cantidad: 300, IdUnidadMedida: 1 }, // gramos
+              { id: 4, nombre: "Huevos A", cantidad: 3, IdUnidadMedida: 5 }, // unidades
+              { id: 2, nombre: "Azúcar Blanca", cantidad: 150, IdUnidadMedida: 1 }, // gramos
+            ],
+            imagen:
+              "https://images.unsplash.com/photo-1604152135912-04a470154c4b?fit=crop&w=600&q=80",
           },
         ],
+        cantidadSanPablo: 10,
+        cantidadSanBenito: 5,
       },
       {
         id: 2,
@@ -202,48 +719,41 @@ export default function Productos() {
         idCategoriaProducto: 303,
         categoria: "Cupcakes",
         estado: true,
-        cantidadSanPablo: 50,
-        cantidadSanBenito: 30,
         recetas: [
           {
-            Idreceta: 202,
-            NombreReceta: "Receta Cupcake Básico Vainilla",
-            Especificaciones:
-              "Base para cupcakes de vainilla, adaptable a diferentes sabores.",
-            estado: true,
-            tieneRelaciones: false,
+            id: 2,
+            nombre: "Receta Base Vainilla",
+            pasos: ["Batir huevos", "Agregar esencia de vainilla", "Hornear"],
             insumos: [
-              {
-                id: 1,
-                nombre: "Harina de Trigo",
-                Cantidad: 200,
-                unidad: "gr",
-                IdUnidadMedida: 2,
-              },
-              {
-                id: 2,
-                nombre: "Azúcar Blanca",
-                Cantidad: 150,
-                unidad: "gr",
-                IdUnidadMedida: 2,
-              },
-              {
-                id: 7,
-                nombre: "Esencia de Vainilla",
-                Cantidad: 5,
-                unidad: "ml",
-                IdUnidadMedida: 4,
-              },
-              {
-                id: 4,
-                nombre: "Huevos A",
-                Cantidad: 2,
-                unidad: "unidad",
-                IdUnidadMedida: 5,
-              },
+              { id: 4, nombre: "Huevos A", cantidad: 2, IdUnidadMedida: 5 },
+              { id: 2, nombre: "Azúcar Blanca", cantidad: 100, IdUnidadMedida: 1 },
+              { id: 1, nombre: "Harina de Trigo", cantidad: 120, IdUnidadMedida: 1 },
+              { id: 8, nombre: "Esencia de Vainilla", cantidad: 5, IdUnidadMedida: 4 },
             ],
+            imagen:
+              "https://images.unsplash.com/photo-1599785209707-28c5f3e43c53?fit=crop&w=600&q=80",
+          },
+          {
+            id: 6,
+            nombre: "Receta Cupcake Base",
+            pasos: [
+              "Mezclar ingredientes secos",
+              "Agregar líquidos",
+              "Hornear",
+            ],
+            insumos: [
+              { id: 1, nombre: "Harina de Trigo", cantidad: 200, IdUnidadMedida: 1 },
+              { id: 2, nombre: "Azúcar Blanca", cantidad: 180, IdUnidadMedida: 1 },
+              { id: 4, nombre: "Huevos A", cantidad: 3, IdUnidadMedida: 5 },
+              { id: 6, nombre: "Leche Entera", cantidad: 150, IdUnidadMedida: 2 },
+              { id: 8, nombre: "Esencia de Vainilla", cantidad: 10, IdUnidadMedida: 4 },
+            ],
+            imagen:
+              "https://images.unsplash.com/photo-1519428870410-42e44efb96b9?fit=crop&w=600&q=80",
           },
         ],
+        cantidadSanPablo: 20,
+        cantidadSanBenito: 15,
       },
       {
         id: 3,
@@ -252,183 +762,190 @@ export default function Productos() {
         idCategoriaProducto: 301,
         categoria: "Fresas con crema",
         estado: true,
-        cantidadSanPablo: 20,
-        cantidadSanBenito: 25,
-        recetas: [],
+        recetas: [
+          {
+            id: 3,
+            nombre: "Receta Fresas con Crema",
+            pasos: ["Lavar fresas", "Batir crema", "Servir en copa"],
+            insumos: [
+              { id: 11, nombre: "Fresas", cantidad: 250, IdUnidadMedida: 1 }, // Assuming 'gramos' for berries
+              { id: 12, nombre: "Crema de leche", cantidad: 100, IdUnidadMedida: 2 }, // Assuming 'ml' for cream
+              { id: 2, nombre: "Azúcar Blanca", cantidad: 50, IdUnidadMedida: 1 },
+            ],
+            imagen:
+              "https://images.unsplash.com/photo-1605478522030-1c56a4d3896d?fit=crop&w=600&q=80",
+          },
+        ],
+        cantidadSanPablo: 8,
+        cantidadSanBenito: 12,
+      },
+      {
+        id: 4,
+        nombre: "Arroz con Leche Tradicional",
+        precio: 8500,
+        idCategoriaProducto: 306,
+        categoria: "Arroz con leche",
+        estado: false,
+        recetas: [
+          {
+            id: 4,
+            nombre: "Receta Arroz con Leche",
+            pasos: [
+              "Hervir arroz",
+              "Agregar leche y azúcar",
+              "Cocinar a fuego lento",
+            ],
+            insumos: [
+              { id: 13, nombre: "Arroz", cantidad: 200, IdUnidadMedida: 1 },
+              { id: 6, nombre: "Leche Entera", cantidad: 500, IdUnidadMedida: 2 },
+              { id: 14, nombre: "Canela", cantidad: 5, IdUnidadMedida: 1 },
+              { id: 2, nombre: "Azúcar Blanca", cantidad: 150, IdUnidadMedida: 1 },
+            ],
+            imagen:
+              "https://images.unsplash.com/photo-1612361362044-d45e5de58c00?fit=crop&w=600&q=80",
+          },
+        ],
+        cantidadSanPablo: 5,
+        cantidadSanBenito: 3,
+      },
+      {
+        id: 5,
+        nombre: "Oblea con Arequipe y Queso",
+        precio: 6000,
+        idCategoriaProducto: 302,
+        categoria: "Obleas",
+        estado: true,
+        recetas: [
+          {
+            id: 5,
+            nombre: "Receta Obleas Clásicas",
+            pasos: [
+              "Colocar oblea",
+              "Agregar arequipe y queso",
+              "Tapar con otra oblea",
+            ],
+            insumos: [
+              { id: 15, nombre: "Obleas", cantidad: 2, IdUnidadMedida: 5 },
+              { id: 16, nombre: "Arequipe", cantidad: 50, IdUnidadMedida: 1 },
+              { id: 17, nombre: "Queso rallado", cantidad: 30, IdUnidadMedida: 1 },
+            ],
+            imagen:
+              "https://images.unsplash.com/photo-1653160056143-b232b93450e1?fit=crop&w=600&q=80",
+          },
+        ],
+        cantidadSanPablo: 15,
+        cantidadSanBenito: 10,
       },
     ];
     setProductos(mockProductos);
   }, []);
 
+  // Función para convertir insumos de string (old mock) a objetos con estructura esperada por RecetaForm y Visualization
+  // This function now handles both string-based and object-based insumos in the initial mock data
+  const convertirInsumosParaRecetaForm = (recetas) => {
+    if (!recetas || recetas.length === 0) return [];
+
+    const insumosConvertidos = [];
+
+    recetas.forEach((receta) => {
+      if (receta.insumos && Array.isArray(receta.insumos)) {
+        receta.insumos.forEach((insumoItem) => {
+          // If insumoItem is already an object with id, name, quantity, IdUnidadMedida
+          if (typeof insumoItem === "object" && insumoItem.nombre) {
+            // Check if already added to avoid duplicates if multiple recipes use same insumo
+            if (!insumosConvertidos.some(i => i.nombre === insumoItem.nombre)) {
+              insumosConvertidos.push(insumoItem);
+            }
+          } else if (typeof insumoItem === "string") {
+            // Handle old string format if it still exists in some data
+            const insumoEncontrado = mockInsumosDisponibles.find(
+              (mock) =>
+                mock.nombre
+                  .toLowerCase()
+                  .includes(insumoItem.toLowerCase()) ||
+                insumoItem.toLowerCase().includes(mock.nombre.toLowerCase())
+            );
+
+            // Only add if not already present by name
+            if (!insumosConvertidos.some(i => i.nombre === insumoItem)) {
+              insumosConvertidos.push({
+                id: insumoEncontrado?.id || Date.now() + Math.random(),
+                nombre: insumoItem,
+                cantidad: 1, // Default quantity for conversion from string
+                IdUnidadMedida: insumoEncontrado?.IdUnidadMedida || 1, // Default unit
+                precio: insumoEncontrado?.precio || 0,
+                imagen: insumoEncontrado?.imagen || "",
+              });
+            }
+          }
+        });
+      }
+    });
+
+    return insumosConvertidos;
+  };
+
+
+  // Función para crear initialData correcto para RecetaForm
+  const crearInitialDataParaRecetaForm = (producto) => {
+    if (!producto) return null;
+
+    // Ensure recipes are always an array
+    const productRecetas = producto.recetas || [];
+
+    // Transform insumos for RecetaForm to have quantity and unit details
+    const insumosForForm = productRecetas.flatMap(receta =>
+        receta.insumos.map(insumo => ({
+            id: insumo.id, // Keep existing ID if available
+            nombre: insumo.nombre,
+            cantidad: insumo.cantidad || 1, // Default to 1 if not specified
+            IdUnidadMedida: insumo.IdUnidadMedida || 1, // Default unit if not specified
+            // Include other properties like precio, imagen if needed by RecetaForm
+        }))
+    ).filter((value, index, self) => // Remove duplicates by name
+        index === self.findIndex((t) => (
+            t.nombre === value.nombre
+        ))
+    );
+
+
+    return {
+      id: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      categoria: producto.idCategoriaProducto,
+      insumos: insumosForForm, // Now contains quantity and unit for form
+      cantidadSanPablo: producto.cantidadSanPablo || 0,
+      cantidadSanBenito: producto.cantidadSanBenito || 0,
+      recetas: productRecetas, // Pass original recipes to RecetaForm if it needs to display/edit them
+    };
+  };
+
   // Notificaciones
   const showNotification = (mensaje, tipo = "success") => {
     setNotification({ visible: true, mensaje, tipo });
   };
+
   const hideNotification = () => {
     setNotification({ visible: false, mensaje: "", tipo: "success" });
   };
 
-  // Abrir modal productos (agregar, editar, visualizar, eliminar)
+  // Abrir modal
   const abrirModal = (tipo, producto = null) => {
     setModalTipo(tipo);
     setProductoSeleccionado(producto);
-    if (tipo === "editar" || tipo === "visualizar") {
-      setNombreEditado(producto.nombre);
-      setPrecioEditado(producto.precio.toString());
-      setCategoriaEditada(producto.idCategoriaProducto.toString());
-      setRecetasSeleccionadas(producto.recetas || []);
-      setCantidadSanPablo(
-        producto.cantidadSanPablo !== undefined
-          ? producto.cantidadSanPablo.toString()
-          : ""
-      );
-      setCantidadSanBenito(
-        producto.cantidadSanBenito !== undefined
-          ? producto.cantidadSanBenito.toString()
-          : ""
-      );
-    }
-    if (tipo === "agregar") {
-      setNombreEditado("");
-      setPrecioEditado("");
-      setCategoriaEditada("");
-      setRecetasSeleccionadas([]); // Vacío para un producto nuevo
-      setCantidadSanPablo("");
-      setCantidadSanBenito("");
-    }
     setModalVisible(true);
   };
+
   const cerrarModal = () => {
     setModalVisible(false);
     setProductoSeleccionado(null);
     setModalTipo(null);
-    setNombreEditado("");
-    setPrecioEditado("");
-    setCategoriaEditada("");
-    setRecetasSeleccionadas([]);
-    setCantidadSanPablo("");
-    setCantidadSanBenito("");
+    setRecetaDetalleVisible(null); // Reset detalle visible
   };
 
-  // --- Funciones para el Modal de Crear Receta ---
-  const abrirModalCrearReceta = () => {
-    setNuevaRecetaNombre("");
-    setNuevaRecetaEspecificaciones("");
-    setInsumosSeleccionadosParaReceta(new Map()); // Resetear insumos para la nueva receta
-    setModalCrearRecetaVisible(true);
-  };
-
-  const cerrarModalCrearReceta = () => {
-    setModalCrearRecetaVisible(false);
-  };
-
-  const guardarNuevaRecetaEnProducto = () => {
-    if (!nuevaRecetaNombre.trim()) {
-      showNotification("El nombre de la receta es obligatorio", "error");
-      return;
-    }
-    if (insumosSeleccionadosParaReceta.size === 0) {
-      showNotification("Debe añadir al menos un insumo a la receta", "error");
-      return;
-    }
-
-    // Convertir el Map de insumos a un array de objetos para la receta
-    const insumosParaGuardar = Array.from(
-      insumosSeleccionadosParaReceta.values()
-    ).map((item) => ({
-      id: item.insumo_obj.id,
-      nombre: item.insumo_obj.nombre,
-      Cantidad: parseFloat(item.cantidad),
-      unidad:
-        unidadesMedida.find((u) => u.value === item.unidad_id)?.text || "",
-      IdUnidadMedida: item.unidad_id,
-    }));
-
-    const nuevoIdReceta = recetasSeleccionadas.length
-      ? Math.max(...recetasSeleccionadas.map((r) => r.Idreceta)) + 1
-      : 1;
-
-    const nuevaReceta = {
-      Idreceta: nuevoIdReceta,
-      NombreReceta: nuevaRecetaNombre,
-      Especificaciones: nuevaRecetaEspecificaciones,
-      estado: true,
-      tieneRelaciones: false,
-      insumos: insumosParaGuardar,
-    };
-
-    setRecetasSeleccionadas([...recetasSeleccionadas, nuevaReceta]);
-    cerrarModalCrearReceta();
-    showNotification("Receta creada y añadida al producto");
-  };
-
-  // --- Funciones para el Modal de Agregar Insumos ---
-  const abrirModalAgregarInsumos = () => {
-    setFiltroInsumos(""); // Resetear filtro
-    // Mantener los insumos ya seleccionados en el modal si se reabre
-    // setInsumosSeleccionadosParaReceta(new Map(nuevaRecetaInsumos.map(i => [i.id, { insumo_obj: i, cantidad: i.Cantidad, unidad_id: i.IdUnidadMedida }])));
-    setModalAgregarInsumosVisible(true);
-  };
-
-  const cerrarModalAgregarInsumos = () => {
-    setModalAgregarInsumosVisible(false);
-  };
-
-  const toggleInsumoSeleccionadoEnModal = (insumo) => {
-    setInsumosSeleccionadosParaReceta((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.has(insumo.id)) {
-        newMap.delete(insumo.id);
-      } else {
-        newMap.set(insumo.id, {
-          insumo_obj: insumo,
-          cantidad: "", // Cantidad inicial vacía
-          unidad_id: "", // Unidad inicial vacía
-        });
-      }
-      return newMap;
-    });
-  };
-
-  const handleCantidadInsumoChange = (insumoId, cantidad) => {
-    setInsumosSeleccionadosParaReceta((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.has(insumoId)) {
-        newMap.get(insumoId).cantidad = cantidad;
-      }
-      return newMap;
-    });
-  };
-
-  const handleUnidadInsumoChange = (insumoId, unidad_id) => {
-    setInsumosSeleccionadosParaReceta((prev) => {
-      const newMap = new Map(prev);
-      if (newMap.has(insumoId)) {
-        newMap.get(insumoId).unidad_id = unidad_id;
-      }
-      return newMap;
-    });
-  };
-
-  const confirmarInsumosParaReceta = () => {
-    const insumosValidos = Array.from(
-      insumosSeleccionadosParaReceta.values()
-    ).every((item) => {
-      return (
-        item.cantidad !== "" &&
-        parseFloat(item.cantidad) > 0 &&
-        item.unidad_id !== ""
-      );
-    });
-
-    if (!insumosValidos) {
-      showNotification(
-        "Todos los insumos seleccionados deben tener cantidad y unidad válidas.",
-        "error"
-      );
-      return;
-    }
-    cerrarModalAgregarInsumos();
+  const toggleDetalleReceta = (id) => {
+    setRecetaDetalleVisible(recetaDetalleVisible === id ? null : id);
   };
 
   // Cambiar estado producto
@@ -442,94 +959,88 @@ export default function Productos() {
     );
   };
 
-  // Validación formulario producto
-  const validarFormulario = () => {
-    if (!nombreEditado.trim()) {
-      showNotification("El nombre es obligatorio", "error");
-      return false;
-    }
-    if (!precioEditado || parseFloat(precioEditado) <= 0) {
-      showNotification("El precio debe ser mayor a 0", "error");
-      return false;
-    }
-    if (!categoriaEditada) {
-      showNotification("Debe seleccionar una categoría", "error");
-      return false;
-    }
-    // Validaciones de cantidad solo si estamos editando/visualizando
-    if (modalTipo === "editar" || modalTipo === "visualizar") {
-      if (
-        cantidadSanPablo === "" ||
-        isNaN(parseInt(cantidadSanPablo)) ||
-        parseInt(cantidadSanPablo) < 0
-      ) {
-        showNotification(
-          "La cantidad en San Pablo debe ser un número válido y no negativo",
-          "error"
-        );
-        return false;
-      }
-      if (
-        cantidadSanBenito === "" ||
-        isNaN(parseInt(cantidadSanBenito)) ||
-        parseInt(cantidadSanBenito) < 0
-      ) {
-        showNotification(
-          "La cantidad en San Benito debe ser un número válido y no negativo",
-          "error"
-        );
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Guardar producto nuevo
-  const guardarNuevoProducto = () => {
-    if (!validarFormulario()) return;
-    const nuevoId = productos.length
-      ? Math.max(...productos.map((p) => p.id)) + 1
-      : 1;
-    const catObj = categorias.find((c) => c.id.toString() === categoriaEditada);
-    const nuevoProd = {
-      id: nuevoId,
-      nombre: nombreEditado,
-      precio: parseFloat(precioEditado),
-      idCategoriaProducto: parseInt(categoriaEditada),
-      categoria: catObj.nombre,
-      estado: true,
-      // Las cantidades iniciales para un producto nuevo pueden ser 0 o no estar definidas hasta la primera edición
-      cantidadSanPablo: 0,
-      cantidadSanBenito: 0,
-      recetas: recetasSeleccionadas,
-    };
-    setProductos([...productos, nuevoProd]);
-    cerrarModal();
-    showNotification("Producto agregado con éxito");
-  };
-
-  // Guardar edición producto
-  const guardarEdicion = () => {
-    if (!validarFormulario()) return;
-    const catObj = categorias.find((c) => c.id.toString() === categoriaEditada);
-    const prodEditados = productos.map((p) =>
-      p.id === productoSeleccionado.id
-        ? {
-            ...p,
-            nombre: nombreEditado,
-            precio: parseFloat(precioEditado),
-            idCategoriaProducto: parseInt(categoriaEditada),
-            categoria: catObj.nombre,
-            cantidadSanPablo: parseInt(cantidadSanPablo),
-            cantidadSanBenito: parseInt(cantidadSanBenito),
-            recetas: recetasSeleccionadas,
-            estado: productoSeleccionado.estado,
-          }
-        : p
+  // Handle Save from RecetaForm - CORREGIDO
+  const handleRecetaFormSave = (data) => {
+    const catObj = categorias.find(
+      (c) => c.id.toString() === data.categoria.toString()
     );
-    setProductos(prodEditados);
+
+    if (!catObj) {
+      showNotification("Categoría seleccionada no válida.", "error");
+      return;
+    }
+
+    // Ensure insumos from the form have the correct structure (id, nombre, cantidad, IdUnidadMedida)
+    const insumosForReceta = data.insumos
+      ? data.insumos.map((insumo) => ({
+          id: insumo.id,
+          nombre: insumo.nombre,
+          cantidad: insumo.cantidad || 1, // Default quantity if not set by form
+          IdUnidadMedida: insumo.IdUnidadMedida || 1, // Default unit if not set by form
+        }))
+      : [];
+
+    // Reconstruct recipes, ensuring insumos are structured as objects
+    const recetasGeneradas =
+      data.recetas && data.recetas.length > 0
+        ? data.recetas.map(receta => ({
+            ...receta,
+            insumos: receta.insumos ? receta.insumos.map(insumo => ({
+                id: insumo.id || Date.now() + Math.random(), // Ensure ID for new insumos
+                nombre: insumo.nombre,
+                cantidad: insumo.cantidad || 1,
+                IdUnidadMedida: insumo.IdUnidadMedida || 1,
+            })) : [],
+          }))
+        : [
+            {
+              id: Date.now(),
+              nombre: `Receta de ${data.nombre}`, // Provide a default recipe name
+              pasos: ["Preparar ingredientes", "Mezclar", "Cocinar"], // Default steps
+              insumos: insumosForReceta, // Use the structured insumos
+              imagen: data.imagen || "",
+            },
+          ];
+
+    if (modalTipo === "agregar") {
+      const nuevoId = productos.length
+        ? Math.max(...productos.map((p) => p.id)) + 1
+        : 1;
+
+      const nuevoProd = {
+        id: nuevoId,
+        nombre: data.nombre,
+        precio: parseInt(data.precio) || 0,
+        idCategoriaProducto: parseInt(data.categoria),
+        categoria: catObj.nombre,
+        estado: true,
+        recetas: recetasGeneradas,
+        cantidadSanPablo: parseInt(data.cantidadSanPablo) || 0,
+        cantidadSanBenito: parseInt(data.cantidadSanBenito) || 0,
+      };
+
+      setProductos([...productos, nuevoProd]);
+      showNotification("Producto agregado con éxito");
+    } else if (modalTipo === "editar") {
+      const prodEditados = productos.map((p) =>
+        p.id === productoSeleccionado.id
+          ? {
+              ...p,
+              nombre: data.nombre,
+              precio: parseInt(data.precio) || 0,
+              idCategoriaProducto: parseInt(data.categoria),
+              categoria: catObj.nombre,
+              recetas: recetasGeneradas,
+              cantidadSanPablo: parseInt(data.cantidadSanPablo) || 0,
+              cantidadSanBenito: parseInt(data.cantidadSanBenito) || 0,
+            }
+          : p
+      );
+      setProductos(prodEditados);
+      showNotification("Producto editado con éxito");
+    }
+
     cerrarModal();
-    showNotification("Producto editado con éxito");
   };
 
   // Eliminar producto
@@ -542,24 +1053,11 @@ export default function Productos() {
     showNotification("Producto eliminado");
   };
 
-  // Eliminar receta asociada al producto
-  const eliminarRecetaDeProducto = (recetaId) => {
-    setRecetasSeleccionadas(
-      recetasSeleccionadas.filter((r) => r.Idreceta !== recetaId)
-    );
-    showNotification("Receta eliminada del producto");
-  };
-
   // Filtrar productos
   const productosFiltrados = productos.filter(
     (p) =>
       p.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
       p.categoria.toLowerCase().includes(filtro.toLowerCase())
-  );
-
-  // Insumos filtrados para el modal de agregar insumos
-  const insumosFiltrados = insumosDisponibles.filter((insumo) =>
-    insumo.nombre.toLowerCase().includes(filtroInsumos.toLowerCase())
   );
 
   // Formato precio
@@ -571,553 +1069,185 @@ export default function Productos() {
     }).format(precio);
 
   return (
-    <div className="admin-wrapper">
-      <Notification
-        visible={notification.visible}
-        mensaje={notification.mensaje}
-        tipo={notification.tipo}
-        onClose={hideNotification}
-      />
+    <>
+      <div className="admin-wrapper">
+        <Notification
+          visible={notification.visible}
+          mensaje={notification.mensaje}
+          tipo={notification.tipo}
+          onClose={hideNotification}
+        />
 
-      <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal("agregar")}
+        <div className="admin-toolbar">
+          <button
+            className="admin-button pink"
+            onClick={() => abrirModal("agregar")}
+          >
+            + Agregar
+          </button>
+          <SearchBar
+            placeholder="Buscar productos..."
+            value={filtro}
+            onChange={setFiltro}
+          />
+        </div>
+
+        <h2 className="admin-section-title">Gestión de productos</h2>
+
+        <DataTable
+          value={productosFiltrados}
+          paginator
+          rows={5}
+          className="admin-table"
         >
-          {" "}
-          + Agregar{" "}
-        </button>
-        <SearchBar
-          placeholder="Buscar productos..."
-          value={filtro}
-          onChange={setFiltro}
+          <Column
+            header="N°"
+            body={(_, { rowIndex }) => rowIndex + 1}
+            headerStyle={{ textAlign: "right", paddingLeft: "15px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "10px" }}
+            style={{ width: "0.5rem" }}
+          />
+          <Column
+            field="nombre"
+            header="Nombre"
+            headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
+            style={{ width: "250px" }}
+          />
+          <Column
+            field="precio"
+            header="Precio"
+            body={(row) => formatearPrecio(row.precio)}
+            headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
+            style={{ width: "250px" }}
+          />
+          <Column
+            field="categoria"
+            header="Categoría"
+            headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "40px" }}
+            style={{ width: "250px" }}
+          />
+          <Column
+            header="Estado"
+            body={(row) => (
+              <InputSwitch
+                checked={row.estado}
+                onChange={() => toggleEstado(row)}
+              />
+            )}
+            headerStyle={{ textAlign: "right", paddingLeft: "25px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
+            style={{ width: "50px" }}
+          />
+          <Column
+            header="Acción"
+            body={(row) => (
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  className="admin-button gray"
+                  onClick={() => abrirModal("visualizar", row)}
+                  aria-label="Ver producto"
+                  title="Ver producto"
+                >
+                  🔍
+                </button>
+                <button
+                  className="admin-button yellow"
+                  onClick={() => abrirModal("editar", row)}
+                  aria-label="Editar producto"
+                  title="Editar producto"
+                >
+                  ✏️
+                </button>
+                <button
+                  className="admin-button red"
+                  onClick={() => abrirModal("eliminar", row)}
+                  aria-label="Eliminar producto"
+                  title="Eliminar producto"
+                >
+                  🗑️
+                </button>
+              </div>
+            )}
+            headerStyle={{ textAlign: "right", paddingLeft: "65px" }}
+            bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
+            style={{ width: "250px" }}
+          />
+        </DataTable>
+
+        {/* Modal eliminar */}
+        {modalTipo === "eliminar" && modalVisible && (
+          <Modal visible={modalVisible} onClose={cerrarModal}>
+            <h2>Confirmar Eliminación</h2>
+            <p>
+              ¿Estás seguro de eliminar el producto{" "}
+              <strong>{productoSeleccionado?.nombre}</strong>?
+            </p>
+            <div className="modal-footer">
+              <button className="modal-btn cancel-btn" onClick={cerrarModal}>
+                Cancelar
+              </button>
+              <button className="modal-btn save-btn" onClick={eliminarProducto}>
+                Eliminar
+              </button>
+            </div>
+          </Modal>
+        )}
+
+        {/* Modal visualizar - NUEVO COMPONENTE */}
+        <VisualizarProductoModal
+          visible={modalTipo === "visualizar" && modalVisible}
+          onClose={cerrarModal}
+          producto={productoSeleccionado}
+          onToggleDetalle={toggleDetalleReceta}
+          detalleVisible={recetaDetalleVisible}
+          unidadesDeMedida={unidadesDeMedida}
         />
       </div>
 
-      <h2 className="admin-section-title">Gestión de productos</h2>
-
-      <DataTable
-        value={productosFiltrados}
-        paginator
-        rows={5}
-        className="admin-table"
-      >
-        <Column
-          header="N°"
-          body={(_, { rowIndex }) => rowIndex + 1}
-          headerStyle={{ textAlign: "right", paddingLeft: "15px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "10px" }}
-          style={{ width: "0.5rem" }}
-        />
-        <Column
-          field="nombre"
-          header="Nombre"
-          headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-          style={{ width: "250px" }}
-        />
-        <Column
-          field="precio"
-          header="Precio"
-          body={(row) => formatearPrecio(row.precio)}
-          headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-          style={{ width: "250px" }}
-        />
-        <Column
-          field="categoria"
-          header="Categoría"
-          headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-          style={{ width: "250px" }}
-        />
-        {/* Cantidades por sede SOLO en el editar/visualizar, no en la tabla principal */}
-        <Column
-          field="estado"
-          header="Estado"
-          body={(rowData) => (
-            <InputSwitch
-              checked={rowData.estado}
-              onChange={() => toggleEstado(rowData)}
+      {/* RecetaForm Modal - RENDERIZADO POR SEPARADO COMO PORTAL */}
+      {(modalTipo === "agregar" || modalTipo === "editar") && modalVisible && (
+        <div
+          className="modal-overlay-fixed"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="modal-content-fixed"
+            style={{
+              backgroundColor: "white",
+              borderRadius: "8px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              position: "relative",
+            }}
+          >
+            <RecetaForm
+              visible={modalVisible}
+              onClose={cerrarModal}
+              initialData={crearInitialDataParaRecetaForm(productoSeleccionado)}
+              onSave={handleRecetaFormSave}
+              onCancel={cerrarModal}
+              isEditing={modalTipo === "editar"}
+              mockInsumosDisponibles={mockInsumosDisponibles} // Pass if RecetaForm needs it for dropdowns
+              unidadesDeMedida={unidadesDeMedida} // Pass to RecetaForm for dropdowns
             />
-          )}
-          headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-          style={{ width: "150px" }}
-        />
-        <Column
-          header="Acciones"
-          body={(rowData) => (
-            <div
-              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
-            >
-              <button
-                className="admin-button gray"
-                onClick={() => abrirModal("visualizar", rowData)}
-              >
-                🔍
-              </button>
-              <button
-                className="admin-button yellow"
-                onClick={() => abrirModal("editar", rowData)}
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                onClick={() => abrirModal("eliminar", rowData)}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
-          headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-          bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-          style={{ width: "250px" }}
-        />
-      </DataTable>
-
-      {/* Modal Principal de Producto (Agregar/Editar/Visualizar/Eliminar) */}
-      <Modal visible={modalVisible} onClose={cerrarModal}>
-        <h2 className="modal-title">
-          {modalTipo === "agregar"
-            ? "Agregar Nuevo Producto"
-            : modalTipo === "editar"
-            ? "Editar Producto"
-            : modalTipo === "visualizar"
-            ? "Detalles del Producto"
-            : "Confirmar Eliminación"}
-        </h2>
-
-        {modalTipo === "eliminar" ? (
-          <div className="modal-body">
-            <p>
-              ¿Está seguro que desea eliminar el producto{" "}
-              <strong>{productoSeleccionado?.nombre}</strong>?
-            </p>
-            <p style={{ color: "#e53935", fontSize: "14px" }}>
-              Esta acción no se puede deshacer.
-            </p>
-          </div>
-        ) : (
-          <div className="modal-body">
-            <div className="modal-form-grid">
-              <div className="modal-input-group">
-                <label>Nombre:</label>
-                <input
-                  type="text"
-                  value={nombreEditado}
-                  onChange={(e) => setNombreEditado(e.target.value)}
-                  readOnly={modalTipo === "visualizar"}
-                  className="modal-input"
-                />
-              </div>
-              <div className="modal-input-group">
-                <label>Precio:</label>
-                <input
-                  type="number"
-                  value={precioEditado}
-                  onChange={(e) => setPrecioEditado(e.target.value)}
-                  readOnly={modalTipo === "visualizar"}
-                  className="modal-input"
-                />
-              </div>
-              <div className="modal-input-group">
-                <label>Categoría:</label>
-                <select
-                  value={categoriaEditada}
-                  onChange={(e) => setCategoriaEditada(e.target.value)}
-                  disabled={modalTipo === "visualizar"}
-                  className="modal-input"
-                >
-                  <option value="">Seleccionar Categoría</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Campos de cantidad por sede SOLO en modo editar o visualizar */}
-              {(modalTipo === "editar" || modalTipo === "visualizar") && (
-                <>
-                  <div className="modal-input-group">
-                    <label>Cantidad en San Pablo:</label>
-                    <input
-                      type="number"
-                      value={cantidadSanPablo}
-                      onChange={(e) => setCantidadSanPablo(e.target.value)}
-                      readOnly={modalTipo === "visualizar"}
-                      className="modal-input"
-                    />
-                  </div>
-                  <div className="modal-input-group">
-                    <label>Cantidad en San Benito:</label>
-                    <input
-                      type="number"
-                      value={cantidadSanBenito}
-                      onChange={(e) => setCantidadSanBenito(e.target.value)}
-                      readOnly={modalTipo === "visualizar"}
-                      className="modal-input"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <h4 style={{ marginTop: "1.5rem", marginBottom: "0.5rem" }}>
-              Recetas del Producto:
-            </h4>
-            {recetasSeleccionadas.length === 0 && (
-              <p>No hay recetas asociadas a este producto.</p>
-            )}
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {recetasSeleccionadas.map((r) => (
-                <li
-                  key={r.Idreceta}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    padding: "8px 0",
-                    borderBottom: "1px solid #eee",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span>
-                      <strong>{r.NombreReceta}</strong>: {r.Especificaciones}
-                    </span>
-                    {modalTipo !== "visualizar" && (
-                      <button
-                        className="admin-button danger small"
-                        onClick={() => eliminarRecetaDeProducto(r.Idreceta)}
-                        style={{ marginLeft: "10px", padding: "5px 10px" }}
-                      >
-                        X
-                      </button>
-                    )}
-                  </div>
-                  {r.insumos && r.insumos.length > 0 && (
-                    <span
-                      style={{
-                        fontSize: "0.85em",
-                        color: "#666",
-                        marginTop: "5px",
-                      }}
-                    >
-                      Insumos:{" "}
-                      {r.insumos
-                        .map((i) => `${i.nombre} (${i.Cantidad} ${i.unidad})`)
-                        .join(", ")}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-
-            {modalTipo !== "visualizar" && (
-              <div
-                className="modal-input-button"
-                style={{
-                  marginTop: "1rem",
-                  padding: "10px",
-                  background: "#e0f7fa",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-                onClick={abrirModalCrearReceta}
-              >
-                ➕ Crear y Añadir Nueva Receta
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="modal-footer">
-          <button className="modal-btn cancel-btn" onClick={cerrarModal}>
-            {" "}
-            Cancelar{" "}
-          </button>
-          {modalTipo === "agregar" && (
-            <button
-              className="modal-btn save-btn"
-              onClick={guardarNuevoProducto}
-            >
-              {" "}
-              Guardar{" "}
-            </button>
-          )}
-          {modalTipo === "editar" && (
-            <button className="modal-btn save-btn" onClick={guardarEdicion}>
-              {" "}
-              Guardar Cambios{" "}
-            </button>
-          )}
-          {modalTipo === "eliminar" && (
-            <button className="modal-btn danger-btn" onClick={eliminarProducto}>
-              {" "}
-              Confirmar Eliminación{" "}
-            </button>
-          )}
-        </div>
-      </Modal>
-
-      {/* Modal para Crear Nueva Receta para el Producto (PRIMERA IMAGEN) */}
-      <Modal visible={modalCrearRecetaVisible} onClose={cerrarModalCrearReceta}>
-        <h2 className="modal-title">Crear Nueva Receta para el Producto</h2>
-        <div
-          className="modal-body"
-          style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-        >
-          <div style={{ display: "flex", gap: "15px", width: "100%" }}>
-            <div className="modal-input-group" style={{ flex: 1 }}>
-              <label>Nombre de la Receta:</label>
-              <input
-                type="text"
-                value={nuevaRecetaNombre}
-                onChange={(e) => setNuevaRecetaNombre(e.target.value)}
-                className="modal-input"
-                placeholder="Ej. Receta Base Cupcake"
-              />
-            </div>
-            <div className="modal-input-group" style={{ flex: 1 }}>
-              <label>Especificaciones:</label>
-              <textarea
-                value={nuevaRecetaEspecificaciones}
-                onChange={(e) => setNuevaRecetaEspecificaciones(e.target.value)}
-                className="modal-input"
-                rows="3"
-                placeholder="Ej. Mezclar ingredientes secos, luego añadir húmedos..."
-              ></textarea>
-            </div>
-          </div>
-
-          {/* Sección de Insumos */}
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              padding: "15px",
-              backgroundColor: "#f9f9f9",
-            }}
-          >
-            <h4 style={{ margin: "0 0 10px 0", color: "#333" }}>
-              Insumos de la Receta:
-            </h4>
-            {Array.from(insumosSeleccionadosParaReceta.values()).length ===
-            0 ? (
-              <p style={{ color: "#777", textAlign: "center" }}>
-                No hay insumos añadidos. Haz clic en "Agregar Insumos" para
-                empezar.
-              </p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {Array.from(insumosSeleccionadosParaReceta.values()).map(
-                  (item) => (
-                    <li
-                      key={item.insumo_obj.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "5px 0",
-                        borderBottom: "1px dashed #eee",
-                      }}
-                    >
-                      <span>
-                        <strong>{item.insumo_obj.nombre}</strong> -{" "}
-                        {item.cantidad}{" "}
-                        {
-                          unidadesMedida.find((u) => u.value === item.unidad_id)
-                            ?.text
-                        }
-                      </span>
-                      <button
-                        className="admin-button danger small"
-                        onClick={() =>
-                          toggleInsumoSeleccionadoEnModal(item.insumo_obj)
-                        } // Deseleccionar para eliminar
-                        style={{ marginLeft: "10px", padding: "3px 8px" }}
-                      >
-                        Quitar
-                      </button>
-                    </li>
-                  )
-                )}
-              </ul>
-            )}
-            <button
-              className="admin-button secondary"
-              onClick={abrirModalAgregarInsumos}
-              style={{ marginTop: "15px", width: "100%" }}
-            >
-              <span style={{ marginRight: "5px" }}>➕</span>Agregar Insumos
-            </button>
           </div>
         </div>
-        <div className="modal-footer">
-          <button
-            className="modal-btn cancel-btn"
-            onClick={cerrarModalCrearReceta}
-          >
-            {" "}
-            Cancelar{" "}
-          </button>
-          <button
-            className="modal-btn save-btn"
-            onClick={guardarNuevaRecetaEnProducto}
-          >
-            {" "}
-            Crear y Añadir{" "}
-          </button>
-        </div>
-      </Modal>
-
-      {/* Modal de Selección y Cantidad de Insumos (SEGUNDA IMAGEN) */}
-      <Modal
-        visible={modalAgregarInsumosVisible}
-        onClose={cerrarModalAgregarInsumos}
-      >
-        <h2 className="modal-title">Agregar Insumos a la Receta</h2>
-        <div
-          className="modal-body"
-          style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-        >
-          <SearchBar
-            placeholder="Buscar insumos..."
-            value={filtroInsumos}
-            onChange={setFiltroInsumos}
-          />
-
-          <div
-            style={{
-              maxHeight: "400px",
-              overflowY: "auto",
-              border: "1px solid #eee",
-              borderRadius: "8px",
-              padding: "10px",
-            }}
-          >
-            {insumosFiltrados.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#777" }}>
-                No se encontraron insumos.
-              </p>
-            ) : (
-              insumosFiltrados.map((insumo) => (
-                <div
-                  key={insumo.id}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: "10px 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      cursor: "pointer",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={insumosSeleccionadosParaReceta.has(insumo.id)}
-                      onChange={() => toggleInsumoSeleccionadoEnModal(insumo)}
-                      style={{ marginRight: "10px" }}
-                    />
-                    <strong>{insumo.nombre}</strong> ({insumo.categoria})
-                  </label>
-                  {insumosSeleccionadosParaReceta.has(insumo.id) && (
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginLeft: "30px",
-                        marginTop: "5px",
-                        width: "calc(100% - 30px)",
-                      }}
-                    >
-                      <input
-                        type="number"
-                        placeholder="Cantidad"
-                        value={
-                          insumosSeleccionadosParaReceta.get(insumo.id)
-                            ?.cantidad || ""
-                        }
-                        onChange={(e) =>
-                          handleCantidadInsumoChange(insumo.id, e.target.value)
-                        }
-                        className="modal-input"
-                        style={{
-                          flex: 1,
-                          minWidth: "80px",
-                          padding: "5px",
-                          height: "30px",
-                        }}
-                      />
-                      <Dropdown
-                        value={
-                          insumosSeleccionadosParaReceta.get(insumo.id)
-                            ?.unidad_id || ""
-                        }
-                        options={unidadesMedida}
-                        onChange={(e) =>
-                          handleUnidadInsumoChange(insumo.id, e.value)
-                        }
-                        placeholder="Unidad"
-                        optionLabel="label"
-                        optionValue="value"
-                        className="p-inputtext p-component p-dropdown" // Clases de PrimeReact para estilo
-                        style={{
-                          flex: 1,
-                          minWidth: "100px",
-                          height: "30px",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-        <div
-          className="modal-footer"
-          style={{ justifyContent: "flex-end", paddingTop: "15px" }}
-        >
-          <button
-            className="modal-btn cancel-btn"
-            onClick={cerrarModalAgregarInsumos}
-          >
-            {" "}
-            Cancelar{" "}
-          </button>
-          <button
-            className="modal-btn save-btn"
-            onClick={confirmarInsumosParaReceta}
-            disabled={insumosSeleccionadosParaReceta.size === 0}
-            style={{
-              opacity: insumosSeleccionadosParaReceta.size === 0 ? 0.6 : 1,
-            }}
-          >
-            Agregar ({insumosSeleccionadosParaReceta.size})
-          </button>
-        </div>
-      </Modal>
-    </div>
+      )}
+    </>
   );
 }

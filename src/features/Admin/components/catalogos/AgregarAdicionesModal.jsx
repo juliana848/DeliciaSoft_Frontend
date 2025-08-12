@@ -25,7 +25,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   id: 307,
   nombre: 'Mini malvaviscos',
   unidad: 'g',
-  precio: 5.20,
+  precio: 520,
   imagen: 'https://media.istockphoto.com/id/628530120/es/foto/fondo-de-mini-malvaviscos-rosas-y-blancos.jpg?s=612x612&w=0&k=20&c=w-ZmM7gE9Jegs9uBnit5FMiU9HEHptX-8LYMhm3glJg=',
   category: 'Malvaviscos'
 },
@@ -33,7 +33,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   id: 308,
   nombre: 'Chocolatina rallada',
   unidad: 'g',
-  precio: 6.00,
+  precio: 600,
   imagen: 'https://thumbs.dreamstime.com/b/piel-de-chocolate-rallado-en-blanco-pila-bloques-sobre-fondo-151707432.jpg',
   category: 'Chocolates'
 },
@@ -41,7 +41,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   id: 309,
   nombre: 'Frambuesas frescas',
   unidad: 'unidad',
-  precio: 7.50,
+  precio: 750,
   imagen: 'https://editorial.aristeguinoticias.com/wp-content/uploads/2024/03/enfermedades-frambuesa-232024.jpg',
   category: 'Frutas'
 },
@@ -49,7 +49,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   id: 310,
   nombre: 'Rodajas de fresa',
   unidad: 'unidad',
-  precio: 6.25,
+  precio: 625,
   imagen: 'https://st3.depositphotos.com/15352324/33625/i/450/depositphotos_336259748-stock-photo-strawberry-slices-fresh-berries-macro.jpg',
   category: 'Frutas'
 },
@@ -57,7 +57,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   id: 311,
   nombre: 'Galletas oreo',
   unidad: 'g',
-  precio: 3.95,
+  precio: 395,
   imagen: 'https://www.pediatriamildias.com/wp-content/uploads/2022/09/Blog53.jpg',
   category: 'Galletas'
 },

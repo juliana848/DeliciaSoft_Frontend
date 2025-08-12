@@ -426,7 +426,7 @@ export default function RecetasTabla() {
                       cursor: rowData.estado ? "pointer" : "not-allowed",
                     }}
                   >
-                    ✏
+                    ✏️
                   </button>
                   <button
                     className={`admin-button ${
@@ -444,7 +444,7 @@ export default function RecetasTabla() {
                       cursor: rowData.estado ? "pointer" : "not-allowed",
                     }}
                   >
-                    🗑
+                    🗑️
                   </button>
                 </>
               )}

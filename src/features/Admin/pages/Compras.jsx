@@ -27,6 +27,14 @@ export default function ComprasTable() {
         insumos: ''
     });
 
+    const formatoCOP = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    };
+
     const generarPDF = async (compra) => {
         try {
             if (!compra.insumos || compra.insumos.length === 0) {
@@ -248,28 +256,24 @@ export default function ComprasTable() {
         const filtroLower = filtro.toLowerCase().trim();
         
         return compras.filter(compra => {
-            // Buscar en campos de texto
             const proveedorMatch = compra.proveedor && compra.proveedor.toLowerCase().includes(filtroLower);
             const fechaMatch = compra.fecha && compra.fecha.toLowerCase().includes(filtroLower);
             const observacionesMatch = compra.observaciones && compra.observaciones.toLowerCase().includes(filtroLower);
             const estadoMatch = compra.estado && compra.estado.toLowerCase().includes(filtroLower);
             
-            // Buscar en números (ID, total, subtotal, iva)
             const idMatch = compra.id && compra.id.toString().includes(filtroLower);
             const totalMatch = compra.total && compra.total.toString().includes(filtroLower);
             const subtotalMatch = compra.subtotal && compra.subtotal.toString().includes(filtroLower);
             const ivaMatch = compra.iva && compra.iva.toString().includes(filtroLower);
             
-            // Buscar en precios formateados (con $ y comas)
-            const totalFormateado = compra.total ? `$${compra.total.toLocaleString()}` : '';
-            const subtotalFormateado = compra.subtotal ? `$${compra.subtotal.toLocaleString()}` : '';
-            const ivaFormateado = compra.iva ? `$${compra.iva.toLocaleString()}` : '';
+            const totalFormateado = compra.total ? formatoCOP(compra.total) : '';
+            const subtotalFormateado = compra.subtotal ? formatoCOP(compra.subtotal) : '';
+            const ivaFormateado = compra.iva ? formatoCOP(compra.iva) : '';
             
             const totalFormateadoMatch = totalFormateado.toLowerCase().includes(filtroLower);
             const subtotalFormateadoMatch = subtotalFormateado.toLowerCase().includes(filtroLower);
             const ivaFormateadoMatch = ivaFormateado.toLowerCase().includes(filtroLower);
             
-            // Buscar en insumos
             let insumosMatch = false;
             if (compra.insumos && compra.insumos.length > 0) {
                 insumosMatch = compra.insumos.some(insumo => {
@@ -277,14 +281,13 @@ export default function ComprasTable() {
                     const unidadInsumo = insumo.unidad && insumo.unidad.toLowerCase().includes(filtroLower);
                     const cantidadInsumo = insumo.cantidad && insumo.cantidad.toString().includes(filtroLower);
                     const precioInsumo = insumo.precio && insumo.precio.toString().includes(filtroLower);
-                    const precioFormateadoInsumo = insumo.precio ? `$${insumo.precio.toLocaleString()}` : '';
+                    const precioFormateadoInsumo = insumo.precio ? formatoCOP(insumo.precio) : '';
                     const precioFormateadoMatch = precioFormateadoInsumo.toLowerCase().includes(filtroLower);
                     
                     return nombreInsumo || unidadInsumo || cantidadInsumo || precioInsumo || precioFormateadoMatch;
                 });
             }
             
-            // Buscar en fechas formateadas
             let fechaFormateadaMatch = false;
             if (compra.fecha_compra) {
                 try {
@@ -296,20 +299,19 @@ export default function ComprasTable() {
                 }
             }
             
-            // Retornar true si encuentra coincidencia en cualquier campo
             return proveedorMatch || 
-                   fechaMatch || 
-                   observacionesMatch || 
-                   estadoMatch ||
-                   idMatch || 
-                   totalMatch || 
-                   subtotalMatch || 
-                   ivaMatch ||
-                   totalFormateadoMatch ||
-                   subtotalFormateadoMatch ||
-                   ivaFormateadoMatch ||
-                   insumosMatch ||
-                   fechaFormateadaMatch;
+                    fechaMatch || 
+                    observacionesMatch || 
+                    estadoMatch ||
+                    idMatch || 
+                    totalMatch || 
+                    subtotalMatch || 
+                    ivaMatch ||
+                    totalFormateadoMatch ||
+                    subtotalFormateadoMatch ||
+                    ivaFormateadoMatch ||
+                    insumosMatch ||
+                    fechaFormateadaMatch;
         });
     };
 
@@ -411,7 +413,6 @@ export default function ComprasTable() {
         {!mostrarAgregarCompra ? (
             <>
             <div className="admin-toolbar" >
-                {/* BOTÓN DE AGREGAR COMPRA */}
                 <button 
                     className="admin-button pink" 
                     onClick={() => abrirModal('agregar')} 
@@ -449,7 +450,11 @@ export default function ComprasTable() {
                 <Column header="N°" body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
                 <Column field="proveedor" header="Proveedor" />
                 <Column field="fecha" header="Fecha Compra" />
-                <Column field="total" header="Total" />
+                <Column
+                    field="total"
+                    header="Total"
+                    body={(rowData) => formatoCOP(rowData.total)}
+                />
                 <Column
                 header="Acción"
                 body={rowData => {
@@ -462,7 +467,7 @@ export default function ComprasTable() {
                             title="Anular"
                             onClick={() => abrirModal('anular', rowData)}
                             >
-                            <XCircle size={18} />
+                            🛑
                             </button>
                         <button 
                             className="admin-button blue" 
@@ -567,7 +572,7 @@ export default function ComprasTable() {
                                 {errores.insumos}
                             </small>
                         )}
-                                            
+                                                
                         <table className="compra-detalle-table">
                             <thead className="p-datatable-thead">
                                 <tr>
@@ -599,9 +604,9 @@ export default function ComprasTable() {
                                         )}
                                     </td>
                                     <td>{item.unidad}</td>
-                                    <td>${item.precio?.toFixed(2)}</td>
+                                    <td>{formatoCOP(item.precio)}</td>
                                     <td>
-                                        ${((item.cantidad || 0) * (item.precio || 0)).toFixed(2)}
+                                        {formatoCOP((item.cantidad || 0) * (item.precio || 0))}
                                     </td>
                                     {modalTipo !== 'ver' && (
                                         <td>
@@ -611,7 +616,7 @@ export default function ComprasTable() {
                                             >
                                                 🗑
                                             </button>
-                                       </td>
+                                        </td>
                                     )}
                                 </tr>
                                 ))}
@@ -633,15 +638,15 @@ export default function ComprasTable() {
                     <div className="compra-totales-grid">
                         <div className="total-item">
                             <span>Subtotal:</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>{formatoCOP(subtotal)}</span>
                         </div>
                         <div className="total-item">
-                            <span>IVA:</span>
-                            <span>${iva.toFixed(2)}</span>
+                            <span>IVA (16%):</span>
+                            <span>{formatoCOP(iva)}</span>
                         </div>
                         <div className="total-item">
                             <span>Total:</span>
-                            <span>${total.toFixed(2)}</span>
+                            <span>{formatoCOP(total)}</span>
                         </div>
                     </div>
 
@@ -675,7 +680,6 @@ export default function ComprasTable() {
                         />
                     )}
 
-                    {/* MODAL DE ANULAR DESDE EL DETALLE - MOVIDO FUERA DEL FORMULARIO */}
                     {modalTipo === 'anular' && compraSeleccionada && modalVisible && (
                         <Modal visible={modalVisible} onClose={() => {
                             cerrarModal();

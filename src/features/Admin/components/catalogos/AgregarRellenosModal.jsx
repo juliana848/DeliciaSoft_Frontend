@@ -25,7 +25,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
     id: 501,
     nombre: 'Crema pastelera',
     unidad: 'g',
-    precio: 6.00,
+    precio: 600,
     imagen: 'https://cdn.pixabay.com/photo/2022/05/27/09/22/pastry-cream-7225199_1280.jpg',
     category: 'Cremas'
   },
@@ -33,7 +33,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
     id: 502,
     nombre: 'Dulce de leche',
     unidad: 'g',
-    precio: 5.50,
+    precio: 550,
     imagen: 'https://cdn.pixabay.com/photo/2021/11/10/18/10/dulce-de-leche-6783187_1280.jpg',
     category: 'Dulces'
   },
@@ -41,7 +41,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
     id: 503,
     nombre: 'Nutella',
     unidad: 'g',
-    precio: 8.00,
+    precio: 800,
     imagen: 'https://cdn.pixabay.com/photo/2017/03/19/13/30/nutella-2154376_1280.jpg',
     category: 'Dulces'
   },
@@ -49,7 +49,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
     id: 504,
     nombre: 'Arequipe',
     unidad: 'g',
-    precio: 5.25,
+    precio: 525,
     imagen: 'https://cdn.pixabay.com/photo/2021/03/22/04/44/dulce-de-leche-6112026_1280.jpg',
     category: 'Dulces'
   },
@@ -57,7 +57,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
     id: 505,
     nombre: 'Mermelada de fresa',
     unidad: 'g',
-    precio: 4.50,
+    precio: 450,
     imagen: 'https://cdn.pixabay.com/photo/2017/01/20/00/30/strawberry-jam-1990177_1280.jpg',
     category: 'Mermeladas'
   },

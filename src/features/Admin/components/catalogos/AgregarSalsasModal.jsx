@@ -25,7 +25,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
     id: 601,
     nombre: 'Salsa de chocolate',
     unidad: 'ml',
-    precio: 0.00,
+    precio: 0,
     imagen: 'https://i.ytimg.com/vi/GeEQmg3S0hE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC91Ih-VqEsWH2Pi5R1qAjAaSytaA',
     category: 'Chocolate'
   },
@@ -33,7 +33,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
     id: 602,
     nombre: 'Salsa de fresa',
     unidad: 'ml',
-    precio: 0.00,
+    precio: 0,
     imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVT8vaCx4lA7Qf9XFLhQQZSxBmGnyZXs3shQ&s',
     category: 'Fresa'
   },
@@ -41,7 +41,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
     id: 603,
     nombre: 'Caramelo líquido',
     unidad: 'ml',
-    precio: 0.00,
+    precio: 0,
     imagen: 'https://www.infobae.com/new-resizer/YONmsTYkM3W9btYcQ0Nym1YilLk=/arc-anglerfish-arc2-prod-infobae/public/VMZ5SC5UCJDZVHXFQBV3RIXCEU.jpg',
     category: 'Caramelo'
   },

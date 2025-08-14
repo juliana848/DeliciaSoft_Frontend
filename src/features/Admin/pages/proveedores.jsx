@@ -25,7 +25,7 @@ export default function ProveedoresTable() {
   const [tipoDocumento, setTipoDocumento] = useState('CC');
   const [nombreEmpresa, setNombreEmpresa] = useState('');
   const [nombreContacto, setNombreContacto] = useState('');
-  const [estadoProveedor, setEstadoProveedor] = useState(true); // Nuevo estado para el switch
+  const [estadoProveedor, setEstadoProveedor] = useState(true);
 
   // Validation states
   const [errors, setErrors] = useState({});
@@ -33,25 +33,25 @@ export default function ProveedoresTable() {
 
   useEffect(() => {
     const mockProveedores = [
-      { 
-        id: 1, 
-        tipo: 'Natural', 
-        nombre: 'Juan Pérez', 
-        contacto: '123456789', 
-        correo: 'juan@gmail.com', 
-        direccion: 'Av. Siempre Viva 123', 
-        estado: true, 
+      {
+        id: 1,
+        tipo: 'Natural',
+        nombre: 'Juan Pérez',
+        contacto: '123456789',
+        correo: 'juan@gmail.com',
+        direccion: 'Av. Siempre Viva 123',
+        estado: true,
         extra: '987654321',
         tipoDocumento: 'CC'
       },
-      { 
-        id: 2, 
-        tipo: 'Jurídico', 
-        nombre: 'Distribuidora ABC S.A.', 
-        contacto: '111222333', 
-        correo: 'contacto@abcsa.com', 
-        direccion: 'Calle Comercio 456', 
-        estado: true, 
+      {
+        id: 2,
+        tipo: 'Jurídico',
+        nombre: 'Distribuidora ABC S.A.',
+        contacto: '111222333',
+        correo: 'contacto@abcsa.com',
+        direccion: 'Calle Comercio 456',
+        estado: true,
         extra: 'J12345678',
         tipoDocumento: 'NIT',
         nombreEmpresa: 'Distribuidora ABC S.A.',
@@ -77,10 +77,9 @@ export default function ProveedoresTable() {
     setNotification({ visible: false, mensaje: '', tipo: 'success' });
   };
 
-  // Real-time validation functions
   const validateField = (field, value) => {
     let error = '';
-    
+
     switch (field) {
       case 'nombre':
         if (tipoProveedor === 'Natural') {
@@ -121,7 +120,7 @@ export default function ProveedoresTable() {
           }
         }
         break;
-        
+
       case 'contacto':
         if (!value.trim()) {
           error = 'El contacto es obligatorio';
@@ -133,7 +132,7 @@ export default function ProveedoresTable() {
           error = 'El contacto no puede tener más de 10 dígitos';
         }
         break;
-        
+
       case 'correo':
         if (!value.trim()) {
           error = 'El correo es obligatorio';
@@ -146,7 +145,7 @@ export default function ProveedoresTable() {
           }
         }
         break;
-        
+
       case 'direccion':
         if (!value.trim()) {
           error = 'La dirección es obligatoria';
@@ -156,7 +155,7 @@ export default function ProveedoresTable() {
           error = 'La dirección no puede tener más de 200 caracteres';
         }
         break;
-        
+
       case 'documentoONit':
         const fieldLabel = tipoProveedor === 'Natural' ? 'Documento' : 'NIT';
         if (!value.trim()) {
@@ -177,20 +176,18 @@ export default function ProveedoresTable() {
           }
         }
         break;
-        
+
       default:
         break;
     }
-    
+
     return error;
   };
 
   const handleFieldChange = (field, value) => {
-    // Update field value
     switch (field) {
       case 'tipoProveedor':
         setTipoProveedor(value);
-        // Reset fields when changing provider type
         if (value === 'Natural') {
           setTipoDocumento('CC');
           setNombreEmpresa('');
@@ -199,7 +196,6 @@ export default function ProveedoresTable() {
           setTipoDocumento('NIT');
           setNombre('');
         }
-        // Re-validate document when type changes
         if (documentoONit) {
           const docError = validateField('documentoONit', documentoONit);
           setErrors(prev => ({ ...prev, documentoONit: docError }));
@@ -234,7 +230,6 @@ export default function ProveedoresTable() {
         break;
     }
 
-    // Real-time validation
     if (touched[field]) {
       const error = validateField(field, value);
       setErrors(prev => ({ ...prev, [field]: error }));
@@ -245,15 +240,14 @@ export default function ProveedoresTable() {
     setTouched(prev => ({ ...prev, [field]: true }));
     const error = validateField(field, value);
     setErrors(prev => ({ ...prev, [field]: error }));
-    
-    // Check for duplicates on blur
+
     if (field === 'correo' && !error && modalTipo === 'agregar') {
       const emailExists = proveedores.some(p => p.correo.toLowerCase() === value.toLowerCase());
       if (emailExists) {
         setErrors(prev => ({ ...prev, correo: 'Ya existe un proveedor con este correo' }));
       }
     }
-    
+
     if (field === 'nombre' && !error && modalTipo === 'agregar' && tipoProveedor === 'Natural') {
       const nameExists = proveedores.some(p => p.nombre.toLowerCase() === value.toLowerCase());
       if (nameExists) {
@@ -272,11 +266,10 @@ export default function ProveedoresTable() {
   const abrirModal = (tipo, proveedor = null) => {
     setModalTipo(tipo);
     setProveedorSeleccionado(proveedor);
-    
-    // Reset validation states
+
     setErrors({});
     setTouched({});
-    
+
     if (tipo === 'editar' || tipo === 'visualizar') {
       setTipoProveedor(proveedor.tipo);
       setNombre(proveedor.nombre || '');
@@ -287,7 +280,7 @@ export default function ProveedoresTable() {
       setTipoDocumento(proveedor.tipoDocumento || (proveedor.tipo === 'Natural' ? 'CC' : 'NIT'));
       setNombreEmpresa(proveedor.nombreEmpresa || '');
       setNombreContacto(proveedor.nombreContacto || '');
-      setEstadoProveedor(proveedor.estado); // Cargar estado actual
+      setEstadoProveedor(proveedor.estado);
     } else if (tipo === 'agregar') {
       setTipoProveedor('Natural');
       setNombre('');
@@ -298,7 +291,7 @@ export default function ProveedoresTable() {
       setTipoDocumento('CC');
       setNombreEmpresa('');
       setNombreContacto('');
-      setEstadoProveedor(true); // Por defecto activo
+      setEstadoProveedor(true);
     }
     setModalVisible(true);
   };
@@ -311,8 +304,7 @@ export default function ProveedoresTable() {
 
   const validarCampos = () => {
     let fields = ['contacto', 'correo', 'direccion', 'documentoONit'];
-    
-    // Add fields based on provider type
+
     if (tipoProveedor === 'Natural') {
       fields = [...fields, 'nombre'];
     } else {
@@ -333,7 +325,7 @@ export default function ProveedoresTable() {
         case 'direccion': value = direccion; break;
         case 'documentoONit': value = documentoONit; break;
       }
-      
+
       const error = validateField(field, value);
       if (error) {
         newErrors[field] = error;
@@ -347,7 +339,7 @@ export default function ProveedoresTable() {
         newErrors.correo = 'Ya existe un proveedor con este correo';
         hasErrors = true;
       }
-      
+
       if (tipoProveedor === 'Natural') {
         const nameExists = proveedores.some(p => p.nombre && p.nombre.toLowerCase() === nombre.toLowerCase());
         if (nameExists) {
@@ -364,16 +356,16 @@ export default function ProveedoresTable() {
     }
 
     if (modalTipo === 'editar') {
-      const emailExists = proveedores.some(p => 
+      const emailExists = proveedores.some(p =>
         p.id !== proveedorSeleccionado.id && p.correo.toLowerCase() === correo.toLowerCase()
       );
       if (emailExists) {
         newErrors.correo = 'Ya existe un proveedor con este correo';
         hasErrors = true;
       }
-      
+
       if (tipoProveedor === 'Natural') {
-        const nameExists = proveedores.some(p => 
+        const nameExists = proveedores.some(p =>
           p.id !== proveedorSeleccionado.id && p.nombre && p.nombre.toLowerCase() === nombre.toLowerCase()
         );
         if (nameExists) {
@@ -381,7 +373,7 @@ export default function ProveedoresTable() {
           hasErrors = true;
         }
       } else {
-        const nameExists = proveedores.some(p => 
+        const nameExists = proveedores.some(p =>
           p.id !== proveedorSeleccionado.id && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === nombreEmpresa.toLowerCase()
         );
         if (nameExists) {
@@ -400,7 +392,8 @@ export default function ProveedoresTable() {
     }
 
     return true;
-  };const guardarProveedor = () => {
+  };
+  const guardarProveedor = () => {
     if (!validarCampos()) return;
 
     if (modalTipo === 'agregar') {
@@ -412,7 +405,7 @@ export default function ProveedoresTable() {
         contacto,
         correo,
         direccion,
-        estado: estadoProveedor, // Usar el estado del switch
+        estado: estadoProveedor,
         extra: documentoONit,
         tipoDocumento
       };
@@ -427,24 +420,24 @@ export default function ProveedoresTable() {
     } else if (modalTipo === 'editar') {
       const updated = proveedores.map(p =>
         p.id === proveedorSeleccionado.id
-          ? { 
-              ...p, 
-              tipo: tipoProveedor, 
-              nombre: tipoProveedor === 'Natural' ? nombre : nombreEmpresa,
-              contacto, 
-              correo, 
-              direccion, 
-              estado: estadoProveedor, // Usar el estado del switch
-              extra: documentoONit,
-              tipoDocumento,
-              ...(tipoProveedor === 'Jurídico' ? { 
-                nombreEmpresa, 
-                nombreContacto 
-              } : {
-                nombreEmpresa: undefined,
-                nombreContacto: undefined
-              })
-            }
+          ? {
+            ...p,
+            tipo: tipoProveedor,
+            nombre: tipoProveedor === 'Natural' ? nombre : nombreEmpresa,
+            contacto,
+            correo,
+            direccion,
+            estado: estadoProveedor,
+            extra: documentoONit,
+            tipoDocumento,
+            ...(tipoProveedor === 'Jurídico' ? {
+              nombreEmpresa,
+              nombreContacto
+            } : {
+              nombreEmpresa: undefined,
+              nombreContacto: undefined
+            })
+          }
           : p
       );
       setProveedores(updated);
@@ -460,11 +453,9 @@ export default function ProveedoresTable() {
     cerrarModal();
   };
 
-  // Filtrado mejorado por todos los campos visibles
   const proveedoresFiltrados = proveedores.filter(p => {
     const filtroLower = filtro.toLowerCase();
-    
-    // Campos principales que siempre se buscan
+
     const nombre = p.nombre?.toLowerCase() || '';
     const tipo = p.tipo?.toLowerCase() || '';
     const contacto = p.contacto?.toLowerCase() || '';
@@ -473,22 +464,21 @@ export default function ProveedoresTable() {
     const tipoDocumento = p.tipoDocumento?.toLowerCase() || '';
     const documento = p.extra?.toLowerCase() || '';
     const estado = p.estado ? 'activo' : 'inactivo';
-    
-    // Campos específicos para jurídico
+
     const nombreEmpresa = p.nombreEmpresa?.toLowerCase() || '';
     const nombreContacto = p.nombreContacto?.toLowerCase() || '';
-    
+
     return nombre.includes(filtroLower) ||
-            tipo.includes(filtroLower) ||
-            contacto.includes(filtroLower) ||
-            correo.includes(filtroLower) ||
-            direccion.includes(filtroLower) ||
-            tipoDocumento.includes(filtroLower) ||
-            documento.includes(filtroLower) ||
-            estado.includes(filtroLower) ||
-            nombreEmpresa.includes(filtroLower) ||
-            nombreContacto.includes(filtroLower);
-    });
+      tipo.includes(filtroLower) ||
+      contacto.includes(filtroLower) ||
+      correo.includes(filtroLower) ||
+      direccion.includes(filtroLower) ||
+      tipoDocumento.includes(filtroLower) ||
+      documento.includes(filtroLower) ||
+      estado.includes(filtroLower) ||
+      nombreEmpresa.includes(filtroLower) ||
+      nombreContacto.includes(filtroLower);
+  });
 
   return (
     <>
@@ -508,62 +498,51 @@ export default function ProveedoresTable() {
         <h2 className="admin-section-title">Proveedores</h2>
         <DataTable value={proveedoresFiltrados} className="admin-table" paginator rows={5}>
           <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-          <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }}/>
+          <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }} />
           <Column field="tipo" header="Tipo Proveedor" />
           <Column field="contacto" header="Contacto" />
-          <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }}/>
-          <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }}/>
+          <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }} />
+          <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }} />
           <Column
             header="Estado"
             body={(rowData) => (
               <InputSwitch checked={rowData.estado} onChange={() => toggleEstado(rowData)} />
             )}
           />
-                  <Column
-          header="Acción"
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>
-                🔍
-              </button>
-              <button 
-                className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`} 
-                title="Editar" 
-                onClick={() => rowData.estado && abrirModal('editar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: !rowData.estado ? 0.5 : 1, 
-                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
-                }}
-              >
-                ✏️
-              </button>
-              <button 
-                className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`} 
-                title="Eliminar" 
-                onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: !rowData.estado ? 0.5 : 1, 
-                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
-                }}
-              >
-                🗑️
-              </button>
-            </>
-          )}
-        />
-          {/* <Column
-            header="Acciones" 
-            headerStyle={{ paddingLeft: '2rem' }}
+          <Column
+            header="Acción"
             body={(rowData) => (
               <>
-                <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>🔍</button>
-                <button className="admin-button yellow" onClick={() => abrirModal('editar', rowData)}>✏️</button>
-                <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
+                <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
+                  🔍
+                </button>
+                <button
+                  className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
+                  title="Editar"
+                  onClick={() => rowData.estado && abrirModal('editar', rowData)}
+                  disabled={!rowData.estado}
+                  style={{
+                    opacity: !rowData.estado ? 0.5 : 1,
+                    cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
+                  title="Eliminar"
+                  onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+                  disabled={!rowData.estado}
+                  style={{
+                    opacity: !rowData.estado ? 0.5 : 1,
+                    cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  🗑️
+                </button>
               </>
             )}
-          /> */}
+          />
         </DataTable>
 
         {(modalTipo === 'agregar' || modalTipo === 'editar') && (
@@ -571,11 +550,10 @@ export default function ProveedoresTable() {
             <h2 className="modal-title">{modalTipo === 'agregar' ? 'Agregar Proveedor' : 'Editar Proveedor'}</h2>
             <div className="modal-body">
               <div className="modal-form-grid-wide">
-                {/* Orden corregido: Tipo de Proveedor */}
                 <label>Tipo de Proveedor*
-                  <select 
-                    value={tipoProveedor} 
-                    onChange={(e) => handleFieldChange('tipoProveedor', e.target.value)} 
+                  <select
+                    value={tipoProveedor}
+                    onChange={(e) => handleFieldChange('tipoProveedor', e.target.value)}
                     className="modal-input"
                   >
                     <option value="Natural">Natural</option>
@@ -583,11 +561,10 @@ export default function ProveedoresTable() {
                   </select>
                 </label>
 
-                {/* Tipo de Documento */}
                 <label>Tipo de Documento*
-                  <select 
-                    value={tipoDocumento} 
-                    onChange={(e) => handleFieldChange('tipoDocumento', e.target.value)} 
+                  <select
+                    value={tipoDocumento}
+                    onChange={(e) => handleFieldChange('tipoDocumento', e.target.value)}
                     className="modal-input"
                   >
                     {tipoProveedor === 'Natural' ? (
@@ -605,11 +582,10 @@ export default function ProveedoresTable() {
                   </select>
                 </label>
 
-                {/* Número de Documento */}
                 <label>{tipoProveedor === 'Natural' ? 'Número de Documento*' : (tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
-                  <input 
-                    type="text" 
-                    value={documentoONit} 
+                  <input
+                    type="text"
+                    value={documentoONit}
                     onChange={(e) => handleFieldChange('documentoONit', e.target.value)}
                     onBlur={(e) => handleFieldBlur('documentoONit', e.target.value)}
                     className={`modal-input ${errors.documentoONit ? 'error' : ''}`}
@@ -619,12 +595,11 @@ export default function ProveedoresTable() {
                   {errors.documentoONit && <span className="error-message">{errors.documentoONit}</span>}
                 </label>
 
-                {/* Campos específicos según tipo */}
                 {tipoProveedor === 'Natural' ? (
                   <label>Nombre Completo*
-                    <input 
-                      type="text" 
-                      value={nombre} 
+                    <input
+                      type="text"
+                      value={nombre}
                       onChange={(e) => handleFieldChange('nombre', e.target.value)}
                       onBlur={(e) => handleFieldBlur('nombre', e.target.value)}
                       className={`modal-input ${errors.nombre ? 'error' : ''}`}
@@ -635,9 +610,9 @@ export default function ProveedoresTable() {
                 ) : (
                   <>
                     <label>Razón Social*
-                      <input 
-                        type="text" 
-                        value={nombreEmpresa} 
+                      <input
+                        type="text"
+                        value={nombreEmpresa}
                         onChange={(e) => handleFieldChange('nombreEmpresa', e.target.value)}
                         onBlur={(e) => handleFieldBlur('nombreEmpresa', e.target.value)}
                         className={`modal-input ${errors.nombreEmpresa ? 'error' : ''}`}
@@ -647,9 +622,9 @@ export default function ProveedoresTable() {
                     </label>
 
                     <label>Nombre del Contacto*
-                      <input 
-                        type="text" 
-                        value={nombreContacto} 
+                      <input
+                        type="text"
+                        value={nombreContacto}
                         onChange={(e) => handleFieldChange('nombreContacto', e.target.value)}
                         onBlur={(e) => handleFieldBlur('nombreContacto', e.target.value)}
                         className={`modal-input ${errors.nombreContacto ? 'error' : ''}`}
@@ -660,11 +635,10 @@ export default function ProveedoresTable() {
                   </>
                 )}
 
-                {/* Contacto */}
                 <label>Teléfono*
-                  <input 
-                    type="text" 
-                    value={contacto} 
+                  <input
+                    type="text"
+                    value={contacto}
                     onChange={(e) => handleFieldChange('contacto', e.target.value)}
                     onBlur={(e) => handleFieldBlur('contacto', e.target.value)}
                     className={`modal-input ${errors.contacto ? 'error' : ''}`}
@@ -674,11 +648,10 @@ export default function ProveedoresTable() {
                   {errors.contacto && <span className="error-message">{errors.contacto}</span>}
                 </label>
 
-                {/* Correo */}
                 <label>Correo Electrónico*
-                  <input 
-                    type="email" 
-                    value={correo} 
+                  <input
+                    type="email"
+                    value={correo}
                     onChange={(e) => handleFieldChange('correo', e.target.value)}
                     onBlur={(e) => handleFieldBlur('correo', e.target.value)}
                     className={`modal-input ${errors.correo ? 'error' : ''}`}
@@ -687,11 +660,10 @@ export default function ProveedoresTable() {
                   {errors.correo && <span className="error-message">{errors.correo}</span>}
                 </label>
 
-                {/* Dirección */}
                 <label>Dirección*
-                  <input 
-                    type="text" 
-                    value={direccion} 
+                  <input
+                    type="text"
+                    value={direccion}
                     onChange={(e) => handleFieldChange('direccion', e.target.value)}
                     onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
                     className={`modal-input ${errors.direccion ? 'error' : ''}`}
@@ -700,16 +672,15 @@ export default function ProveedoresTable() {
                   {errors.direccion && <span className="error-message">{errors.direccion}</span>}
                 </label>
 
-                {/* Switch de Estado - Solo en modo editar */}
                 {modalTipo === 'editar' && (
                   <label>Estado
                     <div className="switch-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
                       <span style={{ color: estadoProveedor ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>
                         {estadoProveedor ? 'Activo' : 'Inactivo'}
                       </span>
-                      <InputSwitch 
-                        checked={estadoProveedor} 
-                        onChange={(e) => handleFieldChange('estadoProveedor', e.value)} 
+                      <InputSwitch
+                        checked={estadoProveedor}
+                        onChange={(e) => handleFieldChange('estadoProveedor', e.value)}
                       />
                     </div>
                   </label>
@@ -731,39 +702,39 @@ export default function ProveedoresTable() {
             <div className="modal-body">
               <div className="modal-form-grid-wide">
                 <label>Tipo de Proveedor*
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.tipo}
                   </div>
                 </label>
 
                 <label>Tipo de Documento*
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.tipoDocumento}
                   </div>
                 </label>
 
                 <label>{proveedorSeleccionado.tipo === 'Natural' ? 'Número de Documento*' : (proveedorSeleccionado.tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.extra}
                   </div>
                 </label>
 
                 {proveedorSeleccionado.tipo === 'Natural' ? (
                   <label>Nombre Completo*
-                    <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                    <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                       {proveedorSeleccionado.nombre}
                     </div>
                   </label>
                 ) : (
                   <>
                     <label>Razón Social*
-                      <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                      <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                         {proveedorSeleccionado.nombreEmpresa}
                       </div>
                     </label>
 
                     <label>Nombre del Contacto*
-                      <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                      <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                         {proveedorSeleccionado.nombreContacto}
                       </div>
                     </label>
@@ -771,25 +742,25 @@ export default function ProveedoresTable() {
                 )}
 
                 <label>Teléfono*
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.contacto}
                   </div>
                 </label>
 
                 <label>Correo Electrónico*
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.correo}
                   </div>
                 </label>
 
                 <label>Dirección*
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     {proveedorSeleccionado.direccion}
                   </div>
                 </label>
 
                 <label>Estado
-                  <div className="modal-input" style={{backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63'}}>
+                  <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
                     <span style={{ color: proveedorSeleccionado.estado ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>
                       {proveedorSeleccionado.estado ? 'Activo' : 'Inactivo'}
                     </span>
@@ -806,12 +777,10 @@ export default function ProveedoresTable() {
         {modalTipo === 'eliminar' && proveedorSeleccionado && (
           <Modal visible={modalVisible} onClose={cerrarModal}>
             <h2 className="modal-title">Confirmar Eliminación</h2>
-            <div className="modal-body">
-              <p>¿Seguro que quieres eliminar al proveedor <strong>{proveedorSeleccionado.nombre || proveedorSeleccionado.nombreEmpresa}</strong>?</p>
-            </div>
+            <p>¿Estás seguro de que quieres eliminar al proveedor **{proveedorSeleccionado.nombre}**?</p>
             <div className="modal-footer">
               <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-              <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+              <button className="modal-btn red" onClick={confirmarEliminar}>Eliminar</button>
             </div>
           </Modal>
         )}

@@ -769,7 +769,7 @@ export default function ClienteFormModal({
         readOnly={isReadOnly}
     />
 </div>
-                            {(modalTipo === 'editar' || modalTipo === 'visualizar') && ( 
+                            {(modalTipo === 'editar') && ( 
                                 <div className="modal-field">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>
                                         <label className="text-sm" style={{ fontSize: '12px' }}>Estado:</label>
@@ -780,13 +780,13 @@ export default function ClienteFormModal({
                                     </div>
                                 </div>
                             )}
-
                         </div>
                     </div>
 
                     <div className="modal-footer mt-2 flex justify-end gap-2">
                         <button className="modal-btn cancel-btn text-sm px-3 py-1" onClick={onClose}>Cancelar</button>
-                        <button className="modal-btn save-btn text-sm px-3 py-1" onClick={handleSave}>Guardar</button>
+                        {modalTipo !== 'visualizar' && (
+                        <button className="modal-btn save-btn text-sm px-3 py-1" onClick={handleSave}>Guardar</button>)}      
                     </div>
                 </div>
             </div>

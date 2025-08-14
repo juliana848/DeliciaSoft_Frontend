@@ -769,7 +769,6 @@ export default function ClienteFormModal({
         readOnly={isReadOnly}
     />
 </div>
-
                             {(modalTipo === 'editar' || modalTipo === 'visualizar') && ( 
                                 <div className="modal-field">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>

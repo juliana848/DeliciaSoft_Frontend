@@ -82,27 +82,6 @@ const validationUtils = {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
   },
 
-  noCommonPatterns: (password) => {
-    const commonPatterns = [
-      /123456/, /password/, /qwerty/, /admin/, /12345/,
-      /000000/, /111111/, /222222/, /333333/, /444444/,
-      /555555/, /666666/, /777777/, /888888/, /999999/
-    ];
-    return !commonPatterns.some(pattern => pattern.test(password.toLowerCase()));
-  },
-
-  noPersonalInfo: (password, nombres, apellidos, documento) => {
-    const lowerPassword = password.toLowerCase();
-    const personalInfo = [
-      nombres?.toLowerCase(),
-      apellidos?.toLowerCase(),
-      documento
-    ].filter(Boolean);
-    
-    return !personalInfo.some(info => 
-      info && lowerPassword.includes(info.toLowerCase())
-    );
-  },
 
   // Validaciones de documento
   isValidDocumentFormat: (documento, tipoDocumento) => {

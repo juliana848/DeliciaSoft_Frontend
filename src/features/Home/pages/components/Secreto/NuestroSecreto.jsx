@@ -1,7 +1,7 @@
 import React from 'react';
 import './NuestroSecreto.css';
 import { Link } from 'react-router-dom';
-import secretoImg from './ImagenesSecreto/secreto1.png'; 
+import secretoImg from './ImagenesSecreto/Secreto1.png'; 
 <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet" />
 
 function NuestroSecreto() {

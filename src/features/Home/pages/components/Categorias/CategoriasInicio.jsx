@@ -2,18 +2,18 @@ import React from 'react';
 import './CategoriasSlider.css';
 <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet" />
 
-import cat1 from './imgenescategorias/cat1.png';
-import cat2 from './imgenescategorias/cat2.png';
-import cat3 from './imgenescategorias/cat3.png';
-import cat4 from './imgenescategorias/cat4.png';
-import cat5 from './imgenescategorias/cat5.png';
-import cat6 from './imgenescategorias/cat6.png';
-import cat7 from './imgenescategorias/cat7.png';
-import cat8 from './imgenescategorias/cat8.png';
-import cat9 from './imgenescategorias/cat9.png';
-import cat10 from './imgenescategorias/cat10.png';
-import cat11 from './imgenescategorias/cat11.png';
-import cat12 from './imgenescategorias/cat12.png';
+import cat1 from './imgenescategorias/Cat1.png';
+import cat2 from './imgenescategorias/Cat2.png';
+import cat3 from './imgenescategorias/Cat3.png';
+import cat4 from './imgenescategorias/Cat4.png';
+import cat5 from './imgenescategorias/Cat5.png';
+import cat6 from './imgenescategorias/Cat6.png';
+import cat7 from './imgenescategorias/Cat7.png';
+import cat8 from './imgenescategorias/Cat8.png';
+import cat9 from './imgenescategorias/Cat9.png';
+import cat10 from './imgenescategorias/Cat10.png';
+import cat11 from './imgenescategorias/Cat11.png';
+import cat12 from './imgenescategorias/Cat12.png';
 
 const categorias = [
   { nombre: 'Fresas con crema', imagen: cat1 },

@@ -393,7 +393,6 @@ export default function SedesTable() {
         tipo={notification.tipo}
         onClose={hideNotification}
       />
-
       <div className="admin-toolbar">
         <button
           className="admin-button pink"
@@ -409,6 +408,7 @@ export default function SedesTable() {
           onChange={setFiltro}
         />
       </div>
+      <h2 className="admin-section-title">Gestión de Sedes</h2>
 
       <DataTable
         value={usuariosFiltrados}
@@ -442,21 +442,21 @@ export default function SedesTable() {
                 title="Visualizar"
                 onClick={() => abrirModal("ver", rowData)}
               >
-                <i className="pi pi-search"></i>
+                🔍
               </button>
               <button
                 className="admin-button yellow"
                 title="Editar"
                 onClick={() => abrirModal("editar", rowData)}
               >
-                <i className="pi pi-pencil"></i>
+                ✏
               </button>
               <button
                 className="admin-button red"
                 title="Eliminar"
                 onClick={() => abrirModal("eliminar", rowData)}
               >
-                <i className="pi pi-trash"></i>
+                🗑
               </button>
             </div>
           )}

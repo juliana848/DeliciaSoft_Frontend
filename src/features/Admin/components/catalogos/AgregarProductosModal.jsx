@@ -1,3 +1,4 @@
+// AgregarProductosModal.jsx
 import React, { useState } from 'react';
 
 const ProductoCard = ({ producto, selected, onToggle }) => {
@@ -16,54 +17,67 @@ const ProductoCard = ({ producto, selected, onToggle }) => {
 const AgregarProductosModal = ({ onClose, onAgregar }) => {
   const [selectedProductos, setSelectedProductos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for dropdown visibility
 
   const productosData = [
   {
     id: 401,
     nombre: 'Cupcake de vainilla',
     unidad: 'Unidad',
-    precio: 4.00,
-    imagen: 'https://tartademanzanacasera.com/wp-content/uploads/2016/08/dsc09806.jpg?w=640'
+    precio: 400,
+    imagen: 'https://tartademanzanacasera.com/wp-content/uploads/2016/08/dsc09806.jpg?w=640',
+    category: 'Cupcakes'
   },
   {
     id: 402,
     nombre: 'Brownie de chocolate',
     unidad: 'Unidad',
-    precio: 5.50,
-    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEYDXeu4DuVeL_YVd83AojeR2MsHX2HUHvKA&s'
+    precio: 550,
+    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEYDXeu4DuVeL_YVd83AojeR2MsHX2HUHvKA&s',
+    category: 'Brownies'
   },
   {
     id: 404,
     nombre: 'Donut glaseada',
     unidad: 'Unidad',
-    precio: 3.75,
-    imagen: 'https://www.gourmet.cl/wp-content/uploads/2014/06/donuts.jpg'
+    precio: 375,
+    imagen: 'https://www.gourmet.cl/wp-content/uploads/2014/06/donuts.jpg',
+    category: 'Donuts'
   },
   {
     id: 405,
     nombre: 'Galleta con chispas',
     unidad: 'Unidad',
-    precio: 2.50,
-    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTG1noJhDelkKB0X8LtMPJs5WMZIm6RtcJ-Eg&s'
+    precio: 250,
+    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTG1noJhDelkKB0X8LtMPJs5WMZIm6RtcJ-Eg&s',
+    category: 'Galletas'
   },
   {
     id: 406,
     nombre: 'pastel de limón',
     unidad: 'Porción',
-    precio: 6.25,
-    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvhOdEL5AmZteVbscGI-tJa7FH6akomOSIKw&s'
+    precio: 625,
+    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvhOdEL5AmZteVbscGI-tJa7FH6akomOSIKw&s',
+    category: 'Pasteles'
   },
   {
     id: 407,
     nombre: 'Muffin de arándanos',
     unidad: 'Unidad',
-    precio: 4.25,
-    imagen: 'https://osojimix.com/wp-content/uploads/2021/04/MUFFINS-DE-ARANDANOS.jpg'
+    precio: 425,
+    imagen: 'https://osojimix.com/wp-content/uploads/2021/04/MUFFINS-DE-ARANDANOS.jpg',
+    category: 'Muffins'
   },
   ];
 
+  const categoriasData = [
+    'Todos', 'Cupcakes', 'Brownies', 'Donuts', 'Galletas', 'Pasteles', 'Muffins'
+  ];
+
   const filteredProductos = productosData.filter(p =>
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === 'Todos' || p.category === selectedCategory)
   );
 
   const toggleProducto = (producto) => {
@@ -95,7 +109,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
           }
 
           .producto-modal-container {
-            background: #fffaf0;
+            background: #fff0f5; /* Light pink background */
             border-radius: 20px;
             padding: 25px;
             width: 90%;
@@ -116,15 +130,76 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
             border: none;
             font-size: 28px;
             cursor: pointer;
-            color: #c0392b;
+            color: #d63384; /* Adiciones close button color */
           }
 
-          .producto-modal-search input {
-            width: 100%;
+          .producto-modal-search-container { /* New class for search and filter */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+          }
+
+          .producto-modal-search-container input {
+            flex-grow: 1; /* Allows input to take available space */
             padding: 10px;
             border-radius: 10px;
-            border: 2px solid #f5c6cb;
+            border: 2px solid #ffb6c1; /* Adiciones border color */
             font-size: 16px;
+          }
+
+          .producto-modal-filter-btn { /* New button style */
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #ff69b4;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          }
+
+          .producto-modal-filter-btn:hover {
+            background-color: #d63384;
+          }
+
+          .producto-modal-categories-dropdown { /* New dropdown style */
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #ffe4ec;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+            min-width: 150px;
+          }
+
+          .producto-modal-category-btn {
+            padding: 8px 15px;
+            border: 1px solid #ff69b4; /* Adiciones button border */
+            border-radius: 8px;
+            background-color: #ffe4ec; /* Adiciones selected background */
+            color: #d63384; /* Adiciones text color */
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, color 0.2s;
+            text-align: left; /* Aligns text to the left for dropdown items */
+          }
+
+          .producto-modal-category-btn.selected {
+            background-color: #ff69b4; /* Adiciones button background */
+            color: white;
+          }
+
+          .producto-modal-category-btn:hover:not(.selected) {
+            background-color: #ffb6c1; /* Lighter hover for non-selected */
           }
 
           .producto-modal-grid {
@@ -147,12 +222,12 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
 
           .producto-modal-card:hover {
             transform: translateY(-4px);
-            border-color: #ffb347;
+            border-color: #ff69b4; /* Adiciones hover border */
           }
 
           .producto-modal-card-selected {
-            border-color: #ffa07a;
-            background: #fff0e6;
+            border-color: #d63384; /* Adiciones selected border */
+            background: #ffe4ec; /* Adiciones selected background */
           }
 
           .producto-modal-card img {
@@ -165,7 +240,7 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
 
           .producto-modal-card h4 {
             font-size: 16px;
-            color: #d35400;
+            color: #d63384; /* Adiciones h4 color */
             margin: 0;
           }
 
@@ -185,12 +260,12 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
           }
 
           .producto-modal-btn-cancel {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #f8d7da; /* Adiciones cancel button background */
+            color: #721c24; /* Adiciones cancel button color */
           }
 
           .producto-modal-btn-add {
-            background-color: #ffa07a;
+            background-color: #ff69b4; /* Adiciones add button background */
             color: white;
           }
 
@@ -205,13 +280,36 @@ const AgregarProductosModal = ({ onClose, onAgregar }) => {
           <button onClick={onClose} className="producto-modal-close-btn">&times;</button>
         </div>
 
-        <div className="producto-modal-search">
+        <div className="producto-modal-search-container"> {/* Updated class */}
           <input
             type="text"
             placeholder="Buscar producto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <button
+            className="producto-modal-filter-btn"
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)} // Toggles dropdown visibility
+          >
+            Categorías
+            {showCategoryDropdown ? ' ▲' : ' ▼'}
+          </button>
+          {showCategoryDropdown && ( // Conditionally render dropdown
+            <div className="producto-modal-categories-dropdown">
+              {categoriasData.map(category => (
+                <button
+                  key={category}
+                  className={`producto-modal-category-btn ${selectedCategory === category ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setShowCategoryDropdown(false); // Close dropdown after selection
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="producto-modal-grid">

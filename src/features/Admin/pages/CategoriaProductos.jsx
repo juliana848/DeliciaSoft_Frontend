@@ -91,7 +91,12 @@ export default function CategoriaProductos() {
 
     const updated = categorias.map(cat =>
       cat.id === categoriaSeleccionada.id
-        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada }
+        ? { 
+            ...cat, 
+            nombre: nombreEditado, 
+            descripcion: descripcionEditada,
+            activo: categoriaSeleccionada.activo
+          }
         : cat
     );
     setCategorias(updated);
@@ -151,8 +156,7 @@ export default function CategoriaProductos() {
         />
       </div>
 
-      <h2 className="admin-section-title">Categorías de Productos</h2>
-
+      <h2 className="admin-section-title">Gestión de categorías de productos</h2>
   <DataTable
     value={categoriasFiltradas}
     className="admin-table"
@@ -195,37 +199,39 @@ export default function CategoriaProductos() {
     bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
     style={{ width: '250px' }}
   />
-  <Column
-    header="Acción"
-    body={(rowData) => (
-      <>
-        <button
-          className="admin-button gray"
-          title="Visualizar"
-          onClick={() => abrirModal('visualizar', rowData)}
-        >
-          🔍
-        </button>
-        <button
-          className="admin-button yellow"
-          title="Editar"
-          onClick={() => abrirModal('editar', rowData)}
-        >
-          ✏️
-        </button>
-        <button
-          className="admin-button red"
-          title="Eliminar"
-          onClick={() => abrirModal('eliminar', rowData)}
-        >
-          🗑️
-        </button>
-      </>
-    )}
-    headerStyle={{ textAlign: 'right', paddingLeft:'120px'}}
-    bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
-    style={{ width: '250px' }}
-  />
+<Column
+  header="Acción"
+  body={(rowData) => (
+    <>
+      <button
+        className="admin-button gray"
+        title="Visualizar"
+        onClick={() => abrirModal('visualizar', rowData)}
+      >
+        🔍
+      </button>
+      <button
+        className={`admin-button ${rowData.activo ? 'yellow' : 'yellow-disabled'}`}
+        title="Editar"
+        onClick={() => rowData.activo && abrirModal('editar', rowData)}
+        disabled={!rowData.activo}
+      >
+        ✏️
+      </button>
+      <button
+        className={`admin-button ${rowData.activo ? 'red' : 'red-disabled'}`}
+        title="Eliminar"
+        onClick={() => rowData.activo && abrirModal('eliminar', rowData)}
+        disabled={!rowData.activo}
+      >
+        🗑️
+      </button>
+    </>
+  )}
+  headerStyle={{ textAlign: 'right', paddingLeft:'120px'}}
+  bodyStyle={{ textAlign: 'center', paddingLeft:'20px'}}
+  style={{ width: '250px' }}
+/>
 </DataTable>
 
       {/* Modal Agregar / Editar */}
@@ -253,6 +259,25 @@ export default function CategoriaProductos() {
                 rows={3}
               />
             </label>
+            {modalTipo === 'editar' && (
+          <label style={{ marginTop: '1rem', display: 'block' }}>
+            Estado:
+            <div style={{ marginTop: '0.5rem' }}>
+              <InputSwitch
+                checked={categoriaSeleccionada?.activo || false}
+                onChange={(e) => {
+                  setCategoriaSeleccionada({
+                    ...categoriaSeleccionada,
+                    activo: e.value
+                  });
+                }}
+              />
+              <span style={{ marginLeft: '0.5rem' }}>
+                {categoriaSeleccionada?.activo ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+          </label>
+        )}
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
@@ -264,31 +289,46 @@ export default function CategoriaProductos() {
       )}
 
       {/* Modal Visualizar */}
-      {modalTipo === 'visualizar' && categoriaSeleccionada && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Detalles Categoría</h2>
-          <div className="modal-body">
-            <p><strong>ID:</strong> {categoriaSeleccionada.id}</p>
-            <p><strong>Nombre:</strong> {categoriaSeleccionada.nombre}</p>
-            <p><strong>Descripción:</strong></p>
-            <div style={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              background: '#f9f9f9',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #ddd',
-              whiteSpace: 'pre-wrap'
-            }}>
-          {categoriaSeleccionada.descripcion}
+    {modalTipo === 'visualizar' && categoriaSeleccionada && (
+  <Modal visible={modalVisible} onClose={cerrarModal}>
+    <h2 className="modal-title">Detalles de la Categoría</h2>
+    <div className="modal-body">
+      <label>
+        Nombre:
+        <input
+          type="text"
+          value={categoriaSeleccionada.nombre}
+          readOnly
+          className="modal-input"
+        />
+      </label>
+      <label style={{ marginTop: '1rem', display: 'block' }}>
+        Descripción:
+        <textarea
+          value={categoriaSeleccionada.descripcion}
+          readOnly
+          className="modal-input"
+          rows={3}
+        />
+      </label>
+      <label style={{ marginTop: '1rem', display: 'block' }}>
+        Estado:
+        <div style={{ marginTop: '0.5rem' }}>
+          <InputSwitch
+            checked={categoriaSeleccionada?.activo || false}
+            disabled={true}
+          />
+          <span style={{ marginLeft: '0.5rem' }}>
+            {categoriaSeleccionada?.activo ? 'Activo' : 'Inactivo'}
+          </span>
         </div>
-        <p><strong>Activo:</strong> {categoriaSeleccionada.activo ? 'Sí' : 'No'}</p>
-      </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
-          </div>
-        </Modal>
-      )}
+      </label>
+    </div>
+    <div className="modal-footer">
+      <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cerrar</button>
+    </div>
+  </Modal>
+)}
 
       {modalTipo === 'eliminar' && categoriaSeleccionada && (
           <Modal visible={modalVisible} onClose={cerrarModal}>

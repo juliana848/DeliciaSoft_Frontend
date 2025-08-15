@@ -399,7 +399,14 @@ export default function RecetaForm({
   };
 
   return (
-    <div className="compra-form-container">
+    <div
+      className="compra-form-container"
+      style={{
+        maxHeight: "calc(80vh - 100px)",
+        overflowY: "auto",
+        paddingRight: "10px",
+      }} // Added scrollbar and padding
+    >
       <NotificationComponent
         visible={notification.visible}
         mensaje={notification.mensaje}

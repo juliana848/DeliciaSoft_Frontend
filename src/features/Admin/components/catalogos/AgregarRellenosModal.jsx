@@ -1,3 +1,4 @@
+// AgregarRellenosModal.jsx
 import React, { useState } from 'react';
 
 const RellenoCard = ({ relleno, selected, onToggle }) => {
@@ -16,47 +17,59 @@ const RellenoCard = ({ relleno, selected, onToggle }) => {
 const AgregarRellenosModal = ({ onClose, onAgregar }) => {
   const [selectedRellenos, setSelectedRellenos] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for dropdown visibility
 
   const rellenosData = [
   {
     id: 501,
     nombre: 'Crema pastelera',
     unidad: 'g',
-    precio: 6.00,
-    imagen: 'https://cdn.pixabay.com/photo/2022/05/27/09/22/pastry-cream-7225199_1280.jpg'
+    precio: 600,
+    imagen: 'https://cdn.pixabay.com/photo/2022/05/27/09/22/pastry-cream-7225199_1280.jpg',
+    category: 'Cremas'
   },
   {
     id: 502,
     nombre: 'Dulce de leche',
     unidad: 'g',
-    precio: 5.50,
-    imagen: 'https://cdn.pixabay.com/photo/2021/11/10/18/10/dulce-de-leche-6783187_1280.jpg'
+    precio: 550,
+    imagen: 'https://cdn.pixabay.com/photo/2021/11/10/18/10/dulce-de-leche-6783187_1280.jpg',
+    category: 'Dulces'
   },
   {
     id: 503,
     nombre: 'Nutella',
     unidad: 'g',
-    precio: 8.00,
-    imagen: 'https://cdn.pixabay.com/photo/2017/03/19/13/30/nutella-2154376_1280.jpg'
+    precio: 800,
+    imagen: 'https://cdn.pixabay.com/photo/2017/03/19/13/30/nutella-2154376_1280.jpg',
+    category: 'Dulces'
   },
   {
     id: 504,
     nombre: 'Arequipe',
     unidad: 'g',
-    precio: 5.25,
-    imagen: 'https://cdn.pixabay.com/photo/2021/03/22/04/44/dulce-de-leche-6112026_1280.jpg'
+    precio: 525,
+    imagen: 'https://cdn.pixabay.com/photo/2021/03/22/04/44/dulce-de-leche-6112026_1280.jpg',
+    category: 'Dulces'
   },
   {
     id: 505,
     nombre: 'Mermelada de fresa',
     unidad: 'g',
-    precio: 4.50,
-    imagen: 'https://cdn.pixabay.com/photo/2017/01/20/00/30/strawberry-jam-1990177_1280.jpg'
+    precio: 450,
+    imagen: 'https://cdn.pixabay.com/photo/2017/01/20/00/30/strawberry-jam-1990177_1280.jpg',
+    category: 'Mermeladas'
   },
 ];
 
+  const categoriasData = [
+    'Todos', 'Cremas', 'Dulces', 'Mermeladas'
+  ];
+
   const filteredRellenos = rellenosData.filter(relleno =>
-    relleno.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    relleno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedCategory === 'Todos' || relleno.category === selectedCategory)
   );
 
   const toggleRelleno = (relleno) => {
@@ -88,7 +101,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           }
 
           .relleno-modal-container {
-            background: #f5fff9;
+            background: #fff0f5; /* Adiciones background */
             border-radius: 20px;
             padding: 25px;
             width: 90%;
@@ -109,15 +122,76 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
             border: none;
             font-size: 28px;
             cursor: pointer;
-            color: #2e7d32;
+            color: #d63384; /* Adiciones close button color */
           }
 
-          .relleno-modal-search input {
-            width: 100%;
+          .relleno-modal-search-container { /* New class for search and filter */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+          }
+
+          .relleno-modal-search-container input {
+            flex-grow: 1; /* Allows input to take available space */
             padding: 10px;
             border-radius: 10px;
-            border: 2px solid #a5d6a7;
+            border: 2px solid #ffb6c1; /* Adiciones border color */
             font-size: 16px;
+          }
+
+          .relleno-modal-filter-btn { /* New button style */
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #ff69b4;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+          }
+
+          .relleno-modal-filter-btn:hover {
+            background-color: #d63384;
+          }
+
+          .relleno-modal-categories-dropdown { /* New dropdown style */
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #ffe4ec;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+            min-width: 150px;
+          }
+
+          .relleno-modal-category-btn {
+            padding: 8px 15px;
+            border: 1px solid #ff69b4;
+            border-radius: 8px;
+            background-color: #ffe4ec;
+            color: #d63384;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, color 0.2s;
+            text-align: left;
+          }
+
+          .relleno-modal-category-btn.selected {
+            background-color: #ff69b4;
+            color: white;
+          }
+
+          .relleno-modal-category-btn:hover:not(.selected) {
+            background-color: #ffb6c1;
           }
 
           .relleno-modal-grid {
@@ -140,12 +214,12 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
 
           .relleno-modal-card:hover {
             transform: translateY(-4px);
-            border-color: #81c784;
+            border-color: #ff69b4; /* Adiciones hover border */
           }
 
           .relleno-modal-card-selected {
-            border-color: #388e3c;
-            background: #e8f5e9;
+            border-color: #d63384; /* Adiciones selected border */
+            background: #ffe4ec; /* Adiciones selected background */
           }
 
           .relleno-modal-card img {
@@ -158,7 +232,7 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
 
           .relleno-modal-card h4 {
             font-size: 16px;
-            color: #2e7d32;
+            color: #d63384; /* Adiciones h4 color */
             margin: 0;
           }
 
@@ -178,12 +252,12 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           }
 
           .relleno-modal-btn-cancel {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #f8d7da; /* Adiciones cancel button background */
+            color: #721c24; /* Adiciones cancel button color */
           }
 
           .relleno-modal-btn-add {
-            background-color: #66bb6a;
+            background-color: #ff69b4; /* Adiciones add button background */
             color: white;
           }
 
@@ -198,13 +272,36 @@ const AgregarRellenosModal = ({ onClose, onAgregar }) => {
           <button onClick={onClose} className="relleno-modal-close-btn">&times;</button>
         </div>
 
-        <div className="relleno-modal-search">
+        <div className="relleno-modal-search-container"> {/* Updated class */}
           <input
             type="text"
             placeholder="Buscar relleno..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          <button
+            className="relleno-modal-filter-btn"
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          >
+            Categorías
+            {showCategoryDropdown ? ' ▲' : ' ▼'}
+          </button>
+          {showCategoryDropdown && (
+            <div className="relleno-modal-categories-dropdown">
+              {categoriasData.map(category => (
+                <button
+                  key={category}
+                  className={`relleno-modal-category-btn ${selectedCategory === category ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setShowCategoryDropdown(false); // Close dropdown after selection
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="relleno-modal-grid">

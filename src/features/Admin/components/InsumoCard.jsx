@@ -1,24 +1,29 @@
 import React from 'react';
 
 const InsumoCard = ({ insumo, selected, onToggle }) => {
-  return (
-    <div 
-      className={`insumo-card ${selected ? 'selected' : ''}`}
-      onClick={onToggle}
-    >
-      <div className="insumo-image">
-        <img 
-          src={insumo.imagen || 'https://via.placeholder.com/100'} 
-          alt={insumo.nombre} 
-        />
-      </div>
-      <div className="insumo-info">
-        <h4>{insumo.nombre}</h4>
-        <p>Unidad: {insumo.unidad}</p>
-        <p>Precio: ${insumo.precio.toFixed(2)}</p>
-      </div>
-    </div>
-  );
+
+    const formatoCOP = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    };
+
+    return (
+        <div 
+          className={`adicion-modal-card ${selected ? 'adicion-modal-card-selected' : ''}`}
+          onClick={onToggle}
+        >
+          <img 
+            src={insumo.imagen || 'https://via.placeholder.com/100'} 
+            alt={insumo.nombre} 
+          />
+          <h4>{insumo.nombre}</h4>
+          <p>Precio: {formatoCOP(insumo.precio)}</p>
+          <p>Cantidad: {insumo.cantidad} {insumo.unidad}</p>
+        </div>
+    );
 };
 
 export default InsumoCard;

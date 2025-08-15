@@ -1,0 +1,120 @@
+.modal-agregar-container {
+  width: 640px;
+  max-height: 80vh;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-agregar-title {
+  margin: 0;
+  font-size: 22px;
+  text-align: center;
+  color: #333;
+}
+
+.modal-agregar-buscador {
+  display: flex;
+  justify-content: center;
+}
+.modal-agregar-buscador input {
+  width: 80%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.modal-agregar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 300px;
+  padding: 4px;
+}
+
+.modal-agregar-card {
+  background: #f8f8f8;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  display: flex; 
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+.modal-agregar-card:hover {
+  transform: scale(1.02);
+}
+.modal-agregar-card img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.modal-agregar-card span {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.modal-agregar-card.seleccionado {
+  border: 2px solid #e91e63;
+  background-color: #fff0f7;
+  box-shadow: 0 0 6px rgba(255, 105, 180, 0.5);
+}
+
+.modal-agregar-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+.cancel-btn,
+.save-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+.cancel-btn {
+  background: #ccc;
+  color: #333;
+}
+.save-btn {
+  background: #e91e63;
+  color: white;
+}
+
+.btn-ver-verabajo{
+  background: #e91e63;
+  color: white;
+  width: 100%;
+  box-shadow: 0 0 6px rgba(255, 105, 180, 0.5);
+  margin-top: auto;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.compra-form-container-produccion {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 25px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}

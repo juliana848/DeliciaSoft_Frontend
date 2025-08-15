@@ -82,27 +82,6 @@ const validationUtils = {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
   },
 
-  noCommonPatterns: (password) => {
-    const commonPatterns = [
-      /123456/, /password/, /qwerty/, /admin/, /12345/,
-      /000000/, /111111/, /222222/, /333333/, /444444/,
-      /555555/, /666666/, /777777/, /888888/, /999999/
-    ];
-    return !commonPatterns.some(pattern => pattern.test(password.toLowerCase()));
-  },
-
-  noPersonalInfo: (password, nombres, apellidos, documento) => {
-    const lowerPassword = password.toLowerCase();
-    const personalInfo = [
-      nombres?.toLowerCase(),
-      apellidos?.toLowerCase(),
-      documento
-    ].filter(Boolean);
-    
-    return !personalInfo.some(info => 
-      info && lowerPassword.includes(info.toLowerCase())
-    );
-  },
 
   // Validaciones de documento
   isValidDocumentFormat: (documento, tipoDocumento) => {
@@ -625,29 +604,6 @@ export default function UsuariosForm({
               </div>
             )}
           </div>
-
-          {/* Rol */}
-          <div className="modal-field">
-            <label className="modal-label">
-              Rol<span className="required">*</span>:
-            </label>
-            <select
-              value={formData.rol_id}
-              onChange={(e) => handleInputChange('rol_id', e.target.value)}
-              className={`modal-input ${fieldErrors.rol_id?.length ? 'error' : ''}`}
-              disabled={isReadOnly}
-            >
-              <option value="">Seleccionar rol</option>
-              {roles.map(rol => (
-                <option key={rol.id} value={rol.id}>{rol.nombre}</option>
-              ))}
-            </select>
-            {fieldErrors.rol_id?.length > 0 && (
-              <div className="error-message">
-                {fieldErrors.rol_id[0]}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* COLUMNA 2 */}
@@ -692,6 +648,29 @@ export default function UsuariosForm({
             {fieldErrors.apellidos?.length > 0 && (
               <div className="error-message">
                 {fieldErrors.apellidos[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Rol */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Rol<span className="required">*</span>:
+            </label>
+            <select
+              value={formData.rol_id}
+              onChange={(e) => handleInputChange('rol_id', e.target.value)}
+              className={`modal-input ${fieldErrors.rol_id?.length ? 'error' : ''}`}
+              disabled={isReadOnly}
+            >
+              <option value="">Seleccionar rol</option>
+              {roles.map(rol => (
+                <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+              ))}
+            </select>
+            {fieldErrors.rol_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.rol_id[0]}
               </div>
             )}
           </div>

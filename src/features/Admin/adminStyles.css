@@ -1203,4 +1203,460 @@
   font-weight: 500;
 }
 
+.ventas-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 1px solid #ddd;
+}
 
+.admin-section-title {
+    margin: 0;
+    padding-bottom: 10px;
+}
+
+.filter-buttons-container {
+    display: flex;
+    margin-bottom: -1px;
+}
+
+.filter-tab {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin-left: 0;
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    top: 1px;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+.filter-tab:last-child {
+    margin-right: 0;
+}
+
+.filter-tab:hover {
+    background-color: #555;
+}
+
+.filter-tab.filter-tab-active {
+    top: 0px;
+    background-color: #444;
+    border-bottom: 2px solid #ff69b4;
+    z-index: 1;
+}
+
+.admin-table {
+    margin-top: 0;
+    border-top: none;
+}
+
+
+.modal-wide {
+    max-width: 800px !important;
+    width: 90% !important;
+}
+
+.modal-form-grid-wide {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.modal-form-grid-wide label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.modal-form-grid-wide .modal-input {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.modal-form-grid-wide .modal-input:focus {
+    outline: none;
+    border-color: #007ad9;
+    box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
+}
+
+.modal-form-grid-wide .modal-input.error {
+    border-color: #dc3545;
+}
+
+.modal-form-grid-wide .modal-input.error:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.modal-form-grid-wide .modal-input:valid {
+    border-color: #e556ae;
+    border-radius: 12px;
+    border-width: 2px;
+}
+
+.modal-form-grid-wide .modal-input:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: #dc3545;
+}
+
+.modal-form-grid-wide select.modal-input {
+    cursor: pointer;
+    background-color: white;
+}
+
+.modal-form-grid-wide select.modal-input:focus {
+    border-color: #e95fc4;
+    box-shadow: 0 0 0 2px rgba(0, 122, 217, 0.2);
+}
+
+.modal-form-grid-wide .modal-input::placeholder {
+    color: #6c757d;
+    opacity: 0.7;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .modal-form-grid-wide {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .modal-wide {
+        width: 95% !important;
+        max-width: none !important;
+    }
+
+    .usuarios-modal-grid-two-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.usuarios-modal-grid-two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 10px;
+}
+
+.usuarios-modal-column,
+.modal-column {
+    flex-grow: 1;
+    width: 100%;
+}
+
+
+.admin-button.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+
+.admin-section-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: -0.2rem;
+}
+
+
+.admin-tab {
+    all: unset;
+    background-color: #000;
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.5rem;
+    font-weight: normal;
+    padding: 0.5rem 1rem;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    line-height: 1.2;
+    display: inline-block;
+    cursor: pointer;
+    user-select: none;
+}
+
+.detalle-venta-modal .modal-content-columns {
+    display: flex; /* This creates the two columns */
+    gap: 30px; /* Space between the two columns */
+    margin-top: 20px;
+    flex-grow: 1; /* Allows columns section to fill available vertical space */
+    overflow-y: auto; /* Add vertical scroll to the content columns if they overflow */
+    padding-right: 15px; /* Space for the scrollbar */
+    padding-bottom: 15px; /* Space at the bottom */
+}
+
+.detalle-venta-modal .modal-content-columns .column {
+    flex: 1; /* Makes both columns take equal width */
+    padding: 15px;
+    border: 1px solid #eee; /* Light border for column separation */
+    border-radius: 6px;
+    display: flex; /* Make column a flex container for its content */
+    flex-direction: column;
+}
+
+
+
+.detalle-venta-modal .modal-content-columns .column p {
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+
+
+
+.detalle-venta-modal .productos-lista-scrollable .producto-item-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .producto-info {
+    flex-grow: 1;
+    font-size: 0.95em;
+    color: #444;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .product-options-show-btn {
+    background-color: #e556ae; /* Green button for "Ver Opciones" */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s ease;
+    margin-left: 15px; /* Space from product info */
+    flex-shrink: 0;
+}
+
+.detalle-venta-modal .productos-lista-scrollable .product-options-show-btn:hover {
+    background-color: #f141ad;
+}
+
+
+.detalle-venta-modal .resumen-venta p {
+    margin: 5px 0;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.detalle-venta-modal .modal-footer {
+    text-align: right;
+    margin-top: 20px;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.stock-alert {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px 15px;
+  border: 1px solid #ffeeba;
+  border-radius: 5px;
+  margin: 1rem 0;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+/* Styles for the disabled state */
+.admin-button.disabled-button {
+    opacity: 0.3; /* Adjusted to be more faded (less opaque) */
+    cursor: not-allowed;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.section-title {
+  color: #c2185b;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  font-weight: bold;
+}
+
+.estado-activo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .modal-roles-container {
+    max-width: 95vw;
+    padding: 1rem;
+    max-height: 90vh;
+  }
+
+  .modal-roles-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    height: auto;
+  }
+
+  .permisos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .permisos-container {
+    max-height: 200px;
+  }
+}
+
+.admin-section-title {
+  background-color: #000;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  width: fit-content;
+  margin-bottom: -0.2rem;
+  user-select: none;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem;
+}
+
+
+.admin-table .p-dropdown {
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+  background-color: white;
+  color: black;
+}
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem; /* Espacio entre columnas y filas */
+}
+
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.productos-table th,
+.productos-table td {
+  border: 1px solid #cccccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.productos-table th {
+  background-color: #f5f5f5;
+}
+
+.insumo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: 0.3s;
+}
+
+.insumo-image img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.insumos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+  justify-items: center;
+}
+
+.insumo-card {
+  width: 160px;
+}
+
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columnas iguales */
+  gap: 1rem 2rem; /* espacio entre filas y columnas */
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+
+.compra-header-actions {
+    display: flex; /* Makes the container a flex container */
+    justify-content: flex-end; /* Aligns items to the end of the flex container (right side) */
+    gap: 10px; /* Adds some space between the buttons */
+    margin-top: 20px; /* Adds some space above the buttons, adjust as needed */
+}
+
+/* Optional: If you want to ensure they are always at the very bottom right,
+   you might need to adjust the parent container's styling as well to allow for full height */
+.compra-form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes content to top and buttons to bottom */
+    min-height: 100vh; /* Example: ensure the form container takes full viewport height */
+}

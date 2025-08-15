@@ -1,0 +1,267 @@
+// Servicio API para gestión de clientes
+const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
+
+class ClienteApiService {
+  // Obtener todos los clientes
+  async obtenerClientes() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return this.transformarClientesDesdeAPI(data);
+    } catch (error) {
+      console.error('Error al obtener clientes:', error);
+      throw new Error('Error al obtener la lista de clientes');
+    }
+  }
+
+  // Obtener cliente por ID
+  async obtenerClientePorId(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Cliente no encontrado');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return this.transformarClienteDesdeAPI(data);
+    } catch (error) {
+      console.error('Error al obtener cliente:', error);
+      throw error;
+    }
+  }
+
+  // Crear nuevo cliente
+  async crearCliente(clienteData) {
+    try {
+      const clienteAPI = this.transformarClienteParaAPI(clienteData);
+      
+      const response = await fetch(`${API_BASE_URL}/clientes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clienteAPI),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return this.transformarClienteDesdeAPI(data);
+    } catch (error) {
+      console.error('Error al crear cliente:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar cliente
+  async actualizarCliente(id, clienteData) {
+    try {
+      const clienteAPI = this.transformarClienteParaAPI(clienteData);
+      
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clienteAPI),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return this.transformarClienteDesdeAPI(data);
+    } catch (error) {
+      console.error('Error al actualizar cliente:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar cliente
+  async eliminarCliente(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      return { success: true, message: 'Cliente eliminado exitosamente' };
+    } catch (error) {
+      console.error('Error al eliminar cliente:', error);
+      throw error;
+    }
+  }
+
+  // Cambiar estado del cliente
+async cambiarEstadoCliente(id, nuevoEstado) {
+  try {
+    const clienteActual = await this.obtenerClientePorId(id);
+    
+    const datosActualizados = {
+      ...this.transformarClienteParaAPI(clienteActual),
+      estado: nuevoEstado
+    };
+
+    delete datosActualizados.idcliente;
+    delete datosActualizados.hashcontrasena;
+
+    const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+      body: JSON.stringify(datosActualizados)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar cliente');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error completo:', error);
+    throw new Error(`No se pudo actualizar el estado: ${error.message}`);
+  }
+}
+
+  // Verificar si cliente tiene ventas
+  async clienteTieneVentas(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}/ventas`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        return false;
+      }
+      
+      const data = await response.json();
+      return data.tieneVentas || false;
+    } catch (error) {
+      console.error('Error al verificar ventas del cliente:', error);
+      return false;
+    }
+  }
+
+  // Transformar datos desde la API (snake_case a camelCase)
+  transformarClienteDesdeAPI(cliente) {
+    return {
+      idCliente: cliente.idcliente,
+      tipoDocumento: cliente.tipodocumento,
+      numeroDocumento: cliente.numerodocumento,
+      nombre: cliente.nombre,
+      apellido: cliente.apellido,
+      correo: cliente.correo,
+      contrasena: cliente.hashcontrasena || '********',
+      direccion: cliente.direccion,
+      barrio: cliente.barrio,
+      ciudad: cliente.ciudad,
+      fechaNacimiento: cliente.fechanacimiento ? this.formatearFechaDesdeAPI(cliente.fechanacimiento) : '',
+      celular: cliente.celular,
+      estado: cliente.estado
+    };
+  }
+
+  // Transformar múltiples clientes desde la API
+  transformarClientesDesdeAPI(clientes) {
+    if (!Array.isArray(clientes)) return [];
+    return clientes.map(cliente => this.transformarClienteDesdeAPI(cliente));
+  }
+
+transformarClienteParaAPI(cliente) {
+  const clienteAPI = {
+    tipodocumento: cliente.tipoDocumento,
+    numerodocumento: cliente.numeroDocumento,
+    nombre: cliente.nombre,
+    apellido: cliente.apellido,
+    correo: cliente.correo,
+    direccion: cliente.direccion,
+    barrio: cliente.barrio,
+    ciudad: cliente.ciudad,
+    celular: cliente.celular,
+    estado: cliente.estado
+  };
+
+  // Solo incluir contraseña si se proporciona y no es el valor por defecto
+  if (cliente.contrasena && cliente.contrasena.trim() && cliente.contrasena !== '********') {
+    clienteAPI.hashcontrasena = cliente.contrasena;
+  }
+
+  // Formatear correctamente la fecha para Prisma
+  if (cliente.fechaNacimiento) {
+    clienteAPI.fechanacimiento = new Date(cliente.fechaNacimiento).toISOString();
+  } else {
+    clienteAPI.fechanacimiento = null; // O eliminar el campo si el backend lo permite
+  }
+
+  return clienteAPI;
+}
+
+  // Formatear fecha desde la API (YYYY-MM-DD)
+  formatearFechaDesdeAPI(fecha) {
+    if (!fecha) return '';
+    const date = new Date(fecha);
+    return date.toISOString().split('T')[0];
+  }
+
+  // Formatear fecha para la API
+  formatearFechaParaAPI(fecha) {
+    if (!fecha) return null;
+    return fecha; // Ya está en formato YYYY-MM-DD del input date
+  }
+
+  // Manejar errores de red
+  async manejarRespuesta(response) {
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    }
+    return response.json();
+  }
+}
+
+// Crear instancia singleton del servicio
+const clienteApiService = new ClienteApiService();
+
+export default clienteApiService;

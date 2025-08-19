@@ -1,5 +1,7 @@
 import React from 'react';
 import Modal from '../../components/modal'; // Assuming you use the same Modal component
+import '../../adminStyles.css';
+
 
 export default function ProductOptionsMiniModal({ visible, onClose, product }) {
     if (!visible || !product) return null;

@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from '../../components/modal';
-
+import '../../adminStyles.css';
 
 export default function VentasDetalleModal({ visible, onClose, ventaSeleccionada, showProductOptions, setShowProductOptions }) {
     if (!visible || !ventaSeleccionada) return null;

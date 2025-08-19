@@ -1,12 +1,10 @@
 // VentasVerDetalle.jsx
-import React, { useState } from 'react'; // Import useState
-import '../../adminStyles.css'; // Ensure this CSS file exists
+import React, { useState } from 'react';
+import '../../adminStyles.css';
 
 export default function VentasVerDetalle({ ventaSeleccionada, onBackToList }) {
-    // State to manage the visibility of nested details for each product
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
 
-    // Function to toggle the visibility of nested details for a specific product
     const toggleNestedDetails = (productId) => {
         setNestedDetailsVisible(prevState => ({
             ...prevState,
@@ -25,88 +23,79 @@ export default function VentasVerDetalle({ ventaSeleccionada, onBackToList }) {
         );
     }
 
-    // Helper function to render product details (now incorporating the toggle)
     const renderProductDetails = (products) => {
         return (
             <table className="compra-detalle-table">
                 <thead>
                     <tr>
-                        <th>Producto</th>
+                        <th>ID Producto</th>
+                        <th>Nombre Producto</th>
                         <th>Cantidad</th>
                         <th>Precio Unitario</th>
                         <th>Subtotal Item</th>
+                        <th>IVA</th>
+                        <th>Opciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map((product, index) => (
-                        <React.Fragment key={product.id || index}> {/* Use product.id if available, otherwise index */}
-                            {/* Main Product Row */}
+                    {products.map((item, index) => (
+                        <React.Fragment key={index}>
                             <tr>
+                                <td>{item.idproductogeneral}</td>
+                                <td>{item.nombreProducto}</td>
+                                <td>{item.cantidad}</td>
+                                <td>${item.precioUnitario?.toLocaleString('es-CO')}</td>
+                                <td>${item.subtotal?.toLocaleString('es-CO')}</td>
+                                <td>${item.iva?.toLocaleString('es-CO')}</td>
                                 <td>
-                                    {product.nombre}
-                                    {/* Button to toggle nested details visibility */}
-                                    {(product.adiciones && product.adiciones.length > 0) ||
-                                     (product.salsas && product.salsas.length > 0) ||
-                                     (product.sabores && product.sabores.length > 0) ? (
+                                    {(item.adiciones?.length > 0 || item.salsas?.length > 0 || item.sabores?.length > 0) ? (
                                         <button
                                             type="button"
-                                            className="btn-small toggle-details-btn"
-                                            onClick={() => toggleNestedDetails(product.id || `product-${index}`)} // Use a unique ID for the product
-                                            title={nestedDetailsVisible[product.id || `product-${index}`] ? 'Ocultar detalles' : 'Mostrar detalles'}
-                                            style={{ marginLeft: '10px', padding: '2px 6px', fontSize: '10px' }}
+                                            className="admin-button gray"
+                                            onClick={() => toggleNestedDetails(item.iddetalleventa)}
                                         >
-                                            {nestedDetailsVisible[product.id || `product-${index}`] ? '▲' : '▼'}
+                                            {nestedDetailsVisible[item.iddetalleventa] ? 'Ocultar' : 'Ver Opciones'}
                                         </button>
-                                    ) : null}
-                                </td>
-                                <td>{product.cantidad}</td>
-                                <td>${product.precio?.toLocaleString('es-CO')}</td>
-                                <td>
-                                    ${((product.precio * product.cantidad) +
-                                        (product.adiciones || []).reduce((acc, ad) => acc + (ad.precio || 0), 0) +
-                                        (product.salsas || []).reduce((acc, sa) => acc + (sa.precio || 0), 0) +
-                                        (product.sabores || []).reduce((acc, re) => acc + (re.precio || 0), 0)
-                                    ).toLocaleString('es-CO')}
+                                    ) : (
+                                        'N/A'
+                                    )}
                                 </td>
                             </tr>
-
-                            {/* Nested Details Row (conditionally rendered) */}
-                            {nestedDetailsVisible[product.id || `product-${index}`] && (
-                                <tr>
-                                    <td colSpan="2"></td> {/* Empty cells for alignment */}
-                                    <td colSpan="2">
-                                        {/* Display Adiciones */}
-                                        {product.adiciones && product.adiciones.length > 0 && (
-                                            <div className="nested-item-list">
-                                                <strong>Adiciones:</strong>
-                                                {product.adiciones.map((adic, idx) => (
-                                                    <div key={idx}>{adic.nombre} (${adic.precio?.toLocaleString('es-CO')})</div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {/* Display Salsas */}
-                                        {product.salsas && product.salsas.length > 0 && (
-                                            <div className="nested-item-list">
-                                                <strong>Salsas:</strong>
-                                                {product.salsas.map((salsa, idx) => (
-                                                    <div key={idx}>{salsa.nombre} (${salsa.precio?.toLocaleString('es-CO')})</div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {/* Display Rellenos/Sabores */}
-                                        {product.sabores && product.sabores.length > 0 && (
-                                            <div className="nested-item-list">
-                                                <strong>Rellenos/Sabores:</strong>
-                                                {product.sabores.map((sabor, idx) => (
-                                                    <div key={idx}>{sabor.nombre} (${sabor.precio?.toLocaleString('es-CO')})</div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {(product.adiciones && product.adiciones.length === 0) &&
-                                         (product.salsas && product.salsas.length === 0) &&
-                                         (product.sabores && product.sabores.length === 0) && (
-                                            <p>No hay adiciones, salsas o rellenos añadidos.</p>
-                                        )}
+                            {nestedDetailsVisible[item.iddetalleventa] && (
+                                <tr className="nested-details-row">
+                                    <td colSpan="7">
+                                        <div className="nested-item-list">
+                                            {item.adiciones && item.adiciones.length > 0 && (
+                                                <div className="nested-item">
+                                                    <strong>Adiciones:</strong>
+                                                    <ul>
+                                                        {item.adiciones.map((ad, adIndex) => (
+                                                            <li key={adIndex}>{ad.nombre} (${ad.precio?.toLocaleString('es-CO')})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {item.salsas && item.salsas.length > 0 && (
+                                                <div className="nested-item">
+                                                    <strong>Salsas:</strong>
+                                                    <ul>
+                                                        {item.salsas.map((sa, saIndex) => (
+                                                            <li key={saIndex}>{sa.nombre} (${sa.precio?.toLocaleString('es-CO')})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {item.sabores && item.sabores.length > 0 && (
+                                                <div className="nested-item">
+                                                    <strong>Rellenos/Sabores:</strong>
+                                                    <ul>
+                                                        {item.sabores.map((re, reIndex) => (
+                                                            <li key={reIndex}>{re.nombre} (${re.precio?.toLocaleString('es-CO')})</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             )}
@@ -119,73 +108,49 @@ export default function VentasVerDetalle({ ventaSeleccionada, onBackToList }) {
 
     return (
         <div className="compra-form-container">
-            <h1>Detalle de Venta</h1>
-
-            {/* Main details section */}
-            <div className="compra-fields-grid">
-                <div className="field-group">
-                    <label>Código de Venta:</label>
-                    <p>{ventaSeleccionada.cod_venta || ventaSeleccionada.id}</p>
-                </div>
-
-                <div className="field-group">
-                    <label>Tipo de Venta:</label>
-                    <p>{ventaSeleccionada.tipo_venta}</p>
-                </div>
-
-                <div className="field-group">
-                    <label>Cliente:</label>
-                    <p>{ventaSeleccionada.cliente}</p>
-                </div>
-
-                <div className="field-group">
-                    <label>Sede:</label>
-                    <p>{ventaSeleccionada.sede}</p>
-                </div>
-
-                <div className="field-group">
-                    <label>Método de Pago:</label>
-                    <p>{ventaSeleccionada.metodo_pago}</p>
-                </div>
-
-                <div className="field-group">
-                    <label>Fecha de Venta:</label>
-                    <p>{ventaSeleccionada.fecha_venta}</p>
-                </div>
-
-                {ventaSeleccionada.fecha_entrega && (
-                    <div className="field-group">
-                        <label>Fecha de Entrega:</label>
-                        <p>{ventaSeleccionada.fecha_entrega}</p>
-                    </div>
-                )}
-
-                {ventaSeleccionada.fecha_finalizacion && (
-                    <div className="field-group">
-                        <label>Fecha de Finalización:</label>
-                        <p>{ventaSeleccionada.fecha_finalizacion}</p>
-                    </div>
-                )}
-
-                <div className="field-group">
-                    <label>Estado:</label>
-                    <p>{ventaSeleccionada.estado}</p>
-                </div>
-
-                <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Observaciones:</label>
-                    <p>{ventaSeleccionada.observaciones || 'N/A'}</p>
+            <h2 className="admin-section-title">Detalle de Venta #{ventaSeleccionada.idVenta}</h2>
+            <div className="detalle-section">
+                <h2>Información General</h2>
+                <div className="detalle-grid">
+                    <p><strong>Cliente:</strong> {ventaSeleccionada.nombreCliente}</p>
+                    <p><strong>Sede:</strong> {ventaSeleccionada.nombreSede}</p>
+                    <p><strong>Método de Pago:</strong> {ventaSeleccionada.metodoPago}</p>
+                    <p><strong>Estado:</strong> {ventaSeleccionada.estadoVenta ? 'Activa' : 'Anulada'}</p>
+                    <p><strong>Tipo de Venta:</strong> {ventaSeleccionada.tipoVenta}</p>
+                    <p><strong>Fecha de Venta:</strong> {ventaSeleccionada.fechaVenta}</p>
                 </div>
             </div>
 
-            <div className="section-divider"></div>
-
             <div className="detalle-section">
                 <h2>Productos Vendidos</h2>
-                {ventaSeleccionada.productos && ventaSeleccionada.productos.length > 0 ? (
-                    renderProductDetails(ventaSeleccionada.productos)
+                {ventaSeleccionada.detalleVenta && ventaSeleccionada.detalleVenta.length > 0 ? (
+                    renderProductDetails(ventaSeleccionada.detalleVenta)
                 ) : (
                     <p>No hay productos registrados para esta venta.</p>
+                )}
+            </div>
+
+            <div className="detalle-section">
+                <h2>Abonos Realizados</h2>
+                {ventaSeleccionada.abonos && ventaSeleccionada.abonos.length > 0 ? (
+                    <table className="abonos-table">
+                        <thead>
+                            <tr>
+                                <th>Monto</th>
+                                <th>Método de Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ventaSeleccionada.abonos.map((abono, index) => (
+                                <tr key={index}>
+                                    <td>${abono.cantidadPagar?.toLocaleString('es-CO')}</td>
+                                    <td>{abono.metodoPago}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>No hay abonos registrados para esta venta.</p>
                 )}
             </div>
 
@@ -203,15 +168,13 @@ export default function VentasVerDetalle({ ventaSeleccionada, onBackToList }) {
                     <span>${ventaSeleccionada.total?.toLocaleString('es-CO')}</span>
                 </div>
             </div>
-
-            {/* Back button at the bottom right */}
             <div className="compra-header-actions" style={{ justifyContent: 'flex-end', marginTop: '20px' }}>
                 <button
                     type="button"
                     className="modal-btn cancel-btn"
                     onClick={onBackToList}
                 >
-                    vancelar
+                    Volver
                 </button>
             </div>
         </div>

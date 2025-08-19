@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
+import categoriaInsumoApiService from '../../services/categoriainsumos';
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(false); 
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modalVisible, setModalVisible] = useState(false);
@@ -16,22 +18,41 @@ export default function CategoriaTableDemo() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [nombreEditado, setNombreEditado] = useState('');
   const [descripcionEditada, setDescripcionEditada] = useState('');
-  const [estadoEditado, setEstadoEditado] = useState(true); // Nuevo estado para el switch
+  const [estadoEditado, setEstadoEditado] = useState(true);
   const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
-  
-  // Nuevo estado para controlar si la edición/eliminación está habilitada
   const [isEditDeleteEnabled, setIsEditDeleteEnabled] = useState(true);
 
   useEffect(() => {
-    const mockCategorias = [
-      { id: 201, nombre: 'Frutas', descripcion: 'Productos naturales', activo: true },
-      { id: 202, nombre: 'Chocolate', descripcion: 'Derivados del cacao', activo: true },
-      { id: 203, nombre: 'Lácteos', descripcion: 'Productos de leche', activo: true },
-      { id: 204, nombre: 'Harinas', descripcion: 'Cereales y derivados', activo: false },
-      { id: 205, nombre: 'Proteínas', descripcion: 'Carnes y vegetales', activo: true }
-    ];
-    setCategorias(mockCategorias);
+    cargarCategorias();
   }, []);
+
+  // Función para cargar categorías desde la API
+  const cargarCategorias = async () => {
+    try {
+      setLoading(true);
+      const data = await categoriaInsumoApiService.obtenerCategorias();
+      const categoriasTransformadas = data.map(cat => ({
+        id: cat.id,
+        nombre: cat.nombreCategoria,
+        descripcion: cat.descripcion,
+        activo: cat.estado
+      }));
+      setCategorias(categoriasTransformadas);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      showNotification('Error al cargar las categorías: ' + error.message, 'error');
+      const mockCategorias = [
+        { id: 201, nombre: 'Frutas', descripcion: 'Productos naturales', activo: true },
+        { id: 202, nombre: 'Chocolate', descripcion: 'Derivados del cacao', activo: true },
+        { id: 203, nombre: 'Lácteos', descripcion: 'Productos de leche', activo: true },
+        { id: 204, nombre: 'Harinas', descripcion: 'Cereales y derivados', activo: false },
+        { id: 205, nombre: 'Proteínas', descripcion: 'Carnes y vegetales', activo: true }
+      ];
+      setCategorias(mockCategorias);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const nuevosErrores = { nombre: '', descripcion: '' };
@@ -42,7 +63,7 @@ export default function CategoriaTableDemo() {
       nuevosErrores.nombre = 'El nombre debe tener al menos 3 caracteres';
     } else if (nombreEditado.trim().length > 50) {
       nuevosErrores.nombre = 'El nombre no puede superar los 50 caracteres';
-    } else if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
+    } else if (!/^[A-Za-zÀÁÉÍÓÚÀáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
       nuevosErrores.nombre = 'El nombre solo puede contener letras y espacios';
     }
 
@@ -56,13 +77,22 @@ export default function CategoriaTableDemo() {
 
     setErrores(nuevosErrores);
   }, [nombreEditado, descripcionEditada]);
-
-  const toggleActivo = (categoria) => {
-    const updated = categorias.map(cat =>
-      cat.id === categoria.id ? { ...cat, activo: !cat.activo } : cat
-    );
-    setCategorias(updated);
-    showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
+  const toggleActivo = async (categoria) => {
+    try {
+      setLoading(true);
+      const nuevoEstado = !categoria.activo;
+      await categoriaInsumoApiService.cambiarEstadoCategoria(categoria.id, nuevoEstado);
+      const updated = categorias.map(cat =>
+        cat.id === categoria.id ? { ...cat, activo: nuevoEstado } : cat
+      );
+      setCategorias(updated);
+      showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      showNotification('Error al cambiar el estado: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const showNotification = (mensaje, tipo = 'success') => {
@@ -74,7 +104,6 @@ export default function CategoriaTableDemo() {
   };
 
   const abrirModal = (tipo, categoria) => {
-    // Verificar si la edición/eliminación está deshabilitada
     if ((tipo === 'editar' || tipo === 'eliminar') && !isEditDeleteEnabled) {
       showNotification('Las funciones de edición y eliminación están deshabilitadas', 'error');
       return;
@@ -85,12 +114,12 @@ export default function CategoriaTableDemo() {
     if (tipo === 'editar') {
       setNombreEditado(categoria.nombre);
       setDescripcionEditada(categoria.descripcion);
-      setEstadoEditado(categoria.activo); // Establecer el estado actual
+      setEstadoEditado(categoria.activo);
     }
     if (tipo === 'agregar') {
       setNombreEditado('');
       setDescripcionEditada('');
-      setEstadoEditado(true); // Por defecto activo para nuevas categorías
+      setEstadoEditado(true);
     }
     setModalVisible(true);
   };
@@ -114,42 +143,99 @@ export default function CategoriaTableDemo() {
     return true;
   };
 
-  const guardarEdicion = () => {
+
+  const guardarEdicion = async () => {
     if (!validarFormulario()) return;
 
-    const updated = categorias.map(cat =>
-      cat.id === categoriaSeleccionada.id
-        ? { ...cat, nombre: nombreEditado, descripcion: descripcionEditada, activo: estadoEditado }
-        : cat
-    );
-    setCategorias(updated);
-    cerrarModal();
-    showNotification('Categoría editada exitosamente');
+    try {
+      setLoading(true);
+      
+
+      const datosCategoria = {
+        nombreCategoria: nombreEditado.trim(),
+        descripcion: descripcionEditada.trim(),
+        estado: estadoEditado
+      };
+
+
+      const categoriaActualizada = await categoriaInsumoApiService.actualizarCategoria(
+        categoriaSeleccionada.id, 
+        datosCategoria
+      );
+
+      const updated = categorias.map(cat =>
+        cat.id === categoriaSeleccionada.id
+          ? {
+              id: categoriaActualizada.id,
+              nombre: categoriaActualizada.nombreCategoria,
+              descripcion: categoriaActualizada.descripcion,
+              activo: categoriaActualizada.estado
+            }
+          : cat
+      );
+      setCategorias(updated);
+      cerrarModal();
+      showNotification('Categoría editada exitosamente');
+    } catch (error) {
+      console.error('Error al editar categoría:', error);
+      showNotification('Error al editar la categoría: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const confirmarEliminar = () => {
-    const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
-    setCategorias(updated);
-    cerrarModal();
-    showNotification('Categoría eliminada exitosamente');
+
+  const confirmarEliminar = async () => {
+    try {
+      setLoading(true);
+      await categoriaInsumoApiService.eliminarCategoria(categoriaSeleccionada.id);
+      const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
+      setCategorias(updated);
+      cerrarModal();
+      showNotification('Categoría eliminada exitosamente');
+    } catch (error) {
+      console.error('Error al eliminar categoría:', error);
+      showNotification('Error al eliminar la categoría: ' + error.message, 'error');
+      cerrarModal();
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const guardarNuevaCategoria = () => {
+  // Función para guardar nueva categoría usando API
+  const guardarNuevaCategoria = async () => {
     if (!validarFormulario()) return;
 
-    const nuevoId = categorias.length ? Math.max(...categorias.map(c => c.id)) + 1 : 1;
-    setCategorias([
-      ...categorias,
-      {
-        id: nuevoId,
-        nombre: nombreEditado,
-        descripcion: descripcionEditada,
-        activo: true
-      }
-    ]);
+    try {
+      setLoading(true);
+      
+      // Preparar datos para la API
+      const datosCategoria = {
+        nombreCategoria: nombreEditado.trim(),
+        descripcion: descripcionEditada.trim(),
+        estado: true // Siempre activo para nuevas categorías
+      };
 
-    cerrarModal();
-    showNotification('Categoría agregada exitosamente');
+      // Llamar a la API para crear
+      const nuevaCategoria = await categoriaInsumoApiService.crearCategoria(datosCategoria);
+
+      // Agregar al estado local
+      const categoriaParaEstado = {
+        id: nuevaCategoria.id,
+        nombre: nuevaCategoria.nombreCategoria,
+        descripcion: nuevaCategoria.descripcion,
+        activo: nuevaCategoria.estado
+      };
+
+      setCategorias([...categorias, categoriaParaEstado]);
+      cerrarModal();
+      showNotification('Categoría agregada exitosamente');
+    } catch (error) {
+      console.error('Error al agregar categoría:', error);
+      showNotification('Error al agregar la categoría: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const normalizar = (texto) =>
@@ -174,8 +260,13 @@ export default function CategoriaTableDemo() {
       />
 
       <div className="admin-toolbar">
-        <button className="admin-button pink" onClick={() => abrirModal('agregar')} type="button">
-          + Agregar
+        <button 
+          className="admin-button pink" 
+          onClick={() => abrirModal('agregar')} 
+          type="button"
+          disabled={loading}
+        >
+          {loading ? 'Cargando...' : '+ Agregar'}
         </button>
         
         <SearchBar
@@ -194,6 +285,7 @@ export default function CategoriaTableDemo() {
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
+        loading={loading}
       >
         <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
         <Column field="nombre" header="Nombre" />
@@ -204,6 +296,7 @@ export default function CategoriaTableDemo() {
             <InputSwitch
               checked={rowData.activo}
               onChange={() => toggleActivo(rowData)}
+              disabled={loading}
             />
           )}
         />
@@ -218,18 +311,19 @@ export default function CategoriaTableDemo() {
                   className="admin-button gray" 
                   title="Visualizar" 
                   onClick={() => abrirModal('visualizar', rowData)}
+                  disabled={loading}
                 >
-                  🔍
+                  👁
                 </button>
 
                 <button 
                   className="admin-button yellow"
                   title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
                   onClick={() => isEnabled && abrirModal('editar', rowData)}
-                  disabled={!isEnabled}
+                  disabled={!isEnabled || loading}
                   style={{
-                    opacity: isEnabled ? 1 : 0.50,
-                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                    opacity: isEnabled && !loading ? 1 : 0.50,
+                    cursor: isEnabled && !loading ? 'pointer' : 'not-allowed'
                   }}
                 >
                   ✏️
@@ -239,10 +333,10 @@ export default function CategoriaTableDemo() {
                   className="admin-button red"
                   title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
                   onClick={() => isEnabled && abrirModal('eliminar', rowData)}
-                  disabled={!isEnabled}
+                  disabled={!isEnabled || loading}
                   style={{
-                    opacity: isEnabled ? 1 : 0.50,
-                    cursor: isEnabled ? 'pointer' : 'not-allowed'
+                    opacity: isEnabled && !loading ? 1 : 0.50,
+                    cursor: isEnabled && !loading ? 'pointer' : 'not-allowed'
                   }}
                 >
                   🗑️
@@ -269,6 +363,7 @@ export default function CategoriaTableDemo() {
                   onChange={(e) => setNombreEditado(e.target.value)}
                   className="modal-input"
                   placeholder="Seleccione o escriba una categoría"
+                  disabled={loading}
                 />
                 {errores.nombre && <p className="error">{errores.nombre}</p>}
                 <datalist id="categorias-list">
@@ -285,6 +380,7 @@ export default function CategoriaTableDemo() {
                   className="modal-input textarea"
                   rows={3}
                   style={{ resize: 'vertical' }}
+                  disabled={loading}
                 />
                 {errores.descripcion && <p className="error">{errores.descripcion}</p>}
               </label>
@@ -296,6 +392,7 @@ export default function CategoriaTableDemo() {
                   <InputSwitch
                     checked={estadoEditado}
                     onChange={(e) => setEstadoEditado(e.value)}
+                    disabled={loading}
                   />
                   <span style={{ fontSize: '0.9rem', color: '#666' }}>
                     {estadoEditado ? 'Activo' : 'Inactivo'}
@@ -305,12 +402,19 @@ export default function CategoriaTableDemo() {
             </div>
           </div>
           <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+            <button 
+              className="modal-btn cancel-btn" 
+              onClick={cerrarModal}
+              disabled={loading}
+            >
+              Cancelar
+            </button>
             <button
               className="modal-btn save-btn"
               onClick={modalTipo === 'agregar' ? guardarNuevaCategoria : guardarEdicion}
+              disabled={loading}
             >
-              Guardar
+              {loading ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </Modal>
@@ -366,8 +470,20 @@ export default function CategoriaTableDemo() {
             <p>¿Seguro que quieres eliminar la categoría <strong>{categoriaSeleccionada.nombre}</strong>?</p>
           </div>
           <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+            <button 
+              className="modal-btn cancel-btn" 
+              onClick={cerrarModal}
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button 
+              className="modal-btn save-btn" 
+              onClick={confirmarEliminar}
+              disabled={loading}
+            >
+              {loading ? 'Eliminando...' : 'Eliminar'}
+            </button>
           </div>
         </Modal>
       )}

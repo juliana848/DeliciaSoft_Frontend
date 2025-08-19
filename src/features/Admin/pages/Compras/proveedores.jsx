@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputSwitch } from 'primereact/inputswitch';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
+import proveedorApiService from '../../services/proveedor_services';
 
 export default function ProveedoresTable() {
   const [proveedores, setProveedores] = useState([]);
@@ -14,6 +15,7 @@ export default function ProveedoresTable() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTipo, setModalTipo] = useState(null);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Form state
   const [tipoProveedor, setTipoProveedor] = useState('Natural');
@@ -31,42 +33,40 @@ export default function ProveedoresTable() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
+  // Cargar proveedores desde la API
   useEffect(() => {
-    const mockProveedores = [
-      {
-        id: 1,
-        tipo: 'Natural',
-        nombre: 'Juan Pérez',
-        contacto: '123456789',
-        correo: 'juan@gmail.com',
-        direccion: 'Av. Siempre Viva 123',
-        estado: true,
-        extra: '987654321',
-        tipoDocumento: 'CC'
-      },
-      {
-        id: 2,
-        tipo: 'Jurídico',
-        nombre: 'Distribuidora ABC S.A.',
-        contacto: '111222333',
-        correo: 'contacto@abcsa.com',
-        direccion: 'Calle Comercio 456',
-        estado: true,
-        extra: 'J12345678',
-        tipoDocumento: 'NIT',
-        nombreEmpresa: 'Distribuidora ABC S.A.',
-        nombreContacto: 'Carlos García'
-      }
-    ];
-    setProveedores(mockProveedores);
+    cargarProveedores();
   }, []);
 
-  const toggleEstado = (proveedor) => {
-    const updated = proveedores.map(p =>
-      p.id === proveedor.id ? { ...p, estado: !p.estado } : p
-    );
-    setProveedores(updated);
-    showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
+  const cargarProveedores = async () => {
+    setLoading(true);
+    try {
+      const data = await proveedorApiService.obtenerProveedores();
+      setProveedores(data);
+    } catch (error) {
+      console.error('Error cargando proveedores:', error);
+      showNotification('Error al cargar los proveedores', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleEstado = async (proveedor) => {
+    setLoading(true);
+    try {
+      await proveedorApiService.cambiarEstadoProveedor(proveedor.idProveedor, !proveedor.estado);
+      
+      const updated = proveedores.map(p =>
+        p.idProveedor === proveedor.idProveedor ? { ...p, estado: !p.estado } : p
+      );
+      setProveedores(updated);
+      showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      showNotification('Error al cambiar el estado del proveedor', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const showNotification = (mensaje, tipo = 'success') => {
@@ -272,11 +272,11 @@ export default function ProveedoresTable() {
 
     if (tipo === 'editar' || tipo === 'visualizar') {
       setTipoProveedor(proveedor.tipo);
-      setNombre(proveedor.nombre || '');
-      setContacto(proveedor.contacto);
+      setNombre(proveedor.nombreProveedor || proveedor.nombre || '');
+      setContacto(proveedor.contacto.toString());
       setCorreo(proveedor.correo);
       setDireccion(proveedor.direccion);
-      setDocumentoONit(proveedor.extra);
+      setDocumentoONit(proveedor.documento.toString() || proveedor.extra.toString());
       setTipoDocumento(proveedor.tipoDocumento || (proveedor.tipo === 'Natural' ? 'CC' : 'NIT'));
       setNombreEmpresa(proveedor.nombreEmpresa || '');
       setNombreContacto(proveedor.nombreContacto || '');
@@ -357,7 +357,7 @@ export default function ProveedoresTable() {
 
     if (modalTipo === 'editar') {
       const emailExists = proveedores.some(p =>
-        p.id !== proveedorSeleccionado.id && p.correo.toLowerCase() === correo.toLowerCase()
+        p.idProveedor !== proveedorSeleccionado.idProveedor && p.correo.toLowerCase() === correo.toLowerCase()
       );
       if (emailExists) {
         newErrors.correo = 'Ya existe un proveedor con este correo';
@@ -366,7 +366,7 @@ export default function ProveedoresTable() {
 
       if (tipoProveedor === 'Natural') {
         const nameExists = proveedores.some(p =>
-          p.id !== proveedorSeleccionado.id && p.nombre && p.nombre.toLowerCase() === nombre.toLowerCase()
+          p.idProveedor !== proveedorSeleccionado.idProveedor && p.nombre && p.nombre.toLowerCase() === nombre.toLowerCase()
         );
         if (nameExists) {
           newErrors.nombre = 'Ya existe un proveedor con este nombre';
@@ -374,7 +374,7 @@ export default function ProveedoresTable() {
         }
       } else {
         const nameExists = proveedores.some(p =>
-          p.id !== proveedorSeleccionado.id && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === nombreEmpresa.toLowerCase()
+          p.idProveedor !== proveedorSeleccionado.idProveedor && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === nombreEmpresa.toLowerCase()
         );
         if (nameExists) {
           newErrors.nombreEmpresa = 'Ya existe un proveedor con este nombre de empresa';
@@ -393,64 +393,69 @@ export default function ProveedoresTable() {
 
     return true;
   };
-  const guardarProveedor = () => {
+
+  const guardarProveedor = async () => {
     if (!validarCampos()) return;
 
-    if (modalTipo === 'agregar') {
-      const nuevoId = proveedores.length ? Math.max(...proveedores.map(p => p.id)) + 1 : 1;
-      const nuevoProveedor = {
-        id: nuevoId,
+    setLoading(true);
+    try {
+      const proveedorData = {
         tipo: tipoProveedor,
-        nombre: tipoProveedor === 'Natural' ? nombre : nombreEmpresa,
+        tipoDocumento,
+        documento: documentoONit,
+        extra: documentoONit, 
         contacto,
         correo,
         direccion,
         estado: estadoProveedor,
-        extra: documentoONit,
-        tipoDocumento
+        ...(tipoProveedor === 'Natural' ? {
+          nombre: nombre,
+          nombreProveedor: nombre
+        } : {
+          nombreEmpresa,
+          nombreContacto,
+          nombre: nombreEmpresa
+        })
       };
 
-      if (tipoProveedor === 'Jurídico') {
-        nuevoProveedor.nombreEmpresa = nombreEmpresa;
-        nuevoProveedor.nombreContacto = nombreContacto;
+      if (modalTipo === 'agregar') {
+        const nuevoProveedor = await proveedorApiService.crearProveedor(proveedorData);
+        setProveedores([...proveedores, nuevoProveedor]);
+        showNotification('Proveedor agregado exitosamente');
+      } else if (modalTipo === 'editar') {
+        const proveedorActualizado = await proveedorApiService.actualizarProveedor(
+          proveedorSeleccionado.idProveedor,
+          proveedorData
+        );
+        const updated = proveedores.map(p =>
+          p.idProveedor === proveedorSeleccionado.idProveedor ? proveedorActualizado : p
+        );
+        setProveedores(updated);
+        showNotification('Proveedor actualizado exitosamente');
       }
 
-      setProveedores([...proveedores, nuevoProveedor]);
-      showNotification('Proveedor agregado exitosamente');
-    } else if (modalTipo === 'editar') {
-      const updated = proveedores.map(p =>
-        p.id === proveedorSeleccionado.id
-          ? {
-            ...p,
-            tipo: tipoProveedor,
-            nombre: tipoProveedor === 'Natural' ? nombre : nombreEmpresa,
-            contacto,
-            correo,
-            direccion,
-            estado: estadoProveedor,
-            extra: documentoONit,
-            tipoDocumento,
-            ...(tipoProveedor === 'Jurídico' ? {
-              nombreEmpresa,
-              nombreContacto
-            } : {
-              nombreEmpresa: undefined,
-              nombreContacto: undefined
-            })
-          }
-          : p
-      );
-      setProveedores(updated);
-      showNotification('Proveedor actualizado exitosamente');
+      cerrarModal();
+    } catch (error) {
+      console.error('Error al guardar proveedor:', error);
+      showNotification(error.message || 'Error al guardar el proveedor', 'error');
+    } finally {
+      setLoading(false);
     }
-
-    cerrarModal();
   };
 
-  const confirmarEliminar = () => {
-    setProveedores(proveedores.filter(p => p.id !== proveedorSeleccionado.id));
-    showNotification('Proveedor eliminado exitosamente');
-    cerrarModal();
+  const confirmarEliminar = async () => {
+    setLoading(true);
+    try {
+      await proveedorApiService.eliminarProveedor(proveedorSeleccionado.idProveedor);
+      setProveedores(proveedores.filter(p => p.idProveedor !== proveedorSeleccionado.idProveedor));
+      showNotification('Proveedor eliminado exitosamente');
+      cerrarModal();
+    } catch (error) {
+      console.error('Error al eliminar proveedor:', error);
+      showNotification(error.message || 'Error al eliminar el proveedor', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const proveedoresFiltrados = proveedores.filter(p => {
@@ -491,12 +496,24 @@ export default function ProveedoresTable() {
         />
 
         <div className="admin-toolbar">
-          <button className="admin-button pink" onClick={() => abrirModal('agregar')}>+ Agregar</button>
+          <button 
+            className="admin-button pink" 
+            onClick={() => abrirModal('agregar')}
+            disabled={loading}
+          >
+            + Agregar
+          </button>
           <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
         </div>
 
         <h2 className="admin-section-title">Proveedores</h2>
-        <DataTable value={proveedoresFiltrados} className="admin-table" paginator rows={5}>
+        <DataTable 
+          value={proveedoresFiltrados} 
+          className="admin-table" 
+          paginator 
+          rows={5}
+          loading={loading}
+        >
           <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
           <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }} />
           <Column field="tipo" header="Tipo Proveedor" />
@@ -506,24 +523,33 @@ export default function ProveedoresTable() {
           <Column
             header="Estado"
             body={(rowData) => (
-              <InputSwitch checked={rowData.estado} onChange={() => toggleEstado(rowData)} />
+              <InputSwitch 
+                checked={rowData.estado} 
+                onChange={() => toggleEstado(rowData)}
+                disabled={loading}
+              />
             )}
           />
           <Column
             header="Acción"
             body={(rowData) => (
               <>
-                <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>
-                  🔍
+                <button 
+                  className="admin-button gray" 
+                  title="Visualizar" 
+                  onClick={() => abrirModal('visualizar', rowData)}
+                  disabled={loading}
+                >
+                  👁
                 </button>
                 <button
                   className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
                   title="Editar"
                   onClick={() => rowData.estado && abrirModal('editar', rowData)}
-                  disabled={!rowData.estado}
+                  disabled={!rowData.estado || loading}
                   style={{
                     opacity: !rowData.estado ? 0.5 : 1,
-                    cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                    cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
                   }}
                 >
                   ✏️
@@ -532,10 +558,10 @@ export default function ProveedoresTable() {
                   className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
                   title="Eliminar"
                   onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
-                  disabled={!rowData.estado}
+                  disabled={!rowData.estado || loading}
                   style={{
                     opacity: !rowData.estado ? 0.5 : 1,
-                    cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                    cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
                   }}
                 >
                   🗑️
@@ -555,6 +581,7 @@ export default function ProveedoresTable() {
                     value={tipoProveedor}
                     onChange={(e) => handleFieldChange('tipoProveedor', e.target.value)}
                     className="modal-input"
+                    disabled={loading}
                   >
                     <option value="Natural">Natural</option>
                     <option value="Jurídico">Jurídico</option>
@@ -566,6 +593,7 @@ export default function ProveedoresTable() {
                     value={tipoDocumento}
                     onChange={(e) => handleFieldChange('tipoDocumento', e.target.value)}
                     className="modal-input"
+                    disabled={loading}
                   >
                     {tipoProveedor === 'Natural' ? (
                       <>
@@ -591,6 +619,7 @@ export default function ProveedoresTable() {
                     className={`modal-input ${errors.documentoONit ? 'error' : ''}`}
                     placeholder={tipoProveedor === 'Natural' ? 'Número de documento' : (tipoDocumento === 'RUT' ? 'Número de RUT' : 'Número de NIT')}
                     maxLength={tipoProveedor === 'Natural' ? '10' : (tipoDocumento === 'RUT' ? '10' : '12')}
+                    disabled={loading}
                   />
                   {errors.documentoONit && <span className="error-message">{errors.documentoONit}</span>}
                 </label>
@@ -604,6 +633,7 @@ export default function ProveedoresTable() {
                       onBlur={(e) => handleFieldBlur('nombre', e.target.value)}
                       className={`modal-input ${errors.nombre ? 'error' : ''}`}
                       placeholder="Ingrese el nombre completo"
+                      disabled={loading}
                     />
                     {errors.nombre && <span className="error-message">{errors.nombre}</span>}
                   </label>
@@ -617,6 +647,7 @@ export default function ProveedoresTable() {
                         onBlur={(e) => handleFieldBlur('nombreEmpresa', e.target.value)}
                         className={`modal-input ${errors.nombreEmpresa ? 'error' : ''}`}
                         placeholder="Ingrese la razón social"
+                        disabled={loading}
                       />
                       {errors.nombreEmpresa && <span className="error-message">{errors.nombreEmpresa}</span>}
                     </label>
@@ -629,6 +660,7 @@ export default function ProveedoresTable() {
                         onBlur={(e) => handleFieldBlur('nombreContacto', e.target.value)}
                         className={`modal-input ${errors.nombreContacto ? 'error' : ''}`}
                         placeholder="Ingrese el nombre del contacto"
+                        disabled={loading}
                       />
                       {errors.nombreContacto && <span className="error-message">{errors.nombreContacto}</span>}
                     </label>
@@ -644,6 +676,7 @@ export default function ProveedoresTable() {
                     className={`modal-input ${errors.contacto ? 'error' : ''}`}
                     placeholder="Número de teléfono (10 dígitos)"
                     maxLength="10"
+                    disabled={loading}
                   />
                   {errors.contacto && <span className="error-message">{errors.contacto}</span>}
                 </label>
@@ -656,6 +689,7 @@ export default function ProveedoresTable() {
                     onBlur={(e) => handleFieldBlur('correo', e.target.value)}
                     className={`modal-input ${errors.correo ? 'error' : ''}`}
                     placeholder="ejemplo@correo.com"
+                    disabled={loading}
                   />
                   {errors.correo && <span className="error-message">{errors.correo}</span>}
                 </label>
@@ -668,6 +702,7 @@ export default function ProveedoresTable() {
                     onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
                     className={`modal-input ${errors.direccion ? 'error' : ''}`}
                     placeholder="Dirección completa"
+                    disabled={loading}
                   />
                   {errors.direccion && <span className="error-message">{errors.direccion}</span>}
                 </label>
@@ -681,6 +716,7 @@ export default function ProveedoresTable() {
                       <InputSwitch
                         checked={estadoProveedor}
                         onChange={(e) => handleFieldChange('estadoProveedor', e.value)}
+                        disabled={loading}
                       />
                     </div>
                   </label>
@@ -690,8 +726,20 @@ export default function ProveedoresTable() {
             </div>
 
             <div className="modal-footer">
-              <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-              <button className="modal-btn save-btn" onClick={guardarProveedor}>Guardar</button>
+              <button 
+                className="modal-btn cancel-btn" 
+                onClick={cerrarModal}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="modal-btn save-btn" 
+                onClick={guardarProveedor}
+                disabled={loading}
+              >
+                {loading ? 'Guardando...' : 'Guardar'}
+              </button>
             </div>
           </Modal>
         )}
@@ -715,7 +763,7 @@ export default function ProveedoresTable() {
 
                 <label>{proveedorSeleccionado.tipo === 'Natural' ? 'Número de Documento*' : (proveedorSeleccionado.tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
                   <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
-                    {proveedorSeleccionado.extra}
+                    {proveedorSeleccionado.documento || proveedorSeleccionado.extra}
                   </div>
                 </label>
 
@@ -779,8 +827,20 @@ export default function ProveedoresTable() {
             <h2 className="modal-title">Confirmar Eliminación</h2>
             <p>¿Estás seguro de que quieres eliminar al proveedor **{proveedorSeleccionado.nombre}**?</p>
             <div className="modal-footer">
-              <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-              <button className="modal-btn red" onClick={confirmarEliminar}>Eliminar</button>
+              <button 
+                className="modal-btn cancel-btn" 
+                onClick={cerrarModal}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="modal-btn red" 
+                onClick={confirmarEliminar}
+                disabled={loading}
+              >
+                {loading ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </Modal>
         )}

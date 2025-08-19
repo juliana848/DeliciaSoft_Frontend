@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import '../adminStyles.css';
-import Modal from '../components/modal';
-import SearchBar from '../components/SearchBar';
-import Notification from '../components/Notification';
-import AgregarInsumosModal from '../components/AgregarInsumosModal';
-import { generarPDFCompra, configurarEmpresa } from './pdf';
+import '../../adminStyles.css';
+import Modal from '../../components/modal';
+import SearchBar from '../../components/SearchBar';
+import Notification from '../../components/Notification';
+import AgregarInsumosModal from '../../components/AgregarInsumosModal';
+import { generarPDFCompra, configurarEmpresa } from '../pdf';
 import { XCircle } from 'lucide-react';
 
 export default function ComprasTable() {

@@ -4,6 +4,8 @@ import AgregarProductosModal from '../../components/catalogos/AgregarProductosMo
 import AgregarAdicionesModal from '../../components/catalogos/AgregarAdicionesModal';
 import AgregarSalsasModal from '../../components/catalogos/AgregarSalsasModal';
 import AgregarRellenosModal from '../../components/catalogos/AgregarRellenosModal';
+import '../../adminStyles.css';
+
 
 export default function VentasCrear({
     ventaData,

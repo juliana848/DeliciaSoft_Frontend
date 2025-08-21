@@ -449,14 +449,14 @@ export default function SedesTable() {
                 title="Editar"
                 onClick={() => abrirModal("editar", rowData)}
               >
-                ✏
+                ✏️
               </button>
               <button
                 className="admin-button red"
                 title="Eliminar"
                 onClick={() => abrirModal("eliminar", rowData)}
               >
-                🗑
+                🗑️
               </button>
             </div>
           )}

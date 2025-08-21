@@ -233,6 +233,16 @@ const unidadesMedida = [
   { label: "Cucharaditas", value: 10, text: "cdta" },
 ];
 
+// Mock data for categorías
+const mockCategorias = [
+  { id: 301, nombre: "Fresas con crema" },
+  { id: 302, nombre: "Obleas" },
+  { id: 303, nombre: "Cupcakes" },
+  { id: 304, nombre: "Postres" },
+  { id: 305, nombre: "Pasteles" },
+  { id: 306, nombre: "Arroz con leche" },
+];
+
 const obtenerNombreUnidad = (idUnidad) => {
   const unidad = unidadesMedida.find((u) => u.value === idUnidad);
   return unidad ? unidad.label : "";
@@ -250,8 +260,12 @@ export default function RecetaForm({
 }) {
   const [formData, setFormData] = useState(
     initialData || {
-      NombreReceta: "", // Changed from IdProductoGeneral
+      NombreReceta: "",
+      Costo: "",
+      IdCategoria: "",
       Especificaciones: "",
+      CantidadSanPablo: "",
+      CantidadSanBenito: "",
     }
   );
   // insumosReceta ahora representa el DetalleReceta
@@ -273,7 +287,11 @@ export default function RecetaForm({
     setFormData(
       initialData || {
         NombreReceta: "",
+        Costo: "",
+        IdCategoria: "",
         Especificaciones: "",
+        CantidadSanPablo: "",
+        CantidadSanBenito: "",
       }
     );
     setInsumosReceta(
@@ -300,10 +318,18 @@ export default function RecetaForm({
   };
 
   const validarFormularioPrincipal = () => {
-    const { NombreReceta } = formData;
+    const { NombreReceta, Costo, IdCategoria } = formData;
 
     if (!NombreReceta.trim()) {
-      showNotification("El nombre de la receta es obligatorio.", "error");
+      showNotification("El nombre es obligatorio.", "error");
+      return false;
+    }
+    if (!Costo || parseFloat(Costo) <= 0) {
+      showNotification("El precio debe ser mayor a 0", "error");
+      return false;
+    }
+    if (!IdCategoria) {
+      showNotification("Debe seleccionar una categoría", "error");
       return false;
     }
     if (insumosReceta.length === 0) {
@@ -317,8 +343,13 @@ export default function RecetaForm({
     if (!validarFormularioPrincipal()) return;
 
     const dataToSave = {
+      Idreceta: formData.Idreceta,
       NombreReceta: formData.NombreReceta,
+      Costo: parseFloat(formData.Costo),
+      IdCategoria: formData.IdCategoria,
       Especificaciones: formData.Especificaciones,
+      CantidadSanPablo: formData.CantidadSanPablo,
+      CantidadSanBenito: formData.CantidadSanBenito,
       // Los insumos ahora son el DetalleReceta
       insumos: insumosReceta.map((ins) => ({
         IdInsumo: ins.id, // Maps to IdInsumo in DetalleReceta
@@ -399,14 +430,7 @@ export default function RecetaForm({
   };
 
   return (
-    <div
-      className="compra-form-container"
-      style={{
-        maxHeight: "calc(80vh - 100px)",
-        overflowY: "auto",
-        paddingRight: "10px",
-      }} // Added scrollbar and padding
-    >
+    <div className="compra-form-container">
       <NotificationComponent
         visible={notification.visible}
         mensaje={notification.mensaje}
@@ -414,11 +438,11 @@ export default function RecetaForm({
         onClose={hideNotification}
       />
 
-      <h1>{isEditing ? "Editar Receta" : "Agregar Receta"}</h1>
+      <h1>{isEditing ? "Editar Producto" : "Agregar Producto"}</h1>
 
       <div className="compra-fields-grid">
-        <div className="field-group" style={{ gridColumn: "span 2" }}>
-          <label>Nombre de la Receta:*</label>
+        <div className="field-group">
+          <label>Nombre*:</label>
           <input
             type="text"
             value={formData.NombreReceta}
@@ -428,22 +452,62 @@ export default function RecetaForm({
           />
         </div>
 
-        <div className="field-group" style={{ gridColumn: "span 2" }}>
+        <div className="field-group">
+          <label>Precio*:</label>
+          <input
+            type="number"
+            value={formData.Costo}
+            onChange={(e) => handleFormChange("Costo", e.target.value)}
+            className="modal-input"
+          />
+        </div>
+
+        <div className="field-group">
+          <label>Categoría*:</label>
+          <select
+            value={formData.IdCategoria}
+            onChange={(e) => handleFormChange("IdCategoria", e.target.value)}
+            className="modal-input"
+          >
+            <option value="">Seleccionar Categoría</option>
+            {mockCategorias.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field-group">
           <label>Especificaciones:</label>
           <textarea
             value={formData.Especificaciones}
             onChange={(e) =>
               handleFormChange("Especificaciones", e.target.value)
             }
-            className="modal-input observaciones-field"
-            maxLength={80}
-            placeholder="Descripción de la receta..."
-          ></textarea>
+            className="modal-input"
+            rows="3"
+            placeholder="Ingrese las especificaciones del producto..."
+            maxLength={500}
+            style={{
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              resize: "vertical",
+              minHeight: "80px",
+              borderColor: "lightgray",
+            }}
+          />
         </div>
       </div>
 
       <div className="section-divider"></div>
 
+      <button
+        className="btn-agregar-insumos"
+        onClick={() => setMostrarModalInsumos(true)}
+      >
+        + Agregar Insumos
+      </button>
       <div className="detalle-section">
         <h2>Insumos para la Receta*</h2>
         <table className="compra-detalle-table">
@@ -495,13 +559,6 @@ export default function RecetaForm({
             )}
           </tbody>
         </table>
-
-        <button
-          className="btn-agregar-insumos"
-          onClick={() => setMostrarModalInsumos(true)}
-        >
-          + Agregar Insumos
-        </button>
       </div>
 
       <div

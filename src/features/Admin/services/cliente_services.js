@@ -123,37 +123,26 @@ class ClienteApiService {
     }
   }
 
-  // Cambiar estado del cliente
-async cambiarEstadoCliente(id, nuevoEstado) {
+ // Cambiar estado del cliente (activar/desactivar)
+async toggleEstadoCliente(id) {
   try {
-    const clienteActual = await this.obtenerClientePorId(id);
-    
-    const datosActualizados = {
-      ...this.transformarClienteParaAPI(clienteActual),
-      estado: nuevoEstado
-    };
-
-    delete datosActualizados.idcliente;
-    delete datosActualizados.hashcontrasena;
-
-    const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
-      method: 'PUT',
+    const response = await fetch(`${API_BASE_URL}/clientes/${id}/estado`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-      },
-      body: JSON.stringify(datosActualizados)
+      }
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error al actualizar cliente');
+      throw new Error(errorData.message || 'Error al cambiar estado');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error completo:', error);
-    throw new Error(`No se pudo actualizar el estado: ${error.message}`);
+    console.error('Error al cambiar estado del cliente:', error);
+    throw error;
   }
 }
 

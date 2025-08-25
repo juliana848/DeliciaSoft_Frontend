@@ -34,22 +34,32 @@ export default function Roles() {
     try {
       setLoading(true);
       
+      console.log('Cargando datos...');
+      
       // Cargar permisos y roles en paralelo
       const [permisosData, rolesData] = await Promise.all([
         roleApiService.obtenerPermisos(),
         roleApiService.obtenerRoles()
       ]);
       
+      console.log('Permisos cargados:', permisosData);
+      console.log('Roles cargados:', rolesData);
+      
       setPermisos(permisosData);
       setRoles(rolesData);
+      
+      showNotification('Datos cargados correctamente', 'success');
       
     } catch (error) {
       console.error('Error al cargar datos:', error);
       showNotification(`Error al cargar datos: ${error.message}`, 'error');
       
       // Usar datos mock como fallback
-      setPermisos(roleApiService.obtenerPermisosMock());
+      const permisosMock = roleApiService.obtenerPermisosMock();
+      setPermisos(permisosMock);
       setRoles([]);
+      
+      console.log('Usando permisos mock:', permisosMock);
     } finally {
       setLoading(false);
     }
@@ -58,6 +68,8 @@ export default function Roles() {
   const toggleActivo = async (rol) => {
     try {
       const nuevoEstado = !rol.activo;
+      
+      console.log(`Cambiando estado del rol ${rol.id} a ${nuevoEstado}`);
       
       // Actualizar en el backend
       await roleApiService.cambiarEstadoRol(rol.id, nuevoEstado);
@@ -69,7 +81,8 @@ export default function Roles() {
       setRoles(updated);
       
       showNotification(
-        `Rol ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`
+        `Rol ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`,
+        'success'
       );
     } catch (error) {
       console.error('Error al cambiar estado:', error);
@@ -79,6 +92,11 @@ export default function Roles() {
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+      setNotification({ visible: false, mensaje: '', tipo: 'success' });
+    }, 5000);
   };
 
   const hideNotification = () => {
@@ -86,6 +104,8 @@ export default function Roles() {
   };
 
   const abrirModal = async (tipo, rol = null) => {
+    console.log(`Abriendo modal tipo: ${tipo}`, rol);
+    
     setModalTipo(tipo);
     setRolSeleccionado(rol);
     
@@ -99,7 +119,9 @@ export default function Roles() {
     } else if ((tipo === 'editar' || tipo === 'visualizar') && rol) {
       try {
         // Obtener los permisos actuales del rol desde la API
+        console.log(`Obteniendo permisos para el rol ${rol.id}`);
         const permisosRol = await roleApiService.obtenerPermisosRol(rol.id);
+        console.log('Permisos del rol obtenidos:', permisosRol);
         
         setFormData({
           nombre: rol.nombre,
@@ -109,12 +131,14 @@ export default function Roles() {
         });
       } catch (error) {
         console.error('Error al obtener permisos del rol:', error);
+        // Usar los permisos del estado local como fallback
         setFormData({
           nombre: rol.nombre,
           descripcion: rol.descripcion,
           permisos: rol.permisos || [],
           activo: rol.activo
         });
+        showNotification('Advertencia: No se pudieron cargar los permisos actuales', 'warn');
       }
     }
     
@@ -135,21 +159,29 @@ export default function Roles() {
 
   const guardarRol = async (data) => {
     try {
+      console.log('Guardando rol con datos:', data);
+      
       let rolActualizado;
 
       if (modalTipo === 'agregar') {
+        console.log('Creando nuevo rol...');
         rolActualizado = await roleApiService.crearRol(data);
+        console.log('Rol creado:', rolActualizado);
+        
         setRoles(prevRoles => [...prevRoles, rolActualizado]);
-        showNotification('Rol agregado exitosamente');
+        showNotification('Rol agregado exitosamente', 'success');
         
       } else if (modalTipo === 'editar') {
+        console.log(`Actualizando rol ${rolSeleccionado.id}...`);
         rolActualizado = await roleApiService.actualizarRol(rolSeleccionado.id, data);
+        console.log('Rol actualizado:', rolActualizado);
+        
         setRoles(prevRoles => 
           prevRoles.map(r => 
             r.id === rolSeleccionado.id ? rolActualizado : r
           )
         );
-        showNotification('Rol actualizado exitosamente');
+        showNotification('Rol actualizado exitosamente', 'success');
       }
       
       cerrarModal();
@@ -162,6 +194,8 @@ export default function Roles() {
 
   const confirmarEliminar = async () => {
     try {
+      console.log(`Intentando eliminar rol ${rolSeleccionado.id}`);
+      
       // Verificar si el rol tiene usuarios asociados
       const tieneUsuarios = await roleApiService.rolTieneUsuarios(rolSeleccionado.id);
       
@@ -173,13 +207,14 @@ export default function Roles() {
 
       // Eliminar el rol
       await roleApiService.eliminarRol(rolSeleccionado.id);
+      console.log('Rol eliminado exitosamente');
       
       // Actualizar el estado local
       const updated = roles.filter(r => r.id !== rolSeleccionado.id);
       setRoles(updated);
       
       cerrarModal();
-      showNotification('Rol eliminado exitosamente');
+      showNotification('Rol eliminado exitosamente', 'success');
       
     } catch (error) {
       console.error('Error al eliminar rol:', error);
@@ -281,6 +316,17 @@ export default function Roles() {
           headerStyle={{ paddingLeft: '5rem' }}
           style={{ width: '12rem', textAlign: 'center' }}
         />
+
+        <Column
+          header="Permisos"
+          headerStyle={{ paddingLeft: '3rem' }}
+          body={(rowData) => (
+            <span title={getPermisosNombres(rowData.permisos)}>
+              {rowData.permisos?.length || 0} permisos
+            </span>
+          )}
+          style={{ width: '6rem', textAlign: 'center' }}
+        />
         
         <Column
           header="Estado"
@@ -304,7 +350,7 @@ export default function Roles() {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                🔍
+                👁️
               </button>
               <button
                 className={`admin-button ${rowData.activo ? 'yellow' : ''}`} 

@@ -5,6 +5,7 @@ class UsuarioApiService {
   // Obtener todos los usuarios
   async obtenerUsuarios() {
     try {
+      console.log('Obteniendo usuarios desde API...');
       const response = await fetch(`${API_BASE_URL}/usuarios`, {
         method: 'GET',
         headers: {
@@ -17,16 +18,22 @@ class UsuarioApiService {
       }
       
       const data = await response.json();
-      return this.transformarUsuariosDesdeAPI(data);
+      console.log('Usuarios obtenidos de la API:', data);
+      
+      const transformedData = this.transformarUsuariosDesdeAPI(data);
+      console.log('Usuarios transformados:', transformedData);
+      
+      return transformedData;
     } catch (error) {
       console.error('Error al obtener usuarios:', error);
-      throw new Error('Error al obtener la lista de usuarios');
+      throw new Error('Error al obtener la lista de usuarios: ' + error.message);
     }
   }
 
   // Obtener usuario por ID
   async obtenerUsuarioPorId(id) {
     try {
+      console.log('Obteniendo usuario por ID:', id);
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
         method: 'GET',
         headers: {
@@ -42,6 +49,8 @@ class UsuarioApiService {
       }
       
       const data = await response.json();
+      console.log('Usuario obtenido:', data);
+      
       return this.transformarUsuarioDesdeAPI(data);
     } catch (error) {
       console.error('Error al obtener usuario:', error);
@@ -52,7 +61,9 @@ class UsuarioApiService {
   // Crear nuevo usuario
   async crearUsuario(usuarioData) {
     try {
+      console.log('Datos a enviar para crear usuario:', usuarioData);
       const usuarioAPI = this.transformarUsuarioParaAPI(usuarioData);
+      console.log('Datos transformados para API:', usuarioAPI);
       
       const response = await fetch(`${API_BASE_URL}/usuarios`, {
         method: 'POST',
@@ -62,12 +73,17 @@ class UsuarioApiService {
         body: JSON.stringify(usuarioAPI),
       });
       
+      console.log('Respuesta del servidor:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Error en el servidor' }));
+        console.error('Error del servidor:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Usuario creado exitosamente:', data);
+      
       return this.transformarUsuarioDesdeAPI(data);
     } catch (error) {
       console.error('Error al crear usuario:', error);
@@ -78,7 +94,9 @@ class UsuarioApiService {
   // Actualizar usuario
   async actualizarUsuario(id, usuarioData) {
     try {
+      console.log('Actualizando usuario:', id, usuarioData);
       const usuarioAPI = this.transformarUsuarioParaAPI(usuarioData);
+      console.log('Datos transformados para actualizar:', usuarioAPI);
       
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
         method: 'PUT',
@@ -89,11 +107,14 @@ class UsuarioApiService {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Error en el servidor' }));
+        console.error('Error al actualizar:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Usuario actualizado exitosamente:', data);
+      
       return this.transformarUsuarioDesdeAPI(data);
     } catch (error) {
       console.error('Error al actualizar usuario:', error);
@@ -104,6 +125,7 @@ class UsuarioApiService {
   // Eliminar usuario
   async eliminarUsuario(id) {
     try {
+      console.log('Eliminando usuario:', id);
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
         method: 'DELETE',
         headers: {
@@ -112,7 +134,8 @@ class UsuarioApiService {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Error en el servidor' }));
+        console.error('Error al eliminar:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
       
@@ -126,42 +149,40 @@ class UsuarioApiService {
   // Cambiar estado del usuario
   async cambiarEstadoUsuario(id, nuevoEstado) {
     try {
+      console.log('Cambiando estado del usuario:', id, 'a', nuevoEstado);
       const usuarioActual = await this.obtenerUsuarioPorId(id);
       
       const datosActualizados = {
         ...this.transformarUsuarioParaAPI(usuarioActual),
-        activo: nuevoEstado
+        estado: nuevoEstado
       };
-
-      // Eliminar campos que no se deben enviar en la actualización
-      delete datosActualizados.id;
-      delete datosActualizados.hashcontrasena;
 
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         },
         body: JSON.stringify(datosActualizados)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Error en el servidor' }));
         throw new Error(errorData.message || 'Error al actualizar usuario');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return this.transformarUsuarioDesdeAPI(data);
     } catch (error) {
       console.error('Error completo:', error);
       throw new Error(`No se pudo actualizar el estado: ${error.message}`);
     }
   }
 
-  // Obtener todos los roles
+  // Obtener todos los roles desde la API de roles
   async obtenerRoles() {
     try {
-      const response = await fetch(`${API_BASE_URL}/roles`, {
+      console.log('Obteniendo roles...');
+      const response = await fetch(`${API_BASE_URL}/rol`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -173,9 +194,11 @@ class UsuarioApiService {
       }
       
       const data = await response.json();
+      console.log('Roles obtenidos:', data);
+      
       return data.map(rol => ({
-        id: rol.id,
-        nombre: rol.nombre
+        id: rol.idrol,
+        nombre: rol.rol
       }));
     } catch (error) {
       console.error('Error al obtener roles:', error);
@@ -192,30 +215,21 @@ class UsuarioApiService {
   // Obtener todos los tipos de documento
   async obtenerTiposDocumento() {
     try {
-      const response = await fetch(`${API_BASE_URL}/tipos-documento`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.map(tipo => ({
-        id: tipo.id,
-        nombre: tipo.nombre
-      }));
+      // Si tienes una API específica para tipos de documento, úsala
+      // Por ahora devuelvo los valores estándar
+      return [
+        { id: 'CC', nombre: 'Cédula de Ciudadanía' },
+        { id: 'CE', nombre: 'Cédula de Extranjería' },
+        { id: 'PA', nombre: 'Pasaporte' },
+        { id: 'NIT', nombre: 'NIT' }
+      ];
     } catch (error) {
       console.error('Error al obtener tipos de documento:', error);
-      // Fallback a tipos mock si la API no funciona
       return [
-        { id: 1, nombre: 'Cédula de Ciudadanía' },
-        { id: 2, nombre: 'Cédula de Extranjería' },
-        { id: 3, nombre: 'Pasaporte' },
-        { id: 4, nombre: 'NIT' }
+        { id: 'CC', nombre: 'Cédula de Ciudadanía' },
+        { id: 'CE', nombre: 'Cédula de Extranjería' },
+        { id: 'PA', nombre: 'Pasaporte' },
+        { id: 'NIT', nombre: 'NIT' }
       ];
     }
   }
@@ -242,39 +256,49 @@ class UsuarioApiService {
     }
   }
 
-  // Transformar datos desde la API (snake_case a camelCase)
+  // Transformar datos desde la API (base de datos a frontend)
   transformarUsuarioDesdeAPI(usuario) {
-    return {
-      id: usuario.id,
-      nombres: usuario.nombres,
-      apellidos: usuario.apellidos,
-      correo: usuario.correo,
-      contraseña: usuario.hashcontrasena || '********',
-      rol_id: usuario.rol_id,
-      rol_nombre: usuario.rol?.nombre || 'Sin rol',
-      tipo_documento_id: usuario.tipo_documento_id,
-      tipo_documento_nombre: usuario.tipo_documento?.nombre || 'Sin tipo',
-      documento: usuario.documento,
-      activo: usuario.activo
+    console.log('Transformando usuario desde API:', usuario);
+    
+    const transformed = {
+      id: usuario.idusuario,
+      nombres: usuario.nombre || '',
+      apellidos: usuario.apellido || '',
+      correo: usuario.correo || '',
+      contraseña: '********', // Nunca mostrar la contraseña real
+      rol_id: usuario.idrol,
+      rol_nombre: usuario.rol?.rol || 'Sin rol',
+      tipo_documento_id: usuario.tipodocumento || '',
+      tipo_documento_nombre: this.obtenerNombreTipoDocumento(usuario.tipodocumento),
+      documento: usuario.documento ? usuario.documento.toString() : '',
+      activo: usuario.estado !== false
     };
+    
+    console.log('Usuario transformado:', transformed);
+    return transformed;
   }
 
   // Transformar múltiples usuarios desde la API
   transformarUsuariosDesdeAPI(usuarios) {
-    if (!Array.isArray(usuarios)) return [];
+    if (!Array.isArray(usuarios)) {
+      console.warn('Los datos de usuarios no son un array:', usuarios);
+      return [];
+    }
     return usuarios.map(usuario => this.transformarUsuarioDesdeAPI(usuario));
   }
 
-  // Transformar datos para la API (camelCase a snake_case)
+  // Transformar datos para la API (frontend a base de datos)
   transformarUsuarioParaAPI(usuario) {
+    console.log('Transformando usuario para API:', usuario);
+    
     const usuarioAPI = {
-      nombres: usuario.nombres,
-      apellidos: usuario.apellidos,
+      tipodocumento: usuario.tipo_documento_id || usuario.tipodocumento,
+      documento: parseInt(usuario.documento),
+      nombre: usuario.nombres || usuario.nombre,
+      apellido: usuario.apellidos || usuario.apellido,
       correo: usuario.correo,
-      rol_id: parseInt(usuario.rol_id),
-      tipo_documento_id: parseInt(usuario.tipo_documento_id),
-      documento: usuario.documento,
-      activo: usuario.activo !== undefined ? usuario.activo : true
+      idrol: parseInt(usuario.rol_id || usuario.idrol),
+      estado: usuario.activo !== undefined ? usuario.activo : true
     };
 
     // Solo incluir contraseña si se proporciona y no es el valor por defecto
@@ -282,7 +306,19 @@ class UsuarioApiService {
       usuarioAPI.hashcontrasena = usuario.contraseña;
     }
 
+    console.log('Datos transformados para API:', usuarioAPI);
     return usuarioAPI;
+  }
+
+  // Obtener nombre del tipo de documento
+  obtenerNombreTipoDocumento(tipo) {
+    const tipos = {
+      'CC': 'Cédula de Ciudadanía',
+      'CE': 'Cédula de Extranjería', 
+      'PA': 'Pasaporte',
+      'NIT': 'NIT'
+    };
+    return tipos[tipo] || 'Tipo no definido';
   }
 
   // Manejar errores de red

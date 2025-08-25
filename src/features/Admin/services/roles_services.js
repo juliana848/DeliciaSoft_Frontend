@@ -1,7 +1,11 @@
-// Servicio API para gestión de roles y permisos - CORREGIDO
+// Servicio API para gestión de roles y permisos - FINAL CORREGIDO Y MEJORADO
 const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
 
 class RoleApiService {
+  // ================================
+  // 📌 ROLES
+  // ================================
+
   // Obtener todos los roles con sus permisos
   async obtenerRoles() {
     try {
@@ -37,33 +41,54 @@ class RoleApiService {
     }
   }
 
-  // Crear nuevo rol con permisos
+  // Crear nuevo rol con validaciones
   async crearRol(rolData) {
     try {
       const rolAPI = this.transformarRolParaAPI(rolData);
+
+      // ✅ Validar que los permisos sean válidos
+      if (!rolData.permisos || !Array.isArray(rolData.permisos)) {
+        throw new Error('Los permisos deben ser un array');
+      }
+
+      const permisosValidos = rolData.permisos.filter(p =>
+        typeof p === 'number' && p > 0 && Number.isInteger(p)
+      );
+
+      if (permisosValidos.length !== rolData.permisos.length) {
+        throw new Error('Algunos permisos no tienen un formato válido');
+      }
+
+      rolAPI.permisos = permisosValidos;
+
+      console.log('Enviando datos al backend:', rolAPI);
+
       const response = await fetch(`${API_BASE_URL}/rol`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${this.getToken()}`
         },
         body: JSON.stringify(rolAPI),
       });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      const rolCreado = this.transformarRolDesdeAPI(data);
 
-      // Asignar permisos después de crear el rol
-      if (rolData.permisos?.length > 0) {
-        await this.asignarPermisosRol(rolCreado.id, rolData.permisos);
-        rolCreado.permisos = rolData.permisos;
-      }
-      return rolCreado;
+      const data = await response.json();
+      console.log('Respuesta del backend:', data);
+
+      return {
+        id: data.idrol || data.rol?.idrol,
+        nombre: rolData.nombre,
+        descripcion: rolData.descripcion,
+        permisos: permisosValidos,
+        activo: rolData.activo !== undefined ? rolData.activo : true
+      };
     } catch (error) {
-      console.error('Error al crear rol:', error);
+      console.error('Error detallado al crear rol:', error);
       throw error;
     }
   }
@@ -72,25 +97,48 @@ class RoleApiService {
   async actualizarRol(id, rolData) {
     try {
       const rolAPI = this.transformarRolParaAPI(rolData);
+
+      if (rolData.permisos && Array.isArray(rolData.permisos)) {
+        const permisosValidos = rolData.permisos.filter(p =>
+          typeof p === 'number' && p > 0
+        );
+        if (permisosValidos.length > 0) {
+          rolAPI.permisos = permisosValidos;
+        }
+      }
+
+      console.log('Actualizando rol con datos:', rolAPI);
+
       const response = await fetch(`${API_BASE_URL}/rol/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${this.getToken()}`
         },
         body: JSON.stringify(rolAPI),
       });
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: `HTTP ${response.status}: ${errorText}` };
+        }
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      await response.json(); // Consumimos respuesta aunque no la usemos
 
-      // Actualizar permisos si vienen en la data
-      if (rolData.permisos) {
-        await this.actualizarPermisosRol(id, rolData.permisos);
-      }
-      return { ...rolData, id };
+      const data = await response.json();
+      console.log('Rol actualizado:', data);
+
+      return {
+        id,
+        nombre: rolData.nombre,
+        descripcion: rolData.descripcion,
+        permisos: rolData.permisos || [],
+        activo: rolData.activo
+      };
     } catch (error) {
       console.error('Error al actualizar rol:', error);
       throw error;
@@ -104,7 +152,7 @@ class RoleApiService {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${this.getToken()}`
         },
       });
       if (!response.ok) {
@@ -118,50 +166,6 @@ class RoleApiService {
     }
   }
 
-  // Asignar permisos a rol
-  async asignarPermisosRol(idRol, idsPermisos) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/rol/${idRol}/permisos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({ permisos: idsPermisos }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al asignar permisos');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error al asignar permisos:', error);
-      throw error;
-    }
-  }
-
-  // Actualizar permisos
-  async actualizarPermisosRol(idRol, idsPermisos) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/rol/${idRol}/permisos`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({ permisos: idsPermisos }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al actualizar permisos');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error al actualizar permisos:', error);
-      throw error;
-    }
-  }
-
   // Cambiar estado
   async cambiarEstadoRol(id, nuevoEstado) {
     try {
@@ -169,15 +173,18 @@ class RoleApiService {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${this.getToken()}`
         },
         body: JSON.stringify({ estado: nuevoEstado })
       });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error al actualizar estado');
       }
-      return await response.json();
+
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       throw new Error(`No se pudo actualizar el estado: ${error.message}`);
@@ -200,10 +207,14 @@ class RoleApiService {
     }
   }
 
-  // Obtener permisos
+  // ================================
+  // 📌 PERMISOS
+  // ================================
+
+  // Obtener permisos (todos)
   async obtenerPermisos() {
     try {
-      const response = await fetch(`${API_BASE_URL}/permisos`, {
+      const response = await fetch(`https://deliciasoft-backend.onrender.com/api/permisos`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -216,6 +227,17 @@ class RoleApiService {
     }
   }
 
+  // Obtener permisos activos
+  async obtenerPermisosActivos() {
+    try {
+      const todosLosPermisos = await this.obtenerPermisos();
+      return todosLosPermisos.filter(p => p.estado !== false);
+    } catch (error) {
+      console.error('Error al obtener permisos activos:', error);
+      return this.obtenerPermisosMock();
+    }
+  }
+
   // Obtener permisos por rol
   async obtenerPermisosRol(idRol) {
     try {
@@ -223,15 +245,31 @@ class RoleApiService {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      if (!response.ok) {
+        console.warn(`No se pudieron obtener permisos del rol ${idRol}`);
+        return [];
+      }
+
       const data = await response.json();
-      return data.map(permiso => permiso.idpermiso || permiso.id);
-    } catch {
+      return data.map(permiso => permiso.idpermiso);
+    } catch (error) {
+      console.error('Error al obtener permisos del rol:', error);
       return [];
     }
   }
 
-  // Permisos mock
+  // ================================
+  // 📌 UTILIDADES
+  // ================================
+
+  getToken() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('token') || '';
+    }
+    return '';
+  }
+
   obtenerPermisosMock() {
     return [
       { id: 1, nombre: 'Dashboard', modulo: 'Dashboard' },
@@ -250,7 +288,6 @@ class RoleApiService {
     ];
   }
 
-  // Transformaciones
   transformarRolDesdeAPI(rol) {
     return {
       id: rol.idrol || rol.id,
@@ -275,12 +312,14 @@ class RoleApiService {
   }
 
   transformarPermisosDesdeAPI(permisos) {
-    return Array.isArray(permisos) ? permisos.map(p => ({
+    if (!Array.isArray(permisos)) return [];
+    return permisos.map(p => ({
       id: p.idpermiso || p.id,
       nombre: p.descripcion || p.nombre,
-      modulo: p.modulo,
-      descripcion: p.descripcion || ''
-    })) : [];
+      modulo: p.modulo || 'Sin módulo',
+      descripcion: p.descripcion || '',
+      estado: p.estado !== false
+    }));
   }
 
   validarDatosRol(rolData) {
@@ -292,7 +331,25 @@ class RoleApiService {
     if (rolData.descripcion?.trim().length < 5) errores.push('La descripción debe tener al menos 5 caracteres');
     if (rolData.descripcion?.trim().length > 30) errores.push('La descripción no puede tener más de 30 caracteres');
     if (!rolData.permisos?.length) errores.push('Debe seleccionar al menos un permiso');
-    return { valido: errores.length === 0, errores };
+
+    const permisosInvalidos = rolData.permisos?.filter(p =>
+      typeof p !== 'number' || p <= 0 || !Number.isInteger(p)
+    ) || [];
+
+    if (permisosInvalidos.length > 0) {
+      errores.push(`Permisos inválidos encontrados: ${permisosInvalidos.join(', ')}`);
+    }
+
+    return {
+      valido: errores.length === 0,
+      errores,
+      detalles: {
+        nombre: rolData.nombre?.trim() || '',
+        descripcion: rolData.descripcion?.trim() || '',
+        permisos: rolData.permisos || [],
+        cantidadPermisos: rolData.permisos?.length || 0
+      }
+    };
   }
 }
 

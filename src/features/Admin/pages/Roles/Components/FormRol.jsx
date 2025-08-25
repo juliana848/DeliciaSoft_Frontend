@@ -13,13 +13,15 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   const isReadOnly = formType === 'visualizar';
 
   useEffect(() => {
+    console.log('FormRol - Datos iniciales recibidos:', initialData);
     setFormData(initialData);
+    
     if (formType === 'editar' && initialData) {
       setValidaciones({
         nombre: validarNombre(initialData.nombre),
         descripcion: validarDescripcion(initialData.descripcion)
       });
-    } else {
+    } else if (formType === 'agregar') {
       setValidaciones({
         nombre: { valido: false, mensaje: '' },
         descripcion: { valido: false, mensaje: '' }
@@ -27,6 +29,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     }
   }, [initialData, formType]);
 
+  // Agrupar permisos por módulo
   const permisosPorModulo = permisos.reduce((acc, permiso) => {
     if (!acc[permiso.modulo]) {
       acc[permiso.modulo] = [];
@@ -52,7 +55,6 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
       return { valido: false, mensaje: 'El nombre debe tener al menos 3 caracteres' };
     }
 
-    // LÍMITE AJUSTADO A LA BD (VARCHAR(20))
     if (nombreTrimmed.length > 20) {
       return { valido: false, mensaje: 'El nombre no puede tener más de 20 caracteres' };
     }
@@ -67,7 +69,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
       return { valido: false, mensaje: 'Ya existe un rol con este nombre' };
     }
 
-    return { valido: true, mensaje: '' };
+    return { valido: true, mensaje: '✓ Nombre válido' };
   };
 
   const validarDescripcion = (descripcion) => {
@@ -81,12 +83,11 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
       return { valido: false, mensaje: 'La descripción debe tener al menos 5 caracteres' };
     }
 
-    // LÍMITE AJUSTADO A LA BD (VARCHAR(30))
     if (descripcionTrimmed.length > 30) {
       return { valido: false, mensaje: 'La descripción no puede tener más de 30 caracteres' };
     }
 
-    return { valido: true, mensaje: '' };
+    return { valido: true, mensaje: '✓ Descripción válida' };
   };
 
   const manejarCambioNombre = (valor) => {
@@ -102,6 +103,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   const handleInputChange = (field, value) => {
     if (isReadOnly) return;
     
+    console.log(`Cambiando campo ${field} a:`, value);
+    
     if (field === 'nombre') {
       manejarCambioNombre(value);
     } else if (field === 'descripcion') {
@@ -115,6 +118,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
   const handlePermisoChange = (permisoId, checked) => {
     if (isReadOnly) return;
+    
+    console.log(`Cambiando permiso ${permisoId} a ${checked}`);
     
     setFormData(prev => ({
       ...prev,
@@ -156,17 +161,47 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     
     if (isReadOnly) return;
     
+    console.log('=== DEBUGGING FORMULARIO ===');
+    console.log('Datos del formulario antes de validar:', {
+      formData,
+      formType,
+      permisos: formData.permisos,
+      tipoPermisos: typeof formData.permisos,
+      permisosLength: formData.permisos?.length
+    });
+    
     if (!validarFormulario()) return;
+
+    // Validar que los permisos sean números válidos
+    if (formData.permisos && Array.isArray(formData.permisos)) {
+      const permisosInvalidos = formData.permisos.filter(p => 
+        typeof p !== 'number' || p <= 0 || !Number.isInteger(p)
+      );
+      
+      if (permisosInvalidos.length > 0) {
+        console.error('Permisos inválidos encontrados:', permisosInvalidos);
+        showNotification('Algunos permisos seleccionados no son válidos', 'error');
+        return;
+      }
+    }
+
+    // Verificar que los permisos existen en la lista disponible
+    if (formData.permisos && Array.isArray(formData.permisos)) {
+      const permisosDisponibles = permisos.map(p => p.id);
+      const permisosNoExisten = formData.permisos.filter(p => !permisosDisponibles.includes(p));
+      
+      if (permisosNoExisten.length > 0) {
+        console.error('Permisos que no existen:', permisosNoExisten);
+        console.error('Permisos disponibles:', permisosDisponibles);
+        showNotification('Algunos permisos seleccionados no están disponibles', 'error');
+        return;
+      }
+    }
+
+    console.log('Datos finales a enviar:', formData);
 
     try {
       setGuardando(true);
-      
-      // Validar datos antes de enviar
-      const validacion = roleApiService.validarDatosRol(formData);
-      if (!validacion.valido) {
-        showNotification(validacion.errores[0], 'error');
-        return;
-      }
 
       await onSave(formData);
       
@@ -178,9 +213,10 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     }
   };
 
-  const formularioValido = validaciones.nombre.valido && 
-                          validaciones.descripcion.valido && 
-                          formData.permisos.length > 0;
+  // CORREGIDO: Validación más flexible que permite guardar con solo validaciones básicas
+  const formularioValido = formType === 'agregar' 
+    ? validaciones.nombre.valido && validaciones.descripcion.valido && formData.permisos.length > 0
+    : validaciones.nombre.valido && validaciones.descripcion.valido; // Para editar, no requiere permisos obligatorios
 
   const getTitleByType = () => {
     switch (formType) {
@@ -231,7 +267,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   cursor: isReadOnly ? 'default' : 'text'
                 }}
                 placeholder={isReadOnly ? '' : "Ej: Administrador"}
-                maxLength={20} // LÍMITE AJUSTADO
+                maxLength={20}
               />
               {!isReadOnly && validaciones.nombre.mensaje && (
                 <small style={{
@@ -275,7 +311,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   cursor: isReadOnly ? 'default' : 'text'
                 }}
                 placeholder={isReadOnly ? '' : "Describe las responsabilidades..."}
-                maxLength={30} // LÍMITE AJUSTADO
+                maxLength={30}
               />
               {!isReadOnly && validaciones.descripcion.mensaje && (
                 <small style={{
@@ -320,12 +356,12 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
           <div>
             <h3 style={{ color: '#c2185b', marginBottom: '1rem' }}>
               Permisos del Sistema
-              {!isReadOnly && <span style={{ color: 'red' }}> *</span>}
+              {!isReadOnly && formType === 'agregar' && <span style={{ color: 'red' }}> *</span>}
             </h3>
 
             <div style={{
               padding: '1rem',
-              border: `2px solid ${formData.permisos.length === 0 && !isReadOnly ? '#f44336' : '#f48fb1'}`,
+              border: `2px solid ${formData.permisos.length === 0 && !isReadOnly && formType === 'agregar' ? '#f44336' : '#f48fb1'}`,
               borderRadius: '10px',
               backgroundColor: isReadOnly ? '#f8f8f8' : '#fafafa',
               maxHeight: '350px',
@@ -401,14 +437,47 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             {!isReadOnly && (
               <div style={{ marginTop: '0.5rem' }}>
                 <small style={{ 
-                  color: formData.permisos.length === 0 ? '#f44336' : '#666',
+                  color: formData.permisos.length === 0 && formType === 'agregar' ? '#f44336' : '#666',
                   fontSize: '0.8rem',
-                  fontWeight: formData.permisos.length === 0 ? 'bold' : 'normal'
+                  fontWeight: formData.permisos.length === 0 && formType === 'agregar' ? 'bold' : 'normal'
                 }}>
-                  {formData.permisos.length === 0 
+                  {formData.permisos.length === 0 && formType === 'agregar'
                     ? 'Debe seleccionar al menos un permiso' 
                     : `${formData.permisos.length} permiso(s) seleccionado(s)`}
                 </small>
+              </div>
+            )}
+
+            {/* Mostrar permisos seleccionados en modo visualizar */}
+            {isReadOnly && formData.permisos.length > 0 && (
+              <div style={{ marginTop: '1rem' }}>
+                <h4 style={{ color: '#c2185b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                  Permisos Asignados:
+                </h4>
+                <div style={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: '0.5rem' 
+                }}>
+                  {permisos
+                    .filter(p => formData.permisos.includes(p.id))
+                    .map(permiso => (
+                      <span
+                        key={permiso.id}
+                        style={{
+                          backgroundColor: '#e8f5e8',
+                          color: '#2e7d2e',
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '15px',
+                          fontSize: '0.8rem',
+                          border: '1px solid #c8e6c9'
+                        }}
+                      >
+                        {permiso.nombre}
+                      </span>
+                    ))
+                  }
+                </div>
               </div>
             )}
           </div>

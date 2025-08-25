@@ -1,4 +1,3 @@
-// components/UsuariosForm.jsx
 import React, { useState, useEffect } from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
 
@@ -82,19 +81,28 @@ const validationUtils = {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
   },
 
+  // FUNCIONES FALTANTES AGREGADAS
+  noCommonPatterns: (password) => {
+    const commonPatterns = [
+      '123456', '654321', 'password', 'contraseña', 'qwerty', 
+      'abc123', '123abc', 'admin', 'usuario', 'user'
+    ];
+    const lowerPassword = password.toLowerCase();
+    return !commonPatterns.some(pattern => lowerPassword.includes(pattern));
+  },
 
   // Validaciones de documento
   isValidDocumentFormat: (documento, tipoDocumento) => {
     const documentoTrimmed = documento.trim();
     
     switch(tipoDocumento) {
-      case 1: // Cédula de Ciudadanía
+      case 'CC': // Cédula de Ciudadanía
         return /^\d{7,10}$/.test(documentoTrimmed);
-      case 2: // Cédula de Extranjería  
+      case 'CE': // Cédula de Extranjería  
         return /^\d{6,10}$/.test(documentoTrimmed);
-      case 3: // Pasaporte
+      case 'PA': // Pasaporte
         return /^[A-Z0-9]{6,12}$/i.test(documentoTrimmed);
-      case 4: // NIT
+      case 'NIT': // NIT
         return /^\d{9,11}$/.test(documentoTrimmed);
       default:
         return documentoTrimmed.length >= 6 && documentoTrimmed.length <= 12;
@@ -104,22 +112,26 @@ const validationUtils = {
   isValidDocumentLength: (documento, tipoDocumento) => {
     const length = documento.trim().length;
     switch(tipoDocumento) {
-      case 1: // Cédula de Ciudadanía
+      case 'CC': // Cédula de Ciudadanía
         return length >= 7 && length <= 10;
-      case 2: // Cédula de Extranjería
+      case 'CE': // Cédula de Extranjería
         return length >= 6 && length <= 10;
-      case 3: // Pasaporte
+      case 'PA': // Pasaporte
         return length >= 6 && length <= 12;
-      case 4: // NIT
+      case 'NIT': // NIT
         return length >= 9 && length <= 11;
       default:
         return length >= 6 && length <= 12;
     }
   },
   
-  // New validation specifically for document to only allow numbers
+  // Validación para documento que solo permita números (excepto pasaporte)
   isNumeric: (value) => {
     return /^\d*$/.test(value);
+  },
+
+  isAlphanumeric: (value) => {
+    return /^[A-Z0-9]*$/i.test(value);
   },
 
   // Validaciones de duplicados
@@ -207,44 +219,43 @@ const validarFormularioCompleto = (formData, modalTipo, usuarios, usuarioSelecci
   }
 
   // ========== VALIDACIONES DE CONTRASEÑA ==========
-  if (!validationUtils.isRequired(contraseña)) {
-    errors.push('La contraseña es obligatoria');
-  } else {
-    if (!validationUtils.hasMinLength(contraseña, 8)) {
-      errors.push('La contraseña debe tener al menos 8 caracteres');
+  if (modalTipo === 'agregar' || (modalTipo === 'editar' && contraseña !== '********')) {
+    if (!validationUtils.isRequired(contraseña)) {
+      errors.push('La contraseña es obligatoria');
+    } else {
+      if (!validationUtils.hasMinLength(contraseña, 8)) {
+        errors.push('La contraseña debe tener al menos 8 caracteres');
+      }
+      if (!validationUtils.hasMaxLength(contraseña, 50)) {
+        errors.push('La contraseña no puede tener más de 50 caracteres');
+      }
+      if (!validationUtils.hasLetter(contraseña)) {
+        errors.push('La contraseña debe contener al menos una letra');
+      }
+      if (!validationUtils.hasNumber(contraseña)) {
+        errors.push('La contraseña debe contener al menos un número');
+      }
+      if (!validationUtils.hasUpperCase(contraseña)) {
+        errors.push('La contraseña debe contener al menos una letra mayúscula');
+      }
+      if (!validationUtils.hasLowerCase(contraseña)) {
+        errors.push('La contraseña debe contener al menos una letra minúscula');
+      }
+      if (!validationUtils.hasSpecialChar(contraseña)) {
+        errors.push('La contraseña debe contener al menos un carácter especial (!@#$%^&*()_+-=[]{}|;:,.<>?)');
+      }
+      if (!validationUtils.noCommonPatterns(contraseña)) {
+        errors.push('La contraseña no puede contener patrones comunes (123456, password, qwerty, etc.)');
+      }
     }
-    if (!validationUtils.hasMaxLength(contraseña, 50)) {
-      errors.push('La contraseña no puede tener más de 50 caracteres');
-    }
-    if (!validationUtils.hasLetter(contraseña)) {
-      errors.push('La contraseña debe contener al menos una letra');
-    }
-    if (!validationUtils.hasNumber(contraseña)) {
-      errors.push('La contraseña debe contener al menos un número');
-    }
-    if (!validationUtils.hasUpperCase(contraseña)) {
-      errors.push('La contraseña debe contener al menos una letra mayúscula');
-    }
-    if (!validationUtils.hasLowerCase(contraseña)) {
-      errors.push('La contraseña debe contener al menos una letra minúscula');
-    }
-    if (!validationUtils.hasSpecialChar(contraseña)) {
-      errors.push('La contraseña debe contener al menos un carácter especial (!@#$%^&*()_+-=[]{}|;:,.<>?)');
-    }
-    if (!validationUtils.noCommonPatterns(contraseña)) {
-      errors.push('La contraseña no puede contener patrones comunes (123456, password, qwerty, etc.)');
-    }
-    if (!validationUtils.noPersonalInfo(contraseña, nombres, apellidos, documento)) {
-      errors.push('La contraseña no debe contener información personal (nombres, apellidos, documento)');
-    }
-  }
 
-  // ========== VALIDACIÓN DE CONFIRMACIÓN DE CONTRASEÑA ==========
-  if (modalTipo === 'agregar') {
-    if (!validationUtils.isRequired(confirmarContraseña)) {
-      errors.push('Debe confirmar la contraseña');
-    } else if (contraseña !== confirmarContraseña) {
-      errors.push('La confirmación de contraseña no coincide');
+    // ========== VALIDACIÓN DE CONFIRMACIÓN DE CONTRASEÑA ==========
+    if (modalTipo === 'agregar') {
+      if (!validationUtils.isRequired(confirmarContraseña)) {
+        errors.push('Debe confirmar la contraseña');
+      } else if (contraseña !== confirmarContraseña) {
+        errors.push('La confirmación de contraseña no coincide');
+      }
     }
   }
 
@@ -257,18 +268,24 @@ const validarFormularioCompleto = (formData, modalTipo, usuarios, usuarioSelecci
   if (!validationUtils.isRequired(documento)) {
     errors.push('El número de documento es obligatorio');
   } else {
-    // Add real-time numeric validation here for the full form validation
-    if (!validationUtils.isNumeric(documento)) {
+    // Validación según el tipo de documento
+    if (tipo_documento_id === 'PA') {
+      // Para pasaporte permitir alfanumérico
+      if (!validationUtils.isAlphanumeric(documento)) {
+        errors.push('El pasaporte solo puede contener letras y números');
+      }
+    } else {
+      // Para otros tipos solo números
+      if (!validationUtils.isNumeric(documento)) {
         errors.push('El documento solo puede contener números');
+      }
     }
     
-    const tipoDocumentoNum = parseInt(tipo_documento_id);
-    
-    if (!validationUtils.isValidDocumentLength(documento, tipoDocumentoNum)) {
+    if (!validationUtils.isValidDocumentLength(documento, tipo_documento_id)) {
       errors.push('La longitud del documento no es válida para el tipo seleccionado');
     }
-    if (!validationUtils.isValidDocumentFormat(documento, tipoDocumentoNum)) {
-      errors.push('el formato del documento no es válido para el tipo seleccionado');
+    if (!validationUtils.isValidDocumentFormat(documento, tipo_documento_id)) {
+      errors.push('El formato del documento no es válido para el tipo seleccionado');
     }
     if (!validationUtils.isUniqueDocument(documento, usuarios, usuarioSeleccionado?.id)) {
       errors.push('Ya existe un usuario registrado con este número de documento');
@@ -339,19 +356,24 @@ const validarCampoEnTiempoReal = (campo, valor, formData, usuarios, usuarioSelec
       break;
 
     case 'documento':
-      // Real-time validation for numbers only
-      if (valor && !validationUtils.isNumeric(valor)) {
-        errors.push('Solo se permiten números');
-      } else {
-          if (valor && formData.tipo_documento_id) {
-            const tipoDoc = parseInt(formData.tipo_documento_id);
-            if (!validationUtils.isValidDocumentFormat(valor, tipoDoc)) {
-              errors.push('Formato inválido para este tipo de documento');
-            }
-            if (!validationUtils.isUniqueDocument(valor, usuarios, usuarioSeleccionado?.id)) {
-              errors.push('Este documento ya está registrado');
-            }
+      // Validación según tipo de documento
+      if (valor && formData.tipo_documento_id) {
+        if (formData.tipo_documento_id === 'PA') {
+          if (!validationUtils.isAlphanumeric(valor)) {
+            errors.push('Solo letras y números para pasaporte');
           }
+        } else {
+          if (!validationUtils.isNumeric(valor)) {
+            errors.push('Solo se permiten números');
+          }
+        }
+        
+        if (!validationUtils.isValidDocumentFormat(valor, formData.tipo_documento_id)) {
+          errors.push('Formato inválido para este tipo de documento');
+        }
+        if (!validationUtils.isUniqueDocument(valor, usuarios, usuarioSeleccionado?.id)) {
+          errors.push('Este documento ya está registrado');
+        }
       }
       break;
   }
@@ -407,15 +429,15 @@ export default function UsuariosForm({
   useEffect(() => {
     if ((modalTipo === 'editar' || modalTipo === 'visualizar') && usuarioSeleccionado) {
       setFormData({
-        nombres: usuarioSeleccionado.nombres,
-        apellidos: usuarioSeleccionado.apellidos,
-        correo: usuarioSeleccionado.correo,
-        contraseña: usuarioSeleccionado.contraseña,
+        nombres: usuarioSeleccionado.nombres || '',
+        apellidos: usuarioSeleccionado.apellidos || '',
+        correo: usuarioSeleccionado.correo || '',
+        contraseña: usuarioSeleccionado.contraseña || '********',
         confirmarContraseña: '',
-        rol_id: usuarioSeleccionado.rol_id,
-        tipo_documento_id: usuarioSeleccionado.tipo_documento_id,
-        documento: usuarioSeleccionado.documento,
-        activo: usuarioSeleccionado.activo
+        rol_id: usuarioSeleccionado.rol_id || '',
+        tipo_documento_id: usuarioSeleccionado.tipo_documento_id || '',
+        documento: usuarioSeleccionado.documento || '',
+        activo: usuarioSeleccionado.activo !== false
       });
     } else {
       // Reset form for 'agregar'
@@ -438,8 +460,16 @@ export default function UsuariosForm({
     if (isReadOnly) return;
 
     let cleanedValue = value;
+    
+    // Limpiar valores según el campo
     if (field === 'documento') {
-      cleanedValue = value.replace(/[^0-9]/g, '');
+      if (formData.tipo_documento_id === 'PA') {
+        // Para pasaporte permitir alfanumérico y convertir a mayúsculas
+        cleanedValue = value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      } else {
+        // Para otros tipos solo números
+        cleanedValue = value.replace(/[^0-9]/g, '');
+      }
     }
     
     setFormData(prev => ({ ...prev, [field]: cleanedValue }));
@@ -454,7 +484,7 @@ export default function UsuariosForm({
     // Limpiar errores relacionados cuando se corrigen
     if (field === 'contraseña' && fieldErrors.confirmarContraseña) {
       setTimeout(() => {
-        if (formData.confirmarContraseña && value === formData.confirmarContraseña) {
+        if (formData.confirmarContraseña && cleanedValue === formData.confirmarContraseña) {
           setFieldErrors(prev => ({
             ...prev,
             confirmarContraseña: []
@@ -463,7 +493,7 @@ export default function UsuariosForm({
       }, 100);
     }
     
-    if (field === 'confirmarContraseña' && value === formData.contraseña) {
+    if (field === 'confirmarContraseña' && cleanedValue === formData.contraseña) {
       setFieldErrors(prev => ({
         ...prev,
         confirmarContraseña: []
@@ -490,8 +520,8 @@ export default function UsuariosForm({
   };
 
   return (
- <div className="usuarios-modal-body usuarios-modal-body-compact">
-  <div className="usuarios-modal-grid-two-columns">
+    <div className="usuarios-modal-body usuarios-modal-body-compact">
+      <div className="usuarios-modal-grid-two-columns">
         {/* COLUMNA 1 */}
         <div className="usuarios-modal-column">
           {/* Tipo de Documento */}
@@ -501,7 +531,14 @@ export default function UsuariosForm({
             </label>
             <select
               value={formData.tipo_documento_id}
-              onChange={(e) => handleInputChange('tipo_documento_id', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('tipo_documento_id', e.target.value);
+                // Limpiar documento cuando cambia el tipo
+                if (formData.documento) {
+                  setFormData(prev => ({ ...prev, documento: '' }));
+                  setFieldErrors(prev => ({ ...prev, documento: [] }));
+                }
+              }}
               className={`modal-input ${fieldErrors.tipo_documento_id?.length ? 'error' : ''}`}
               disabled={isReadOnly}
             >
@@ -564,7 +601,7 @@ export default function UsuariosForm({
             <label className="modal-label">
               Contraseña<span className="required">*</span>:
             </label>
-           <div className="password-container" style={{ position: 'relative' }}>
+            <div className="password-container" style={{ position: 'relative' }}>
               <input
                 type={showPassword ? "text" : "password"}
                 value={formData.contraseña}
@@ -575,23 +612,23 @@ export default function UsuariosForm({
                 readOnly={isReadOnly}
               />
               {!isReadOnly && (
-               <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      zIndex: 1
-                    }}
-                  >
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    zIndex: 1
+                  }}
+                >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               )}
@@ -618,10 +655,9 @@ export default function UsuariosForm({
               value={formData.documento}
               onChange={(e) => handleInputChange('documento', e.target.value)}
               className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
-              placeholder="Número"
+              placeholder={formData.tipo_documento_id === 'PA' ? 'Alfanumérico' : 'Número'}
               maxLength="12"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode={formData.tipo_documento_id === 'PA' ? 'text' : 'numeric'}
               readOnly={isReadOnly}
             />
             {fieldErrors.documento?.length > 0 && (
@@ -681,7 +717,7 @@ export default function UsuariosForm({
               <label className="modal-label">
                 Confirmar Contraseña<span className="required">*</span>:
               </label>
-             <div className="password-container" style={{ position: 'relative' }}>
+              <div className="password-container" style={{ position: 'relative' }}>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmarContraseña}
@@ -690,23 +726,23 @@ export default function UsuariosForm({
                   placeholder="Confirme la contraseña"
                   maxLength="50"
                 />
-              <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      zIndex: 1
-                    }}
-                  >
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    zIndex: 1
+                  }}
+                >
                   {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
@@ -724,7 +760,7 @@ export default function UsuariosForm({
             </div>
           )}
 
-           {/* Estado */}
+          {/* Estado */}
           {modalTipo !== 'agregar' && (
             <div className="modal-field">
               <label className="modal-label">Estado:</label>
@@ -738,10 +774,10 @@ export default function UsuariosForm({
                   {formData.activo ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
-           </div>
+            </div>
           )}
-         </div>
-       </div>
+        </div>
+      </div>
 
       <div className="modal-footer">
         <button className="modal-btn cancel-btn" onClick={onCancel}>

@@ -39,21 +39,21 @@ export default function Clientes() {
     }
   };
 
-  const toggleEstado = async (cliente) => {
-    try {
-      const nuevoEstado = !cliente.estado;
-      const clienteActualizado = await clienteApiService.cambiarEstadoCliente(cliente.idCliente, nuevoEstado);
-      
-      const updated = clientes.map(c =>
-        c.idCliente === cliente.idCliente ? clienteActualizado : c
-      );
-      setClientes(updated);
-      showNotification(`Cliente ${cliente.estado ? 'desactivado' : 'activado'} exitosamente`);
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      showNotification(`Error al cambiar estado: ${error.message}`, 'error');
-    }
-  };
+const toggleEstado = async (cliente) => {
+  try {
+    const clienteActualizado = await clienteApiService.toggleEstadoCliente(cliente.idCliente);
+
+    const updated = clientes.map(c =>
+      c.idCliente === cliente.idCliente ? { ...c, estado: clienteActualizado.estado } : c
+    );
+    setClientes(updated);
+
+    showNotification(`Cliente ${clienteActualizado.estado ? 'activado' : 'desactivado'} exitosamente`);
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    showNotification(`Error al cambiar estado: ${error.message}`, 'error');
+  }
+};
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });

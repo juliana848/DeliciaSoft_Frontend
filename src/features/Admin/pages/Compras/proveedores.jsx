@@ -51,23 +51,28 @@ export default function ProveedoresTable() {
     }
   };
 
-  const toggleEstado = async (proveedor) => {
-    setLoading(true);
-    try {
-      await proveedorApiService.cambiarEstadoProveedor(proveedor.idProveedor, !proveedor.estado);
-      
-      const updated = proveedores.map(p =>
-        p.idProveedor === proveedor.idProveedor ? { ...p, estado: !p.estado } : p
-      );
-      setProveedores(updated);
-      showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      showNotification('Error al cambiar el estado del proveedor', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+const toggleEstado = async (proveedor) => {
+  setLoading(true);
+  try {
+    console.log('🔄 Cambiando estado de proveedor:', proveedor);
+    
+    // CORREGIR: usar idproveedor (minúscula) que viene de la base de datos
+    const idProveedor = proveedor.idProveedor || proveedor.idproveedor;
+    
+    await proveedorApiService.cambiarEstadoProveedor(idProveedor, !proveedor.estado);
+    
+    const updated = proveedores.map(p =>
+      (p.idProveedor === idProveedor || p.idproveedor === idProveedor) ? { ...p, estado: !p.estado } : p
+    );
+    setProveedores(updated);
+    showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    showNotification('Error al cambiar el estado del proveedor', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
@@ -89,7 +94,7 @@ export default function ProveedoresTable() {
             error = 'El nombre debe tener al menos 3 caracteres';
           } else if (value.trim().length > 50) {
             error = 'El nombre no puede tener más de 50 caracteres';
-          } else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s.]+$/.test(value)) {
+          } else if (!/^[A-Za-zÀÁÉÍÓÚÑàáéíóúñ\s.]+$/.test(value)) {
             error = 'El nombre solo puede contener letras, espacios y puntos';
           }
         }
@@ -101,8 +106,8 @@ export default function ProveedoresTable() {
             error = 'El nombre de empresa es obligatorio';
           } else if (value.trim().length < 3) {
             error = 'El nombre de empresa debe tener al menos 3 caracteres';
-          } else if (value.trim().length > 100) {
-            error = 'El nombre de empresa no puede tener más de 100 caracteres';
+          } else if (value.trim().length > 50) {
+            error = 'El nombre de empresa no puede tener más de 50 caracteres';
           }
         }
         break;
@@ -115,7 +120,7 @@ export default function ProveedoresTable() {
             error = 'El nombre del contacto debe tener al menos 3 caracteres';
           } else if (value.trim().length > 50) {
             error = 'El nombre del contacto no puede tener más de 50 caracteres';
-          } else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s.]+$/.test(value)) {
+          } else if (!/^[A-Za-zÀÁÉÍÓÚÑàáéíóúñ\s.]+$/.test(value)) {
             error = 'El nombre del contacto solo puede contener letras, espacios y puntos';
           }
         }
@@ -126,9 +131,9 @@ export default function ProveedoresTable() {
           error = 'El contacto es obligatorio';
         } else if (!/^\d+$/.test(value)) {
           error = 'El contacto debe contener solo números';
-        } else if (value.length < 10) {
-          error = 'El contacto debe tener 10 dígitos';
-        } else if (value.length > 10) {
+        } else if (value.length < 3) {
+          error = 'El contacto debe tener 3 dígitos';
+        } else if (value.length > 3) {
           error = 'El contacto no puede tener más de 10 dígitos';
         }
         break;
@@ -136,8 +141,8 @@ export default function ProveedoresTable() {
       case 'correo':
         if (!value.trim()) {
           error = 'El correo es obligatorio';
-        } else if (value.length > 100) {
-          error = 'El correo no puede tener más de 100 caracteres';
+        } else if (value.length > 50) {
+          error = 'El correo no puede tener más de 50 caracteres';
         } else {
           const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!correoRegex.test(value) || !value.includes('@')) {
@@ -151,8 +156,8 @@ export default function ProveedoresTable() {
           error = 'La dirección es obligatoria';
         } else if (value.trim().length < 5) {
           error = 'La dirección debe tener al menos 5 caracteres';
-        } else if (value.trim().length > 200) {
-          error = 'La dirección no puede tener más de 200 caracteres';
+        } else if (value.trim().length > 30) {
+          error = 'La dirección no puede tener más de 30 caracteres';
         }
         break;
 
@@ -163,13 +168,13 @@ export default function ProveedoresTable() {
         } else if (!/^\d+$/.test(value)) {
           error = `${fieldLabel} debe contener solo números`;
         } else if (tipoProveedor === 'Natural') {
-          if (value.length < 7) {
+          if (value.length < 3) {
             error = 'El documento debe tener al menos 7 dígitos';
           } else if (value.length > 10) {
             error = 'El documento no puede tener más de 10 dígitos';
           }
         } else {
-          if (value.length < 9) {
+          if (value.length < 3) {
             error = 'El NIT debe tener al menos 9 dígitos';
           } else if (value.length > 12) {
             error = 'El NIT no puede tener más de 12 dígitos';
@@ -249,7 +254,7 @@ export default function ProveedoresTable() {
     }
 
     if (field === 'nombre' && !error && modalTipo === 'agregar' && tipoProveedor === 'Natural') {
-      const nameExists = proveedores.some(p => p.nombre.toLowerCase() === value.toLowerCase());
+      const nameExists = proveedores.some(p => p.nombre && p.nombre.toLowerCase() === value.toLowerCase());
       if (nameExists) {
         setErrors(prev => ({ ...prev, nombre: 'Ya existe un proveedor con este nombre' }));
       }
@@ -262,40 +267,47 @@ export default function ProveedoresTable() {
       }
     }
   };
+const abrirModal = (tipo, proveedor = null) => {
+  setModalTipo(tipo);
+  setProveedorSeleccionado(proveedor);
 
-  const abrirModal = (tipo, proveedor = null) => {
-    setModalTipo(tipo);
-    setProveedorSeleccionado(proveedor);
+  setErrors({});
+  setTouched({});
 
-    setErrors({});
-    setTouched({});
-
-    if (tipo === 'editar' || tipo === 'visualizar') {
-      setTipoProveedor(proveedor.tipo);
-      setNombre(proveedor.nombreProveedor || proveedor.nombre || '');
-      setContacto(proveedor.contacto.toString());
-      setCorreo(proveedor.correo);
-      setDireccion(proveedor.direccion);
-      setDocumentoONit(proveedor.documento.toString() || proveedor.extra.toString());
-      setTipoDocumento(proveedor.tipoDocumento || (proveedor.tipo === 'Natural' ? 'CC' : 'NIT'));
-      setNombreEmpresa(proveedor.nombreEmpresa || '');
-      setNombreContacto(proveedor.nombreContacto || '');
-      setEstadoProveedor(proveedor.estado);
-    } else if (tipo === 'agregar') {
-      setTipoProveedor('Natural');
-      setNombre('');
-      setContacto('');
-      setCorreo('');
-      setDireccion('');
-      setDocumentoONit('');
-      setTipoDocumento('CC');
+  if (tipo === 'editar' || tipo === 'visualizar') {
+    console.log('📝 Abriendo modal para editar/visualizar:', proveedor);
+    
+    setTipoProveedor(proveedor.tipo);
+    if (proveedor.tipo === 'Natural') {
+      setNombre(proveedor.nombreProveedor || '');
       setNombreEmpresa('');
       setNombreContacto('');
-      setEstadoProveedor(true);
+    } else {
+      // Para jurídico
+      setNombreEmpresa(proveedor.nombreEmpresa || '');
+      setNombreContacto(proveedor.nombreProveedor || ''); // El contacto está en nombreProveedor
+      setNombre('');
     }
-    setModalVisible(true);
-  };
-
+    setContacto(proveedor.contacto.toString());
+    setCorreo(proveedor.correo);
+    setDireccion(proveedor.direccion);
+    setDocumentoONit(proveedor.documento.toString());
+    setTipoDocumento(proveedor.tipoDocumento);
+    setEstadoProveedor(proveedor.estado);
+  } else if (tipo === 'agregar') {
+    setTipoProveedor('Natural');
+    setNombre('');
+    setContacto('');
+    setCorreo('');
+    setDireccion('');
+    setDocumentoONit('');
+    setTipoDocumento('CC');
+    setNombreEmpresa('');
+    setNombreContacto('');
+    setEstadoProveedor(true);
+  }
+  setModalVisible(true);
+};
   const cerrarModal = () => {
     setModalVisible(false);
     setProveedorSeleccionado(null);
@@ -394,68 +406,81 @@ export default function ProveedoresTable() {
     return true;
   };
 
-  const guardarProveedor = async () => {
-    if (!validarCampos()) return;
+const guardarProveedor = async () => {
+  if (!validarCampos()) return;
 
-    setLoading(true);
-    try {
-      const proveedorData = {
-        tipo: tipoProveedor,
-        tipoDocumento,
-        documento: documentoONit,
-        extra: documentoONit, 
-        contacto,
-        correo,
-        direccion,
-        estado: estadoProveedor,
-        ...(tipoProveedor === 'Natural' ? {
-          nombre: nombre,
-          nombreProveedor: nombre
-        } : {
-          nombreEmpresa,
-          nombreContacto,
-          nombre: nombreEmpresa
-        })
-      };
+  setLoading(true);
+  try {
+    const proveedorData = {
+      tipo: tipoProveedor,
+      tipoDocumento,
+      documento: documentoONit,
+      extra: documentoONit, 
+      contacto,
+      correo,
+      direccion,
+      estado: estadoProveedor,
+      ...(tipoProveedor === 'Natural' ? {
+        nombre: nombre,
+        nombreProveedor: nombre
+      } : {
+        nombreEmpresa,
+        nombreContacto,
+        nombre: nombreEmpresa
+      })
+    };
 
-      if (modalTipo === 'agregar') {
-        const nuevoProveedor = await proveedorApiService.crearProveedor(proveedorData);
-        setProveedores([...proveedores, nuevoProveedor]);
-        showNotification('Proveedor agregado exitosamente');
-      } else if (modalTipo === 'editar') {
-        const proveedorActualizado = await proveedorApiService.actualizarProveedor(
-          proveedorSeleccionado.idProveedor,
-          proveedorData
-        );
-        const updated = proveedores.map(p =>
-          p.idProveedor === proveedorSeleccionado.idProveedor ? proveedorActualizado : p
-        );
-        setProveedores(updated);
-        showNotification('Proveedor actualizado exitosamente');
-      }
+    console.log('💾 Datos del proveedor a guardar:', proveedorData);
 
-      cerrarModal();
-    } catch (error) {
-      console.error('Error al guardar proveedor:', error);
-      showNotification(error.message || 'Error al guardar el proveedor', 'error');
-    } finally {
-      setLoading(false);
+    if (modalTipo === 'agregar') {
+      const nuevoProveedor = await proveedorApiService.crearProveedor(proveedorData);
+      setProveedores([...proveedores, nuevoProveedor]);
+      showNotification('Proveedor agregado exitosamente');
+    } else if (modalTipo === 'editar') {
+      // CORREGIR: usar el ID correcto
+      const idProveedor = proveedorSeleccionado.idProveedor || proveedorSeleccionado.idproveedor;
+      console.log('🔄 Actualizando proveedor con ID:', idProveedor);
+      
+      const proveedorActualizado = await proveedorApiService.actualizarProveedor(
+        idProveedor,
+        proveedorData
+      );
+      
+      const updated = proveedores.map(p =>
+        (p.idProveedor === idProveedor || p.idproveedor === idProveedor) ? proveedorActualizado : p
+      );
+      setProveedores(updated);
+      showNotification('Proveedor actualizado exitosamente');
     }
-  };
 
-  const confirmarEliminar = async () => {
-    setLoading(true);
-    try {
-      await proveedorApiService.eliminarProveedor(proveedorSeleccionado.idProveedor);
-      setProveedores(proveedores.filter(p => p.idProveedor !== proveedorSeleccionado.idProveedor));
-      showNotification('Proveedor eliminado exitosamente');
-      cerrarModal();
-    } catch (error) {
-      console.error('Error al eliminar proveedor:', error);
-      showNotification(error.message || 'Error al eliminar el proveedor', 'error');
-    } finally {
-      setLoading(false);
-    }
+    cerrarModal();
+  } catch (error) {
+    console.error('Error al guardar proveedor:', error);
+    showNotification(error.message || 'Error al guardar el proveedor', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
+const confirmarEliminar = async () => {
+  setLoading(true);
+  try {
+    // CORREGIR: usar el ID correcto
+    const idProveedor = proveedorSeleccionado.idProveedor || proveedorSeleccionado.idproveedor;
+    console.log('🗑️ Eliminando proveedor con ID:', idProveedor);
+    
+    await proveedorApiService.eliminarProveedor(idProveedor);
+    
+    setProveedores(proveedores.filter(p => 
+      (p.idProveedor !== idProveedor && p.idproveedor !== idProveedor)
+    ));
+    showNotification('Proveedor eliminado exitosamente');
+    cerrarModal();
+  } catch (error) {
+    console.error('Error al eliminar proveedor:', error);
+    showNotification(error.message || 'Error al eliminar el proveedor', 'error');
+  } finally {
+    setLoading(false);
+  }
   };
 
   const proveedoresFiltrados = proveedores.filter(p => {
@@ -507,69 +532,77 @@ export default function ProveedoresTable() {
         </div>
 
         <h2 className="admin-section-title">Proveedores</h2>
-        <DataTable 
-          value={proveedoresFiltrados} 
-          className="admin-table" 
-          paginator 
-          rows={5}
-          loading={loading}
+      <DataTable 
+  value={proveedoresFiltrados} 
+  className="admin-table" 
+  paginator 
+  rows={5}
+  rowsPerPageOptions={[5, 10, 20]}
+  paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
+  loading={loading}
+>
+  <Column 
+    header="N°" 
+    headerStyle={{ paddingLeft: '1rem' }} 
+    body={(rowData, { rowIndex }) => rowIndex + 1} 
+    style={{ width: '3rem', textAlign: 'center' }} 
+  />
+  <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }} />
+  <Column field="tipo" header="Tipo Proveedor" />
+  <Column field="contacto" header="Contacto" />
+  <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }} />
+  <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }} />
+  <Column
+    header="Estado"
+    body={(rowData) => (
+      <InputSwitch 
+        checked={rowData.estado} 
+        onChange={() => toggleEstado(rowData)}
+        disabled={loading}
+      />
+    )}
+  />
+  <Column
+    header="Acción"
+    body={(rowData) => (
+      <div style={{ display: 'flex', gap: '5px' }}>
+        <button 
+          className="admin-button gray" 
+          title="Visualizar" 
+          onClick={() => abrirModal('visualizar', rowData)}
+          disabled={loading}
         >
-          <Column header="N°" headerStyle={{ paddingLeft: '1rem' }} body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-          <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }} />
-          <Column field="tipo" header="Tipo Proveedor" />
-          <Column field="contacto" header="Contacto" />
-          <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }} />
-          <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }} />
-          <Column
-            header="Estado"
-            body={(rowData) => (
-              <InputSwitch 
-                checked={rowData.estado} 
-                onChange={() => toggleEstado(rowData)}
-                disabled={loading}
-              />
-            )}
-          />
-          <Column
-            header="Acción"
-            body={(rowData) => (
-              <>
-                <button 
-                  className="admin-button gray" 
-                  title="Visualizar" 
-                  onClick={() => abrirModal('visualizar', rowData)}
-                  disabled={loading}
-                >
-                  👁
-                </button>
-                <button
-                  className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
-                  title="Editar"
-                  onClick={() => rowData.estado && abrirModal('editar', rowData)}
-                  disabled={!rowData.estado || loading}
-                  style={{
-                    opacity: !rowData.estado ? 0.5 : 1,
-                    cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  ✏️
-                </button>
-                <button
-                  className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
-                  title="Eliminar"
-                  onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
-                  disabled={!rowData.estado || loading}
-                  style={{
-                    opacity: !rowData.estado ? 0.5 : 1,
-                    cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  🗑️
-                </button>
-              </>
-            )}
-          />
-        </DataTable>
+          👁
+        </button>
+        <button
+          className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
+          title="Editar"
+          onClick={() => rowData.estado && abrirModal('editar', rowData)}
+          disabled={!rowData.estado || loading}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          ✏️
+        </button>
+        <button
+          className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
+          title="Eliminar"
+          onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+          disabled={!rowData.estado || loading}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado || loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          🗑️
+        </button>
+      </div>
+    )}
+  />
+</DataTable>
 
         {(modalTipo === 'agregar' || modalTipo === 'editar') && (
           <Modal visible={modalVisible} onClose={cerrarModal} className="modal-wide">
@@ -770,7 +803,7 @@ export default function ProveedoresTable() {
                 {proveedorSeleccionado.tipo === 'Natural' ? (
                   <label>Nombre Completo*
                     <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
-                      {proveedorSeleccionado.nombre}
+                      {proveedorSeleccionado.nombreProveedor || proveedorSeleccionado.nombre}
                     </div>
                   </label>
                 ) : (
@@ -783,7 +816,7 @@ export default function ProveedoresTable() {
 
                     <label>Nombre del Contacto*
                       <div className="modal-input" style={{ backgroundColor: '#f8f9fa', cursor: 'default', border: '2px solid #e91e63' }}>
-                        {proveedorSeleccionado.nombreContacto}
+                        {proveedorSeleccionado.nombreProveedor || proveedorSeleccionado.nombreContacto}
                       </div>
                     </label>
                   </>
@@ -825,7 +858,7 @@ export default function ProveedoresTable() {
         {modalTipo === 'eliminar' && proveedorSeleccionado && (
           <Modal visible={modalVisible} onClose={cerrarModal}>
             <h2 className="modal-title">Confirmar Eliminación</h2>
-            <p>¿Estás seguro de que quieres eliminar al proveedor **{proveedorSeleccionado.nombre}**?</p>
+            <p>¿Estás seguro de que quieres eliminar al proveedor <strong>{proveedorSeleccionado.nombre}</strong>?</p>
             <div className="modal-footer">
               <button 
                 className="modal-btn cancel-btn" 

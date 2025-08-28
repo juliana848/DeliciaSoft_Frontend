@@ -8,6 +8,8 @@ import Notification from '../../components/Notification';
 import AgregarInsumosModal from '../../components/AgregarInsumosModal';
 import { generarPDFCompra, configurarEmpresa } from '../pdf';
 import { XCircle } from 'lucide-react';
+import compraApiService from '../../services/compras_services'; 
+import proveedorApiService from '../../services/proveedor_services'; // Asumiendo que tienes este servicio
 
 export default function ComprasTable() {
     const [compras, setCompras] = useState([]);
@@ -20,6 +22,8 @@ export default function ComprasTable() {
     const [insumosSeleccionados, setInsumosSeleccionados] = useState([]);
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
+    const [proveedores, setProveedores] = useState([]);
+    const [cargando, setCargando] = useState(false);
     
     const [errores, setErrores] = useState({
         proveedor: '',
@@ -37,7 +41,10 @@ export default function ComprasTable() {
 
     const generarPDF = async (compra) => {
         try {
-            if (!compra.insumos || compra.insumos.length === 0) {
+            // Obtener los detalles completos de la compra
+            const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
+            
+            if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
                 setNotification({
                     visible: true,
                     mensaje: 'No se puede generar PDF: La compra no tiene insumos registrados',
@@ -45,13 +52,19 @@ export default function ComprasTable() {
                 });
                 return;
             }
+
             const datosCompra = {
-                id: compra.id,
-                proveedor: compra.proveedor,
-                fecha_compra: compra.fecha_compra || compra.fecha,
-                fecha_registro: compra.fecha_registro || new Date().toISOString().split('T')[0],
-                observaciones: compra.observaciones || '',
-                insumos: compra.insumos
+                id: compraCompleta.id,
+                proveedor: compraCompleta.proveedor?.nombre || 'N/A',
+                fecha_compra: compraCompleta.fechaCompra,
+                fecha_registro: compraCompleta.fechaRegistro,
+                observaciones: compraCompleta.observaciones || '',
+                insumos: compraCompleta.detalles.map(detalle => ({
+                    nombre: detalle.insumo?.nombre || 'N/A',
+                    cantidad: detalle.cantidad,
+                    precio: detalle.precioUnitario,
+                    unidad: detalle.insumo?.unidad || 'N/A'
+                }))
             };
 
             await generarPDFCompra(datosCompra);
@@ -76,80 +89,60 @@ export default function ComprasTable() {
 
     const [compraData, setCompraData] = useState({
         proveedor: '',
-        fecha_compra: '',
-        fecha_registro: obtenerFechaActual(),
+        idProveedor: null,
+        fechaCompra: '',
+        fechaRegistro: obtenerFechaActual(),
         observaciones: ''
     });
 
+    // Cargar datos iniciales
     useEffect(() => {
-        const mockCompras = [
-            {  
-                id: 1, 
-                proveedor: 'Dis.Martinez', 
-                fecha: '10/02/2024', 
-                total: 126000,
-                fecha_compra: '2024-02-10',
-                fecha_registro: '2024-02-11',
-                observaciones: 'Pago contado',
-                subtotal: 108621,
-                iva: 17379,
-                estado: 'activa',
-                insumos: [
-                    { id: 1, nombre: 'Harina', unidad: 'kg', cantidad: 5, precio: 10000 },
-                    { id: 2, nombre: 'Azúcar', unidad: 'kg', cantidad: 2, precio: 8000 }
-                ]
-            },
-            {  
-                id: 2, 
-                proveedor: 'Dis.Tolu', 
-                fecha: '10/02/2024', 
-                total: 144000,
-                fecha_compra: '2024-02-10',
-                fecha_registro: '2024-02-11',
-                observaciones: 'Transferencia',
-                subtotal: 124137,
-                iva: 19863,
-                estado: 'activa',
-                insumos: [
-                    { id: 3, nombre: 'Leche', unidad: 'litros', cantidad: 10, precio: 5000 },
-                    { id: 4, nombre: 'Huevos', unidad: 'docena', cantidad: 3, precio: 12000 }
-                ]
-            },
-            {  
-                id: 3, 
-                proveedor: 'Sumi.Express', 
-                fecha: '10/02/2024', 
-                total: 458900,
-                fecha_compra: '2024-02-10',
-                fecha_registro: '2024-02-11',
-                observaciones: '',
-                subtotal: 395603,
-                iva: 63297,
-                estado: 'activa',
-                insumos: [
-                    { id: 5, nombre: 'Mantequilla', unidad: 'kg', cantidad: 4, precio: 15000 },
-                    { id: 6, nombre: 'Chocolate', unidad: 'kg', cantidad: 3, precio: 20000 }
-                ]
-            },
-            {  
-                id: 4, 
-                proveedor: 'Mate.industriales', 
-                fecha: '10/02/2024', 
-                total: 321700,
-                fecha_compra: '2024-02-10',
-                fecha_registro: '2024-02-11',
-                observaciones: 'Pago parcial',
-                subtotal: 277327,
-                iva: 44373,
-                estado: 'activa',
-                insumos: [
-                    { id: 7, nombre: 'Molde aluminio', unidad: 'unidad', cantidad: 10, precio: 2500 },
-                    { id: 8, nombre: 'Espátula', unidad: 'unidad', cantidad: 5, precio: 4000 }
-                ]
-            }
-        ];
-        setCompras(mockCompras);
+        cargarCompras();
+        cargarProveedores();
     }, []);
+
+    const cargarCompras = async () => {
+        try {
+            setCargando(true);
+            const comprasAPI = await compraApiService.obtenerCompras();
+            setCompras(comprasAPI);
+        } catch (error) {
+            console.error('Error al cargar compras:', error);
+            setNotification({
+                visible: true,
+                mensaje: 'Error al cargar las compras: ' + error.message,
+                tipo: 'error'
+            });
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    const cargarProveedores = async () => {
+        try {
+            console.log('Iniciando carga de proveedores...');
+            // Asumiendo que tienes un servicio de proveedores
+            const proveedoresAPI = await proveedorApiService.obtenerProveedores();
+            console.log('Proveedores obtenidos:', proveedoresAPI);
+            setProveedores(proveedoresAPI);
+            
+            if (!proveedoresAPI || proveedoresAPI.length === 0) {
+                console.warn('No se encontraron proveedores');
+                setNotification({
+                    visible: true,
+                    mensaje: 'No se encontraron proveedores disponibles',
+                    tipo: 'warning'
+                });
+            }
+        } catch (error) {
+            console.error('Error al cargar proveedores:', error);
+            setNotification({
+                visible: true,
+                mensaje: 'Error al cargar los proveedores: ' + error.message,
+                tipo: 'error'
+            });
+        }
+    };
 
     const showNotification = (mensaje, tipo = 'success') => {
         setNotification({ visible: true, mensaje, tipo });
@@ -169,8 +162,8 @@ export default function ComprasTable() {
         return '';
     };
 
-    const validarProveedor = (proveedor) => {
-        if (!proveedor.trim()) return 'Debe seleccionar un proveedor';
+    const validarProveedor = (idProveedor) => {
+        if (!idProveedor) return 'Debe seleccionar un proveedor';
         return '';
     };
 
@@ -179,24 +172,59 @@ export default function ComprasTable() {
         return '';
     };
 
-    const abrirModal = (tipo, compra = null) => {
+    const abrirModal = async (tipo, compra = null) => {
         setModalTipo(tipo);
         setCompraSeleccionada(compra);
         
-        if (tipo === 'ver') {
-            setCompraData({
-                proveedor: compra.proveedor,
-                fecha_compra: compra.fecha_compra,
-                fecha_registro: compra.fecha_registro,
-                observaciones: compra.observaciones || ''
-            });
-            setInsumosSeleccionados(compra.insumos || []);
-            setMostrarAgregarCompra(true);
+        if (tipo === 'ver' && compra) {
+            try {
+                setCargando(true);
+                // Cargar los detalles completos de la compra
+                const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
+                
+                setCompraData({
+                    proveedor: compraCompleta.proveedor?.nombre || '',
+                    idProveedor: compraCompleta.idProveedor,
+                    fechaCompra: compraCompleta.fechaCompra,
+                    fechaRegistro: compraCompleta.fechaRegistro,
+                    observaciones: compraCompleta.observaciones || ''
+                });
+                
+                // Convertir detalles a formato esperado por el frontend
+                const insumosFormateados = compraCompleta.detalles?.map(detalle => ({
+                    id: detalle.idInsumo,
+                    nombre: detalle.insumo?.nombre || 'N/A',
+                    cantidad: detalle.cantidad,
+                    precio: detalle.precioUnitario,
+                    precioUnitario: detalle.precioUnitario,
+                    unidad: detalle.insumo?.unidad || 'N/A'
+                })) || [];
+                
+                setInsumosSeleccionados(insumosFormateados);
+                setMostrarAgregarCompra(true);
+            } catch (error) {
+                console.error('Error al cargar detalles de compra:', error);
+                setNotification({
+                    visible: true,
+                    mensaje: 'Error al cargar los detalles de la compra: ' + error.message,
+                    tipo: 'error'
+                });
+            } finally {
+                setCargando(false);
+            }
         } else if (tipo === 'agregar') {
+            console.log('Proveedores disponibles al abrir modal:', proveedores);
+            
+            if (proveedores.length === 0) {
+                console.log('Recargando proveedores...');
+                await cargarProveedores();
+            }
+            
             setCompraData({
                 proveedor: '',
-                fecha_compra: '',
-                fecha_registro: obtenerFechaActual(),
+                idProveedor: null,
+                fechaCompra: '',
+                fechaRegistro: obtenerFechaActual(),
                 observaciones: ''
             });
             setInsumosSeleccionados([]);
@@ -224,8 +252,9 @@ export default function ComprasTable() {
         setInsumosSeleccionados([]);
         setCompraData({
             proveedor: '',
-            fecha_compra: '',
-            fecha_registro: obtenerFechaActual(),
+            idProveedor: null,
+            fechaCompra: '',
+            fechaRegistro: obtenerFechaActual(),
             observaciones: ''
         });
         setErrores({
@@ -235,19 +264,30 @@ export default function ComprasTable() {
         });
     };
 
-    const anularCompra = () => {
-        setCompras(prev =>
-            prev.map(c => (c.id === compraSeleccionada.id ? { ...c, estado: 'anulada' } : c))
-        );
-        cerrarModal();
-        showNotification('Compra anulada exitosamente');
+    const anularCompra = async () => {
+        try {
+            setCargando(true);
+            // Cambiar estado de la compra a anulada
+            await compraApiService.cambiarEstadoCompra(compraSeleccionada.id, false);
+            
+            // Recargar las compras para reflejar el cambio
+            await cargarCompras();
+            
+            cerrarModal();
+            showNotification('Compra anulada exitosamente');
+        } catch (error) {
+            console.error('Error al anular compra:', error);
+            setNotification({
+                visible: true,
+                mensaje: 'Error al anular la compra: ' + error.message,
+                tipo: 'error'
+            });
+        } finally {
+            setCargando(false);
+        }
     };
 
-    const exportarPDF = compra => {
-        showNotification(`Compra ${compra.cod_compra} exportada como PDF exitosamente`);
-    };
-
-    // FUNCIÓN DE FILTRADO MEJORADA - BUSCA EN TODOS LOS CAMPOS VISIBLES
+    // Función de filtrado mejorada
     const filtrarCompras = (compras, filtro) => {
         if (!filtro || filtro.trim() === '') {
             return compras;
@@ -256,10 +296,9 @@ export default function ComprasTable() {
         const filtroLower = filtro.toLowerCase().trim();
         
         return compras.filter(compra => {
-            const proveedorMatch = compra.proveedor && compra.proveedor.toLowerCase().includes(filtroLower);
-            const fechaMatch = compra.fecha && compra.fecha.toLowerCase().includes(filtroLower);
+            const proveedorMatch = compra.proveedor?.nombre && compra.proveedor.nombre.toLowerCase().includes(filtroLower);
+            const fechaMatch = compra.fechaCompra && compra.fechaCompra.toLowerCase().includes(filtroLower);
             const observacionesMatch = compra.observaciones && compra.observaciones.toLowerCase().includes(filtroLower);
-            const estadoMatch = compra.estado && compra.estado.toLowerCase().includes(filtroLower);
             
             const idMatch = compra.id && compra.id.toString().includes(filtroLower);
             const totalMatch = compra.total && compra.total.toString().includes(filtroLower);
@@ -274,60 +313,45 @@ export default function ComprasTable() {
             const subtotalFormateadoMatch = subtotalFormateado.toLowerCase().includes(filtroLower);
             const ivaFormateadoMatch = ivaFormateado.toLowerCase().includes(filtroLower);
             
-            let insumosMatch = false;
-            if (compra.insumos && compra.insumos.length > 0) {
-                insumosMatch = compra.insumos.some(insumo => {
-                    const nombreInsumo = insumo.nombre && insumo.nombre.toLowerCase().includes(filtroLower);
-                    const unidadInsumo = insumo.unidad && insumo.unidad.toLowerCase().includes(filtroLower);
-                    const cantidadInsumo = insumo.cantidad && insumo.cantidad.toString().includes(filtroLower);
-                    const precioInsumo = insumo.precio && insumo.precio.toString().includes(filtroLower);
-                    const precioFormateadoInsumo = insumo.precio ? formatoCOP(insumo.precio) : '';
-                    const precioFormateadoMatch = precioFormateadoInsumo.toLowerCase().includes(filtroLower);
-                    
-                    return nombreInsumo || unidadInsumo || cantidadInsumo || precioInsumo || precioFormateadoMatch;
-                });
-            }
-            
-            let fechaFormateadaMatch = false;
-            if (compra.fecha_compra) {
-                try {
-                    const fecha = new Date(compra.fecha_compra);
-                    const fechaTexto = fecha.toLocaleDateString('es-ES');
-                    fechaFormateadaMatch = fechaTexto.toLowerCase().includes(filtroLower);
-                } catch (error) {
-                    console.error('Error al formatear fecha:', error);
-                }
-            }
-            
             return proveedorMatch || 
                     fechaMatch || 
-                    observacionesMatch || 
-                    estadoMatch ||
+                    observacionesMatch ||
                     idMatch || 
                     totalMatch || 
                     subtotalMatch || 
                     ivaMatch ||
                     totalFormateadoMatch ||
                     subtotalFormateadoMatch ||
-                    ivaFormateadoMatch ||
-                    insumosMatch ||
-                    fechaFormateadaMatch;
+                    ivaFormateadoMatch;
         });
     };
 
-    // APLICAR FILTROS
+    // Aplicar filtros - asumiendo que el estado se maneja en el campo 'estado'
     const comprasFiltradas = filtrarCompras(compras, filtro).filter(c =>
-        mostrarAnuladas ? c.estado === 'anulada' : c.estado !== 'anulada'
+        mostrarAnuladas ? !c.estado : c.estado
     );
 
     const handleChange = e => {
         const { name, value } = e.target;
-        setCompraData(prev => ({ ...prev, [name]: value }));
         
         if (name === 'proveedor') {
-            setErrores(prev => ({ ...prev, proveedor: validarProveedor(value) }));
-        } else if (name === 'fecha_compra') {
-            setErrores(prev => ({ ...prev, fecha_compra: validarFecha(value) }));
+            console.log('Seleccionando proveedor:', value);
+            console.log('Lista de proveedores:', proveedores);
+            
+            const proveedorSeleccionado = proveedores.find(p => p.nombreCategoria === value || p.nombre === value);
+            console.log('Proveedor encontrado:', proveedorSeleccionado);
+            
+            setCompraData(prev => ({ 
+                ...prev, 
+                [name]: value,
+                idProveedor: proveedorSeleccionado ? proveedorSeleccionado.id : null
+            }));
+            setErrores(prev => ({ ...prev, proveedor: validarProveedor(proveedorSeleccionado?.id) }));
+        } else {
+            setCompraData(prev => ({ ...prev, [name]: value }));
+            if (name === 'fechaCompra') {
+                setErrores(prev => ({ ...prev, fecha_compra: validarFecha(value) }));
+            }
         }
     };
 
@@ -355,8 +379,8 @@ export default function ComprasTable() {
     };
 
     const validarFormulario = () => {
-        const errorProveedor = validarProveedor(compraData.proveedor);
-        const errorFecha = validarFecha(compraData.fecha_compra);
+        const errorProveedor = validarProveedor(compraData.idProveedor);
+        const errorFecha = validarFecha(compraData.fechaCompra);
         const errorInsumos = validarInsumos(insumosSeleccionados);
         
         setErrores({
@@ -380,35 +404,96 @@ export default function ComprasTable() {
         return true;
     };
 
-    const guardarCompra = () => {
+    const guardarCompra = async () => {
         if (!validarFormulario()) return;
-        const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
-        const iva = subtotal * 0.16;
-        const total = subtotal + iva;
-        const nuevaCompra = {
-            id: compras.length + 1,
-            proveedor: compraData.proveedor,
-            fecha: compraData.fecha_compra,
-            fecha_compra: compraData.fecha_compra,
-            fecha_registro: obtenerFechaActual(),
-            observaciones: compraData.observaciones,
-            insumos: insumosSeleccionados,
-            subtotal,
-            iva,
-            total,
-            estado: 'activa'
-        };
-        setCompras(prev => [...prev, nuevaCompra]);
-        showNotification('Compra guardada exitosamente');
-        cancelarFormulario();
+        
+        try {
+            setCargando(true);
+            
+            // Preparar datos para la compra con detalles
+            const nuevaCompraData = {
+                idProveedor: compraData.idProveedor,
+                fechaCompra: compraData.fechaCompra,
+                fechaRegistro: obtenerFechaActual(),
+                observaciones: compraData.observaciones || '',
+                detalles: insumosSeleccionados.map(insumo => ({
+                    idInsumo: insumo.id,
+                    cantidad: insumo.cantidad,
+                    precioUnitario: insumo.precio || insumo.precioUnitario
+                }))
+            };
+
+            // Calcular totales usando el método del servicio
+            const totales = compraApiService.calcularTotalesCompra(
+                insumosSeleccionados.map(insumo => ({
+                    subtotalProducto: (insumo.cantidad || 0) * (insumo.precio || insumo.precioUnitario || 0)
+                }))
+            );
+
+            nuevaCompraData.subtotal = totales.subtotal;
+            nuevaCompraData.iva = totales.iva;
+            nuevaCompraData.total = totales.total;
+
+            await compraApiService.crearCompra(nuevaCompraData);
+            
+            // Recargar las compras
+            await cargarCompras();
+            
+            showNotification('Compra guardada exitosamente');
+            cancelarFormulario();
+        } catch (error) {
+            console.error('Error al guardar compra:', error);
+            setNotification({
+                visible: true,
+                mensaje: 'Error al guardar la compra: ' + error.message,
+                tipo: 'error'
+            });
+        } finally {
+            setCargando(false);
+        }
     };
 
-    const subtotal = insumosSeleccionados.reduce((s, i) => s + i.precio * i.cantidad, 0);
-    const iva = subtotal * 0.16;
+    const subtotal = insumosSeleccionados.reduce((s, i) => s + (i.precio || i.precioUnitario || 0) * (i.cantidad || 0), 0);
+    const iva = subtotal * 0.19; // Cambié a 19% para coincidir con el servicio
     const total = subtotal + iva;
+    
     return (
         <div className="admin-wrapper">
         <Notification visible={notification.visible} mensaje={notification.mensaje} tipo={notification.tipo} onClose={hideNotification} />
+
+        {cargando && (
+            <div style={{ 
+                position: 'fixed', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0, 
+                background: 'rgba(0,0,0,0.5)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                zIndex: 9999 
+            }}>
+                <div style={{ 
+                    background: 'white', 
+                    padding: '20px', 
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <div style={{ 
+                        width: '20px', 
+                        height: '20px', 
+                        border: '2px solid #f3f3f3',
+                        borderTop: '2px solid #3498db',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }}></div>
+                    Cargando...
+                </div>
+            </div>
+        )}
 
         {!mostrarAgregarCompra ? (
             <>
@@ -417,6 +502,7 @@ export default function ComprasTable() {
                     className="admin-button pink" 
                     onClick={() => abrirModal('agregar')} 
                     type="button"
+                    disabled={cargando}
                 >
                     + Agregar
                 </button>
@@ -440,16 +526,29 @@ export default function ComprasTable() {
             </button>
             </div>
 
-
             <DataTable
                 value={comprasFiltradas}
                 className="admin-table"
                 paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
-                rowClassName={rowData => rowData.estado === 'anulada' ? 'fila-anulada' : ''}
+                rowClassName={rowData => !rowData.estado ? 'fila-anulada' : ''}
             >
                 <Column header="N°" body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-                <Column field="proveedor" header="Proveedor" />
-                <Column field="fecha" header="Fecha Compra" />
+                <Column 
+                    field="proveedor" 
+                    header="Proveedor" 
+                    body={rowData => rowData.proveedor?.nombre || 'N/A'}
+                />
+                <Column 
+                    field="fechaCompra" 
+                    header="Fecha Compra" 
+                    body={rowData => {
+                        try {
+                            return new Date(rowData.fechaCompra).toLocaleDateString('es-ES');
+                        } catch {
+                            return rowData.fechaCompra || 'N/A';
+                        }
+                    }}
+                />
                 <Column
                     field="total"
                     header="Total"
@@ -458,21 +557,23 @@ export default function ComprasTable() {
                 <Column
                 header="Acción"
                 body={rowData => {
-                    if (rowData.estado === 'anulada') return <span style={{ color: 'gray' }}>Anulada</span>;
+                    if (!rowData.estado) return <span style={{ color: 'gray' }}>Anulada</span>;
                     return (
                     <>
-                        <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>🔍</button>
+                        <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)} disabled={cargando}>👁</button>
                         <button
                             className="admin-button red"
                             title="Anular"
                             onClick={() => abrirModal('anular', rowData)}
+                            disabled={cargando}
                             >
                             🛑
                             </button>
                         <button 
                             className="admin-button blue" 
                             title="Descargar PDF" 
-                            onClick={() => generarPDF(rowData)}  
+                            onClick={() => generarPDF(rowData)}
+                            disabled={cargando}
                         >
                             <i className="fas fa-download" style={{ marginRight: '5px' }}></i>
                         </button>
@@ -486,11 +587,11 @@ export default function ComprasTable() {
                 <Modal visible={modalVisible} onClose={cerrarModal}>
                 <h2 className="modal-title">Confirmar Anulación</h2>
                 <div className="modal-body">
-                    <p>¿Seguro que deseas anular la compra <strong>{compraSeleccionada.cod_compra}</strong> del proveedor <strong>{compraSeleccionada.proveedor}</strong>?</p>
+                    <p>¿Seguro que deseas anular la compra del proveedor <strong>{compraSeleccionada.proveedor?.nombre}</strong>?</p>
                 </div>
                 <div className="modal-footer">
-                    <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-                    <button className="modal-btn save-btn" onClick={anularCompra}>Anular</button>
+                    <button className="modal-btn cancel-btn" onClick={cerrarModal} disabled={cargando}>Cancelar</button>
+                    <button className="modal-btn save-btn" onClick={anularCompra} disabled={cargando}>Anular</button>
                 </div>
                 </Modal>
             )}
@@ -503,6 +604,9 @@ export default function ComprasTable() {
                         alignItems: 'center',
                         marginBottom: '1rem'
                     }}>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                            Proveedores cargados: {proveedores.length}
+                        </div>
                     </div>
                     
                     <div className="compra-fields-grid">
@@ -512,23 +616,24 @@ export default function ComprasTable() {
                                 name="proveedor"
                                 value={compraData.proveedor}
                                 onChange={handleChange}
-                                disabled={modalTipo === 'ver'}
+                                disabled={modalTipo === 'ver' || cargando}
                                 style={{ borderColor: errores.proveedor ? 'red' : '' }}
                             >
                                 <option value="">---</option>
-                                <option value="Dis.Martinez">Dis.Martinez</option>
-                                <option value="Dis.Tolu">Dis.Tolu</option>
-                                <option value="Sumi.Express">Sumi.Express</option>
-                                <option value="Mate.industriales">Mate.industriales</option>
-                                <option value="Dis.MatFruit">Dis.MatFruit</option>
-                                <option value="Desechables J&J">Desechables J&J</option>
-                                <option value="Harina la Moderna">Harina la Moderna</option>
-                                <option value="Moldes & utensilios">Moldes & utensilios</option>
-                                <option value="Dulces Delicias">Dulces Delicias</option>
+                                {proveedores.map(proveedor => (
+                                    <option key={proveedor.id} value={proveedor.nombreCategoria || proveedor.nombre}>
+                                        {proveedor.nombreCategoria || proveedor.nombre}
+                                    </option>
+                                ))}
                             </select>
                             {errores.proveedor && (
                                 <small style={{ color: 'red', fontSize: '12px' }}>
                                     {errores.proveedor}
+                                </small>
+                            )}
+                            {proveedores.length === 0 && (
+                                <small style={{ color: 'orange', fontSize: '10px' }}>
+                                    No hay proveedores disponibles
                                 </small>
                             )}
                         </div>
@@ -537,10 +642,10 @@ export default function ComprasTable() {
                             <label>Fecha de compra*</label>
                             <input
                                 type="date"
-                                name="fecha_compra"
-                                value={compraData.fecha_compra}
+                                name="fechaCompra"
+                                value={compraData.fechaCompra}
                                 onChange={handleChange}
-                                disabled={modalTipo === 'ver'}
+                                disabled={modalTipo === 'ver' || cargando}
                                 max={obtenerFechaActual()}
                                 style={{ borderColor: errores.fecha_compra ? 'red' : '' }}
                             />
@@ -555,8 +660,8 @@ export default function ComprasTable() {
                             <label>Fecha de registro</label>
                             <input
                                 type="date"
-                                name="fecha_registro"
-                                value={compraData.fecha_registro}
+                                name="fechaRegistro"
+                                value={compraData.fechaRegistro}
                                 onChange={handleChange}
                                 disabled
                             />
@@ -600,21 +705,22 @@ export default function ComprasTable() {
                                                 onChange={(e) =>
                                                 handleCantidadChange(item.id, parseInt(e.target.value))
                                                 }
+                                                disabled={cargando}
                                             />
                                         )}
                                     </td>
                                     <td>{item.unidad}</td>
-                                    <td>{formatoCOP(item.precio)}</td>
+                                    <td>{formatoCOP(item.precio || item.precioUnitario || 0)}</td>
                                     <td>
-                                        {formatoCOP((item.cantidad || 0) * (item.precio || 0))}
+                                        {formatoCOP((item.cantidad || 0) * (item.precio || item.precioUnitario || 0))}
                                     </td>
                                     {modalTipo !== 'ver' && (
                                         <td>
                                             <button
                                                 className="btn-eliminar"
                                                 onClick={() => removeInsumo(item.id)}
+                                                disabled={cargando}
                                             >
-
                                                 🗑️
                                             </button>
                                         </td>
@@ -628,6 +734,7 @@ export default function ComprasTable() {
                             <button 
                                 className="btn-agregar-insumos"
                                 onClick={() => setMostrarModalInsumos(true)}
+                                disabled={cargando}
                             >
                                 + Agregar Insumos
                             </button>
@@ -642,7 +749,7 @@ export default function ComprasTable() {
                             <span>{formatoCOP(subtotal)}</span>
                         </div>
                         <div className="total-item">
-                            <span>IVA (16%):</span>
+                            <span>IVA (19%):</span>
                             <span>{formatoCOP(iva)}</span>
                         </div>
                         <div className="total-item">
@@ -661,6 +768,7 @@ export default function ComprasTable() {
                         <button 
                             className="modal-btn cancel-btn"
                             onClick={cancelarFormulario}
+                            disabled={cargando}
                         >
                             {modalTipo === 'ver' ? 'Cerrar' : 'Cancelar'}
                         </button>
@@ -668,6 +776,7 @@ export default function ComprasTable() {
                             <button 
                                 className="modal-btn save-btn"
                                 onClick={guardarCompra}
+                                disabled={cargando}
                             >
                                 Guardar
                             </button>
@@ -688,22 +797,33 @@ export default function ComprasTable() {
                         }}>
                         <h2 className="modal-title">Confirmar Anulación</h2>
                         <div className="modal-body">
-                            <p>¿Seguro que deseas anular la compra del proveedor <strong>{compraSeleccionada.proveedor}</strong>?</p>
+                            <p>¿Seguro que deseas anular la compra del proveedor <strong>{compraSeleccionada.proveedor?.nombre}</strong>?</p>
                         </div>
                         <div className="modal-footer">
                             <button className="modal-btn cancel-btn" onClick={() => {
                                 cerrarModal();
                                 setModalTipo('ver'); 
-                            }}>Cancelar</button>
+                            }} disabled={cargando}>Cancelar</button>
                             <button className="modal-btn save-btn" onClick={() => {
                                 anularCompra();
                                 cancelarFormulario(); 
-                            }}>Anular</button>
+                            }} disabled={cargando}>Anular</button>
                         </div>
                         </Modal>
                     )}
                 </div>
             )}
+            
+            <style jsx>{`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .fila-anulada {
+                    background-color: #ffebee !important;
+                    opacity: 0.7;
+                }
+            `}</style>
         </div>
     );
 }

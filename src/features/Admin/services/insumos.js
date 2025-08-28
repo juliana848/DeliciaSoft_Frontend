@@ -257,11 +257,21 @@ class InsumoApiService {
         console.log(`  - ID: ${u.idunidadmedida} | Nombre: ${u.unidadmedida}`);
       });
       
-      console.log('📂 Categorías disponibles:');
-      categorias.forEach(c => {
-        const nombre = c.nombre || c.nombrecategoria || c.name || 'Sin nombre';
-        console.log(`  - ID: ${c.id} | Nombre: ${nombre}`);
-      });
+     console.log('📂 Categorías disponibles:');
+categorias.forEach(c => {
+  const nombre = c.nombrecategoria || c.nombre || c.name || 'Sin nombre';
+  console.log(`  - ID: ${c.idcategoriainsumos} | Nombre: ${nombre}`);
+});
+
+// Verificar categoría
+const categoriaExiste = categorias.some(c => parseInt(c.idcategoriainsumos) === idCategoriaInsumos);
+if (!categoriaExiste) {
+  const categoriasDisponibles = categorias.map(
+    c => `${c.idcategoriainsumos} (${c.nombrecategoria || c.nombre || 'Sin nombre'})`
+  ).join(', ');
+  throw new Error(`❌ La categoría ID ${idCategoriaInsumos} no existe. IDs disponibles: ${categoriasDisponibles}`);
+}
+
 
       // Verificar unidad de medida - USANDO CAMPO CORRECTO
       const unidadExiste = unidades.some(u => parseInt(u.idunidadmedida) === idUnidadMedida);
@@ -270,13 +280,8 @@ class InsumoApiService {
         throw new Error(`❌ La unidad de medida ID ${idUnidadMedida} no existe. IDs disponibles: ${unidadesDisponibles}`);
       }
 
-      // Verificar categoría
-      const categoriaExiste = categorias.some(c => parseInt(c.id) === idCategoriaInsumos);
-      if (!categoriaExiste) {
-        const categoriasDisponibles = categorias.map(c => `${c.id} (${c.nombre || c.nombrecategoria || 'Sin nombre'})`).join(', ');
-        throw new Error(`❌ La categoría ID ${idCategoriaInsumos} no existe. IDs disponibles: ${categoriasDisponibles}`);
-      }
 
+  
       console.log('✅ Todos los IDs son válidos');
       console.log(`  ✓ Unidad de medida ID: ${idUnidadMedida}`);
       console.log(`  ✓ Categoría ID: ${idCategoriaInsumos}`);
@@ -538,21 +543,26 @@ class InsumoApiService {
     return transformed;
   }
 
-  transformarInsumoDesdeAPI(insumo) {
-    if (!insumo) return null;
-    
-    return {
-      id: insumo.idinsumo,
-      nombreInsumo: insumo.nombreinsumo,
-      idCategoriaInsumos: insumo.idcategoriainsumos,
-      idUnidadMedida: insumo.idunidadmedida,
-      cantidad: insumo.cantidad,
-      estado: insumo.estado,
-      idImagen: insumo.idimagen,
-      nombreUnidadMedida: insumo.nombreUnidadMedida,
-      nombreCategoria: insumo.nombreCategoria
-    };
-  }
+transformarInsumoDesdeAPI(insumo) {
+  if (!insumo) return null;
+  
+  return {
+    id: insumo.idinsumo,
+    nombreInsumo: insumo.nombreinsumo,
+    idCategoriaInsumos: insumo.idcategoriainsumos,
+    idUnidadMedida: insumo.idunidadmedida,
+    cantidad: insumo.cantidad,
+    estado: insumo.estado,
+    idImagen: insumo.idimagen,
+    nombreUnidadMedida: insumo.unidadmedida 
+      ? insumo.unidadmedida.unidadmedida 
+      : (insumo.nombreUnidadMedida || "Unidad desconocida"),
+    nombreCategoria: insumo.categoriainsumos 
+      ? insumo.categoriainsumos.nombrecategoria 
+      : (insumo.nombreCategoria || "Categoría desconocida")
+  };
+}
+
 
   transformarInsumosDesdeAPI(insumos) {
     if (!Array.isArray(insumos)) return [];

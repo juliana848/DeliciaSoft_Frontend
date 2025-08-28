@@ -13,26 +13,26 @@ import categoriaInsumoApiService from '../../services/categoriainsumos';
 export default function InsumosTable() {
   const unidadesPorProducto = {
     'Harina': ['Kilogramos', 'Gramos', 'libra', 'Bolsa', 'Paquete'],
-    'Azúcar': ['kg', 'g', 'lb', 'bolsa'],
+    'Azúcar': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
     'Huevos': ['unid', 'docena', 'cartón'],
-    'Leche': ['l', 'ml', 'galón', 'bolsa', 'cartón'],
-    'Sal': ['kg', 'g', 'paquete'],
-    'Mantequilla': ['g', 'kg', 'barra', 'paquete'],
-    'Aceite': ['l', 'ml', 'botella'],
-    'Arroz': ['kg', 'g', 'lb', 'bolsa'],
-    'Pasta': ['kg', 'g', 'paquete'],
-    'Tomate': ['kg', 'g', 'unid', 'caja']
+    'Leche': ['litros', 'mililitros', 'galón', 'bolsa', 'cartón'],
+    'Sal': ['Kilogramos', 'Gramos', 'paquete'],
+    'Mantequilla': ['Gramos', 'Kilogramos', 'barra', 'paquete'],
+    'Aceite': ['litros', 'mililitros', 'botella'],
+    'Arroz': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
+    'Pasta': ['Kilogramos', 'Gramos', 'paquete'],
+    'Tomate': ['Kilogramos', 'Gramos', 'unida', 'caja']
   };
+
   const unidadesToIds = {
     'Kilogramos': 1,        
-    'g': 2,         
-    'l': 3,         
-    'ml': 4,        
-    'unid': 5,      
-    'lb': 6,      
+    'Gramos': 2,         
+    'litros': 3,         
+    'mililitros': 4,        
+    'unida': 5,      
+    'libras': 6,      
     'oz': 7,      
     'cuch': 8,      
-    // Unidades sin ID en el JSON (las agregarás después)
     'bolsa': null,
     'paquete': null,
     'docena': null,
@@ -43,11 +43,10 @@ export default function InsumosTable() {
     'caja': null
   };
 
-
-
+  // Estados
   const [insumos, setInsumos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [unidades, setUnidades] = useState([]); // Estado para unidades de medida desde API
+  const [unidades, setUnidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
   const [loadingUnidades, setLoadingUnidades] = useState(true);
@@ -75,10 +74,10 @@ export default function InsumosTable() {
     stockMinimo: null
   });
 
- 
-useEffect(() => {
+  // Effect para cargar datos iniciales
+  useEffect(() => {
     const cargarDatos = async () => {
-      console.log('🚀 Iniciando carga de datos del componente...');
+      console.log('Iniciando carga de datos del componente...');
       
       // Cargar categorías primero
       await cargarCategorias();
@@ -89,32 +88,32 @@ useEffect(() => {
       // Luego cargar insumos
       await cargarInsumos();
       
-      console.log('✅ Carga de datos completada');
+      console.log('Carga de datos completada');
     };
     
     cargarDatos();
   }, []);
 
-
+  // Función para cargar unidades
   const cargarUnidades = async () => {
     try {
       setLoadingUnidades(true);
-      console.log('🔄 Iniciando carga de unidades de medida...');
+      console.log('Iniciando carga de unidades de medida...');
       
       const unidadesAPI = await insumoApiService.obtenerUnidadesMedida();
-      console.log('📏 Unidades recibidas de la API:', unidadesAPI);
+      console.log('Unidades recibidas de la API:', unidadesAPI);
       
       if (!unidadesAPI || unidadesAPI.length === 0) {
-        console.warn('⚠️ No se encontraron unidades de medida');
+        console.warn('No se encontraron unidades de medida');
         showNotification('No se encontraron unidades de medida', 'warning');
         setUnidades([]);
         return;
       }
       
       setUnidades(unidadesAPI);
-      console.log('✅ Unidades cargadas exitosamente:', unidadesAPI.length);
+      console.log('Unidades cargadas exitosamente:', unidadesAPI.length);
     } catch (error) {
-      console.error('❌ Error al cargar unidades:', error);
+      console.error('Error al cargar unidades:', error);
       showNotification('Error al cargar las unidades de medida: ' + error.message, 'error');
       setUnidades([]);
     } finally {
@@ -122,27 +121,26 @@ useEffect(() => {
     }
   };
 
-
+  // Función para cargar categorías
   const cargarCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('🔄 Iniciando carga de categorías...');
+      console.log('Iniciando carga de categorías...');
       
       const categoriasAPI = await categoriaInsumoApiService.obtenerCategorias();
-      console.log('📊 Categorías recibidas de la API:', categoriasAPI);
+      console.log('Categorías recibidas de la API:', categoriasAPI);
       
-
       const categoriasActivas = categoriasAPI.filter(cat => cat.estado === true);
-      console.log('✅ Categorías activas filtradas:', categoriasActivas);
+      console.log('Categorías activas filtradas:', categoriasActivas);
       
       if (categoriasActivas.length === 0) {
-        console.warn('⚠️ No se encontraron categorías activas');
+        console.warn('No se encontraron categorías activas');
         showNotification('No se encontraron categorías activas', 'warning');
       }
       
       setCategorias(categoriasActivas);
     } catch (error) {
-      console.error('❌ Error al cargar categorías:', error);
+      console.error('Error al cargar categorías:', error);
       showNotification('Error al cargar las categorías: ' + error.message, 'error');
       setCategorias([]);
     } finally {
@@ -150,45 +148,87 @@ useEffect(() => {
     }
   };
 
-  
+  // Función corregida para cargar insumos
   const cargarInsumos = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Cargando insumos...');
+      console.log('Cargando insumos...');
+      console.log('Estado actual - Categorías:', categorias.length, 'Unidades:', unidades.length);
       
       const insumosAPI = await insumoApiService.obtenerInsumos();
-      console.log('📦 Insumos recibidos:', insumosAPI);
-      const insumosTransformados = insumosAPI.map(insumo => ({
-        id: insumo.id,
-        nombre: insumo.nombreInsumo,
-        categoria: insumo.nombreCategoria || getCategoriaName(insumo.idCategoriaInsumos),
-        cantidad: insumo.cantidad,
-        unidad: insumo.nombreUnidadMedida || getUnidadName(insumo.idUnidadMedida),
-        estado: insumo.estado,
-        stockMinimo: 5, 
-        _originalData: insumo
-      }));
+      console.log('Insumos recibidos:', insumosAPI);
+      console.log('Estructura del primer insumo:', insumosAPI[0]);
+      
+      // Verificar si tenemos las categorías y unidades cargadas
+      if (categorias.length === 0) {
+        console.warn('No hay categorías disponibles para mapear');
+      }
+      if (unidades.length === 0) {
+        console.warn('No hay unidades disponibles para mapear');
+      }
+      
+      // Transformar insumos
+      const insumosTransformados = insumosAPI.map(insumo => {
+        console.log(`Procesando insumo ID ${insumo.id}:`, {
+          nombreInsumo: insumo.nombreInsumo,
+          idCategoriaInsumos: insumo.idCategoriaInsumos,
+          idUnidadMedida: insumo.idUnidadMedida,
+          nombreCategoria: insumo.nombreCategoria,
+          nombreUnidadMedida: insumo.nombreUnidadMedida
+        });
+
+        // Primero intentar usar el nombre que viene de la API
+        let categoria = insumo.nombreCategoria;
+        
+        // Si no viene el nombre, buscarlo en el estado de categorías
+        if (!categoria) {
+          const categoriaEncontrada = categorias.find(cat => cat.id === parseInt(insumo.idCategoriaInsumos));
+          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'Categoría desconocida';
+          console.log(`Categoría buscada para ID ${insumo.idCategoriaInsumos}:`, categoriaEncontrada);
+        }
+
+        // Lo mismo para unidades
+        let unidad = insumo.nombreUnidadMedida;
+        if (!unidad) {
+          const unidadEncontrada = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(insumo.idUnidadMedida));
+          unidad = unidadEncontrada ? unidadEncontrada.unidadmedida : 'unid';
+          console.log(`Unidad buscada para ID ${insumo.idUnidadMedida}:`, unidadEncontrada);
+        }
+
+        const resultado = {
+          id: insumo.id,
+          nombre: insumo.nombreInsumo,
+          categoria,
+          cantidad: insumo.cantidad,
+          unidad,
+          estado: insumo.estado,
+          stockMinimo: 5,
+          _originalData: insumo
+        };
+
+        console.log('Insumo transformado:', resultado);
+        return resultado;
+      });
       
       setInsumos(insumosTransformados);
-      console.log('✅ Insumos transformados:', insumosTransformados.length);
+      console.log('Insumos transformados:', insumosTransformados.length);
     } catch (error) {
-      console.error('❌ Error al cargar insumos:', error);
+      console.error('Error al cargar insumos:', error);
       showNotification('Error al cargar los insumos: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  // Funciones auxiliares
   const getCategoriaName = (id) => {
     const categoria = categorias.find(cat => cat.id === parseInt(id));
-    console.log(`🔍 Buscando categoría con ID ${id}:`, categoria);
-    return categoria ? categoria.nombreCategoria : 'Sin categoría'; 
+    return categoria ? categoria.nombreCategoria : 'Sin categoría';
   };
-
 
   const getUnidadName = (id) => {
     const unidad = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(id));
-    console.log(`🔍 Buscando unidad con ID ${id}:`, unidad);
+    console.log(`Buscando unidad con ID ${id}:`, unidad);
     return unidad ? unidad.unidadmedida : 'unid';
   };
 
@@ -197,28 +237,25 @@ useEffect(() => {
     return categoria ? categoria.id : null;
   };
 
-
   const getUnidadId = (nombre) => {
     const unidad = unidades.find(uni => uni.unidadmedida === nombre);
-    console.log(`🔍 Buscando ID de unidad para "${nombre}":`, unidad);
+    console.log(`Buscando ID de unidad para "${nombre}":`, unidad);
     return unidad ? unidad.idunidadmedida : null;
   };
 
   const getUnidadesDisponibles = (nombreProducto) => {
-
     const unidadesPredefinidas = unidadesPorProducto[nombreProducto];
     
     if (unidadesPredefinidas) {
-
       return unidades.filter(unidadAPI => 
         unidadesPredefinidas.includes(unidadAPI.unidadmedida)
       );
     }
     
-
     return unidades;
   };
 
+  // Funciones de notificación
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
   };
@@ -231,7 +268,7 @@ useEffect(() => {
     setShowStockInfo(!showStockInfo);
   };
 
-
+  // Función para cambiar estado
   const toggleEstado = async (id) => {
     try {
       const insumo = insumos.find(i => i.id === id);
@@ -242,12 +279,12 @@ useEffect(() => {
       setInsumos(insumos.map(i => i.id === id ? { ...i, estado: nuevoEstado } : i));
       showNotification(`Insumo ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
     } catch (error) {
-      console.error('❌ Error al cambiar estado:', error);
+      console.error('Error al cambiar estado:', error);
       showNotification('Error al cambiar el estado: ' + error.message, 'error');
     }
   };
 
-
+  // Funciones del modal
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
     if (tipo === 'editar' && insumo) {
@@ -289,11 +326,10 @@ useEffect(() => {
     setErrors({});
   };
 
-
+  // Manejo de cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newForm = { ...form, [name]: value };
-
 
     if (name === 'nombreInsumo' && value) {
       const unidadesDisponibles = getUnidadesDisponibles(value);
@@ -302,7 +338,7 @@ useEffect(() => {
       
       if (!unidadValida && unidadesDisponibles.length > 0) {
         newForm.idUnidadMedida = unidadesDisponibles[0].idunidadmedida;
-        console.log(`🔄 Unidad cambiada automáticamente a: ${unidadesDisponibles[0].unidadmedida}`);
+        console.log(`Unidad cambiada automáticamente a: ${unidadesDisponibles[0].unidadmedida}`);
       }
     }
 
@@ -315,6 +351,7 @@ useEffect(() => {
     }));
   };
 
+  // Validación de campos
   const validateField = (name, value) => {
     let error = null;
     
@@ -361,6 +398,7 @@ useEffect(() => {
     return error;
   };
 
+  // Función para convertir archivo a Base64
   const convertirABase64 = (file, callback) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -368,6 +406,7 @@ useEffect(() => {
     reader.onerror = (error) => console.error('Error al leer archivo:', error);
   };
 
+  // Validación completa del formulario
   const validarFormulario = () => {
     const erroresValidacion = {
       nombreInsumo: validateField('nombreInsumo', form.nombreInsumo),
@@ -389,15 +428,14 @@ useEffect(() => {
     return true;
   };
 
-
+  // Función para guardar insumo
   const guardar = async () => {
     if (!validarFormulario()) return;
 
     try {
-      console.log('💾 === GUARDANDO INSUMO ===');
-      console.log('📝 Datos del formulario:', JSON.stringify(form, null, 2));
+      console.log('=== GUARDANDO INSUMO ===');
+      console.log('Datos del formulario:', JSON.stringify(form, null, 2));
       
-
       if (!form.nombreInsumo.trim()) {
         showNotification('El nombre del insumo es requerido', 'error');
         return;
@@ -422,12 +460,12 @@ useEffect(() => {
         idImagen: form.idImagen || null
       };
 
-      console.log('📤 Datos preparados para API:', JSON.stringify(datosAPI, null, 2));
+      console.log('Datos preparados para API:', JSON.stringify(datosAPI, null, 2));
 
       const categoriaExiste = categorias.find(c => c.id === datosAPI.idCategoriaInsumos);
       const unidadExiste = unidades.find(u => u.idunidadmedida === datosAPI.idUnidadMedida);
       
-      console.log('🔍 Verificación de foreign keys:');
+      console.log('Verificación de foreign keys:');
       console.log('  - Categoría encontrada:', categoriaExiste);
       console.log('  - Unidad encontrada:', unidadExiste);
       
@@ -440,23 +478,21 @@ useEffect(() => {
       }
 
       if (modal.tipo === 'agregar') {
-        console.log('➕ Creando nuevo insumo...');
+        console.log('Creando nuevo insumo...');
         await insumoApiService.crearInsumo(datosAPI);
         showNotification('Insumo agregado exitosamente');
       } else if (modal.tipo === 'editar') {
-        console.log('✏️ Actualizando insumo existente...');
+        console.log('Actualizando insumo existente...');
         await insumoApiService.actualizarInsumo(modal.insumo.id, datosAPI);
         showNotification('Insumo actualizado exitosamente');
       }
 
-
       await cargarInsumos();
       cerrarModal();
-      console.log('✅ Guardado exitoso');
+      console.log('Guardado exitoso');
     } catch (error) {
-      console.error('❌ Error al guardar:', error);
+      console.error('Error al guardar:', error);
       
-
       let mensajeError = 'Error al guardar el insumo';
       
       if (error.status === 500) {
@@ -473,6 +509,7 @@ useEffect(() => {
     }
   };
 
+  // Función para eliminar insumo
   const eliminar = async () => {
     try {
       await insumoApiService.eliminarInsumo(modal.insumo.id);
@@ -485,6 +522,7 @@ useEffect(() => {
     }
   };
 
+  // Filtrado de insumos
   const insumosFiltrados = insumos.filter((insumo) => {
     if (!filtro.trim()) return true;
     
@@ -500,6 +538,7 @@ useEffect(() => {
     );
   });
 
+  // Funciones de stock
   const getStockStatus = (insumo) => {
     const { cantidad, stockMinimo } = insumo;
     const porcentaje = stockMinimo > 0 ? (cantidad / stockMinimo) * 100 : 100;
@@ -532,6 +571,7 @@ useEffect(() => {
     }
   };
 
+  // Componentes de indicadores
   const StockIndicator = ({ insumo }) => {
     const status = getStockStatus(insumo);
     const style = getStockStyle(insumo);
@@ -566,19 +606,20 @@ useEffect(() => {
     );
   };
 
-
+  // Renderizado condicional para loading
   if (loading || loadingCategorias || loadingUnidades) {
     return (
       <div className="admin-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
         <div>
-          {loading && <div>🔄 Cargando insumos...</div>}
-          {loadingCategorias && <div>📂 Cargando categorías...</div>}
-          {loadingUnidades && <div>📏 Cargando unidades de medida...</div>}
+          {loading && <div>Cargando insumos...</div>}
+          {loadingCategorias && <div>Cargando categorías...</div>}
+          {loadingUnidades && <div>Cargando unidades de medida...</div>}
         </div>
       </div>
     );
   }
 
+  // Renderizado principal
   return (
     <div className="admin-wrapper">
       <Notification
@@ -596,7 +637,6 @@ useEffect(() => {
           placeholder="Buscar por nombre, categoría, cantidad, estado..." 
         />
       </div>
-
 
       <div style={{ margin: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: '14px', color: '#666' }}>
@@ -635,51 +675,56 @@ useEffect(() => {
       )}
 
       <h2 className="admin-section-title">Gestión de Insumos</h2>
+<DataTable
+  value={insumosFiltrados}
+  paginator
+  rows={5}
+  rowsPerPageOptions={[5, 10, 20]}
+  paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
+  className="admin-table"
+>
+  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+  <Column field="nombre" header="Nombre" />
+  <Column field="categoria" header="Categoría" />
+  <Column header="Stock Actual" body={(insumo) => <StockIndicator insumo={insumo} />} />
+  <Column header="Stock Mínimo" body={(insumo) => <StockMinimoIndicator insumo={insumo} />} />
+  <Column
+    header="Estado"
+    body={i => (
+      <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
+    )}
+  />
+  <Column
+    header="Acción"
+    body={(rowData) => (
+      <>
+        <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>👁</button>
+        <button
+          className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
+          title="Editar"
+          onClick={() => rowData.estado && abrirModal('editar', rowData)}
+          disabled={!rowData.estado}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+          }}
+        >✏️</button>
+        <button
+          className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
+          title="Eliminar"
+          onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+          disabled={!rowData.estado}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+          }}
+        >🗑️</button>
+      </>
+    )}
+  />
+</DataTable>
 
-      <DataTable value={insumosFiltrados} paginator rows={10} className="admin-table">
-        <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-        <Column field="nombre" header="Nombre" />
-        <Column field="categoria" header="Categoría" />
-        <Column header="Stock Actual" body={(insumo) => <StockIndicator insumo={insumo} />} />
-        <Column header="Stock Mínimo" body={(insumo) => <StockMinimoIndicator insumo={insumo} />} />
-        <Column header="Estado" body={i => (
-          <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
-        )} />
-        <Column
-          header="Acción"
-          body={(rowData) => (
-            <>
-              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>
-                👁
-              </button>
-              <button 
-                className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`} 
-                title="Editar" 
-                onClick={() => rowData.estado && abrirModal('editar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: !rowData.estado ? 0.5 : 1, 
-                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
-                }}
-              >
-                ✏️
-              </button>
-              <button 
-                className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`} 
-                title="Eliminar" 
-                onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: !rowData.estado ? 0.5 : 1, 
-                  cursor: !rowData.estado ? 'not-allowed' : 'pointer' 
-                }}
-              >
-                🗑️
-              </button>
-            </>
-          )}
-        />
-      </DataTable>
       
       {modal.visible && (
         <Modal visible={modal.visible} onClose={cerrarModal}>
@@ -957,57 +1002,6 @@ useEffect(() => {
             )}
           </div>
         </Modal>
-      )}
-
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '8px',
-          padding: '10px',
-          fontSize: '12px',
-          color: '#666',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          maxWidth: '300px'
-        }}>
-          <strong>🔧 Dev Tools</strong>
-          <br />
-          <button 
-            style={{ fontSize: '11px', margin: '5px 2px', padding: '2px 6px' }}
-            onClick={async () => {
-              console.log('🔬 Ejecutando diagnóstico...');
-              await insumoApiService.diagnosticarConexiones();
-            }}
-          >
-            Diagnóstico API
-          </button>
-          <button 
-            style={{ fontSize: '11px', margin: '5px 2px', padding: '2px 6px' }}
-            onClick={async () => {
-              console.log('🧪 Probando creación...');
-              try {
-                await insumoApiService.probarCreacion();
-                showNotification('Prueba de creación exitosa', 'success');
-              } catch (error) {
-                showNotification('Error en prueba: ' + error.message, 'error');
-              }
-            }}
-          >
-            Probar Creación
-          </button>
-          <button 
-            style={{ fontSize: '11px', margin: '5px 2px', padding: '2px 6px' }}
-            onClick={() => {
-              insumoApiService.limpiarCache();
-              showNotification('Cache limpiado', 'info');
-            }}
-          >
-            Limpiar Cache
-          </button>
-        </div>
       )}
     </div>
   );

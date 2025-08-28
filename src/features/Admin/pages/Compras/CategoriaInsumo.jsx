@@ -11,6 +11,7 @@ import categoriaInsumoApiService from '../../services/categoriainsumos';
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false); 
+  const [loadingStates, setLoadingStates] = useState({}); // Para loading individual
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modalVisible, setModalVisible] = useState(false);
@@ -77,9 +78,12 @@ export default function CategoriaTableDemo() {
 
     setErrores(nuevosErrores);
   }, [nombreEditado, descripcionEditada]);
+
   const toggleActivo = async (categoria) => {
     try {
-      setLoading(true);
+      // Loading individual para cada switch
+      setLoadingStates(prev => ({ ...prev, [categoria.id]: true }));
+      
       const nuevoEstado = !categoria.activo;
       await categoriaInsumoApiService.cambiarEstadoCategoria(categoria.id, nuevoEstado);
       const updated = categorias.map(cat =>
@@ -91,7 +95,7 @@ export default function CategoriaTableDemo() {
       console.error('Error al cambiar estado:', error);
       showNotification('Error al cambiar el estado: ' + error.message, 'error');
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, [categoria.id]: false }));
     }
   };
 
@@ -143,20 +147,17 @@ export default function CategoriaTableDemo() {
     return true;
   };
 
-
   const guardarEdicion = async () => {
     if (!validarFormulario()) return;
 
     try {
       setLoading(true);
       
-
       const datosCategoria = {
         nombreCategoria: nombreEditado.trim(),
         descripcion: descripcionEditada.trim(),
         estado: estadoEditado
       };
-
 
       const categoriaActualizada = await categoriaInsumoApiService.actualizarCategoria(
         categoriaSeleccionada.id, 
@@ -183,7 +184,6 @@ export default function CategoriaTableDemo() {
       setLoading(false);
     }
   };
-
 
   const confirmarEliminar = async () => {
     try {
@@ -278,6 +278,7 @@ export default function CategoriaTableDemo() {
 
       <h2 className="admin-section-title">Categoria Insumos</h2>
 
+      {/* SOLUCIÓN 1: Quitar completamente la prop loading */}
       <DataTable
         value={categoriasFiltradas}
         className="admin-table"
@@ -285,7 +286,7 @@ export default function CategoriaTableDemo() {
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
-        loading={loading}
+        // loading={loading} // <- COMENTADO PARA EVITAR EL OVERLAY GRIS
       >
         <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
         <Column field="nombre" header="Nombre" />
@@ -296,7 +297,7 @@ export default function CategoriaTableDemo() {
             <InputSwitch
               checked={rowData.activo}
               onChange={() => toggleActivo(rowData)}
-              disabled={loading}
+              disabled={loadingStates[rowData.id]} // Loading individual
             />
           )}
         />
@@ -304,6 +305,7 @@ export default function CategoriaTableDemo() {
           header="Acción"
           body={(rowData) => {
             const isEnabled = rowData.activo;
+            const isLoadingThis = loadingStates[rowData.id];
 
             return (
               <>
@@ -311,7 +313,7 @@ export default function CategoriaTableDemo() {
                   className="admin-button gray" 
                   title="Visualizar" 
                   onClick={() => abrirModal('visualizar', rowData)}
-                  disabled={loading}
+                  disabled={isLoadingThis}
                 >
                   👁
                 </button>
@@ -320,10 +322,10 @@ export default function CategoriaTableDemo() {
                   className="admin-button yellow"
                   title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
                   onClick={() => isEnabled && abrirModal('editar', rowData)}
-                  disabled={!isEnabled || loading}
+                  disabled={!isEnabled || isLoadingThis}
                   style={{
-                    opacity: isEnabled && !loading ? 1 : 0.50,
-                    cursor: isEnabled && !loading ? 'pointer' : 'not-allowed'
+                    opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
+                    cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
                   }}
                 >
                   ✏️
@@ -333,10 +335,10 @@ export default function CategoriaTableDemo() {
                   className="admin-button red"
                   title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
                   onClick={() => isEnabled && abrirModal('eliminar', rowData)}
-                  disabled={!isEnabled || loading}
+                  disabled={!isEnabled || isLoadingThis}
                   style={{
-                    opacity: isEnabled && !loading ? 1 : 0.50,
-                    cursor: isEnabled && !loading ? 'pointer' : 'not-allowed'
+                    opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
+                    cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
                   }}
                 >
                   🗑️

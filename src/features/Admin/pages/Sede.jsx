@@ -297,7 +297,7 @@ export default function SedesTable() {
             <div className="modal-body">
               <div className="modal-details">
                 <div className="detail-row">
-                  <span className="detail-label">ID:</span>
+                  <span className="detail-label">N:</span>
                   <span className="detail-value">
                     {usuarioSeleccionado?.id}
                   </span>
@@ -419,7 +419,7 @@ export default function SedesTable() {
         tableStyle={{ minWidth: "50rem" }}
         emptyMessage="No se encontraron sedes"
       >
-        <Column field="id" header="ID" />
+        <Column field="id" header="N°" />
         <Column field="nombre" header="Nombre" />
         <Column field="Direccion" header="Dirección" />
         <Column field="Telefono" header="Teléfono" />

@@ -40,7 +40,7 @@ const mockInsumosDisponibles = [
   {
     id: 4,
     nombre: "Huevos A",
-    categoria: "LÃƒÂ¡cteos",
+    categoria: "Lácteos",
     IdUnidadMedida: 5,
     precio: 18.9,
     imagen:
@@ -112,7 +112,7 @@ const unidadesDeMedida = [
   { id: 6, nombre: "kilogramos" },
 ];
 
-// Mock data for categorÃ­as de productos - ACTUALIZADO con las categorÃ­as del primer cÃ³digo
+// Mock data for categorías de productos
 const categorias = [
   { id: 301, nombre: "Fresas con crema" },
   { id: 302, nombre: "Obleas" },
@@ -122,7 +122,7 @@ const categorias = [
   { id: 306, nombre: "Arroz con leche" },
 ];
 
-// Componente modal de visualizaciÃ³n con el mismo diseÃ±o
+// Componente modal de visualización mejorado con recetas detalladas
 const VisualizarProductoModal = ({
   visible,
   onClose,
@@ -168,6 +168,7 @@ const VisualizarProductoModal = ({
           backgroundColor: "white",
           borderRadius: "12px",
           maxWidth: "90vw",
+          width: "900px",
           maxHeight: "90vh",
           overflow: "auto",
           position: "relative",
@@ -190,34 +191,33 @@ const VisualizarProductoModal = ({
               style={{
                 color: "#2c3e50",
                 margin: 0,
-                fontSize: "1.5rem",
+                fontSize: "1.8rem",
                 fontWeight: "600",
               }}
             >
-              Detalles del Producto
+              📋 Detalles del Producto
             </h2>
             <button
               onClick={onClose}
               style={{
-                background: "none",
+                background: "#ff6b6b",
                 border: "none",
-                fontSize: "1.5rem",
+                fontSize: "1.2rem",
                 cursor: "pointer",
-                color: "#7f8c8d",
-                padding: "0.5rem",
-                borderRadius: "50%",
-                width: "40px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                color: "white",
+                padding: "0.5rem 1rem",
+                borderRadius: "8px",
+                fontWeight: "600",
+                transition: "background-color 0.3s ease",
               }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "#e55555"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = "#ff6b6b"}
             >
-              x
+              ✕ Cerrar
             </button>
           </div>
 
-          {/* InformaciÃ³n bÃ¡sica del producto */}
+          {/* Información básica del producto */}
           <div style={{ marginBottom: "2rem" }}>
             <div
               style={{
@@ -237,16 +237,17 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Nombre del Producto
+                  📝 Nombre del Producto
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
                     backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    border: "2px solid #e9ecef",
                     borderRadius: "8px",
                     fontSize: "1rem",
                     color: "#2c3e50",
+                    fontWeight: "500",
                   }}
                 >
                   {producto.nombre}
@@ -263,17 +264,17 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Precio
+                  💰 Precio
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    backgroundColor: "#e8f5e8",
+                    border: "2px solid #4CAF50",
                     borderRadius: "8px",
-                    fontSize: "1rem",
-                    color: "#000",
-                    fontWeight: "600",
+                    fontSize: "1.1rem",
+                    color: "#2e7d32",
+                    fontWeight: "700",
                   }}
                 >
                   {formatearPrecio(producto.precio || 0)}
@@ -290,16 +291,17 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Categoria
+                  🏷️ Categoría
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    backgroundColor: "#fff3e0",
+                    border: "2px solid #ff9800",
                     borderRadius: "8px",
                     fontSize: "1rem",
-                    color: "#2c3e50",
+                    color: "#f57c00",
+                    fontWeight: "600",
                   }}
                 >
                   {producto.categoria}
@@ -316,20 +318,21 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Estado
+                  📊 Estado
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    backgroundColor: producto.estado ? "#e8f5e8" : "#ffebee",
+                    border: producto.estado ? "2px solid #4CAF50" : "2px solid #f44336",
                     borderRadius: "8px",
                     fontSize: "1rem",
-                    color: producto.estado ? "#27ae60" : "#e74c3c",
+                    color: producto.estado ? "#2e7d32" : "#c62828",
                     fontWeight: "600",
+                    textAlign: "center",
                   }}
                 >
-                  {producto.estado ? "Activo" : "Inactivo"}
+                  {producto.estado ? "✅ Activo" : "❌ Inactivo"}
                 </div>
               </div>
             </div>
@@ -340,7 +343,11 @@ const VisualizarProductoModal = ({
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: "1.5rem",
-                marginBottom: "1.5rem",
+                marginBottom: "2rem",
+                padding: "1.5rem",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "12px",
+                border: "1px solid #dee2e6",
               }}
             >
               <div>
@@ -353,16 +360,18 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Cantidad en San Pablo
+                  🏢 Cantidad en San Pablo
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    backgroundColor: "white",
+                    border: "2px solid #6c757d",
                     borderRadius: "8px",
-                    fontSize: "1rem",
-                    color: "#2c3e50",
+                    fontSize: "1.1rem",
+                    color: "#495057",
+                    fontWeight: "600",
+                    textAlign: "center",
                   }}
                 >
                   {producto.cantidadSanPablo || 0} unidades
@@ -379,16 +388,18 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Cantidad en San Benito
+                  🏪 Cantidad en San Benito
                 </label>
                 <div
                   style={{
                     padding: "0.75rem",
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
+                    backgroundColor: "white",
+                    border: "2px solid #6c757d",
                     borderRadius: "8px",
-                    fontSize: "1rem",
-                    color: "#2c3e50",
+                    fontSize: "1.1rem",
+                    color: "#495057",
+                    fontWeight: "600",
+                    textAlign: "center",
                   }}
                 >
                   {producto.cantidadSanBenito || 0} unidades
@@ -396,50 +407,72 @@ const VisualizarProductoModal = ({
               </div>
             </div>
 
-            {/* SecciÃ³n de Recetas */}
+            {/* Sección de Recetas Mejorada */}
             <div style={{ marginBottom: "2rem" }}>
-              <h3
+              <div
                 style={{
-                  color: "#000",
-                  fontSize: "1.2rem",
-                  fontWeight: "600",
-                  marginBottom: "1rem",
-                  textAlign: "center",
-                  borderBottom: "2px solid #000",
-                  paddingBottom: "0.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  marginBottom: "1.5rem",
+                  padding: "1rem",
+                  backgroundColor: "#e3f2fd",
+                  borderRadius: "12px",
+                  border: "2px solid #2196f3",
                 }}
               >
-                Recetas Asociadas
-              </h3>
+                <h3
+                  style={{
+                    color: "#1565c0",
+                    fontSize: "1.4rem",
+                    fontWeight: "700",
+                    margin: 0,
+                    textAlign: "center",
+                    flex: 1,
+                  }}
+                >
+                  👨‍🍳 Recetas Asociadas al Producto
+                </h3>
+              </div>
+
               {producto.recetas?.length > 0 ? (
                 <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "1rem",
+                    gap: "1.5rem",
                   }}
                 >
-                  {producto.recetas.map((receta) => (
+                  {producto.recetas.map((receta, index) => (
                     <div
                       key={receta.id}
                       style={{
-                        border: "1px solid #e9ecef",
-                        borderRadius: "8px",
+                        border: "2px solid #e9ecef",
+                        borderRadius: "12px",
                         overflow: "hidden",
                         backgroundColor: "#ffffff",
+                        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                        transition: "box-shadow 0.3s ease",
                       }}
                     >
-                      {/* Header de la receta */}
+                      {/* Header de la receta mejorado */}
                       <div
                         onClick={() => onToggleDetalle(receta.id)}
                         style={{
-                          padding: "1rem",
-                          backgroundColor: "#f8f9fa",
+                          padding: "1.5rem",
+                          backgroundColor: index % 2 === 0 ? "#f1f8e9" : "#fff3e0",
                           cursor: "pointer",
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
                           borderBottom: "1px solid #e9ecef",
+                          transition: "background-color 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#e8f5e8" : "#ffe0b2";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#f1f8e9" : "#fff3e0";
                         }}
                       >
                         <div
@@ -449,150 +482,262 @@ const VisualizarProductoModal = ({
                             gap: "1rem",
                           }}
                         >
-                          {receta.imagen && (
+                          {receta.imagen ? (
                             <img
                               src={receta.imagen}
                               alt={receta.nombre}
                               style={{
-                                width: "50px",
-                                height: "50px",
+                                width: "60px",
+                                height: "60px",
                                 objectFit: "cover",
-                                borderRadius: "8px",
+                                borderRadius: "10px",
+                                border: "2px solid #dee2e6",
                               }}
                             />
+                          ) : (
+                            <div
+                              style={{
+                                width: "60px",
+                                height: "60px",
+                                backgroundColor: "#6c757d",
+                                borderRadius: "10px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "1.5rem",
+                                color: "white",
+                              }}
+                            >
+                              🍰
+                            </div>
                           )}
-                          <h4
+                          <div>
+                            <h4
+                              style={{
+                                margin: 0,
+                                color: "#2c3e50",
+                                fontSize: "1.2rem",
+                                fontWeight: "700",
+                                marginBottom: "0.25rem",
+                              }}
+                            >
+                              📋 {receta.nombre}
+                            </h4>
+                            <p
+                              style={{
+                                margin: 0,
+                                color: "#6c757d",
+                                fontSize: "0.9rem",
+                                fontStyle: "italic",
+                              }}
+                            >
+                              Click para ver detalles de la receta
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "1rem",
+                          }}
+                        >
+                          <div
                             style={{
-                              margin: 0,
-                              color: "#2c3e50",
-                              fontSize: "1.1rem",
+                              backgroundColor: detalleVisible === receta.id ? "#4CAF50" : "#6c757d",
+                              color: "white",
+                              padding: "0.5rem 1rem",
+                              borderRadius: "20px",
+                              fontSize: "0.8rem",
                               fontWeight: "600",
                             }}
                           >
-                            {receta.nombre}
-                          </h4>
+                            {detalleVisible === receta.id ? "Expandida" : "Contraída"}
+                          </div>
+                          <span
+                            style={{
+                              color: "#7f8c8d",
+                              fontSize: "1.5rem",
+                              transform:
+                                detalleVisible === receta.id
+                                  ? "rotate(180deg)"
+                                  : "rotate(0deg)",
+                              transition: "transform 0.3s ease",
+                            }}
+                          >
+                            ⬇️
+                          </span>
                         </div>
-                        <span
-                          style={{
-                            color: "#7f8c8d",
-                            fontSize: "1.2rem",
-                            transform:
-                              detalleVisible === receta.id
-                                ? "rotate(180deg)"
-                                : "rotate(0deg)",
-                            transition: "transform 0.2s ease",
+                      </div>
+
+                      {/* Detalles de la receta (colapsable) mejorado */}
+                      {detalleVisible === receta.id && (
+                        <div 
+                          style={{ 
+                            padding: "2rem",
+                            backgroundColor: "#fafafa",
+                            animation: "fadeIn 0.3s ease-in-out",
                           }}
                         >
-                          ↓
-                        </span>
-                      </div>
-                      {/* Detalles de la receta (colapsable) */}
-                      {detalleVisible === receta.id && (
-                        <div style={{ padding: "1.5rem" }}>
                           <div
                             style={{
                               display: "grid",
                               gridTemplateColumns: "1fr 1fr",
-                              gap: "1.5rem",
+                              gap: "2rem",
                             }}
                           >
-                            {/* Insumos */}
+                            {/* Insumos mejorado */}
                             <div>
                               <h5
                                 style={{
-                                  color: "#34495e",
-                                  marginBottom: "0.5rem",
-                                  fontSize: "1rem",
-                                  fontWeight: "600",
+                                  color: "#2e7d32",
+                                  marginBottom: "1rem",
+                                  fontSize: "1.1rem",
+                                  fontWeight: "700",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
                                 }}
                               >
-                                Insumos necesarios:
+                                🥄 Insumos Necesarios
                               </h5>
-                              <ul
+                              <div
                                 style={{
-                                  listStyle: "none",
-                                  padding: 0,
-                                  margin: 0,
-                                  backgroundColor: "#f8f9fa",
-                                  borderRadius: "6px",
+                                  backgroundColor: "#ffffff",
+                                  borderRadius: "10px",
+                                  border: "2px solid #e8f5e8",
+                                  padding: "1rem",
                                 }}
                               >
                                 {receta.insumos?.length > 0 ? (
-                                  receta.insumos.map((insumo, index) => (
-                                    <li
-                                      key={index}
-                                      style={{
-                                        padding: "0.25rem 0",
-                                        color: "#2c3e50",
-                                        fontSize: "0.9rem",
-                                        borderBottom:
-                                          index === receta.insumos.length - 1
-                                            ? "none"
-                                            : "1px solid #e9ecef",
-                                      }}
-                                    >
-                                      {insumo.nombre} (
-                                      {insumo.cantidad}{" "}
-                                      {getUnidadMedidaNombre(
-                                        insumo.IdUnidadMedida
-                                      )}
-                                      )
-                                    </li>
-                                  ))
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                    {receta.insumos.map((insumo, idx) => (
+                                      <div
+                                        key={idx}
+                                        style={{
+                                          padding: "0.75rem",
+                                          backgroundColor: "#f8f9fa",
+                                          borderRadius: "8px",
+                                          border: "1px solid #dee2e6",
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            color: "#2c3e50",
+                                            fontSize: "0.9rem",
+                                            fontWeight: "600",
+                                          }}
+                                        >
+                                          • {insumo.nombre}
+                                        </span>
+                                        <span
+                                          style={{
+                                            color: "#6c757d",
+                                            fontSize: "0.85rem",
+                                            backgroundColor: "#e9ecef",
+                                            padding: "0.25rem 0.5rem",
+                                            borderRadius: "4px",
+                                            fontWeight: "600",
+                                          }}
+                                        >
+                                          {insumo.cantidad} {getUnidadMedidaNombre(insumo.IdUnidadMedida)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 ) : (
-                                  <li style={{ color: "#7f8c8d" }}>
-                                    No hay insumos asociados.
-                                  </li>
+                                  <div
+                                    style={{
+                                      textAlign: "center",
+                                      color: "#6c757d",
+                                      fontStyle: "italic",
+                                      padding: "1rem",
+                                    }}
+                                  >
+                                    ℹ️ No hay insumos asociados a esta receta
+                                  </div>
                                 )}
-                              </ul>
+                              </div>
                             </div>
-                            {/* Recetas */}
+
+                            {/* Recetas anidadas mejorado */}
                             <div>
                               <h5
                                 style={{
-                                  color: "#34495e",
-                                  marginBottom: "0.5rem",
-                                  fontSize: "1rem",
-                                  fontWeight: "600",
+                                  color: "#d32f2f",
+                                  marginBottom: "1rem",
+                                  fontSize: "1.1rem",
+                                  fontWeight: "700",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.5rem",
                                 }}
                               >
-                                Recetas necesarias:
+                                🔄 Sub-Recetas Necesarias
                               </h5>
-                              <ul
+                              <div
                                 style={{
-                                  listStyle: "none",
-                                  padding: 0,
-                                  margin: 0,
-                                  backgroundColor: "#f8f9fa",
-                                  borderRadius: "6px",
+                                  backgroundColor: "#ffffff",
+                                  borderRadius: "10px",
+                                  border: "2px solid #ffebee",
+                                  padding: "1rem",
                                 }}
                               >
                                 {receta.recetasAnidadas?.length > 0 ? (
-                                  receta.recetasAnidadas.map((receta, index) => (
-                                    <li
-                                      key={index}
-                                      style={{
-                                        padding: "0.25rem 0",
-                                        color: "#2c3e50",
-                                        fontSize: "0.9rem",
-                                        borderBottom:
-                                          index ===
-                                            receta.recetasAnidadas.length - 1
-                                            ? "none"
-                                            : "1px solid #e9ecef",
-                                      }}
-                                    >
-                                      {receta.nombre} (
-                                      {receta.cantidad}
-                                      )
-                                    </li>
-                                  ))
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                                    {receta.recetasAnidadas.map((subReceta, idx) => (
+                                      <div
+                                        key={idx}
+                                        style={{
+                                          padding: "0.75rem",
+                                          backgroundColor: "#f8f9fa",
+                                          borderRadius: "8px",
+                                          border: "1px solid #dee2e6",
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            color: "#2c3e50",
+                                            fontSize: "0.9rem",
+                                            fontWeight: "600",
+                                          }}
+                                        >
+                                          🧩 {subReceta.nombre}
+                                        </span>
+                                        <span
+                                          style={{
+                                            color: "#6c757d",
+                                            fontSize: "0.85rem",
+                                            backgroundColor: "#e9ecef",
+                                            padding: "0.25rem 0.5rem",
+                                            borderRadius: "4px",
+                                            fontWeight: "600",
+                                          }}
+                                        >
+                                          {subReceta.cantidad || 1} unidad(es)
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 ) : (
-                                  <li style={{ color: "#7f8c8d" }}>
-                                    No hay recetas asociadas.
-                                  </li>
+                                  <div
+                                    style={{
+                                      textAlign: "center",
+                                      color: "#6c757d",
+                                      fontStyle: "italic",
+                                      padding: "1rem",
+                                    }}
+                                  >
+                                    ℹ️ No hay sub-recetas asociadas
+                                  </div>
                                 )}
-                              </ul>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -601,14 +746,56 @@ const VisualizarProductoModal = ({
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: "center", color: "#7f8c8d" }}>
-                  Este producto no tiene recetas asociadas.
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "3rem 2rem",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "12px",
+                    border: "2px dashed #6c757d",
+                  }}
+                >
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🍽️</div>
+                  <h4
+                    style={{
+                      color: "#6c757d",
+                      margin: 0,
+                      fontSize: "1.1rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Este producto no tiene recetas asociadas
+                  </h4>
+                  <p
+                    style={{
+                      color: "#adb5bd",
+                      margin: "0.5rem 0 0 0",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    Puedes agregar recetas editando este producto
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
@@ -627,18 +814,12 @@ export default function ProductosTabla() {
 
   // Función corregida para obtener nombre de categoría por ID
   const getNombreCategoriaById = (idCategoria) => {
-    // Si no hay idCategoria, retornar valor por defecto
     if (!idCategoria && idCategoria !== 0) {
       return "Sin categoría";
     }
     
-    // Convertir a número para asegurar comparación correcta
     const id = Number(idCategoria);
-    
-    // Buscar la categoría por ID
     const categoria = categorias.find(cat => cat.id === id);
-    
-    // Retornar el nombre si se encuentra, sino el valor por defecto
     return categoria ? categoria.nombre : "Sin categoría";
   };
 
@@ -654,13 +835,13 @@ export default function ProductosTabla() {
     }).format(precio);
 
   useEffect(() => {
-    // Mock productos actualizados con las nuevas categorÃ­as
+    // Mock productos actualizados con más recetas detalladas
     const mockProductos = [
       {
         id: 1,
         nombre: "Pan de Leche",
         precio: 5000,
-        categoria: "Pasteles", // Cambiado para usar las nuevas categorÃ­as
+        categoria: "Pasteles",
         cantidadSanPablo: 20,
         cantidadSanBenito: 15,
         estado: true,
@@ -669,9 +850,12 @@ export default function ProductosTabla() {
           {
             id: 1,
             nombre: "Pan Integral Casero",
+            imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop&crop=center",
             insumos: [
               { id: 1, nombre: "Harina de Trigo", cantidad: 500, IdUnidadMedida: 1 },
               { id: 2, nombre: "Azucar Blanca", cantidad: 50, IdUnidadMedida: 1 },
+              { id: 3, nombre: "Levadura Seca", cantidad: 10, IdUnidadMedida: 1 },
+              { id: 6, nombre: "Leche Entera", cantidad: 200, IdUnidadMedida: 2 },
             ],
             recetasAnidadas: [],
           },
@@ -690,11 +874,17 @@ export default function ProductosTabla() {
           {
             id: 2,
             nombre: "Torta de Chocolate Fudge",
+            imagen: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop&crop=center",
             insumos: [
-              { id: 7, nombre: "Chocolate Semiamargo", cantidad: 200, IdUnidadMedida: 2 },
+              { id: 1, nombre: "Harina de Trigo", cantidad: 300, IdUnidadMedida: 1 },
+              { id: 7, nombre: "Chocolate Semiamargo", cantidad: 200, IdUnidadMedida: 1 },
               { id: 8, nombre: "Esencia de Vainilla", cantidad: 5, IdUnidadMedida: 4 },
+              { id: 4, nombre: "Huevos A", cantidad: 4, IdUnidadMedida: 5 },
+              { id: 5, nombre: "Mantequilla sin sal", cantidad: 150, IdUnidadMedida: 1 },
             ],
-            recetasAnidadas: [],
+            recetasAnidadas: [
+              { id: 21, nombre: "Crema de Chocolate", cantidad: 1 }
+            ],
           },
         ],
       },
@@ -721,12 +911,49 @@ export default function ProductosTabla() {
         recetas: [
           {
             id: 3,
-            nombre: "Crema de Vainilla",
+            nombre: "Base de Cupcake de Vainilla",
+            imagen: "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=200&h=200&fit=crop&crop=center",
             insumos: [
-              { id: 6, nombre: "Leche Entera", cantidad: 100, IdUnidadMedida: 3 },
+              { id: 1, nombre: "Harina de Trigo", cantidad: 200, IdUnidadMedida: 1 },
+              { id: 2, nombre: "Azucar Blanca", cantidad: 150, IdUnidadMedida: 1 },
+              { id: 4, nombre: "Huevos A", cantidad: 2, IdUnidadMedida: 5 },
+              { id: 5, nombre: "Mantequilla sin sal", cantidad: 100, IdUnidadMedida: 1 },
+              { id: 6, nombre: "Leche Entera", cantidad: 100, IdUnidadMedida: 2 },
               { id: 8, nombre: "Esencia de Vainilla", cantidad: 2, IdUnidadMedida: 4 },
             ],
-            recetasAnidadas: [],
+            recetasAnidadas: [
+              { id: 31, nombre: "Crema de Vainilla", cantidad: 1 },
+              { id: 32, nombre: "Decoración de Fondant", cantidad: 1 }
+            ],
+          },
+        ],
+      },
+      {
+        id: 5,
+        nombre: "Cheesecake de Fresas",
+        precio: 28000,
+        categoria: "Fresas con crema",
+        cantidadSanPablo: 8,
+        cantidadSanBenito: 12,
+        estado: true,
+        tieneRelaciones: true,
+        recetas: [
+          {
+            id: 4,
+            nombre: "Cheesecake de Fresas Premium",
+            imagen: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=200&h=200&fit=crop&crop=center",
+            insumos: [
+              { id: 1, nombre: "Harina de Trigo", cantidad: 100, IdUnidadMedida: 1 },
+              { id: 2, nombre: "Azucar Blanca", cantidad: 200, IdUnidadMedida: 1 },
+              { id: 4, nombre: "Huevos A", cantidad: 3, IdUnidadMedida: 5 },
+              { id: 5, nombre: "Mantequilla sin sal", cantidad: 80, IdUnidadMedida: 1 },
+              { id: 8, nombre: "Esencia de Vainilla", cantidad: 3, IdUnidadMedida: 4 },
+            ],
+            recetasAnidadas: [
+              { id: 41, nombre: "Base de Galleta", cantidad: 1 },
+              { id: 42, nombre: "Relleno de Queso", cantidad: 1 },
+              { id: 43, nombre: "Salsa de Fresas", cantidad: 1 }
+            ],
           },
         ],
       },
@@ -785,7 +1012,7 @@ export default function ProductosTabla() {
   };
 
   const handleSaveProducto = (productoData) => {
-    console.log("Datos recibidos del formulario:", productoData); // Debug
+    console.log("Datos recibidos del formulario:", productoData);
 
     if (productoData.id || productoData.Idreceta) {
       // Lógica para editar un producto existente
@@ -816,11 +1043,7 @@ export default function ProductosTabla() {
       // Lógica para agregar un nuevo producto
       const newId = Math.max(...productos.map(p => p.id), 0) + 1;
       
-      // Obtener nombre de categoría usando la función corregida
       const nombreCategoria = getNombreCategoriaById(productoData.IdCategoria);
-      
-      console.log("ID Categoría recibido:", productoData.IdCategoria); // Debug
-      console.log("Nombre categoría convertido:", nombreCategoria); // Debug
       
       const newProducto = {
         id: newId,
@@ -832,7 +1055,6 @@ export default function ProductosTabla() {
         estado: true,
         tieneRelaciones: (productoData.insumos && productoData.insumos.length > 0) || 
                         (productoData.recetasAnidadas && productoData.recetasAnidadas.length > 0),
-        // Crear estructura de recetas si hay insumos o recetas anidadas
         recetas: (productoData.insumos?.length > 0 || productoData.recetasAnidadas?.length > 0) ? [{
           id: newId,
           nombre: productoData.NombreReceta || "Producto sin nombre",
@@ -840,8 +1062,6 @@ export default function ProductosTabla() {
           recetasAnidadas: productoData.recetasAnidadas || []
         }] : []
       };
-      
-      console.log("Nuevo producto creado:", newProducto); // Debug
       
       setProductos(prevProductos => {
         const nuevosProductos = [...prevProductos, newProducto];
@@ -880,7 +1100,6 @@ export default function ProductosTabla() {
       }))
     );
 
-    // Buscar ID de categoría por nombre
     const categoriaId = categorias.find(cat => cat.nombre === producto.categoria)?.id || 301;
 
     return {
@@ -901,7 +1120,6 @@ export default function ProductosTabla() {
       case "list":
         return (
           <>
-            {/* Nuevo diseño de header y tabla */}
             <div className="admin-wrapper">
               <div className="admin-toolbar">
                 <button

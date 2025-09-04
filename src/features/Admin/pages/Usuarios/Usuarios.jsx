@@ -299,7 +299,7 @@ export default function Usuarios() {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                👁
+                🔍
               </button>
               <button
                 className={`admin-button yellow ${!rowData.activo ? 'disabled' : ''}`}

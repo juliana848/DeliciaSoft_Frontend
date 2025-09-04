@@ -113,7 +113,7 @@ export default function VentasListar({
                     title="Ver Detalle"
                     onClick={() => verDetalleVenta(rowData)}
                 >
-                    👁
+                    🔍
                 </button>
                 <button
                     className="admin-button red"
@@ -206,7 +206,7 @@ export default function VentasListar({
                 emptyMessage="No se encontraron ventas."
                 rowClassName={getRowClassName}
             >
-                <Column field="idVenta" header="ID"></Column>
+                <Column field="idVenta" header="N°"></Column>
                 <Column field="nombreCliente" header="Cliente"></Column>
                 <Column field="nombreSede" header="Sede"></Column>
                 <Column field="metodoPago" header="Método de Pago"></Column>

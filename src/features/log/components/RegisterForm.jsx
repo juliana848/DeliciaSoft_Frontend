@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import authService from '../../Admin/services/authService';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -19,12 +23,12 @@ const RegisterForm = () => {
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Límites de caracteres para cada campo
+  // Límites de caracteres actualizados
   const fieldLimits = {
-    nombre: 50,
-    apellido: 50,
+    nombre: 10,
+    apellido: 10,
     correo: 100,
-    documento: 15,
+    documento: 10,
     contacto: 15,
     password: 50
   };
@@ -33,7 +37,7 @@ const RegisterForm = () => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
       setShowAlert({ show: false, type: '', message: '' });
-    }, 3000);
+    }, 4000);
   };
 
   const validateField = (name, value) => {
@@ -48,8 +52,8 @@ const RegisterForm = () => {
           error = `${name === 'nombre' ? 'Nombre' : 'Apellido'} debe tener al menos 2 caracteres`;
         } else if (value.length > fieldLimits[name]) {
           error = `${name === 'nombre' ? 'Nombre' : 'Apellido'} no puede exceder ${fieldLimits[name]} caracteres`;
-        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
-          error = 'Solo se permiten letras y espacios';
+        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$/.test(value)) {
+          error = 'Solo se permiten letras, sin espacios';
         }
         break;
       
@@ -119,22 +123,42 @@ const RegisterForm = () => {
     return error;
   };
 
+  // Función para prevenir espacios en campos específicos
+  const preventSpaces = (fieldName, value) => {
+    if (['nombre', 'apellido', 'correo', 'documento', 'contacto'].includes(fieldName)) {
+      return value.replace(/\s/g, '');
+    }
+    return value;
+  };
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
     
-    // Aplicar límite de caracteres antes de actualizar el estado
-    let limitedValue = value;
-    if (fieldLimits[name] && value.length > fieldLimits[name]) {
-      limitedValue = value.substring(0, fieldLimits[name]);
+    // APLICAR LÍMITES PRIMERO - MUY IMPORTANTE
+    if (name === 'documento') {
+      value = value.replace(/\D/g, '').substring(0, 10); // Solo números, máximo 10
+    } else if (name === 'contacto') {
+      value = value.replace(/\D/g, '').substring(0, 15); // Solo números, máximo 15
+    } else if (name === 'nombre' || name === 'apellido') {
+      value = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '').substring(0, 10); // Solo letras, máximo 10
+    } else if (name === 'correo') {
+      value = value.replace(/\s/g, '').substring(0, 100); // Sin espacios, máximo 100
+    } else if (name === 'password') {
+      value = value.substring(0, 50); // Solo límite de longitud para password
+    }
+    
+    // Prevenir espacios en otros campos (excepto password)
+    if (['nombre', 'apellido', 'correo', 'documento', 'contacto'].includes(name)) {
+      value = value.replace(/\s/g, '');
     }
 
     setFormData((prev) => ({
       ...prev,
-      [name]: limitedValue,
+      [name]: value,
     }));
 
     // Validar campo en tiempo real
-    const error = validateField(name, limitedValue);
+    const error = validateField(name, value);
     setFieldErrors(prev => ({
       ...prev,
       [name]: error
@@ -198,7 +222,7 @@ const RegisterForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateCurrentStep()) {
@@ -225,22 +249,50 @@ const RegisterForm = () => {
       return;
     }
 
-    // Simulación de registro exitoso
-    showCustomAlert('success', '¡Registro exitoso!');
+    setIsLoading(true);
 
-    console.log('Datos registrados:', formData);
+    try {
+      // Verificar si el correo ya existe
+      const correoExiste = await authService.verificarCorreoExistente(formData.correo);
+      if (correoExiste) {
+        showCustomAlert('error', 'Ya existe una cuenta con este correo electrónico.');
+        setIsLoading(false);
+        return;
+      }
 
-    // Simular login automático después del registro
-    localStorage.setItem('authToken', 'fake-jwt-token');
-    localStorage.setItem('userRole', 'cliente');
-    localStorage.setItem('userEmail', formData.correo);
+      // Registrar cliente usando el servicio con el endpoint correcto
+      const result = await authService.registrarCliente(formData);
 
-    showCustomAlert('success', 'Sesión iniciada correctamente');
+      if (result.success) {
+        showCustomAlert('success', '¡Registro exitoso!');
 
-    setTimeout(() => {
-      navigate('/');
-      window.location.reload();
-    }, 1500);
+        setTimeout(() => {
+          navigate('/iniciar-sesion');
+        }, 1500);
+      } else {
+        showCustomAlert('error', result.message || 'Error al registrar usuario');
+      }
+
+    } catch (error) {
+      console.error('Error en registro:', error);
+      showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Función para obtener el ícono de validación
+  const getValidationIcon = (fieldName) => {
+    const hasError = fieldErrors[fieldName];
+    const hasValue = formData[fieldName];
+    
+    if (!hasValue) return null;
+    
+    if (hasError) {
+      return <span className="validation-icon error-icon">❌</span>;
+    } else {
+      return <span className="validation-icon success-icon">✅</span>;
+    }
   };
 
   const renderStep = () => {
@@ -249,29 +301,38 @@ const RegisterForm = () => {
         return (
           <>
             <div className="form-group">
-              <select
-                name="tipoDocumento"
-                className={`select-documento ${fieldErrors.tipoDocumento ? 'error' : ''}`}
-                value={formData.tipoDocumento}
-                onChange={handleChange}
-              >
-                <option value="">Tipo de documento</option>
-                <option value="cc">Cédula de Ciudadanía</option>
-                <option value="ce">Cédula de Extranjería</option>
-                <option value="ti">Tarjeta de Identidad</option>
-              </select>
+              <div className="input-container">
+                <select
+                  name="tipoDocumento"
+                  className={`select-documento ${fieldErrors.tipoDocumento ? 'error' : ''}`}
+                  value={formData.tipoDocumento}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                >
+                  <option value="">Tipo de documento</option>
+                  <option value="CC">Cédula de Ciudadanía</option>
+                  <option value="CE">Cédula de Extranjería</option>
+                  <option value="PA">Pasaporte</option>
+                  <option value="NIT">NIT</option>
+                </select>
+                {getValidationIcon('tipoDocumento')}
+              </div>
               {fieldErrors.tipoDocumento && <span className="error-message">{fieldErrors.tipoDocumento}</span>}
             </div>
             <div className="form-group">
-              <input
-                type="text"
-                name="documento"
-                placeholder="Número de documento"
-                value={formData.documento}
-                onChange={handleChange}
-                maxLength={fieldLimits.documento}
-                className={fieldErrors.documento ? 'error' : ''}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  name="documento"
+                  placeholder="Número de documento"
+                  value={formData.documento}
+                  onChange={handleChange}
+                  maxLength={fieldLimits.documento}
+                  className={fieldErrors.documento ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                {getValidationIcon('documento')}
+              </div>
               <small className="char-counter">{formData.documento.length}/{fieldLimits.documento}</small>
               {fieldErrors.documento && <span className="error-message">{fieldErrors.documento}</span>}
             </div>
@@ -282,28 +343,36 @@ const RegisterForm = () => {
         return (
           <>
             <div className="form-group">
-              <input
-                type="text"
-                name="nombre"
-                placeholder="Nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                maxLength={fieldLimits.nombre}
-                className={fieldErrors.nombre ? 'error' : ''}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  maxLength={fieldLimits.nombre}
+                  className={fieldErrors.nombre ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                {getValidationIcon('nombre')}
+              </div>
               <small className="char-counter">{formData.nombre.length}/{fieldLimits.nombre}</small>
               {fieldErrors.nombre && <span className="error-message">{fieldErrors.nombre}</span>}
             </div>
             <div className="form-group">
-              <input
-                type="text"
-                name="apellido"
-                placeholder="Apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                maxLength={fieldLimits.apellido}
-                className={fieldErrors.apellido ? 'error' : ''}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  name="apellido"
+                  placeholder="Apellido"
+                  value={formData.apellido}
+                  onChange={handleChange}
+                  maxLength={fieldLimits.apellido}
+                  className={fieldErrors.apellido ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                {getValidationIcon('apellido')}
+              </div>
               <small className="char-counter">{formData.apellido.length}/{fieldLimits.apellido}</small>
               {fieldErrors.apellido && <span className="error-message">{fieldErrors.apellido}</span>}
             </div>
@@ -314,28 +383,36 @@ const RegisterForm = () => {
         return (
           <>
             <div className="form-group">
-              <input
-                type="email"
-                name="correo"
-                placeholder="Correo electrónico"
-                value={formData.correo}
-                onChange={handleChange}
-                maxLength={fieldLimits.correo}
-                className={fieldErrors.correo ? 'error' : ''}
-              />
+              <div className="input-container">
+                <input
+                  type="email"
+                  name="correo"
+                  placeholder="Correo electrónico"
+                  value={formData.correo}
+                  onChange={handleChange}
+                  maxLength={fieldLimits.correo}
+                  className={fieldErrors.correo ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                {getValidationIcon('correo')}
+              </div>
               <small className="char-counter">{formData.correo.length}/{fieldLimits.correo}</small>
               {fieldErrors.correo && <span className="error-message">{fieldErrors.correo}</span>}
             </div>
             <div className="form-group">
-              <input
-                type="text"
-                name="contacto"
-                placeholder="Número de contacto"
-                value={formData.contacto}
-                onChange={handleChange}
-                maxLength={fieldLimits.contacto}
-                className={fieldErrors.contacto ? 'error' : ''}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  name="contacto"
+                  placeholder="Número de contacto"
+                  value={formData.contacto}
+                  onChange={handleChange}
+                  maxLength={fieldLimits.contacto}
+                  className={fieldErrors.contacto ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                {getValidationIcon('contacto')}
+              </div>
               <small className="char-counter">{formData.contacto.length}/{fieldLimits.contacto}</small>
               {fieldErrors.contacto && <span className="error-message">{fieldErrors.contacto}</span>}
             </div>
@@ -346,27 +423,50 @@ const RegisterForm = () => {
         return (
           <>
             <div className="form-group">
-              <input
-                type="password"
-                name="password"
-                placeholder="Contraseña"
-                value={formData.password}
-                onChange={handleChange}
-                maxLength={fieldLimits.password}
-                className={fieldErrors.password ? 'error' : ''}
-              />
+              <div className="input-container password-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Contraseña"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={fieldErrors.password ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="eye-button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? '🔒' : '👁'}
+                </button>
+                {getValidationIcon('password')}
+              </div>
               <small className="char-counter">{formData.password.length}/{fieldLimits.password}</small>
               {fieldErrors.password && <span className="error-message">{fieldErrors.password}</span>}
             </div>
             <div className="form-group">
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirmar contraseña"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={fieldErrors.confirmPassword ? 'error' : ''}
-              />
+              <div className="input-container password-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  placeholder="Confirmar contraseña"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={fieldErrors.confirmPassword ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="eye-button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? '🔒' : '👁'}
+                </button>
+                {getValidationIcon('confirmPassword')}
+              </div>
               {fieldErrors.confirmPassword && <span className="error-message">{fieldErrors.confirmPassword}</span>}
             </div>
             
@@ -375,13 +475,13 @@ const RegisterForm = () => {
               <strong>Requisitos de contraseña:</strong>
               <ul>
                 <li style={{ color: formData.password.length >= 8 ? '#10b981' : '#666' }}>
-                  Al menos 8 caracteres
+                  {formData.password.length >= 8 ? '✅' : '❌'} Al menos 8 caracteres
                 </li>
                 <li style={{ color: /(?=.*[A-Z])/.test(formData.password) ? '#10b981' : '#666' }}>
-                  Una letra mayúscula
+                  {/(?=.*[A-Z])/.test(formData.password) ? '✅' : '❌'} Una letra mayúscula
                 </li>
                 <li style={{ color: /(?=.*[!@#$%^&*])/.test(formData.password) ? '#10b981' : '#666' }}>
-                  Un carácter especial (!@#$%^&*)
+                  {/(?=.*[!@#$%^&*])/.test(formData.password) ? '✅' : '❌'} Un carácter especial (!@#$%^&*)
                 </li>
               </ul>
             </div>
@@ -451,6 +551,7 @@ const RegisterForm = () => {
               type="button" 
               className="nav-button prev-button"
               onClick={handlePrevious}
+              disabled={isLoading}
             >
               ← Anterior
             </button>
@@ -461,15 +562,42 @@ const RegisterForm = () => {
               type="button" 
               className="nav-button next-button"
               onClick={handleNext}
+              disabled={isLoading}
             >
               Siguiente →
             </button>
           ) : (
-            <button type="submit" className="hiddenn1">
-              Registrar
+            <button 
+              type="submit" 
+              className="hiddenn1"
+              disabled={isLoading}
+              style={{
+                opacity: isLoading ? 0.7 : 1,
+                cursor: isLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isLoading ? 'Registrando...' : 'Registrar'}
             </button>
           )}
         </div>
+
+        {isLoading && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '10px'
+          }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              border: '2px solid #ffffff',
+              borderTop: '2px solid transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+          </div>
+        )}
       </form>
 
       <style jsx>{`
@@ -477,6 +605,55 @@ const RegisterForm = () => {
           width: 100%;
           margin-bottom: 15px;
           position: relative;
+        }
+
+        .input-container {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .password-container {
+          position: relative;
+        }
+
+        .eye-button {
+          position: absolute;
+          right: 40px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+          font-size: 14px;
+          padding: 6px;
+          color: #555;
+          z-index: 10;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+        }
+
+        .eye-button:hover {
+          background: rgba(255, 255, 255, 1);
+          border-color: #666;
+        }
+
+        .password-container input {
+          padding-right: 75px !important;
+        }
+
+        .validation-icon {
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 14px;
+          z-index: 5;
         }
 
         .error-message {
@@ -500,7 +677,7 @@ const RegisterForm = () => {
         .containerlog input.error,
         .select-documento.error {
           border: 2px solid #dc3545 !important;
-          background-color:rgb(255, 255, 255) !important;
+          background-color: rgb(255, 255, 255) !important;
         }
 
         /* Estilos específicos para el indicador de pasos del registro */
@@ -528,7 +705,7 @@ const RegisterForm = () => {
 
         .registro-step-text {
           font-size: 15px;
-          color:rgb(255, 255, 255) !important;
+          color: rgb(255, 255, 255) !important;
           font-weight: 600;
           text-align: center;
           display: block;
@@ -564,24 +741,29 @@ const RegisterForm = () => {
           min-width: 100px;
         }
 
+        .nav-button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
         .prev-button {
           background-color: rgba(255, 255, 255, 0.1);
           color: #fff;
           border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .prev-button:hover {
+        .prev-button:hover:not(:disabled) {
           background-color: rgba(255, 255, 255, 0.2);
           transform: translateY(-1px);
         }
 
         .next-button {
           background-color: #ff58a6;
-          color: #fff;x
+          color: #fff;
           margin-left: auto;
         }
 
-        .next-button:hover {
+        .next-button:hover:not(:disabled) {
           background-color: #fc0278;
           transform: translateY(-1px);
         }
@@ -590,7 +772,7 @@ const RegisterForm = () => {
           font-size: 12px;
           color: rgba(0, 0, 0, 0.8);
           margin-top: 10px;
-          background-color:rgb(255, 255, 255);
+          background-color: rgb(255, 255, 255);
           padding: 12px;
           border-radius: 6px;
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -604,6 +786,13 @@ const RegisterForm = () => {
         .password-requirements li {
           margin: 4px 0;
           transition: color 0.3s ease;
+          list-style: none;
+          padding-left: 0;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>

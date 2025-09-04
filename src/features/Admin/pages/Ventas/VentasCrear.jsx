@@ -1,11 +1,12 @@
-// VentasCrear.jsx
-import React, { useEffect } from 'react'; // Importa useEffect
+// VentasCrear.jsx - Actualizado para consumir APIs
+import React, { useEffect, useState } from 'react';
 import AgregarProductosModal from '../../components/catalogos/AgregarProductosModal';
 import AgregarAdicionesModal from '../../components/catalogos/AgregarAdicionesModal';
 import AgregarSalsasModal from '../../components/catalogos/AgregarSalsasModal';
 import AgregarRellenosModal from '../../components/catalogos/AgregarRellenosModal';
+import clienteApiService from '../../services/cliente_services';
+import ventaApiService from '../../services/venta_services';
 import '../../adminStyles.css';
-
 
 export default function VentasCrear({
     ventaData,
@@ -39,6 +40,10 @@ export default function VentasCrear({
     setProductoEditandoId,
     productoEditandoId
 }) {
+    // Estados para clientes
+    const [clientes, setClientes] = useState([]);
+    const [loadingClientes, setLoadingClientes] = useState(true);
+    const [errorClientes, setErrorClientes] = useState('');
 
     // Función para obtener la fecha de hoy en formato YYYY-MM-DD
     const getTodayDate = () => {
@@ -49,11 +54,13 @@ export default function VentasCrear({
         return `${year}-${month}-${day}`;
     };
 
-    // Establecer la fecha de venta al día de hoy al cargar el componente
-    // Usamos useEffect para asegurarnos de que solo se ejecute una vez al montar
+    // Cargar clientes al montar el componente
     useEffect(() => {
-        // Asegúrate de que `handleChange` pueda manejar un objeto o si necesita el nombre y valor
-        // Si `handleChange` espera un evento, puedes simularlo:
+        fetchClientes();
+    }, []);
+
+    // Establecer la fecha de venta al día de hoy al cargar el componente
+    useEffect(() => {
         if (ventaData.fecha_venta !== getTodayDate()) {
             handleChange({
                 target: {
@@ -63,6 +70,52 @@ export default function VentasCrear({
             });
         }
     }, [ventaData.fecha_venta, handleChange]);
+
+    // Función para cargar clientes desde la API
+    const fetchClientes = async () => {
+        try {
+            setLoadingClientes(true);
+            setErrorClientes('');
+            
+            console.log('Cargando clientes desde API...');
+            const clientesData = await clienteApiService.obtenerClientesParaVenta();
+            console.log('Clientes cargados:', clientesData);
+            
+            setClientes(clientesData);
+        } catch (error) {
+            console.error('Error al cargar clientes:', error);
+            setErrorClientes('Error al cargar clientes');
+            
+            // Clientes de fallback
+            setClientes([
+                {
+                    idcliente: null,
+                    nombreCompleto: 'Cliente Genérico'
+                }
+            ]);
+        } finally {
+            setLoadingClientes(false);
+        }
+    };
+
+    // Manejar cambio de cliente
+    const handleClienteChange = (e) => {
+        const selectedValue = e.target.value;
+        const selectedCliente = clientes.find(c => c.nombreCompleto === selectedValue);
+        
+        // Llamar al handleChange original para actualizar ventaData.cliente
+        handleChange(e);
+        
+        // Si se necesita también almacenar el ID del cliente
+        if (selectedCliente && selectedCliente.idcliente) {
+            handleChange({
+                target: {
+                    name: 'clienteId',
+                    value: selectedCliente.idcliente
+                }
+            });
+        }
+    };
 
     // Calcular las fechas min y max para la fecha de entrega
     const today = new Date();
@@ -82,16 +135,53 @@ export default function VentasCrear({
     const minDateFormatted = formatForInput(minDeliveryDate);
     const maxDateFormatted = formatForInput(maxDeliveryDate);
 
+    // Función para manejar el envío del formulario
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        try {
+            console.log('Preparando datos de venta para enviar...');
+            console.log('Datos actuales de venta:', ventaData);
+            console.log('Productos seleccionados:', insumosSeleccionados);
+            
+            // Preparar los datos para el servicio de venta
+            const datosVenta = {
+                fecha_venta: ventaData.fecha_venta,
+                tipo_venta: ventaData.tipo_venta,
+                sede: ventaData.sede,
+                cliente: ventaData.cliente,
+                clienteId: ventaData.clienteId,
+                metodo_pago: ventaData.metodo_pago,
+                total: total,
+                productos: insumosSeleccionados.map(producto => ({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    cantidad: producto.cantidad || 1,
+                    precio: producto.precio,
+                    subtotal: (producto.precio * (producto.cantidad || 1)),
+                    // Incluir adiciones, salsas y sabores si están implementados
+                    adiciones: producto.adiciones || [],
+                    salsas: producto.salsas || [],
+                    sabores: producto.sabores || []
+                }))
+            };
+            
+            console.log('Datos preparados para enviar:', datosVenta);
+            
+            // Llamar a la función original de guardar
+            await guardarVenta(datosVenta);
+            
+        } catch (error) {
+            console.error('Error al procesar la venta:', error);
+            // El manejo de errores se puede hacer en el componente padre
+        }
+    };
+
     return (
-        <div className="compra-form-container" >
+        <div className="compra-form-container">
             <h1>Agregar Venta</h1>
 
-            <form
-                onSubmit={e => {
-                    e.preventDefault();
-                    guardarVenta();
-                }}
-            >
+            <form onSubmit={handleSubmit}>
                 <div className="compra-fields-grid">
                     <div className={`field-group ${erroresValidacion.tipo_venta ? 'has-error' : ''}`}>
                         <label>Tipo de Venta <span style={{ color: 'red' }}>*</span></label>
@@ -103,28 +193,30 @@ export default function VentasCrear({
                             required
                         >
                             <option value="">Seleccione</option>
-                            <option value="venta directa">Venta Directa</option>
+                            <option value="directa">Venta Directa</option>
                             <option value="pedido">Pedido</option>
                         </select>
                         {erroresValidacion.tipo_venta && (
                             <span className="error-message">{erroresValidacion.tipo_venta}</span>
                         )}
                     </div>
+                    
                     <div className={`field-group ${erroresValidacion.fecha_venta ? 'has-error' : ''}`}>
-                        <label>Fecha de Venta </label>
+                        <label>Fecha de Venta</label>
                         <input
                             type="date"
                             name="fecha_venta"
                             value={ventaData.fecha_venta}
-                            onChange={handleChange} // Aunque esté deshabilitado, mantén el onChange por si acaso la lógica lo necesita para algo interno.
+                            onChange={handleChange}
                             className={erroresValidacion.fecha_venta ? 'field-error' : ''}
                             required
-                            disabled // Deshabilita el input
+                            disabled
                         />
                         {erroresValidacion.fecha_venta && (
                             <span className="error-message">{erroresValidacion.fecha_venta}</span>
                         )}
                     </div>
+                    
                     {ventaData.tipo_venta === 'pedido' && (
                         <div className={`field-group ${erroresValidacion.fecha_entrega ? 'has-error' : ''}`}>
                             <label>Fecha de Entrega <span style={{ color: 'red' }}>*</span></label>
@@ -135,14 +227,15 @@ export default function VentasCrear({
                                 onChange={handleChange}
                                 className={erroresValidacion.fecha_entrega ? 'field-error' : ''}
                                 required={ventaData.tipo_venta === 'pedido'}
-                                min={minDateFormatted} // Fecha mínima permitida
-                                max={maxDateFormatted} // Fecha máxima permitida
+                                min={minDateFormatted}
+                                max={maxDateFormatted}
                             />
                             {erroresValidacion.fecha_entrega && (
                                 <span className="error-message">{erroresValidacion.fecha_entrega}</span>
                             )}
                         </div>
                     )}
+                    
                     <div className={`field-group ${erroresValidacion.sede ? 'has-error' : ''}`}>
                         <label>Sede <span style={{ color: 'red' }}>*</span></label>
                         <select
@@ -160,31 +253,39 @@ export default function VentasCrear({
                             <span className="error-message">{erroresValidacion.sede}</span>
                         )}
                     </div>
+                    
                     <div className={`field-group ${erroresValidacion.cliente ? 'has-error' : ''}`}>
                         <label>Cliente <span style={{ color: 'red' }}>*</span></label>
-                        <select
-                            name="cliente"
-                            value={ventaData.cliente}
-                            onChange={handleChange}
-                            className={erroresValidacion.cliente ? 'field-error' : ''}
-                            required
-                        >
-                            <option value="">Seleccione</option>
-                            <option value="Cliente Genérico">Cliente Genérico</option>
-                            <option value="Carlos Pérez">Carlos Pérez</option>
-                            <option value="Ana Gómez">Ana Gómez</option>
-                            <option value="Luis Torres">Luis Torres</option>
-                            <option value="María Sánchez">María Sánchez</option>
-                            <option value="Juan Rodríguez">Juan Rodríguez</option>
-                        </select>
+                        {loadingClientes ? (
+                            <select disabled>
+                                <option>Cargando clientes...</option>
+                            </select>
+                        ) : (
+                            <select
+                                name="cliente"
+                                value={ventaData.cliente}
+                                onChange={handleClienteChange}
+                                className={erroresValidacion.cliente ? 'field-error' : ''}
+                                required
+                            >
+                                <option value="">Seleccione</option>
+                                {clientes.map((cliente, index) => (
+                                    <option key={cliente.idcliente || index} value={cliente.nombreCompleto}>
+                                        {cliente.nombreCompleto}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        {errorClientes && (
+                            <span className="error-message">{errorClientes}</span>
+                        )}
                         {erroresValidacion.cliente && (
                             <span className="error-message">{erroresValidacion.cliente}</span>
                         )}
                     </div>
+                    
                     <div className={`field-group ${erroresValidacion.metodo_pago ? 'has-error' : ''}`}>
-                        <label>
-                            Método de Pago <span style={{ color: 'red' }}>*</span>
-                        </label>
+                        <label>Método de Pago <span style={{ color: 'red' }}>*</span></label>
                         <select
                             name="metodo_pago"
                             value={ventaData.metodo_pago}
@@ -201,7 +302,9 @@ export default function VentasCrear({
                         )}
                     </div>
                 </div>
+                
                 <div className="section-divider"></div>
+                
                 <div className="detalle-section">
                     <h2>Detalle:</h2>
                     {insumosSeleccionados.length > 0 && (
@@ -218,7 +321,6 @@ export default function VentasCrear({
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-
                             <tbody>
                                 {insumosSeleccionados.map(item => (
                                     <React.Fragment key={item.id}>
@@ -247,7 +349,7 @@ export default function VentasCrear({
                                                     }
                                                 />
                                             </td>
-                                            <td>${item.precio.toLocaleString()}</td>
+                                            <td>${item.precio.toLocaleString('es-CO')}</td>
                                             <td>
                                                 <button type="button" className="btn-small" onClick={() => abrirModalAdiciones(item.id)}>+ Adición</button>
                                             </td>
@@ -258,10 +360,10 @@ export default function VentasCrear({
                                                 <button type="button" className="btn-small" onClick={() => abrirModalRellenos(item.id)}>+ Relleno</button>
                                             </td>
                                             <td>
-                                                ${((item.precio * item.cantidad) +
-                                                    item.adiciones.slice(2).reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) +
-                                                    item.sabores.reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0)
-                                                ).toLocaleString()}
+                                                ${((item.precio * (item.cantidad || 1)) +
+                                                    (item.adiciones?.slice(2)?.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) || 0) +
+                                                    (item.sabores?.reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0) || 0)
+                                                ).toLocaleString('es-CO')}
                                             </td>
                                             <td>
                                                 <button
@@ -277,40 +379,42 @@ export default function VentasCrear({
                                             <tr>
                                                 <td colSpan="3"></td>
                                                 <td colSpan="5">
-                                                    {item.adiciones.length > 0 && (
+                                                    {item.adiciones && item.adiciones.length > 0 && (
                                                         <div className="nested-item-list">
                                                             <strong>Adiciones:</strong>
                                                             {item.adiciones.map(ad => (
                                                                 <div key={ad.id}>
-                                                                    {ad.nombre} (${ad.precio.toLocaleString()})
+                                                                    {ad.nombre} (${ad.precio.toLocaleString('es-CO')})
                                                                     <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeAdicion(item.id, ad.id)}>x</button>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
-                                                    {item.salsas.length > 0 && (
+                                                    {item.salsas && item.salsas.length > 0 && (
                                                         <div className="nested-item-list">
                                                             <strong>Salsas:</strong>
                                                             {item.salsas.map(sa => (
                                                                 <div key={sa.id}>
-                                                                    {sa.nombre} (${sa.precio.toLocaleString()})
+                                                                    {sa.nombre} (${sa.precio.toLocaleString('es-CO')})
                                                                     <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeSalsa(item.id, sa.id)}>x</button>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
-                                                    {item.sabores.length > 0 && (
+                                                    {item.sabores && item.sabores.length > 0 && (
                                                         <div className="nested-item-list">
                                                             <strong>Rellenos:</strong>
                                                             {item.sabores.map(re => (
                                                                 <div key={re.id}>
-                                                                    {re.nombre} (${re.precio.toLocaleString()})
+                                                                    {re.nombre} (${re.precio.toLocaleString('es-CO')})
                                                                     <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeRelleno(item.id, re.id)}>x</button>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
-                                                    {item.adiciones.length === 0 && item.salsas.length === 0 && item.sabores.length === 0 && (
+                                                    {(!item.adiciones || item.adiciones.length === 0) && 
+                                                     (!item.salsas || item.salsas.length === 0) && 
+                                                     (!item.sabores || item.sabores.length === 0) && (
                                                         <p>No hay adiciones, salsas o rellenos añadidos.</p>
                                                     )}
                                                 </td>
@@ -319,7 +423,6 @@ export default function VentasCrear({
                                     </React.Fragment>
                                 ))}
                             </tbody>
-
                         </table>
                     )}
 
@@ -336,18 +439,19 @@ export default function VentasCrear({
                         </div>
                     )}
                 </div>
+
                 <div className="compra-totales-grid">
                     <div className="total-item">
                         <span>Subtotal:</span>
-                        <span>${subtotal.toLocaleString()}</span>
+                        <span>${subtotal.toLocaleString('es-CO')}</span>
                     </div>
                     <div className="total-item">
                         <span>IVA (16%):</span>
-                        <span>${iva.toLocaleString()}</span>
+                        <span>${iva.toLocaleString('es-CO')}</span>
                     </div>
                     <div className="total-item">
                         <span>Total:</span>
-                        <span>${total.toLocaleString()}</span>
+                        <span>${total.toLocaleString('es-CO')}</span>
                     </div>
                 </div>
 
@@ -380,6 +484,7 @@ export default function VentasCrear({
                     adicionesSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.adiciones || []}
                 />
             )}
+            
             {mostrarModalSalsas && (
                 <AgregarSalsasModal
                     onClose={() => { setMostrarModalSalsas(false); setProductoEditandoId(null); }}
@@ -387,6 +492,7 @@ export default function VentasCrear({
                     salsasSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.salsas || []}
                 />
             )}
+            
             {mostrarModalRellenos && (
                 <AgregarRellenosModal
                     onClose={() => { setMostrarModalRellenos(false); setProductoEditandoId(null); }}

@@ -1,7 +1,50 @@
-// Servicio API para gestión de clientes
+// cliente_services.js actualizado para crear ventas
 const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
 
 class ClienteApiService {
+  // Obtener todos los clientes para el dropdown
+  async obtenerClientesParaVenta() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Agregar cliente genérico al inicio de la lista
+      const clientesConGenerico = [
+        {
+          idcliente: null,
+          nombre: 'Cliente',
+          apellido: 'Genérico',
+          nombreCompleto: 'Cliente Genérico'
+        },
+        ...data.map(cliente => ({
+          ...cliente,
+          nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
+        }))
+      ];
+      
+      return clientesConGenerico;
+    } catch (error) {
+      console.error('Error al obtener clientes:', error);
+      // Retornar solo cliente genérico en caso de error
+      return [{
+        idcliente: null,
+        nombre: 'Cliente',
+        apellido: 'Genérico',
+        nombreCompleto: 'Cliente Genérico'
+      }];
+    }
+  }
+
   // Obtener todos los clientes
   async obtenerClientes() {
     try {
@@ -123,28 +166,27 @@ class ClienteApiService {
     }
   }
 
- // Cambiar estado del cliente (activar/desactivar)
-async toggleEstadoCliente(id) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/clientes/${id}/estado`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+  // Cambiar estado del cliente (activar/desactivar)
+  async toggleEstadoCliente(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}/estado`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cambiar estado');
       }
-    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Error al cambiar estado');
+      return await response.json();
+    } catch (error) {
+      console.error('Error al cambiar estado del cliente:', error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error al cambiar estado del cliente:', error);
-    throw error;
   }
-}
 
   // Verificar si cliente tiene ventas
   async clienteTieneVentas(id) {
@@ -183,7 +225,8 @@ async toggleEstadoCliente(id) {
       ciudad: cliente.ciudad,
       fechaNacimiento: cliente.fechanacimiento ? this.formatearFechaDesdeAPI(cliente.fechanacimiento) : '',
       celular: cliente.celular,
-      estado: cliente.estado
+      estado: cliente.estado,
+      nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
     };
   }
 
@@ -193,34 +236,34 @@ async toggleEstadoCliente(id) {
     return clientes.map(cliente => this.transformarClienteDesdeAPI(cliente));
   }
 
-transformarClienteParaAPI(cliente) {
-  const clienteAPI = {
-    tipodocumento: cliente.tipoDocumento,
-    numerodocumento: cliente.numeroDocumento,
-    nombre: cliente.nombre,
-    apellido: cliente.apellido,
-    correo: cliente.correo,
-    direccion: cliente.direccion,
-    barrio: cliente.barrio,
-    ciudad: cliente.ciudad,
-    celular: cliente.celular,
-    estado: cliente.estado
-  };
+  transformarClienteParaAPI(cliente) {
+    const clienteAPI = {
+      tipodocumento: cliente.tipoDocumento,
+      numerodocumento: cliente.numeroDocumento,
+      nombre: cliente.nombre,
+      apellido: cliente.apellido,
+      correo: cliente.correo,
+      direccion: cliente.direccion,
+      barrio: cliente.barrio,
+      ciudad: cliente.ciudad,
+      celular: cliente.celular,
+      estado: cliente.estado
+    };
 
-  // Solo incluir contraseña si se proporciona y no es el valor por defecto
-  if (cliente.contrasena && cliente.contrasena.trim() && cliente.contrasena !== '********') {
-    clienteAPI.hashcontrasena = cliente.contrasena;
+    // Solo incluir contraseña si se proporciona y no es el valor por defecto
+    if (cliente.contrasena && cliente.contrasena.trim() && cliente.contrasena !== '********') {
+      clienteAPI.hashcontrasena = cliente.contrasena;
+    }
+
+    // Formatear correctamente la fecha para Prisma
+    if (cliente.fechaNacimiento) {
+      clienteAPI.fechanacimiento = new Date(cliente.fechaNacimiento).toISOString();
+    } else {
+      clienteAPI.fechanacimiento = null;
+    }
+
+    return clienteAPI;
   }
-
-  // Formatear correctamente la fecha para Prisma
-  if (cliente.fechaNacimiento) {
-    clienteAPI.fechanacimiento = new Date(cliente.fechaNacimiento).toISOString();
-  } else {
-    clienteAPI.fechanacimiento = null; // O eliminar el campo si el backend lo permite
-  }
-
-  return clienteAPI;
-}
 
   // Formatear fecha desde la API (YYYY-MM-DD)
   formatearFechaDesdeAPI(fecha) {
@@ -232,7 +275,7 @@ transformarClienteParaAPI(cliente) {
   // Formatear fecha para la API
   formatearFechaParaAPI(fecha) {
     if (!fecha) return null;
-    return fecha; // Ya está en formato YYYY-MM-DD del input date
+    return fecha;
   }
 
   // Manejar errores de red

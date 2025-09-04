@@ -215,32 +215,55 @@ export default function Ventas() {
         setModalTipo(null);
     };
     
-    // Función para ver detalle de venta
-    const verDetalleVenta = async (venta) => {
-        try {
-            console.log('Intentando obtener el detalle de la venta con ID:', venta.idVenta);
-            const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
-            setVentaSeleccionada(ventaCompleta);
-            setMostrarVerDetalle(true);
-        } catch (error) {
-            console.error('Error al obtener detalle:', error);
-            showNotification(error.message || 'Error al obtener el detalle de la venta', 'error');
-        }
-    };
+
+const verDetalleVenta = async (venta) => {
+    // Mostrar detalle al instante con la info disponible
+    setVentaSeleccionada(venta);
+    setMostrarVerDetalle(true);
+
+    try {
+        console.log('Intentando obtener el detalle de la venta con ID:', venta.idVenta);
+        const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+        setVentaSeleccionada(ventaCompleta); // Actualizar con más datos si llega la respuesta
+    } catch (error) {
+        console.error('Error al obtener detalle:', error);
+        showNotification(error.message || 'No se pudo obtener información completa de la venta', 'error');
+    }
+};
+
     
-    // Función para anular venta
-    const anularVenta = async () => {
-        try {
-            // Aquí iría la llamada a la API para anular
-            // await ventaApiService.anularVenta(ventaSeleccionada.idVenta);
-            showNotification('Venta anulada correctamente', 'success');
-            await fetchVentas(); // Recargar la lista de ventas
-            cerrarModal();
-        } catch (error) {
-            console.error('Error al anular venta:', error);
-            showNotification(error.message || 'Error al anular la venta', 'error');
-        }
-    };
+    // Función para anular venta - CORREGIDA
+   // Función para anular venta - CORREGIDA
+const anularVenta = async () => {
+    if (!ventaSeleccionada?.idVenta) {
+        showNotification('No se pudo identificar la venta a anular', 'error');
+        return;
+    }
+
+    try {
+        console.log('Anulando venta con ID:', ventaSeleccionada.idVenta);
+        await ventaApiService.anularVenta(ventaSeleccionada.idVenta);
+
+        // Actualizar solo la venta anulada en el estado
+        setAllSales(prevSales =>
+            prevSales.map(v =>
+                v.idVenta === ventaSeleccionada.idVenta
+                    ? {
+                          ...v,
+                          idEstadoVenta: estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa,
+                          nombreEstado: 'Anulada'
+                      }
+                    : v
+            )
+        );
+
+        showNotification('Venta anulada correctamente', 'success');
+        cerrarModal();
+    } catch (error) {
+        console.error('Error al anular venta:', error);
+        showNotification(error.message || 'Error al anular la venta', 'error');
+    }
+};
     
     // Función para cambiar estado de venta
  const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
@@ -294,66 +317,94 @@ export default function Ventas() {
     const iva = useMemo(() => subtotal * 0.16, [subtotal]);
     const total = useMemo(() => subtotal + iva, [subtotal, iva]);
 
-    // Función para guardar venta
-    const guardarVenta = async () => {
-        // Validaciones básicas
-        const errores = {};
-        
-        if (!ventaData.tipo_venta) errores.tipo_venta = 'El tipo de venta es requerido';
-        if (!ventaData.cliente) errores.cliente = 'El cliente es requerido';
-        if (!ventaData.sede) errores.sede = 'La sede es requerida';
-        if (!ventaData.metodo_pago) errores.metodo_pago = 'El método de pago es requerido';
-        if (insumosSeleccionados.length === 0) errores.productos = 'Debe agregar al menos un producto';
-        
-        if (Object.keys(errores).length > 0) {
-            setErroresValidacion(errores);
-            return;
-        }
 
+const guardarVenta = async () => {
+    // Validaciones básicas
+    const errores = {};
+    if (!ventaData.tipo_venta) errores.tipo_venta = 'El tipo de venta es requerido';
+    if (!ventaData.cliente) errores.cliente = 'El cliente es requerido';
+    if (!ventaData.sede) errores.sede = 'La sede es requerida';
+    if (!ventaData.metodo_pago) errores.metodo_pago = 'El método de pago es requerido';
+    if (insumosSeleccionados.length === 0) errores.productos = 'Debe agregar al menos un producto';
+    
+    // Validación especial para pedidos
+    if (ventaData.tipo_venta === 'pedido' && !ventaData.fecha_entrega) {
+        errores.fecha_entrega = 'La fecha de entrega es requerida para pedidos';
+    }
+
+    if (Object.keys(errores).length > 0) {
+        setErroresValidacion(errores);
+        showNotification('Por favor corrija los errores en el formulario', 'error');
+        return;
+    }
+
+    try {
+        // Mapear sede a ID numérico
+        const sedeId = ventaData.sede === 'San Pablo' ? 1 : 2;
+        
+        // Buscar el ID del estado "Activa"
+        const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa || 5;
+        
+        // Preparar datos de la venta para la API - FORMATO CORREGIDO
         const nuevaVenta = {
             fechaventa: ventaData.fecha_venta,
-            cliente: ventaData.cliente,
-            idsede: ventaData.sede === 'San Pablo' ? 1 : 2, // Mapear nombres a IDs
-            metodopago: ventaData.metodo_pago,
-            tipoventa: ventaData.tipo_venta,
-            estadoVentaId: estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa || 1,
+            cliente: ventaData.clienteId || null, // ID del cliente o null
+            idsede: sedeId,
+            metodopago: ventaData.metodo_pago,  // CORREGIDO: usar metodo_pago del estado
+            tipoventa: ventaData.tipo_venta === 'venta directa' ? 'venta directa' : ventaData.tipo_venta, // CORREGIDO: mantener formato original
+            estadoVentaId: estadoActivoId,
             total: total,
-            detalleventa: insumosSeleccionados.map(item => ({
-                idproductogeneral: item.id,
-                cantidad: item.cantidad,
-                preciounitario: item.precio,
-                subtotal: item.precio * item.cantidad,
-                iva: (item.precio * item.cantidad) * 0.16,
-            })),
+            // Información adicional para el frontend
+            clienteNombre: ventaData.cliente,
+            sedeNombre: ventaData.sede,
+            productos: insumosSeleccionados.map(item => {
+                // Calcular subtotal del item incluyendo adiciones
+                const subtotalItem = item.precio * (item.cantidad || 1);
+                const costoAdiciones = (item.adiciones?.slice(2) || []).reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0);
+                const costoSabores = (item.sabores || []).reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0);
+                const subtotalTotal = subtotalItem + costoAdiciones + costoSabores;
+                
+                return {
+                    idproductogeneral: item.id,
+                    cantidad: item.cantidad || 1,
+                    preciounitario: item.precio,
+                    subtotal: subtotalTotal,
+                    iva: subtotalTotal * 0.16
+                };
+            })
         };
+
+        console.log('Enviando nueva venta a la API:', nuevaVenta);
         
-        try {
-            await ventaApiService.crearVenta(nuevaVenta);
-            showNotification('Venta creada exitosamente', 'success');
-            
-            // Resetear formulario
-            setMostrarAgregarVenta(false);
-            setInsumosSeleccionados([]);
-            setVentaData({
-                cod_venta: '00000000',
-                tipo_venta: '',
-                cliente: '',
-                sede: '',
-                metodo_pago: '',
-                fecha_venta: new Date().toISOString().split('T')[0],
-                fecha_entrega: '',
-                fecha_registro: '',
-                observaciones: ''
-            });
-            setErroresValidacion({});
-            
-            // Recargar lista
-            await fetchVentas();
-        } catch (error) {
-            console.error('Error al crear venta:', error);
-            showNotification(error.message || 'Error al crear la venta', 'error');
-        }
-    };
+        const ventaCreada = await ventaApiService.crearVenta(nuevaVenta);
+        console.log('Venta creada exitosamente:', ventaCreada);
+
+        // Agregar la nueva venta al estado local
+        setAllSales(prevSales => [ventaCreada, ...prevSales]);
+
+        showNotification('Venta creada exitosamente', 'success');
+
+        // Resetear formulario
+        setMostrarAgregarVenta(false);
+        setInsumosSeleccionados([]);
+        setVentaData({
+            cod_venta: '00000000',
+            tipo_venta: '',
+            cliente: '',
+            sede: '',
+            metodo_pago: '',
+            fecha_venta: new Date().toISOString().split('T')[0],
+            fecha_entrega: '',
+            fecha_registro: '',
+            observaciones: ''
+        });
+        setErroresValidacion({});
+        
+    } catch (error) {
+        console.error('Error al crear venta:', error);
+        showNotification(error.message || 'Error al crear la venta', 'error');
+    }
+};
 
     // Funciones para manejar cambios en el formulario
     const handleChange = (e) => {

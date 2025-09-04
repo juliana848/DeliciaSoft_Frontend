@@ -619,24 +619,22 @@ const RegisterForm = () => {
 
         .eye-button {
           position: absolute;
-          right: 40px;
+          right: 0px;
           top: 50%;
-          transform: translateY(-50%);
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(0, 0, 0, 0.2);
+          transform: translateY(-76%);
+          background: none;
+          border: none;
           cursor: pointer;
           font-size: 14px;
-          padding: 6px;
+          padding: 0;
           color: #555;
           z-index: 10;
-          width: 28px;
-          height: 28px;
+          width: 40px; 
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 4px;
-          transition: all 0.2s ease;
-        }
+        }}
 
         .eye-button:hover {
           background: rgba(255, 255, 255, 1);
@@ -648,6 +646,7 @@ const RegisterForm = () => {
         }
 
         .validation-icon {
+          right: 70px; /* Modificado de 8px a 12px */
           position: absolute;
           right: 8px;
           top: 50%;

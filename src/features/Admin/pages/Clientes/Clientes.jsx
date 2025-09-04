@@ -253,7 +253,7 @@ const toggleEstado = async (cliente) => {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                📋
+                🔍
               </button>
               <button
                 className="admin-button yellow"

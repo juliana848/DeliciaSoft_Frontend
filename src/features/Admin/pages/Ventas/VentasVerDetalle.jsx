@@ -115,7 +115,7 @@ export default function VentasVerDetalle({ ventaSeleccionada, onBackToList }) {
                     <p><strong>Cliente:</strong> {ventaSeleccionada.nombreCliente}</p>
                     <p><strong>Sede:</strong> {ventaSeleccionada.nombreSede}</p>
                     <p><strong>Método de Pago:</strong> {ventaSeleccionada.metodoPago}</p>
-                    <p><strong>Estado:</strong> {ventaSeleccionada.estadoVenta ? 'Activa' : 'Anulada'}</p>
+                    <p><strong>Estado:</strong> {ventaSeleccionada.nombreEstado}</p>
                     <p><strong>Tipo de Venta:</strong> {ventaSeleccionada.tipoVenta}</p>
                     <p><strong>Fecha de Venta:</strong> {ventaSeleccionada.fechaVenta}</p>
                 </div>

@@ -2,10 +2,10 @@
 import React from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Dropdown } from 'primereact/dropdown';
 import AppNotification from '../../components/Notification';
-import { Button } from 'primereact/button';
-import '../../adminStyles.css';
 import { Tag } from 'primereact/tag';
+import '../../adminStyles.css';
 
 export default function VentasListar({
     ventasFiltradas,
@@ -20,9 +20,15 @@ export default function VentasListar({
     filtroTipoVenta,
     setFiltroTipoVenta,
     verDetalleVenta,
+    estadosVenta,
+    setFiltro,
+    setMostrarAgregarVenta
 }) {
 
     const actionBodyTemplate = (rowData) => {
+        const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
+        const isUpdatable = rowData.idEstadoVenta !== estadoAnuladoId;
+
         return (
             <div className="action-buttons-container">
                 <button
@@ -36,7 +42,7 @@ export default function VentasListar({
                     className="admin-button red"
                     title="Anular"
                     onClick={() => abrirModal('anular', rowData)}
-                    disabled={rowData.estadoVenta === false} // Se cambió a `estadoVenta`
+                    disabled={rowData.idEstadoVenta === estadoAnuladoId}
                 >
                     🛑
                 </button>
@@ -47,7 +53,7 @@ export default function VentasListar({
                 >
                     ⬇️
                 </button>
-                {rowData.tipoVenta === 'pedido' && rowData.estadoVenta !== false && (
+                {rowData.tipoVenta === 'pedido' && rowData.idEstadoVenta !== estadoAnuladoId && (
                     <button
                         className="admin-button green"
                         title="Abonos"
@@ -59,8 +65,36 @@ export default function VentasListar({
                         💰
                     </button>
                 )}
+                {isUpdatable && (
+                    <Dropdown
+                        value={rowData.idEstadoVenta}
+                        options={estadosVenta}
+                        onChange={(e) => manejarCambioEstado(rowData.idVenta, e.value)}
+                        optionLabel="nombre_estado"
+                        optionValue="idestadoventa"
+                        placeholder="Cambiar Estado"
+                        className="status-dropdown"
+                    />
+                )}
             </div>
         );
+    };
+
+    const getSeverity = (nombreEstado) => {
+        switch (nombreEstado) {
+            case 'Activa':
+                return 'success';
+            case 'Anulada':
+                return 'danger';
+            case 'Pendiente':
+                return 'warning';
+            case 'En Proceso':
+                return 'info';
+            case 'Completada':
+                return 'success';
+            default:
+                return null;
+        }
     };
 
     return (
@@ -72,8 +106,25 @@ export default function VentasListar({
                 onClose={hideNotification}
             />
 
+            {/* Toolbar con botón + búsqueda */}
+            <div className="ventas-toolbar">
+                <button
+                    className="admin-button green"
+                    onClick={() => setMostrarAgregarVenta(true)}
+                >
+                    + Agregar Venta
+                </button>
+
+                <input
+                    type="text"
+                    placeholder="Buscar por cliente o ID..."
+                    className="search-bar"
+                    onChange={(e) => setFiltro(e.target.value)}
+                />
+            </div>
+
             <div className="ventas-header-container">
-                <h2 className="admin-section-title"> Gestión de Ventas</h2>
+                <h2 className="admin-section-title">Gestión de Ventas</h2>
                 <div className="filter-buttons-container">
                     <button
                         className={`filter-tab ${filtroTipoVenta === 'directa' ? 'filter-tab-active' : ''}`}
@@ -114,12 +165,12 @@ export default function VentasListar({
                 <Column field="metodoPago" header="Método de Pago"></Column>
                 <Column field="tipoVenta" header="Tipo de Venta"></Column>
                 <Column
-                    field="estadoVenta"
+                    field="nombreEstado"
                     header="Estado"
                     body={(rowData) => (
                         <Tag
-                            value={rowData.estadoVenta ? 'Activa' : 'Anulada'}
-                            severity={rowData.estadoVenta ? 'success' : 'danger'}
+                            value={rowData.nombreEstado}
+                            severity={getSeverity(rowData.nombreEstado)}
                         ></Tag>
                     )}
                 ></Column>

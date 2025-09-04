@@ -1,3 +1,4 @@
+// ventas.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import '../../adminStyles.css';
 
@@ -58,6 +59,8 @@ export default function Ventas() {
 
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
 
+    const [estadosVenta, setEstadosVenta] = useState([]);
+
     const toggleNestedDetails = (itemId) => {
         setNestedDetailsVisible(prevState => ({
             ...prevState,
@@ -72,6 +75,7 @@ export default function Ventas() {
     
     const verDetalleVenta = async (venta) => {
         try {
+            console.log('Intentando obtener el detalle de la venta con ID:', venta.idVenta);
             const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
             setVentaSeleccionada(ventaCompleta);
             setMostrarVerDetalle(true);
@@ -88,36 +92,50 @@ export default function Ventas() {
             showNotification(error.message, 'error');
         }
     };
+
+    const fetchEstadosVenta = async () => {
+        try {
+            const estados = await ventaApiService.obtenerEstadosVenta();
+            setEstadosVenta(estados);
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    };
     
     useEffect(() => {
         fetchVentas();
+        fetchEstadosVenta();
     }, []);
 
     const filteredVentas = useMemo(() => {
-        // Se aplica el filtro de tipo de venta y la búsqueda
+        const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
+        const estadosActivosIds = estadosVenta
+            .filter(e => e.nombre_estado !== 'Anulada')
+            .map(e => e.idestadoventa);
+
         return allSales.filter(venta => {
             const matchesSearch = filtro === '' ||
-                (venta.cliente && venta.cliente.toLowerCase().includes(filtro.toLowerCase())) ||
+                (venta.nombreCliente && venta.nombreCliente.toLowerCase().includes(filtro.toLowerCase())) ||
                 (venta.idVenta && venta.idVenta.toString().includes(filtro));
             
             if (filtroTipoVenta === 'directa') {
-                return matchesSearch && venta.tipoVenta === 'directa' && venta.estadoVenta;
+                return matchesSearch && venta.tipoVenta === 'directa' && estadosActivosIds.includes(venta.idEstadoVenta);
             } else if (filtroTipoVenta === 'pedido') {
-                return matchesSearch && venta.tipoVenta === 'pedido' && venta.estadoVenta;
+                return matchesSearch && venta.tipoVenta === 'pedido' && estadosActivosIds.includes(venta.idEstadoVenta);
             } else if (filtroTipoVenta === 'anulado') {
-                return matchesSearch && venta.estadoVenta === false;
+                return matchesSearch && venta.idEstadoVenta === estadoAnuladoId;
             }
             return false;
         }).sort((a, b) => {
-            if (a.estadoVenta === false && b.estadoVenta !== false) {
+            if (a.idEstadoVenta === estadoAnuladoId && b.idEstadoVenta !== estadoAnuladoId) {
                 return 1;
             }
-            if (b.estadoVenta === false && a.estadoVenta !== false) {
+            if (b.idEstadoVenta === estadoAnuladoId && a.idEstadoVenta !== estadoAnuladoId) {
                 return -1;
             }
             return 0;
         });
-    }, [allSales, filtro, filtroTipoVenta]);
+    }, [allSales, filtro, filtroTipoVenta, estadosVenta]);
 
     const showNotification = (mensaje, tipo) => {
         setNotification({ visible: true, mensaje, tipo });
@@ -153,19 +171,23 @@ export default function Ventas() {
         }
     };
     
+    const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
+        try {
+            await ventaApiService.actualizarEstadoVenta(idVenta, nuevoEstadoId);
+            showNotification('Estado de venta actualizado correctamente', 'success');
+            await fetchVentas();
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    };
+
     const generarPDFVenta = (venta) => {
         // Lógica para generar PDF (no necesita cambios por la API)
     };
-
-    const manejarCambioEstado = (ventaActualizada, nuevoEstado) => {
-        // Esta función podría ser redundante si el backend maneja el estado
-        setAllSales(prevSales => prevSales.map(venta =>
-            venta.idVenta === ventaActualizada.idVenta ? { ...venta, estadoVenta: nuevoEstado } : venta
-        ));
-    };
     
     const getRowClassName = (data) => {
-        return data.estadoVenta === false ? 'row-anulado' : '';
+        const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
+        return data.idEstadoVenta === estadoAnuladoId ? 'row-anulado' : '';
     };
 
     const guardarVenta = async () => {
@@ -176,17 +198,15 @@ export default function Ventas() {
             idsede: ventaData.sede,
             metodopago: ventaData.metodo_pago,
             tipoventa: ventaData.tipo_venta,
-            estadoventa: true, // Asumimos que al crear una venta, está activa
+            idestadoventa: estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa || 1,
             total: total,
             detalleventa: insumosSeleccionados.map(item => ({
                 idproductogeneral: item.id,
                 cantidad: item.cantidad,
                 preciounitario: item.precio,
-                subtotal: item.subtotal,
                 iva: item.iva,
             })),
         };
-    
         try {
             await ventaApiService.crearVenta(nuevaVenta);
             showNotification('Venta creada exitosamente', 'success');
@@ -202,23 +222,25 @@ export default function Ventas() {
     const handleImageUpload = (e) => {
         // Lógica de subida de imagen (no necesita cambios)
     };
-    
+
     const agregarAbono = async () => {
         const abonoParaAPI = {
             idpedido: ventaSeleccionada.idVenta,
             metodopago: abonoData.metodo_pago,
-            idimagen: null, // Necesitarías subir la imagen primero y obtener el id
-            cantidadpagar: parseFloat(abonoData.total_pagado),
+            TotalPagado: parseFloat(abonoData.total_pagado),
+            fecha: abonoData.fecha,
         };
-
         try {
-            await ventaApiService.agregarAbono(abonoParaAPI);
-            showNotification('Abono agregado exitosamente', 'success');
-            // Recargar la venta seleccionada para mostrar el nuevo abono
-            const ventaActualizada = await ventaApiService.obtenerVentaPorId(ventaSeleccionada.idVenta);
-            setVentaSeleccionada(ventaActualizada);
+            await ventaApiService.crearAbono(abonoParaAPI);
+            showNotification('Abono agregado correctamente', 'success');
             setMostrarModalAgregarAbono(false);
-            setAbonoData({ metodo_pago: '', total_pagado: '', comprobante_imagen: null }); // Reset
+            setAbonoData({
+                metodo_pago: '',
+                total_pagado: '',
+                fecha: new Date().toISOString().split('T')[0],
+                comprobante_imagen: null
+            });
+            await verDetalleVenta(ventaSeleccionada);
         } catch (error) {
             showNotification(error.message, 'error');
         }
@@ -229,100 +251,36 @@ export default function Ventas() {
         setMostrarModalDetalleAbono(true);
     };
 
-    const anularAbono = (abonoId) => {
+    const anularAbono = async () => {
         // Lógica para anular abono
     };
 
-    // Funciones para manejar los productos/insumos (sin cambios por la API)
-    const handleCantidadChange = (id, e) => {
-        // Lógica de cambio de cantidad
+    const onBackToList = () => {
+        setMostrarVerDetalle(false);
+        setVentaSeleccionada(null);
     };
-    const abrirModalAdiciones = (id) => {
-        // Lógica para abrir modal
-    };
-    const abrirModalSalsas = (id) => {
-        // Lógica para abrir modal
-    };
-    const abrirModalRellenos = (id) => {
-        // Lógica para abrir modal
-    };
-    const removeInsumo = (id) => {
-        // Lógica para remover insumo
-    };
-    const removeAdicion = (insumoId, adicionId) => {
-        // Lógica para remover adición
-    };
-    const removeSalsa = (insumoId, salsaId) => {
-        // Lógica para remover salsa
-    };
-    const removeRelleno = (insumoId, rellenoId) => {
-        // Lógica para remover relleno
-    };
-    const agregarInsumos = (insumos) => {
-        // Lógica para agregar insumos
-    };
-    const agregarAdiciones = (adiciones) => {
-        // Lógica para agregar adiciones
-    };
-    const agregarSalsas = (salsas) => {
-        // Lógica para agregar salsas
-    };
-    const agregarRellenos = (rellenos) => {
-        // Lógica para agregar rellenos
-    };
-    const subtotal = 0; // Lógica para calcular
-    const iva = 0; // Lógica para calcular
-    const total = 0; // Lógica para calcular
-    
 
-    const renderContent = () => {
-        if (mostrarAgregarVenta) {
-            return (
-                <VentasCrear
-                    ventaData={ventaData}
-                    handleChange={(e) => setVentaData({ ...ventaData, [e.target.name]: e.target.value })}
-                    erroresValidacion={erroresValidacion}
-                    insumosSeleccionados={insumosSeleccionados}
-                    toggleNestedDetails={toggleNestedDetails}
-                    nestedDetailsVisible={nestedDetailsVisible}
-                    handleCantidadChange={handleCantidadChange}
-                    abrirModalAdiciones={abrirModalAdiciones}
-                    abrirModalSalsas={abrirModalSalsas}
-                    abrirModalRellenos={abrirModalRellenos}
-                    removeInsumo={removeInsumo}
-                    removeAdicion={removeAdicion}
-                    removeSalsa={removeSalsa}
-                    removeRelleno={removeRelleno}
-                    setMostrarModalInsumos={setMostrarModalInsumos}
-                    subtotal={subtotal}
-                    iva={iva}
-                    total={total}
-                    guardarVenta={guardarVenta}
-                    setMostrarAgregarVenta={setMostrarAgregarVenta}
-                    mostrarModalInsumos={mostrarModalInsumos}
-                    agregarInsumos={agregarInsumos}
-                    mostrarModalAdiciones={mostrarModalAdiciones}
-                    agregarAdiciones={agregarAdiciones}
-                    mostrarModalSalsas={mostrarModalSalsas}
-                    agregarSalsas={agregarSalsas}
-                    mostrarModalRellenos={mostrarModalRellenos}
-                    agregarRellenos={agregarRellenos}
-                    setProductoEditandoId={setProductoEditandoId}
-                    productoEditandoId={productoEditandoId}
-                />
-            );
-        } else if (mostrarVerDetalle && ventaSeleccionada) {
-            return (
+    return (
+        <div className="admin-container">
+            {mostrarVerDetalle ? (
                 <VentasVerDetalle
                     ventaSeleccionada={ventaSeleccionada}
-                    onBackToList={() => {
-                        setMostrarVerDetalle(false);
-                        setVentaSeleccionada(null);
-                    }}
+                    onBackToList={onBackToList}
                 />
-            );
-        } else {
-            return (
+            ) : mostrarAgregarVenta ? (
+                <VentasCrear
+                    onBackToList={() => setMostrarAgregarVenta(false)}
+                    insumosSeleccionados={insumosSeleccionados}
+                    setInsumosSeleccionados={setInsumosSeleccionados}
+                    ventaData={ventaData}
+                    setVentaData={setVentaData}
+                    erroresValidacion={erroresValidacion}
+                    setErroresValidacion={setErroresValidacion}
+                    guardarVenta={guardarVenta}
+                    mostrarModalInsumos={mostrarModalInsumos}
+                    setMostrarModalInsumos={setMostrarModalInsumos}
+                />
+            ) : (
                 <VentasListar
                     ventasFiltradas={filteredVentas}
                     abrirModal={abrirModal}
@@ -336,42 +294,11 @@ export default function Ventas() {
                     filtroTipoVenta={filtroTipoVenta}
                     setFiltroTipoVenta={setFiltroTipoVenta}
                     verDetalleVenta={verDetalleVenta}
+                    estadosVenta={estadosVenta}
                 />
-            );
-        }
-    };
-    
-    return (
-        <div className="admin-wrapper">
-            <div className="admin-actions">
-                <button 
-                    className="admin-button pink"
-                    onClick={() => {
-                        setMostrarAgregarVenta(true);
-                        setVentaData({ 
-                            cod_venta: '00000000',
-                            tipo_venta: '',
-                            cliente: '',
-                            sede: '',
-                            metodo_pago: '',
-                            fecha_venta: new Date().toISOString().split('T')[0],
-                            fecha_entrega: '',
-                            fecha_registro: '',
-                            observaciones: ''
-                        });
-                        setInsumosSeleccionados([]);
-                    }}
-                >
-                    + Agregar Venta
-                </button>
-            </div>
-            
-            <SearchBar filtro={filtro} setFiltro={setFiltro} />
-
-            {renderContent()}
-
+            )}
             <VentasAnularModal
-                visible={modalVisible && modalTipo === 'anular'}
+                visible={modalVisible}
                 onClose={cerrarModal}
                 ventaSeleccionada={ventaSeleccionada}
                 anularVenta={anularVenta}

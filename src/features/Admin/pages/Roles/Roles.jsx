@@ -350,7 +350,7 @@ export default function Roles() {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                👁️
+                🔍
               </button>
               <button
                 className={`admin-button ${rowData.activo ? 'yellow' : ''}`} 

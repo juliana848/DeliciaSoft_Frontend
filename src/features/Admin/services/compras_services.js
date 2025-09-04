@@ -102,33 +102,33 @@ class CompraApiService {
     }
   }
 
-  // Método para cambiar estado de compra (anular/activar)
-  async cambiarEstadoCompra(id, estado) {
-    try {
-      const response = await fetch(`${BASE_URL}/${id}/estado`, {
-        method: "PATCH",
-        headers: this.baseHeaders,
-        body: JSON.stringify({ estado: estado }),
-      });
-      const data = await this.handleResponse(response);
-      return this.transformarCompraDesdeAPI(data);
-    } catch (error) {
-      console.error('Error en cambiarEstadoCompra:', error);
-      // Si el endpoint no existe, intentar con PUT
-      try {
-        const putResponse = await fetch(`${BASE_URL}/${id}`, {
-          method: "PUT",
-          headers: this.baseHeaders,
-          body: JSON.stringify({ estado: estado }),
-        });
-        const putData = await this.handleResponse(putResponse);
-        return this.transformarCompraDesdeAPI(putData);
-      } catch (putError) {
-        console.error('Error en PUT cambiarEstadoCompra:', putError);
-        throw new Error('No se pudo cambiar el estado de la compra');
-      }
-    }
-  }
+  // // Método para cambiar estado de compra (anular/activar)
+  // async cambiarEstadoCompra(id, estado) {
+  //   try {
+  //     const response = await fetch(`${BASE_URL}/${id}/estado`, {
+  //       method: "PATCH",
+  //       headers: this.baseHeaders,
+  //       body: JSON.stringify({ estado: estado }),
+  //     });
+  //     const data = await this.handleResponse(response);
+  //     return this.transformarCompraDesdeAPI(data);
+  //   } catch (error) {
+  //     console.error('Error en cambiarEstadoCompra:', error);
+  //     // Si el endpoint no existe, intentar con PUT
+  //     try {
+  //       const putResponse = await fetch(`${BASE_URL}/${id}`, {
+  //         method: "PUT",
+  //         headers: this.baseHeaders,
+  //         body: JSON.stringify({ estado: estado }),
+  //       });
+  //       const putData = await this.handleResponse(putResponse);
+  //       return this.transformarCompraDesdeAPI(putData);
+  //     } catch (putError) {
+  //       console.error('Error en PUT cambiarEstadoCompra:', putError);
+  //       throw new Error('No se pudo cambiar el estado de la compra');
+  //     }
+  //   }
+  // }
 
   // Métodos para DETALLES DE COMPRA
   async obtenerDetallesCompra(idCompra) {
@@ -248,8 +248,8 @@ class CompraApiService {
       nombre: proveedor.nombreproveedor || 
               proveedor.nombre || 
               proveedor.nombreCategoria || 
-              proveedor.nombre_proveedor ||
-              'Proveedor desconocido'
+              proveedor.nombre_proveedor 
+              // 'Proveedor desconocido'
     };
   }
 

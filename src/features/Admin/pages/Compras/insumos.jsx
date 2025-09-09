@@ -13,9 +13,9 @@ import categoriaInsumoApiService from '../../services/categoriainsumos';
 export default function InsumosTable() {
   const unidadesPorProducto = {
     'Harina': ['Kilogramos', 'Gramos', 'libra', 'Bolsa', 'Paquete'],
-    'Azúcar': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
-    'Huevos': ['unid', 'docena', 'cartón'],
-    'Leche': ['litros', 'mililitros', 'galón', 'bolsa', 'cartón'],
+    'AzÃºcar': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
+    'Huevos': ['unid', 'docena', 'cartÃ³n'],
+    'Leche': ['litros', 'mililitros', 'galÃ³n', 'bolsa', 'cartÃ³n'],
     'Sal': ['Kilogramos', 'Gramos', 'paquete'],
     'Mantequilla': ['Gramos', 'Kilogramos', 'barra', 'paquete'],
     'Aceite': ['litros', 'mililitros', 'botella'],
@@ -36,8 +36,8 @@ export default function InsumosTable() {
     'bolsa': null,
     'paquete': null,
     'docena': null,
-    'cartón': null,
-    'galón': null,
+    'cartÃ³n': null,
+    'galÃ³n': null,
     'barra': null,
     'botella': null,
     'caja': null
@@ -74,12 +74,23 @@ export default function InsumosTable() {
     stockMinimo: null
   });
 
+  // Estados para el modal de categoría
+  const [modalCategoriaVisible, setModalCategoriaVisible] = useState(false);
+  const [formCategoria, setFormCategoria] = useState({
+    nombreCategoria: '',
+    descripcion: ''
+  });
+  const [erroresCategoria, setErroresCategoria] = useState({
+    nombreCategoria: '',
+    descripcion: ''
+  });
+
   // Effect para cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       console.log('Iniciando carga de datos del componente...');
       
-      // Cargar categorías primero
+      // Cargar categorÃ­as primero
       await cargarCategorias();
       
       // Cargar unidades de medida desde API
@@ -94,7 +105,7 @@ export default function InsumosTable() {
     cargarDatos();
   }, []);
 
-  // Función para cargar unidades
+  // FunciÃ³n para cargar unidades
   const cargarUnidades = async () => {
     try {
       setLoadingUnidades(true);
@@ -121,47 +132,47 @@ export default function InsumosTable() {
     }
   };
 
-  // Función para cargar categorías
+  // FunciÃ³n para cargar categorÃ­as
   const cargarCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('Iniciando carga de categorías...');
+      console.log('Iniciando carga de categorÃ­as...');
       
       const categoriasAPI = await categoriaInsumoApiService.obtenerCategorias();
-      console.log('Categorías recibidas de la API:', categoriasAPI);
+      console.log('CategorÃ­as recibidas de la API:', categoriasAPI);
       
       const categoriasActivas = categoriasAPI.filter(cat => cat.estado === true);
-      console.log('Categorías activas filtradas:', categoriasActivas);
+      console.log('CategorÃ­as activas filtradas:', categoriasActivas);
       
       if (categoriasActivas.length === 0) {
-        console.warn('No se encontraron categorías activas');
-        showNotification('No se encontraron categorías activas', 'warning');
+        console.warn('No se encontraron categorÃ­as activas');
+        showNotification('No se encontraron categorÃ­as activas', 'warning');
       }
       
       setCategorias(categoriasActivas);
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
-      showNotification('Error al cargar las categorías: ' + error.message, 'error');
+      console.error('Error al cargar categorÃ­as:', error);
+      showNotification('Error al cargar las categorÃ­as: ' + error.message, 'error');
       setCategorias([]);
     } finally {
       setLoadingCategorias(false);
     }
   };
 
-  // Función corregida para cargar insumos
+  // FunciÃ³n corregida para cargar insumos
   const cargarInsumos = async () => {
     try {
       setLoading(true);
       console.log('Cargando insumos...');
-      console.log('Estado actual - Categorías:', categorias.length, 'Unidades:', unidades.length);
+      console.log('Estado actual - CategorÃ­as:', categorias.length, 'Unidades:', unidades.length);
       
       const insumosAPI = await insumoApiService.obtenerInsumos();
       console.log('Insumos recibidos:', insumosAPI);
       console.log('Estructura del primer insumo:', insumosAPI[0]);
       
-      // Verificar si tenemos las categorías y unidades cargadas
+      // Verificar si tenemos las categorÃ­as y unidades cargadas
       if (categorias.length === 0) {
-        console.warn('No hay categorías disponibles para mapear');
+        console.warn('No hay categorÃ­as disponibles para mapear');
       }
       if (unidades.length === 0) {
         console.warn('No hay unidades disponibles para mapear');
@@ -180,11 +191,11 @@ export default function InsumosTable() {
         // Primero intentar usar el nombre que viene de la API
         let categoria = insumo.nombreCategoria;
         
-        // Si no viene el nombre, buscarlo en el estado de categorías
+        // Si no viene el nombre, buscarlo en el estado de categorÃ­as
         if (!categoria) {
           const categoriaEncontrada = categorias.find(cat => cat.id === parseInt(insumo.idCategoriaInsumos));
-          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'Categoría desconocida';
-          console.log(`Categoría buscada para ID ${insumo.idCategoriaInsumos}:`, categoriaEncontrada);
+          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'CategorÃ­a desconocida';
+          console.log(`CategorÃ­a buscada para ID ${insumo.idCategoriaInsumos}:`, categoriaEncontrada);
         }
 
         // Lo mismo para unidades
@@ -223,7 +234,7 @@ export default function InsumosTable() {
   // Funciones auxiliares
   const getCategoriaName = (id) => {
     const categoria = categorias.find(cat => cat.id === parseInt(id));
-    return categoria ? categoria.nombreCategoria : 'Sin categoría';
+    return categoria ? categoria.nombreCategoria : 'Sin categorÃ­a';
   };
 
   const getUnidadName = (id) => {
@@ -255,7 +266,7 @@ export default function InsumosTable() {
     return unidades;
   };
 
-  // Funciones de notificación
+  // Funciones de notificaciÃ³n
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
   };
@@ -268,7 +279,7 @@ export default function InsumosTable() {
     setShowStockInfo(!showStockInfo);
   };
 
-  // Función para cambiar estado
+  // FunciÃ³n para cambiar estado
   const toggleEstado = async (id) => {
     try {
       const insumo = insumos.find(i => i.id === id);
@@ -326,6 +337,110 @@ export default function InsumosTable() {
     setErrors({});
   };
 
+  // Funciones para el modal de categoría
+  const abrirModalCategoria = () => {
+    setModalCategoriaVisible(true);
+    setFormCategoria({
+      nombreCategoria: '',
+      descripcion: ''
+    });
+    setErroresCategoria({
+      nombreCategoria: '',
+      descripcion: ''
+    });
+  };
+
+  const cerrarModalCategoria = () => {
+    setModalCategoriaVisible(false);
+    setFormCategoria({
+      nombreCategoria: '',
+      descripcion: ''
+    });
+    setErroresCategoria({
+      nombreCategoria: '',
+      descripcion: ''
+    });
+  };
+
+  const handleChangeCategoriaForm = (e) => {
+    const { name, value } = e.target;
+    setFormCategoria(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    const error = validateCategoriaField(name, value);
+    setErroresCategoria(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const validateCategoriaField = (name, value) => {
+    let error = '';
+
+    switch (name) {
+      case 'nombreCategoria':
+        if (!value.trim()) {
+          error = 'El nombre es obligatorio';
+        } else if (value.trim().length < 3) {
+          error = 'El nombre debe tener al menos 3 caracteres';
+        } else if (value.trim().length > 50) {
+          error = 'El nombre no puede superar los 50 caracteres';
+        }
+        break;
+      
+      case 'descripcion':
+        if (!value.trim()) {
+          error = 'La descripción es obligatoria';
+        } else if (value.trim().length < 10) {
+          error = 'La descripción debe tener al menos 10 caracteres';
+        }
+        break;
+    }
+
+    return error;
+  };
+
+  const guardarCategoria = async () => {
+    const erroresValidacion = {
+      nombreCategoria: validateCategoriaField('nombreCategoria', formCategoria.nombreCategoria),
+      descripcion: validateCategoriaField('descripcion', formCategoria.descripcion)
+    };
+
+    setErroresCategoria(erroresValidacion);
+
+    const hasErrors = Object.values(erroresValidacion).some(error => error !== '');
+    
+    if (hasErrors) {
+      showNotification('Por favor corrige los errores en el formulario', 'error');
+      return;
+    }
+
+    try {
+      const datosCategoria = {
+        nombreCategoria: formCategoria.nombreCategoria.trim(),
+        descripcion: formCategoria.descripcion.trim(),
+        estado: true
+      };
+
+      const nuevaCategoria = await categoriaInsumoApiService.crearCategoria(datosCategoria);
+      
+      await cargarCategorias();
+      
+      setForm(prev => ({
+        ...prev,
+        idCategoriaInsumos: nuevaCategoria.id
+      }));
+
+      cerrarModalCategoria();
+      showNotification('Categoría creada exitosamente');
+    } catch (error) {
+      console.error('Error al crear categoría:', error);
+      showNotification('Error al crear la categoría: ' + error.message, 'error');
+    }
+  };
+
   // Manejo de cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -338,7 +453,7 @@ export default function InsumosTable() {
       
       if (!unidadValida && unidadesDisponibles.length > 0) {
         newForm.idUnidadMedida = unidadesDisponibles[0].idunidadmedida;
-        console.log(`Unidad cambiada automáticamente a: ${unidadesDisponibles[0].unidadmedida}`);
+        console.log(`Unidad cambiada automÃ¡ticamente a: ${unidadesDisponibles[0].unidadmedida}`);
       }
     }
 
@@ -351,7 +466,7 @@ export default function InsumosTable() {
     }));
   };
 
-  // Validación de campos
+  // ValidaciÃ³n de campos
   const validateField = (name, value) => {
     let error = null;
     
@@ -364,7 +479,7 @@ export default function InsumosTable() {
       
       case 'idCategoriaInsumos':
         if (!value) {
-          error = 'La categoría es obligatoria';
+          error = 'La categorÃ­a es obligatoria';
         }
         break;
       
@@ -378,7 +493,7 @@ export default function InsumosTable() {
         if (!value.toString().trim()) {
           error = 'La cantidad es obligatoria';
         } else if (isNaN(value) || Number(value) <= 0) {
-          error = 'La cantidad debe ser un número mayor a 0';
+          error = 'La cantidad debe ser un nÃºmero mayor a 0';
         } else if (Number(value) > 10000) {
           error = 'La cantidad no puede ser mayor a 10,000';
         }
@@ -386,11 +501,11 @@ export default function InsumosTable() {
 
       case 'stockMinimo':
         if (!value.toString().trim()) {
-          error = 'El stock mínimo es obligatorio';
+          error = 'El stock mÃ­nimo es obligatorio';
         } else if (isNaN(value) || Number(value) < 0) {
-          error = 'El stock mínimo debe ser un número mayor o igual a 0';
+          error = 'El stock mÃ­nimo debe ser un nÃºmero mayor o igual a 0';
         } else if (Number(value) > 1000) {
-          error = 'El stock mínimo no puede ser mayor a 1,000';
+          error = 'El stock mÃ­nimo no puede ser mayor a 1,000';
         }
         break;
     }
@@ -398,7 +513,7 @@ export default function InsumosTable() {
     return error;
   };
 
-  // Función para convertir archivo a Base64
+  // FunciÃ³n para convertir archivo a Base64
   const convertirABase64 = (file, callback) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -406,7 +521,7 @@ export default function InsumosTable() {
     reader.onerror = (error) => console.error('Error al leer archivo:', error);
   };
 
-  // Validación completa del formulario
+  // ValidaciÃ³n completa del formulario
   const validarFormulario = () => {
     const erroresValidacion = {
       nombreInsumo: validateField('nombreInsumo', form.nombreInsumo),
@@ -428,7 +543,7 @@ export default function InsumosTable() {
     return true;
   };
 
-  // Función para guardar insumo
+  // FunciÃ³n para guardar insumo
   const guardar = async () => {
     if (!validarFormulario()) return;
 
@@ -442,7 +557,7 @@ export default function InsumosTable() {
       }
       
       if (!form.idCategoriaInsumos) {
-        showNotification('La categoría es requerida', 'error');
+        showNotification('La categorÃ­a es requerida', 'error');
         return;
       }
       
@@ -465,12 +580,12 @@ export default function InsumosTable() {
       const categoriaExiste = categorias.find(c => c.id === datosAPI.idCategoriaInsumos);
       const unidadExiste = unidades.find(u => u.idunidadmedida === datosAPI.idUnidadMedida);
       
-      console.log('Verificación de foreign keys:');
-      console.log('  - Categoría encontrada:', categoriaExiste);
+      console.log('VerificaciÃ³n de foreign keys:');
+      console.log('  - CategorÃ­a encontrada:', categoriaExiste);
       console.log('  - Unidad encontrada:', unidadExiste);
       
       if (!categoriaExiste) {
-        throw new Error(`La categoría con ID ${datosAPI.idCategoriaInsumos} no existe`);
+        throw new Error(`La categorÃ­a con ID ${datosAPI.idCategoriaInsumos} no existe`);
       }
       
       if (!unidadExiste) {
@@ -496,11 +611,11 @@ export default function InsumosTable() {
       let mensajeError = 'Error al guardar el insumo';
       
       if (error.status === 500) {
-        mensajeError = 'Error interno del servidor. Verifica que todos los datos sean válidos.';
+        mensajeError = 'Error interno del servidor. Verifica que todos los datos sean vÃ¡lidos.';
       } else if (error.status === 400) {
-        mensajeError = 'Datos inválidos. ' + (error.message || '');
+        mensajeError = 'Datos invÃ¡lidos. ' + (error.message || '');
       } else if (error.message && error.message.includes('foreign key')) {
-        mensajeError = 'Error de clave foránea: Verifica que la categoría y unidad de medida existan.';
+        mensajeError = 'Error de clave forÃ¡nea: Verifica que la categorÃ­a y unidad de medida existan.';
       } else if (error.message) {
         mensajeError = error.message;
       }
@@ -509,7 +624,7 @@ export default function InsumosTable() {
     }
   };
 
-  // Función para eliminar insumo
+  // FunciÃ³n para eliminar insumo
   const eliminar = async () => {
     try {
       await insumoApiService.eliminarInsumo(modal.insumo.id);
@@ -576,10 +691,10 @@ export default function InsumosTable() {
     const status = getStockStatus(insumo);
     const style = getStockStyle(insumo);
     const icons = {
-      'agotado': '⛔',
-      'critico': '⚠️',
-      'bajo': '⚡',
-      'normal': '✅'
+      'agotado': 'â›"',
+      'critico': 'âš ï¸',
+      'bajo': 'âš¡',
+      'normal': 'âœ…'
     };
     
     return (
@@ -675,55 +790,55 @@ export default function InsumosTable() {
       )}
 
       <h2 className="admin-section-title">Gestión de Insumos</h2>
-<DataTable
-  value={insumosFiltrados}
-  paginator
-  rows={5}
-  rowsPerPageOptions={[5, 10, 20]}
-  paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
-  className="admin-table"
->
-  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
-  <Column field="nombre" header="Nombre" />
-  <Column field="categoria" header="Categoría" />
-  <Column header="Stock Actual" body={(insumo) => <StockIndicator insumo={insumo} />} />
-  <Column header="Stock Mínimo" body={(insumo) => <StockMinimoIndicator insumo={insumo} />} />
-  <Column
-    header="Estado"
-    body={i => (
-      <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
-    )}
-  />
-  <Column
-    header="Acción"
-    body={(rowData) => (
-      <>
-        <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>👁</button>
-        <button
-          className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
-          title="Editar"
-          onClick={() => rowData.estado && abrirModal('editar', rowData)}
-          disabled={!rowData.estado}
-          style={{
-            opacity: !rowData.estado ? 0.5 : 1,
-            cursor: !rowData.estado ? 'not-allowed' : 'pointer'
-          }}
-        >✏️</button>
-        <button
-          className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
-          title="Eliminar"
-          onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
-          disabled={!rowData.estado}
-          style={{
-            opacity: !rowData.estado ? 0.5 : 1,
-            cursor: !rowData.estado ? 'not-allowed' : 'pointer'
-          }}
-        >🗑️</button>
-      </>
-    )}
-  />
-</DataTable>
+      <DataTable
+        value={insumosFiltrados}
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 20]}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
+        className="admin-table"
+      >
+        <Column header="Nº" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+        <Column field="nombre" header="Nombre" />
+        <Column field="categoria" header="Categoría" />
+        <Column header="Stock Actual" body={(insumo) => <StockIndicator insumo={insumo} />} />
+        <Column header="Stock Mínimo" body={(insumo) => <StockMinimoIndicator insumo={insumo} />} />
+        <Column
+          header="Estado"
+          body={i => (
+            <InputSwitch checked={i.estado} onChange={() => toggleEstado(i.id)} />
+          )}
+        />
+        <Column
+          header="Acción"
+          body={(rowData) => (
+            <>
+              <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>👁</button>
+              <button
+                className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
+                title="Editar"
+                onClick={() => rowData.estado && abrirModal('editar', rowData)}
+                disabled={!rowData.estado}
+                style={{
+                  opacity: !rowData.estado ? 0.5 : 1,
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                }}
+              >✏️</button>
+              <button
+                className={`admin-button red ${!rowData.estado ? 'disabled' : ''}`}
+                title="Eliminar"
+                onClick={() => rowData.estado && abrirModal('eliminar', rowData)}
+                disabled={!rowData.estado}
+                style={{
+                  opacity: !rowData.estado ? 0.5 : 1,
+                  cursor: !rowData.estado ? 'not-allowed' : 'pointer'
+                }}
+              >🗑️</button>
+            </>
+          )}
+        />
+      </DataTable>
 
       
       {modal.visible && (
@@ -836,25 +951,52 @@ export default function InsumosTable() {
 
                 <label>
                   Categoría*
-                  <select
-                    name="idCategoriaInsumos"
-                    value={form.idCategoriaInsumos}
-                    onChange={handleChange}
-                    className={`modal-input ${errors.idCategoriaInsumos ? 'input-invalid' : form.idCategoriaInsumos ? 'input-valid' : ''}`}
-                    disabled={loadingCategorias}
-                  >
-                    <option value="">
-                      {loadingCategorias ? 'Cargando categorías...' : 'Selecciona una categoría'}
-                    </option>
-                    {categorias.length === 0 && !loadingCategorias && (
-                      <option value="" disabled>No hay categorías disponibles</option>
-                    )}
-                    {categorias.map((categoria) => (
-                      <option key={categoria.id} value={categoria.id}>
-                        {categoria.nombreCategoria}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <select
+                      name="idCategoriaInsumos"
+                      value={form.idCategoriaInsumos}
+                      onChange={handleChange}
+                      className={`modal-input ${errors.idCategoriaInsumos ? 'input-invalid' : form.idCategoriaInsumos ? 'input-valid' : ''}`}
+                      disabled={loadingCategorias}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">
+                        {loadingCategorias ? 'Cargando categorías...' : 'Selecciona una categoría'}
                       </option>
-                    ))}
-                  </select>
+                      {categorias.length === 0 && !loadingCategorias && (
+                        <option value="" disabled>No hay categorías disponibles</option>
+                      )}
+                      {categorias.map((categoria) => (
+                        <option key={categoria.id} value={categoria.id}>
+                          {categoria.nombreCategoria}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <button
+                      type="button"
+                      onClick={abrirModalCategoria}
+                      style={{
+                        width: '35px',
+                        height: '35px',
+                        borderRadius: '5px',
+                        border: '1px solid #d1d5db',
+                        backgroundColor: '#f9fafb',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        minWidth: '35px'
+                      }}
+                      title="Agregar nueva categoría"
+                    >
+                      +
+                    </button>
+                  </div>
+                  
                   {errors.idCategoriaInsumos && <span className="error-message">{errors.idCategoriaInsumos}</span>}
                   
                   {process.env.NODE_ENV === 'development' && (
@@ -1000,6 +1142,62 @@ export default function InsumosTable() {
                 {modal.tipo === 'eliminar' ? 'Eliminar' : 'Guardar'}
               </button>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal para agregar categoría */}
+      {modalCategoriaVisible && (
+        <Modal visible={modalCategoriaVisible} onClose={cerrarModalCategoria}>
+          <h2 className="modal-title">Agregar Nueva Categoría</h2>
+          <div className="modal-body">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label>
+                Nombre*
+                <input
+                  name="nombreCategoria"
+                  value={formCategoria.nombreCategoria}
+                  onChange={handleChangeCategoriaForm}
+                  className={`modal-input ${erroresCategoria.nombreCategoria ? 'input-invalid' : formCategoria.nombreCategoria ? 'input-valid' : ''}`}
+                  placeholder="Ingresa el nombre de la categoría"
+                />
+                {erroresCategoria.nombreCategoria && (
+                  <span className="error-message">{erroresCategoria.nombreCategoria}</span>
+                )}
+              </label>
+              
+              <label>
+                Descripción*
+                <textarea
+                  name="descripcion"
+                  value={formCategoria.descripcion}
+                  onChange={handleChangeCategoriaForm}
+                  className={`modal-input textarea ${erroresCategoria.descripcion ? 'input-invalid' : formCategoria.descripcion ? 'input-valid' : ''}`}
+                  rows={3}
+                  style={{ resize: 'vertical' }}
+                  placeholder="Describe la categoría..."
+                />
+                {erroresCategoria.descripcion && (
+                  <span className="error-message">{erroresCategoria.descripcion}</span>
+                )}
+              </label>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="modal-btn cancel-btn" 
+              onClick={cerrarModalCategoria}
+              type="button"
+            >
+              Cancelar
+            </button>
+            <button
+              className="modal-btn save-btn"
+              onClick={guardarCategoria}
+              type="button"
+            >
+              Guardar
+            </button>
           </div>
         </Modal>
       )}

@@ -10,6 +10,9 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const [categorias, setCategorias] = useState(['Todos']);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+  const [insumoParaPrecio, setInsumoParaPrecio] = useState(null);
+  const [precioTemporal, setPrecioTemporal] = useState('');
 
   // Función para obtener imagen por defecto según categoría
   const obtenerImagenPorDefecto = (categoria, nombreInsumo) => {
@@ -25,23 +28,45 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
     return 'https://via.placeholder.com/100x100/ff69b4/ffffff?text=📦';
   };
 
-  // Función para obtener precio estimado (mientras no esté en la API)
+  // Función para obtener precio estimado (fallback)
   const obtenerPrecioEstimado = (nombreInsumo, categoria) => {
     const nombreLower = (nombreInsumo || '').toLowerCase();
     
     // Precios estimados comunes en Colombia (en COP)
-    if (nombreLower.includes('huevo')) return 6000; // docena de huevos
-    if (nombreLower.includes('harina')) return 4500; // kilo de harina
-    if (nombreLower.includes('leche')) return 3500; // litro de leche
-    if (nombreLower.includes('azucar') || nombreLower.includes('azúcar')) return 3000; // kilo de azúcar
-    if (nombreLower.includes('sal')) return 1500; // kilo de sal
-    if (nombreLower.includes('arroz')) return 4000; // kilo de arroz
+    if (nombreLower.includes('huevo')) return 6000;
+    if (nombreLower.includes('harina')) return 4500;
+    if (nombreLower.includes('leche')) return 3500;
+    if (nombreLower.includes('azucar') || nombreLower.includes('azúcar')) return 3000;
+    if (nombreLower.includes('sal')) return 1500;
+    if (nombreLower.includes('arroz')) return 4000;
     
     // Precios por categoría
     if (categoria === 'frutas') return 5000;
     if (categoria === 'secos') return 3500;
     
-    return 2500; // precio genérico
+    return 2500;
+  };
+
+  // Actualizar precio de insumo en la base de datos
+  const actualizarPrecioInsumo = async (insumoId, nuevoPrecio) => {
+    try {
+      const response = await fetch(`https://deliciasoft-backend.onrender.com/api/insumos/${insumoId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ precio: nuevoPrecio })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error actualizando precio:', error);
+      throw error;
+    }
   };
 
   // Cargar insumos desde la API
@@ -66,37 +91,33 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         console.log('🚀 Datos RAW de insumos desde API:', data);
         console.log('📋 Campos disponibles en primer insumo:', Object.keys(data[0] || {}));
         
-        // Verificar si hay campos de precio en los datos
-        const camposPrecio = ['precio', 'preciounitario', 'precioUnitario', 'valor', 'costo'];
+        // Verificar si hay campo de precio en los datos
         const tienePrecio = data.some(insumo => 
-          camposPrecio.some(campo => insumo[campo] !== undefined && insumo[campo] !== null)
+          insumo.precio !== undefined && 
+          insumo.precio !== null && 
+          parseFloat(insumo.precio) > 0
         );
         
         console.log('💰 ¿Los datos incluyen precios?', tienePrecio);
         
         // Transformar datos de la API al formato esperado
         const insumosTransformados = data.map(insumo => {
-          // Intentar buscar precio en los datos
+          // Intentar obtener precio real de la base de datos
           let precio = 0;
-          let campoUsado = '';
+          let esPrecioReal = false;
           
-          // Buscar en campos posibles
-          const camposPrecio = ['precio', 'preciounitario', 'precioUnitario', 'valor', 'costo'];
-          for (const campo of camposPrecio) {
-            if (insumo[campo] !== undefined && insumo[campo] !== null && insumo[campo] !== '') {
-              const precioNumerico = parseFloat(insumo[campo]);
-              if (!isNaN(precioNumerico) && precioNumerico > 0) {
-                precio = precioNumerico;
-                campoUsado = campo;
-                break;
-              }
+          if (insumo.precio !== undefined && insumo.precio !== null) {
+            const precioNumerico = parseFloat(insumo.precio);
+            if (!isNaN(precioNumerico) && precioNumerico > 0) {
+              precio = precioNumerico;
+              esPrecioReal = true;
             }
           }
           
-          // Si no encontramos precio en la API, usar precio estimado
+          // Si no hay precio real, usar estimado
           if (precio === 0) {
             precio = obtenerPrecioEstimado(insumo.nombreinsumo, insumo.categoriainsumos?.nombrecategoria);
-            campoUsado = 'estimado';
+            esPrecioReal = false;
           }
           
           const insumoTransformado = {
@@ -111,18 +132,18 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
               insumo.categoriainsumos?.nombrecategoria, 
               insumo.nombreinsumo
             ),
-            esPrecioEstimado: campoUsado === 'estimado',
-            campoUsadoParaPrecio: campoUsado,
+            esPrecioReal: esPrecioReal,
             datosOriginales: insumo
           };
           
-          console.log(`✅ ${insumoTransformado.nombre}: $${precio} (${campoUsado})`);
+          console.log(`${esPrecioReal ? '✅' : '⚠️'} ${insumoTransformado.nombre}: $${precio} (${esPrecioReal ? 'real' : 'estimado'})`);
           
           return insumoTransformado;
         });
 
         console.log('📦 Total insumos transformados:', insumosTransformados.length);
-        console.log('💵 Insumos con precio > 0:', insumosTransformados.filter(i => i.precio > 0).length);
+        console.log('💵 Insumos con precio real:', insumosTransformados.filter(i => i.esPrecioReal).length);
+        console.log('⚠️ Insumos con precio estimado:', insumosTransformados.filter(i => !i.esPrecioReal).length);
 
         setInsumos(insumosTransformados);
         
@@ -150,7 +171,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
     console.log('🎯 Seleccionando insumo:', {
       nombre: insumo.nombre,
       precio: insumo.precio,
-      esPrecioEstimado: insumo.esPrecioEstimado
+      esPrecioReal: insumo.esPrecioReal
     });
     
     setSelectedInsumos(prev =>
@@ -163,6 +184,46 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             precioUnitario: insumo.precio
           }]
     );
+  };
+
+  const abrirModalPrecio = (insumo, e) => {
+    e.stopPropagation(); // Evitar que se seleccione el insumo
+    setInsumoParaPrecio(insumo);
+    setPrecioTemporal(insumo.precio.toString());
+    setMostrarModalPrecio(true);
+  };
+
+  const guardarPrecio = async () => {
+    try {
+      const nuevoPrecio = parseFloat(precioTemporal);
+      if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+        alert('Por favor ingresa un precio válido');
+        return;
+      }
+
+      // Actualizar en la base de datos
+      await actualizarPrecioInsumo(insumoParaPrecio.id, nuevoPrecio);
+      
+      // Actualizar localmente
+      setInsumos(prev => prev.map(insumo => 
+        insumo.id === insumoParaPrecio.id 
+          ? { ...insumo, precio: nuevoPrecio, precioUnitario: nuevoPrecio, esPrecioReal: true }
+          : insumo
+      ));
+
+      // Actualizar insumos seleccionados si este insumo está seleccionado
+      setSelectedInsumos(prev => prev.map(insumo =>
+        insumo.id === insumoParaPrecio.id
+          ? { ...insumo, precio: nuevoPrecio, precioUnitario: nuevoPrecio, esPrecioReal: true }
+          : insumo
+      ));
+
+      setMostrarModalPrecio(false);
+      setInsumoParaPrecio(null);
+      setPrecioTemporal('');
+    } catch (error) {
+      alert('Error al actualizar el precio: ' + error.message);
+    }
   };
 
   const handleAgregar = () => {
@@ -203,6 +264,9 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       </div>
     );
   }
+
+  const insumosConPrecioReal = insumos.filter(i => i.esPrecioReal).length;
+  const insumosConPrecioEstimado = insumos.filter(i => !i.esPrecioReal).length;
 
   return (
     <div className="adicion-modal-overlay">
@@ -333,6 +397,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             transition: transform 0.2s;
             cursor: pointer;
             border: 3px solid transparent;
+            position: relative;
           }
 
           .adicion-modal-card:hover {
@@ -365,9 +430,9 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             margin: 2px 0;
           }
 
-          .adicion-modal-card .precio {
+          .adicion-modal-card .precio-real {
             font-weight: bold;
-            color: #ff69b4;
+            color: #28a745;
             font-size: 14px;
           }
 
@@ -377,11 +442,62 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             font-size: 14px;
           }
 
-          .adicion-modal-card .debug-info {
-            font-size: 10px;
-            color: #999;
-            font-style: italic;
-            margin-top: 4px;
+          .btn-editar-precio {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff69b4;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .btn-editar-precio:hover {
+            background: #d63384;
+          }
+
+          .modal-precio {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+          }
+
+          .modal-precio-contenido {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 300px;
+            text-align: center;
+          }
+
+          .modal-precio input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ff69b4;
+            border-radius: 5px;
+            font-size: 16px;
+          }
+
+          .modal-precio-botones {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
           }
 
           .adicion-modal-footer {
@@ -444,6 +560,15 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             margin: 0 auto 8px;
           }
 
+          .info-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+          }
+
           .warning-message {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -469,10 +594,21 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
           <button onClick={onClose} className="adicion-modal-close-btn">&times;</button>
         </div>
 
-        <div className="warning-message">
-          ⚠️ <strong>Nota:</strong> Los precios mostrados son estimados ya que la API no incluye información de precios. 
-          Considera agregar precios a tu base de datos para mayor precisión.
-        </div>
+        {insumosConPrecioReal > 0 && insumosConPrecioEstimado > 0 ? (
+          <div className="info-message">
+            ✅ <strong>Precios disponibles:</strong> {insumosConPrecioReal} insumos tienen precio real, 
+            {insumosConPrecioEstimado} usan precio estimado. Haz clic en el botón ✏️ para actualizar precios.
+          </div>
+        ) : insumosConPrecioEstimado > 0 ? (
+          <div className="warning-message">
+            ⚠️ <strong>Nota:</strong> Los precios mostrados son estimados. 
+            Haz clic en el botón ✏️ para establecer precios reales.
+          </div>
+        ) : (
+          <div className="info-message">
+            ✅ <strong>Excelente:</strong> Todos los insumos tienen precios reales configurados.
+          </div>
+        )}
 
         <div className="adicion-modal-search-container">
           <input
@@ -520,6 +656,14 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
                   className={`adicion-modal-card ${isSelected ? 'adicion-modal-card-selected' : ''}`}
                   onClick={() => toggleInsumo(insumo)}
                 >
+                  <button 
+                    className="btn-editar-precio"
+                    onClick={(e) => abrirModalPrecio(insumo, e)}
+                    title="Editar precio"
+                  >
+                    ✏️
+                  </button>
+
                   {insumo.imagen && insumo.imagen !== 'https://via.placeholder.com/100x100/ff69b4/ffffff?text=📦' ? (
                     <img 
                       src={insumo.imagen} 
@@ -538,13 +682,13 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
                   </div>
                   <h4>{insumo.nombre}</h4>
                   <p>{insumo.unidad}</p>
-                  <p className={insumo.esPrecioEstimado ? "precio-estimado" : "precio"}>
+                  <p className={insumo.esPrecioReal ? "precio-real" : "precio-estimado"}>
                     {new Intl.NumberFormat('es-CO', {
                       style: 'currency',
                       currency: 'COP',
                       minimumFractionDigits: 0
                     }).format(insumo.precio)}
-                    {insumo.esPrecioEstimado && ' *'}
+                    {!insumo.esPrecioReal && ' *'}
                   </p>
                   {insumo.category !== 'Sin categoría' && (
                     <p style={{ fontSize: '10px', fontStyle: 'italic' }}>{insumo.category}</p>
@@ -560,7 +704,9 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
           <div className="adicion-modal-info">
             {filteredInsumos.length} insumos disponibles
             <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
-              * Precios estimados (no disponibles en API)
+              {insumosConPrecioReal > 0 && `✅ ${insumosConPrecioReal} con precio real`}
+              {insumosConPrecioReal > 0 && insumosConPrecioEstimado > 0 && ' | '}
+              {insumosConPrecioEstimado > 0 && `* ${insumosConPrecioEstimado} estimados`}
             </div>
           </div>
           <div className="adicion-modal-buttons">
@@ -576,6 +722,41 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             </button>
           </div>
         </div>
+
+        {/* Modal para editar precio */}
+        {mostrarModalPrecio && (
+          <div className="modal-precio">
+            <div className="modal-precio-contenido">
+              <h3>Actualizar precio de {insumoParaPrecio?.nombre}</h3>
+              <input
+                type="number"
+                value={precioTemporal}
+                onChange={(e) => setPrecioTemporal(e.target.value)}
+                placeholder="Ingrese el precio"
+                min="0"
+                step="0.01"
+              />
+              <div className="modal-precio-botones">
+                <button 
+                  className="adicion-modal-btn adicion-modal-btn-cancel"
+                  onClick={() => {
+                    setMostrarModalPrecio(false);
+                    setInsumoParaPrecio(null);
+                    setPrecioTemporal('');
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="adicion-modal-btn adicion-modal-btn-add"
+                  onClick={guardarPrecio}
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

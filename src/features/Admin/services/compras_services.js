@@ -1,4 +1,4 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/compras";
+const BASE_URL = "https://deliciasoft-backend.onrender.com/api/compra";
 
 class CompraApiService {
   constructor() {
@@ -101,6 +101,38 @@ class CompraApiService {
       throw error;
     }
   }
+
+  // Agregar este método en tu clase CompraApiService (después del método eliminarCompra)
+
+// Método para cambiar estado de compra (anular/activar)
+async cambiarEstadoCompra(id, estado) {
+  try {
+    // Primero intentamos con el endpoint específico de anular si existe
+    const response = await fetch(`${BASE_URL}/${id}/anular`, {
+      method: "PATCH",
+      headers: this.baseHeaders,
+      body: JSON.stringify({ estado: estado }),
+    });
+    
+    if (!response.ok) {
+      // Si no existe el endpoint /anular, usamos el endpoint principal con PUT
+      const putResponse = await fetch(`${BASE_URL}/${id}`, {
+        method: "PUT", 
+        headers: this.baseHeaders,
+        body: JSON.stringify({ estado: estado }),
+      });
+      
+      const data = await this.handleResponse(putResponse);
+      return this.transformarCompraDesdeAPI(data);
+    }
+    
+    const data = await this.handleResponse(response);
+    return this.transformarCompraDesdeAPI(data);
+  } catch (error) {
+    console.error('Error en cambiarEstadoCompra:', error);
+    throw error;
+  }
+}
 
   // // Método para cambiar estado de compra (anular/activar)
   // async cambiarEstadoCompra(id, estado) {

@@ -9,12 +9,18 @@ export default function ModalAgregarProductos({
   setFiltro,
   onClose
 }) {
+  // 👉 alternar selección de producto
   const toggleSeleccion = (producto) => {
     const yaSeleccionado = productosSeleccionados.some(p => p.id === producto.id);
     if (yaSeleccionado) {
+      // si ya estaba, lo quitamos
       setProductosSeleccionados(prev => prev.filter(p => p.id !== producto.id));
     } else {
-    setProductosSeleccionados(prev => [...prev, { ...producto, cantidad: 1, receta: producto.receta || null }]);
+      // si no estaba, lo agregamos con cantidad = 1
+      setProductosSeleccionados(prev => [
+        ...prev,
+        { ...producto, cantidad: 1, receta: producto.receta || null, sede: "" }
+      ]);
     }
   };
 
@@ -60,7 +66,7 @@ export default function ModalAgregarProductos({
         <button className="cancel-btn" onClick={onClose}>Cancelar</button>
         <button
           className="save-btn"
-          onClick={onClose}
+          onClick={onClose} // 👈 solo cierra, productos ya quedan seleccionados
         >
           Guardar ({productosSeleccionados.length})
         </button>

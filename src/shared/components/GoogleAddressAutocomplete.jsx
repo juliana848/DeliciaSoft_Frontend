@@ -44,31 +44,16 @@ const GoogleAddressAutocomplete = ({
             autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
                 if (place.formatted_address) {
-                    const addressComponents = place.address_components || [];
-                    let barrio = '';
-                    let ciudad = '';
-
-                    addressComponents.forEach(component => {
-                        const types = component.types;
-                        if (types.includes('sublocality') || types.includes('neighborhood')) {
-                            barrio = component.long_name;
-                        }
-                        if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-                            ciudad = component.long_name;
-                        }
-                    });
-
-                    onChange(place.formatted_address);
+                    const addressData = extractAddressComponents(place);
+                    
+                    // Solo pasar la dirección corta (antes de la primera coma)
+                    const direccionCorta = place.formatted_address.split(',')[0].trim();
+                    onChange(direccionCorta);
+                    
                     if (onPlaceSelect) {
                         onPlaceSelect({
-                            ...place,
-                            address_components: addressComponents,
-                            barrio,
-                            ciudad,
-                            coordenadas: {
-                                lat: place.geometry?.location?.lat(),
-                                lng: place.geometry?.location?.lng()
-                            }
+                            ...addressData,
+                            direccion: direccionCorta // Asegurar que la dirección sea corta
                         });
                     }
                     setShowSuggestions(false);
@@ -82,6 +67,55 @@ const GoogleAddressAutocomplete = ({
             };
         }
     }, [isLoaded, disabled, onChange, onPlaceSelect]);
+
+    // Función para extraer componentes de dirección de Google Places
+    const extractAddressComponents = (place) => {
+        const addressComponents = place.address_components || [];
+        let barrio = '';
+        let ciudad = '';
+        let departamento = '';
+
+        addressComponents.forEach(component => {
+            const types = component.types;
+            
+            // Barrio/Localidad
+            if (types.includes('sublocality_level_1') || 
+                types.includes('sublocality') || 
+                types.includes('neighborhood')) {
+                barrio = component.long_name;
+            }
+            
+            // Ciudad
+            if (types.includes('locality')) {
+                ciudad = component.long_name;
+            } else if (types.includes('administrative_area_level_2') && !ciudad) {
+                ciudad = component.long_name;
+            }
+            
+            // Departamento
+            if (types.includes('administrative_area_level_1')) {
+                departamento = component.long_name;
+            }
+        });
+
+        // Extraer solo la parte de la dirección antes de la primera coma
+        const direccionCorta = place.formatted_address ? 
+            place.formatted_address.split(',')[0].trim() : '';
+
+        return {
+            ...place,
+            address_components: addressComponents,
+            direccion: direccionCorta, // Dirección corta
+            direccionCompleta: place.formatted_address, // Dirección completa por si la necesitas
+            barrio,
+            ciudad,
+            departamento,
+            coordenadas: {
+                lat: place.geometry?.location?.lat(),
+                lng: place.geometry?.location?.lng()
+            }
+        };
+    };
 
     const handleInputChange = (e) => {
         const inputValue = e.target.value;
@@ -115,32 +149,13 @@ const GoogleAddressAutocomplete = ({
             fields: ['address_components', 'formatted_address', 'geometry', 'name']
         }, (place, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-                const addressComponents = place.address_components || [];
-                let barrio = '';
-                let ciudad = '';
-
-                addressComponents.forEach(component => {
-                    const types = component.types;
-                    if (types.includes('sublocality') || types.includes('neighborhood')) {
-                        barrio = component.long_name;
-                    }
-                    if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-                        ciudad = component.long_name;
-                    }
-                });
-
-                onChange(place.formatted_address);
+                const addressData = extractAddressComponents(place);
+                
+                // Solo pasar la dirección corta
+                onChange(addressData.direccion);
+                
                 if (onPlaceSelect) {
-                    onPlaceSelect({
-                        ...place,
-                        address_components: addressComponents,
-                        barrio,
-                        ciudad,
-                        coordenadas: {
-                            lat: place.geometry?.location?.lat(),
-                            lng: place.geometry?.location?.lng()
-                        }
-                    });
+                    onPlaceSelect(addressData);
                 }
                 setShowSuggestions(false);
             }
@@ -191,6 +206,7 @@ const GoogleAddressAutocomplete = ({
                             onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
                         >
                             <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
+                                {/* Mostrar solo la parte principal de la dirección */}
                                 {suggestion.structured_formatting.main_text}
                             </div>
                             <div style={{ color: '#666', fontSize: '11px' }}>

@@ -1,3 +1,5 @@
+/* login.css - Versión mejorada con diseño móvil adaptado */
+
 .toggle-left {
   background-color: #ff007b;
 }
@@ -31,7 +33,9 @@
   line-height: 20px;
   letter-spacing: 0.3px;
   margin: 20px 0;
+  color: #333333;
 }
+
 .login-wrapper {
   display: flex;
   justify-content: center;
@@ -88,6 +92,11 @@
   border-radius: 8px;
   width: 100%;
   outline: none;
+  color: #333333;
+}
+
+.containerlog input::placeholder {
+  color: #999999;
 }
 
 .form-container {
@@ -97,11 +106,12 @@
   height: 100%;
   transition: all 0.6s ease-in-out;
 }
+
 .sign-in {
   background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), /* This creates the overlay */
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
     url('https://th.bing.com/th/id/OIP.SA16p_-iTwhNSJOobUU4mAHaFS?rs=1&pid=ImgDetMain'); 
-  background-color: #e4e3e4; /* Still useful for fallback or blend */
+  background-color: #e4e3e4;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -112,7 +122,7 @@
 
 .sign-up {
   background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* Adjust rgba alpha for desired transparency */
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
     url('https://noticias-web.com.ar/wp-content/uploads/2019/10/CUPCAKES-al-Horno.jpg'); 
   background-color: #e4e3e4;
   background-size: cover;
@@ -152,7 +162,7 @@
 
 .toggle {
   background-color: #ffffff;
-  background: linear-gradient(to right, #FFB6D9, #ffb6d9, #f40072, #fc0278); /* Gradiente actualizado con rosa más claro */
+  background: linear-gradient(to right, #FFB6D9, #ffb6d9, #f40072, #fc0278);
   color: #fff;
   position: relative;
   left: -100%;
@@ -242,131 +252,546 @@
   background-color: #ff1add;
 }
 
-.modalrecuperar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 650px;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(6px);
-  animation: fadeIn 0.3s ease forwards, scaleIn 0.3s ease forwards;
+/* ============ ESTILOS MEJORADOS PARA MODALES DE RECUPERACIÓN ============ */
+
+/* Overlay principal que cubre toda la pantalla */
+.recovery-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(15px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 999999 !important;
+  animation: fadeInOverlay 0.4s ease-out !important;
 }
 
-.modal-contenidorecupera {
-  background: linear-gradient(135deg, #f9f9fb, #e3e7ff);
-  border-radius: 16px;
-  padding: 2.5rem 3rem;
-  max-width: 460px;
-  width: 100%;
-  box-shadow: 0 15px 35px rgba(0, 0, 50, 0.2);
-  position: relative;
+.recovery-modal {
+  background: #ffffff !important;
+  border-radius: 28px !important;
+  padding: 2.5rem 2rem !important;
+  max-width: 650px !important;
+  width: 90% !important;
+  max-height: 95vh !important;
+  overflow-y: auto !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15) !important;
+  animation: slideInModal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  border: none !important;
+  position: relative !important;
 }
 
-.modal-contenidorecupera h2 {
-  color: #ff28d8; 
-  margin-bottom: 20px;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+
+.progress-indicator {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 2.5rem !important;
+  padding: 0 !important;
 }
 
-.modal-contenidorecupera p {
-  line-height: 1.7;
-  font-size: 1rem;
-  color: #ff0026; 
-  margin-bottom: 1.5rem;
+.step {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 10; }
+.step-circle {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: #f1f3f4 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  color: #9aa0a6 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 3px solid transparent !important;
 }
 
-@keyframes scaleIn {
-  from {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+.step.active .step-circle {
+  background: #e91e63 !important;
+  color: white !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(233, 30, 99, 0.3) !important;
+  border-color: #e91e63 !important;
 }
 
-/* Agregar estas animaciones al final del archivo login.css */
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.step.completed .step-circle {
+  background: #e91e63 !important;
+  color: white !important;
+  border-color: #e91e63 !important;
 }
 
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+.step span {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #9aa0a6 !important;
+  transition: all 0.3s ease !important;
+  text-align: center !important;
 }
 
-/* Mejoras para los botones de los modales */
-.botones {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
+.step.active span {
+  color: #e91e63 !important;
+  font-weight: 600 !important;
 }
 
-.btn-enviar {
-  flex: 1;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+.step.completed span {
+  color: #e91e63 !important;
+  font-weight: 600 !important;
 }
 
-.btn-enviar:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.step-line {
+  width: 60px !important;
+  height: 3px !important;
+  background: #f1f3f4 !important;
+  margin: 0 1rem !important;
+  border-radius: 2px !important;
+  transition: all 0.4s ease !important;
 }
 
-/* Estilos para el campo de código de verificación */
-.codigo-input {
-  text-align: center;
-  font-size: 18px;
-  letter-spacing: 2px;
-  font-weight: bold;
+.step-line.completed {
+  background: #e91e63 !important;
 }
 
-/* Estilos para la información de requisitos de contraseña */
+/* Header del modal */
+.modal-header {
+  text-align: center !important;
+  margin-bottom: 2rem !important;
+}
+
+.icon-container {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  background: rgba(233, 30, 99, 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 1.5rem !important;
+  color: #e91e63 !important;
+}
+
+.modal-header h2 {
+  color: #202124 !important;
+  font-size: 1.75rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.75rem !important;
+  letter-spacing: -0.5px !important;
+}
+
+.modal-header p {
+  color: #5f6368 !important;
+  line-height: 1.5 !important;
+  font-size: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+/* Estilos para inputs mejorados */
+.input-group {
+  position: relative !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.input-wrapper {
+  position: relative !important;
+}
+
+.input-icon {
+  position: absolute !important;
+  left: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #9aa0a6 !important;
+  z-index: 2 !important;
+}
+
+.styled-input {
+  width: 173% !important;
+  padding: 16px 16px 16px 48px !important;
+  border: 2px solid #f1f3f4 !important;
+  border-radius: 16px !important;
+  font-size: 16px !important;
+  background: #fafbfc !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: #202124 !important;
+  font-weight: 500 !important;
+}
+
+.styled-input:focus {
+  outline: none !important;
+  border-color: #e91e63 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1) !important;
+  transform: none !important;
+}
+
+.styled-input::placeholder {
+  color: #9aa0a6 !important;
+  font-weight: 400 !important;
+}
+
+.styled-input:disabled {
+  background-color: #f8f9fa !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+/* Inputs para código con diseño móvil */
+.code-input-container {
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: center !important;
+  margin: 2rem 0 !important;
+}
+
+.code-digit-input {
+  width: 48px !important;
+  height: 56px !important;
+  text-align: center !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  border: 2px solid #f1f3f4 !important;
+  border-radius: 12px !important;
+  background: #fafbfc !important;
+  color: #202124 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.code-digit-input:focus {
+  outline: none !important;
+  border-color: #e91e63 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Botones del modal con diseño móvil */
+.button-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  margin-top: 2rem !important;
+}
+
+.btn-primary {
+  width: 100% !important;
+  padding: 16px 24px !important;
+  border: none !important;
+  border-radius: 16px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-height: 52px !important;
+  background: #e91e63 !important;
+  color: white !important;
+  letter-spacing: 0.3px !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #c2185b !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3) !important;
+}
+
+.btn-secondary {
+  width: 100% !important;
+  padding: 16px 24px !important;
+  border: 2px solid #f1f3f4 !important;
+  border-radius: 16px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-height: 52px !important;
+  background: #ffffff !important;
+  color: #e91e63 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fce4ec !important;
+  border-color: #e91e63 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Spinner mejorado */
+.spinner {
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid transparent !important;
+  border-top: 2px solid currentColor !important;
+  border-radius: 50% !important;
+  animation: spin 1s linear infinite !important;
+}
+
+/* Alertas mejoradas */
+.custom-alert {
+  position: fixed !important;
+  top: 24px !important;
+  right: 24px !important;
+  padding: 16px 24px !important;
+  border-radius: 16px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  z-index: 1000000 !important;
+  min-width: 320px !important;
+  animation: slideInAlert 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #4caf50, #2e7d32) !important;
+}
+
+.alert-error {
+  background: linear-gradient(135deg, #f44336, #c62828) !important;
+}
+
+/* Validación de contraseña mejorada */
 .password-requirements {
-  font-size: 12px;
-  color: #000000;
-  margin-top: 10px;
-  background-color: #0080ff;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #dee2e6;
+  background: #f8f9fa !important;
+  border: 2px solid #f1f3f4 !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  margin: 1.5rem 0 !important;
 }
 
-.password-requirements ul {
-  margin: 5px 0;
-  padding-left: 15px;
+.password-requirements h4 {
+  color: #202124 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+  text-align: center !important;
 }
 
-.password-requirements li {
-  margin: 2px 0;
+.requirements-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.requirement {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  font-weight: 500 !important;
+}
+
+.requirement.valid {
+  color: #2e7d32 !important;
+  background: rgba(76, 175, 80, 0.1) !important;
+}
+
+.requirement.invalid {
+  color: #757575 !important;
+  background: rgba(158, 158, 158, 0.1) !important;
+}
+
+/* Toggle de contraseña */
+.password-toggle {
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: none !important;
+  border: none !important;
+  color: #9aa0a6 !important;
+  cursor: pointer !important;
+  padding: 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  z-index: 2 !important;
+}
+
+.password-toggle:hover:not(:disabled) {
+  color: #e91e63 !important;
+  background: rgba(233, 30, 99, 0.1) !important;
+}
+
+/* Indicador de coincidencia de contraseñas */
+.password-match-indicator {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  margin-bottom: 1rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.password-match-indicator.match {
+  color: #2e7d32 !important;
+  background: rgba(76, 175, 80, 0.1) !important;
+  border: 1px solid rgba(76, 175, 80, 0.3) !important;
+}
+
+.password-match-indicator.no-match {
+  color: #d32f2f !important;
+  background: rgba(244, 67, 54, 0.1) !important;
+  border: 1px solid rgba(244, 67, 54, 0.3) !important;
+}
+
+/* Información adicional */
+.info-text {
+  text-align: center !important;
+  margin: 1.5rem 0 !important;
+}
+
+.info-text p {
+  color: #5f6368 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+/* Animaciones mejoradas */
+@keyframes fadeInOverlay {
+  from { 
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to { 
+    opacity: 1;
+    backdrop-filter: blur(15px);
+  }
+}
+
+@keyframes slideInModal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInAlert {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Media queries para responsive */
+@media (max-width: 640px) {
+  .recovery-modal {
+    margin: 1rem !important;
+    padding: 2rem 1.5rem !important;
+    max-height: 90vh !important;
+    border-radius: 24px !important;
+  }
+
+  .progress-indicator {
+    margin-bottom: 2rem !important;
+  }
+
+  .step-circle {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 14px !important;
+  }
+
+  .step-line {
+    width: 40px !important;
+    margin: 0 0.5rem !important;
+  }
+
+  .code-input-container {
+    gap: 8px !important;
+  }
+
+  .code-digit-input {
+    width: 42px !important;
+    height: 50px !important;
+    font-size: 20px !important;
+  }
+
+  .custom-alert {
+    left: 16px !important;
+    right: 16px !important;
+    min-width: auto !important;
+    margin: 0 !important;
+  }
+
+  .requirements-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .icon-container {
+    width: 70px !important;
+    height: 70px !important;
+  }
+}
+
+/* Forzar el z-index correcto cuando hay modal activo */
+.hide-toggle .toggle-container,
+body:has(.recovery-overlay) .toggle-container {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
+
+.hide-toggle .containerlog,
+body:has(.recovery-overlay) .containerlog {
+  z-index: 1 !important;
+}
+
+.recovery-overlay {
+  z-index: 999999 !important;
+}
+
+.recovery-modal {
+  z-index: 1000000 !important;
+}
+
+.custom-alert {
+  z-index: 1000001 !important;
 }

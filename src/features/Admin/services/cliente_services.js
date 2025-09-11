@@ -210,6 +210,42 @@ class ClienteApiService {
     }
   }
 
+async actualizarContrasenaCliente(id, nuevaContrasena) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/clientes/${id}/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ nuevaContrasena }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error al actualizar contraseña:', error);
+    throw error;
+  }
+}
+
+async obtenerPerfilCliente() {
+  try {
+    const profile = authService.getUserProfile();
+    if (!profile || !profile.data || !profile.data.idcliente) {
+      throw new Error('No hay sesión activa de cliente');
+    }
+    
+    return await this.obtenerClientePorId(profile.data.idcliente);
+  } catch (error) {
+    console.error('Error al obtener perfil:', error);
+    throw error;
+  }
+}
+
   // Transformar datos desde la API (snake_case a camelCase)
   transformarClienteDesdeAPI(cliente) {
     return {

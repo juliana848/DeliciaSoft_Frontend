@@ -1,36 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './CategoriasSlider.css';
-<link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet" />
+import categoriaProductoApiService from '../../../../Admin/services/categoriaProductosService';
 
-import cat1 from './imgenescategorias/Cat1.png';
-import cat2 from './imgenescategorias/Cat2.png';
-import cat3 from './imgenescategorias/Cat3.png';
-import cat4 from './imgenescategorias/Cat4.png';
-import cat5 from './imgenescategorias/Cat5.png';
-import cat6 from './imgenescategorias/Cat6.png';
-import cat7 from './imgenescategorias/Cat7.png';
-import cat8 from './imgenescategorias/Cat8.png';
-import cat9 from './imgenescategorias/Cat9.png';
-import cat10 from './imgenescategorias/Cat10.png';
-import cat11 from './imgenescategorias/Cat11.png';
-import cat12 from './imgenescategorias/Cat12.png';
+function CategoriasInicio() {
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const categorias = [
-  { nombre: 'Fresas con crema', imagen: cat1 },
-  { nombre: 'Obleas', imagen: cat2 },
-  { nombre: 'Cupcakes', imagen: cat3 },
-  { nombre: 'Postres', imagen: cat4 },
-  { nombre: 'Pasteles', imagen: cat5 },
-  { nombre: 'Arroz con leche', imagen: cat6 },
-  { nombre: 'Fresas con crema', imagen: cat7 },
-  { nombre: 'Obleas', imagen: cat8 },
-  { nombre: 'Cupcakes', imagen: cat9 },
-  { nombre: 'Postres', imagen: cat10 },
-  { nombre: 'Pasteles', imagen: cat11 },
-  { nombre: 'Arroz con leche', imagen: cat12 },
-];
+  // Cargar categorías desde la API
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        setLoading(true);
+        const categoriasData = await categoriaProductoApiService.obtenerCategoriasActivas();
+        
+        if (categoriasData && categoriasData.length > 0) {
+          // Mapear los datos de la API al formato esperado
+          const categoriasMapeadas = categoriasData.map(cat => ({
+            nombre: cat.nombrecategoria,
+            imagen: cat.imagen || '/imagenes/default-category.png' // Imagen por defecto si no tiene
+          }));
+          setCategorias(categoriasMapeadas);
+        } else {
+          // Fallback a categorías estáticas si no hay datos en la API
+          setCategorias([
+            { nombre: 'Fresas con crema', imagen: '/imagenes/categorias/Cat1.png' },
+            { nombre: 'Obleas', imagen: '/imagenes/categorias/Cat2.png' },
+            { nombre: 'Cupcakes', imagen: '/imagenes/categorias/Cat3.png' },
+            { nombre: 'Postres', imagen: '/imagenes/categorias/Cat4.png' },
+            { nombre: 'Pasteles', imagen: '/imagenes/categorias/Cat5.png' },
+            { nombre: 'Arroz con leche', imagen: '/imagenes/categorias/Cat6.png' },
+          ]);
+        }
+        setError(null);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        setError('Error al cargar categorías');
+        // Fallback a categorías estáticas en caso de error
+        setCategorias([
+          { nombre: 'Fresas con crema', imagen: '/imagenes/categorias/Cat1.png' },
+          { nombre: 'Obleas', imagen: '/imagenes/categorias/Cat2.png' },
+          { nombre: 'Cupcakes', imagen: '/imagenes/categorias/Cat3.png' },
+          { nombre: 'Postres', imagen: '/imagenes/categorias/Cat4.png' },
+          { nombre: 'Pasteles', imagen: '/imagenes/categorias/Cat5.png' },
+          { nombre: 'Arroz con leche', imagen: '/imagenes/categorias/Cat6.png' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-function CategoriasSlider() {
+    cargarCategorias();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="categorias-contenedor">
+        <h2 className="categorias-titulo">Destacados</h2>
+        <div className="categorias-slider-wrapper">
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Cargando categorías...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && categorias.length === 0) {
+    return (
+      <div className="categorias-contenedor">
+        <h2 className="categorias-titulo">Destacados</h2>
+        <div className="categorias-slider-wrapper">
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Error al cargar categorías
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Duplicar categorías para el efecto de animación infinita
   const allCategorias = [...categorias, ...categorias];
 
   return (
@@ -40,7 +89,15 @@ function CategoriasSlider() {
         <div className="categorias-slider animacion-infinita">
           {allCategorias.map((cat, index) => (
             <div className="categoria-item" key={index}>
-              <img src={cat.imagen} alt={cat.nombre} className="categoria-imagen" />
+              <img 
+                src={cat.imagen} 
+                alt={cat.nombre} 
+                className="categoria-imagen"
+                onError={(e) => {
+                  console.error('Error al cargar imagen de categoría:', cat.imagen);
+                  e.target.src = '/imagenes/default-category.png'; // Imagen de fallback
+                }}
+              />
               <span className={`categoria-nombre color-${index % 3}`}>{cat.nombre}</span>
             </div>
           ))}
@@ -50,4 +107,4 @@ function CategoriasSlider() {
   );
 }
 
-export default CategoriasSlider;
+export default CategoriasInicio;

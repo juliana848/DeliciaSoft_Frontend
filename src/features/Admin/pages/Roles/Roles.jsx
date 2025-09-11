@@ -46,7 +46,7 @@ export default function Roles() {
       console.log('Roles cargados:', rolesData);
       
       setPermisos(permisosData);
-      setRoles(rolesData);
+      setRoles(rolesData); // Ya viene ordenado con Admin primero
       
       showNotification('Datos cargados correctamente', 'success');
       
@@ -65,8 +65,15 @@ export default function Roles() {
     }
   };
 
+  // ✅ ACTUALIZADO: Verificar si es rol Admin y protegerlo
   const toggleActivo = async (rol) => {
     try {
+      // Verificar si es rol Admin y se intenta desactivar
+      if (roleApiService.esRolAdmin(rol.nombre) && rol.activo) {
+        showNotification('No se puede desactivar el rol Admin. Este rol debe permanecer siempre activo.', 'error');
+        return;
+      }
+
       const nuevoEstado = !rol.activo;
       
       console.log(`Cambiando estado del rol ${rol.id} a ${nuevoEstado}`);
@@ -74,11 +81,13 @@ export default function Roles() {
       // Actualizar en el backend
       await roleApiService.cambiarEstadoRol(rol.id, nuevoEstado);
       
-      // Actualizar el estado local
+      // Actualizar el estado local manteniendo el orden
       const updated = roles.map(r =>
         r.id === rol.id ? { ...r, activo: nuevoEstado } : r
       );
-      setRoles(updated);
+      
+      // Reordenar para mantener Admin arriba
+      setRoles(roleApiService.ordenarRolesConAdminPrimero(updated));
       
       showNotification(
         `Rol ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`,
@@ -105,6 +114,18 @@ export default function Roles() {
 
   const abrirModal = async (tipo, rol = null) => {
     console.log(`Abriendo modal tipo: ${tipo}`, rol);
+    
+    // ✅ NUEVO: Verificar protecciones del rol Admin
+    if (rol && roleApiService.esRolAdmin(rol.nombre)) {
+      if (tipo === 'editar') {
+        showNotification('No se puede editar el rol Admin. Este rol está protegido del sistema.', 'error');
+        return;
+      }
+      if (tipo === 'eliminar') {
+        showNotification('No se puede eliminar el rol Admin. Este rol es esencial para el sistema.', 'error');
+        return;
+      }
+    }
     
     setModalTipo(tipo);
     setRolSeleccionado(rol);
@@ -168,7 +189,9 @@ export default function Roles() {
         rolActualizado = await roleApiService.crearRol(data);
         console.log('Rol creado:', rolActualizado);
         
-        setRoles(prevRoles => [...prevRoles, rolActualizado]);
+        // Agregar y reordenar manteniendo Admin arriba
+        const nuevosRoles = [...roles, rolActualizado];
+        setRoles(roleApiService.ordenarRolesConAdminPrimero(nuevosRoles));
         showNotification('Rol agregado exitosamente', 'success');
         
       } else if (modalTipo === 'editar') {
@@ -176,11 +199,12 @@ export default function Roles() {
         rolActualizado = await roleApiService.actualizarRol(rolSeleccionado.id, data);
         console.log('Rol actualizado:', rolActualizado);
         
-        setRoles(prevRoles => 
-          prevRoles.map(r => 
-            r.id === rolSeleccionado.id ? rolActualizado : r
-          )
+        const rolesActualizados = roles.map(r => 
+          r.id === rolSeleccionado.id ? rolActualizado : r
         );
+        
+        // Mantener orden con Admin arriba
+        setRoles(roleApiService.ordenarRolesConAdminPrimero(rolesActualizados));
         showNotification('Rol actualizado exitosamente', 'success');
       }
       
@@ -196,6 +220,13 @@ export default function Roles() {
     try {
       console.log(`Intentando eliminar rol ${rolSeleccionado.id}`);
       
+      // ✅ NUEVO: Protección adicional contra eliminación de Admin
+      if (roleApiService.esRolAdmin(rolSeleccionado.nombre)) {
+        showNotification('No se puede eliminar el rol Admin. Este rol es esencial para el sistema.', 'error');
+        cerrarModal();
+        return;
+      }
+
       // Verificar si el rol tiene usuarios asociados
       const tieneUsuarios = await roleApiService.rolTieneUsuarios(rolSeleccionado.id);
       
@@ -209,9 +240,9 @@ export default function Roles() {
       await roleApiService.eliminarRol(rolSeleccionado.id);
       console.log('Rol eliminado exitosamente');
       
-      // Actualizar el estado local
+      // Actualizar el estado local manteniendo orden
       const updated = roles.filter(r => r.id !== rolSeleccionado.id);
-      setRoles(updated);
+      setRoles(roleApiService.ordenarRolesConAdminPrimero(updated));
       
       cerrarModal();
       showNotification('Rol eliminado exitosamente', 'success');
@@ -219,6 +250,21 @@ export default function Roles() {
     } catch (error) {
       console.error('Error al eliminar rol:', error);
       showNotification(`Error al eliminar rol: ${error.message}`, 'error');
+    }
+  };
+
+  // ✅ NUEVO: Función para verificar si se pueden realizar acciones en un rol
+  const puedeEjecutarAccion = (rol, accion) => {
+    const esAdmin = roleApiService.esRolAdmin(rol.nombre);
+    
+    switch (accion) {
+      case 'editar':
+      case 'eliminar':
+        return !esAdmin && rol.activo;
+      case 'toggleEstado':
+        return !esAdmin || (esAdmin && rol.activo); // Admin no se puede desactivar
+      default:
+        return true;
     }
   };
 
@@ -236,8 +282,31 @@ export default function Roles() {
     
     return permisos
       .filter(p => permisosIds.includes(p.id))
-      .map(p => p.nombre)
+      .map(p => p.nombre) // Ya usa el módulo como nombre
       .join(', ');
+  };
+
+  // ✅ NUEVO: Componente para mostrar badges del rol Admin
+  const RolBadge = ({ rol }) => {
+    const esAdmin = roleApiService.esRolAdmin(rol.nombre);
+    
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span>{rol.nombre}</span>
+        {esAdmin && (
+          <span style={{
+            backgroundColor: '#d81b60',
+            color: 'white',
+            padding: '0.2rem 0.5rem',
+            borderRadius: '10px',
+            fontSize: '0.7rem',
+            fontWeight: 'bold'
+          }}>
+            SISTEMA
+          </span>
+        )}
+      </div>
+    );
   };
 
   // Mostrar loading mientras se cargan los datos
@@ -293,7 +362,12 @@ export default function Roles() {
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '35rem' }}
-        rowClassName={(rowData) => !rowData.activo ? 'fila-inactiva' : ''}
+        rowClassName={(rowData) => {
+          const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
+          if (esAdmin) return 'fila-admin';
+          if (!rowData.activo) return 'fila-inactiva';
+          return '';
+        }}
         emptyMessage="No se encontraron roles"
       >
         <Column 
@@ -308,6 +382,7 @@ export default function Roles() {
           header="Nombre"
           headerStyle={{ paddingLeft: '5.8rem' }}
           style={{ width: '12rem', textAlign: 'center' }}
+          body={(rowData) => <RolBadge rol={rowData} />}
         />
 
         <Column 
@@ -331,55 +406,86 @@ export default function Roles() {
         <Column
           header="Estado"
           headerStyle={{ paddingLeft: '3rem' }}
-          body={(rowData) => (
-            <InputSwitch
-              checked={rowData.activo}
-              onChange={() => toggleActivo(rowData)}
-            />
-          )}
+          body={(rowData) => {
+            const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <InputSwitch
+                  checked={rowData.activo}
+                  onChange={() => toggleActivo(rowData)}
+                  disabled={esAdmin && rowData.activo} // Admin activo no se puede desactivar
+                />
+                {esAdmin && rowData.activo && (
+                  <i 
+                    className="pi pi-lock" 
+                    title="El rol Admin no se puede desactivar"
+                    style={{ color: '#d32f2f', fontSize: '0.8rem' }}
+                  />
+                )}
+              </div>
+            );
+          }}
           style={{ width: '6rem', textAlign: 'center' }}
         />
         
        <Column
         header="Acciones"
         headerStyle={{ paddingLeft: '5rem' }}
-        body={(rowData) => (
-          <>
+        body={(rowData) => {
+          const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
+          const puedeEditar = puedeEjecutarAccion(rowData, 'editar');
+          const puedeEliminar = puedeEjecutarAccion(rowData, 'eliminar');
+          
+          return (
+            <>
               <button 
                 className="admin-button gray" 
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                🔍
+                👁
               </button>
               <button
-                className={`admin-button ${rowData.activo ? 'yellow' : ''}`} 
-                title={rowData.activo ? "Editar" : "No disponible (rol inactivo)"}
-                onClick={() => rowData.activo && abrirModal('editar', rowData)}
-                disabled={!rowData.activo}
+                className={`admin-button ${puedeEditar ? 'yellow' : 'disabled'}`} 
+                title={
+                  esAdmin 
+                    ? "No disponible (rol del sistema)" 
+                    : !rowData.activo 
+                      ? "No disponible (rol inactivo)"
+                      : "Editar"
+                }
+                onClick={() => puedeEditar && abrirModal('editar', rowData)}
+                disabled={!puedeEditar}
                 style={{
-                  opacity: rowData.activo ? 1 : 0.8,
-                  cursor: rowData.activo ? 'pointer' : 'not-allowed'
+                  opacity: puedeEditar ? 1 : 0.5,
+                  cursor: puedeEditar ? 'pointer' : 'not-allowed'
                 }}
               >
                 ✏️
               </button>
               <button
-                className={`admin-button ${rowData.activo ? 'red' : 'disabled'}`}
-                title={rowData.activo ? "Eliminar" : "No disponible (rol inactivo)"}  
-                onClick={() => rowData.activo && abrirModal('eliminar', rowData)}  
-                disabled={!rowData.activo}
-               style={{
-                  opacity: rowData.activo ? 1 : 0.8,
-                  cursor: rowData.activo ? 'pointer' : 'not-allowed',
+                className={`admin-button ${puedeEliminar ? 'red' : 'disabled'}`}
+                title={
+                  esAdmin 
+                    ? "No disponible (rol del sistema)" 
+                    : !rowData.activo 
+                      ? "No disponible (rol inactivo)"
+                      : "Eliminar"
+                }
+                onClick={() => puedeEliminar && abrirModal('eliminar', rowData)}
+                disabled={!puedeEliminar}
+                style={{
+                  opacity: puedeEliminar ? 1 : 0.5,
+                  cursor: puedeEliminar ? 'pointer' : 'not-allowed',
                 }}
               >
                 🗑️
               </button>
             </>
-          )}
-          style={{ width: '10rem', textAlign: 'center' }}
-        />
+          );
+        }}
+        style={{ width: '10rem', textAlign: 'center' }}
+      />
       </DataTable>
 
       <Modal visible={modalVisible} onClose={cerrarModal}>

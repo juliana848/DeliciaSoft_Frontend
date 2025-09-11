@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import sedeApiService from '../../Admin/Services/sedes_services.js';
 import './OpcionesEntregaView.css';
 
 const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccionada }) => {
@@ -12,27 +13,65 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
   
   const [alertas, setAlertas] = useState([]);
   const [errores, setErrores] = useState({});
+  const [ubicaciones, setUbicaciones] = useState([]);
+  const [cargandoSedes, setCargandoSedes] = useState(true);
 
-  const ubicaciones = [
-    {
-      id: 'san-benito',
-      nombre: 'San Benito',
-      direccion: 'CALLE 9 #7-34',
-      horarios: 'Lunes a Domingo: 9:00 AM - 6:00 PM',
-      horaInicio: '09:00',
-      horaFin: '18:00',
-      icon: '🛒'
-    },
-    {
-      id: 'san-pablo',
-      nombre: 'San Pablo',
-      direccion: 'Carrera 15 #12-45',
-      horarios: 'Lunes a Domingo: 10:00 AM - 7:00 PM',
-      horaInicio: '10:00',
-      horaFin: '19:00',
-      icon: '🛒'
-    }
-  ];
+  // Horario uniforme para todas las sedes (11:00 AM - 4:00 PM)
+  const HORARIO_UNIFORME = {
+    horaInicio: '11:00',
+    horaFin: '16:00',
+    texto: 'Lunes a Domingo: 11:00 AM - 4:00 PM'
+  };
+
+  // Cargar sedes desde la API
+  useEffect(() => {
+    const cargarSedes = async () => {
+      try {
+        setCargandoSedes(true);
+        const sedesData = await sedeApiService.obtenerSedes();
+        
+        // Transformar datos de sedes para el formato esperado
+        const sedesTransformadas = sedesData
+          .filter(sede => sede.activo) // Solo sedes activas
+          .map(sede => ({
+            id: sede.id.toString(),
+            nombre: sede.nombre,
+            direccion: sede.Direccion || sede.direccion,
+            horarios: HORARIO_UNIFORME.texto,
+            horaInicio: HORARIO_UNIFORME.horaInicio,
+            horaFin: HORARIO_UNIFORME.horaFin,
+            icon: '🛒',
+            telefono: sede.Telefono || sede.telefono,
+            imagenUrl: sede.imagenUrl
+          }));
+        
+        setUbicaciones(sedesTransformadas);
+        
+        if (sedesTransformadas.length === 0) {
+          agregarAlerta('warning', '⚠️ No hay sedes disponibles en este momento');
+        }
+      } catch (error) {
+        console.error('Error al cargar sedes:', error);
+        agregarAlerta('error', '❌ Error al cargar las ubicaciones disponibles');
+        // Fallback con datos por defecto en caso de error
+        setUbicaciones([
+          {
+            id: 'sede-principal',
+            nombre: 'Sede Principal',
+            direccion: 'Dirección no disponible',
+            horarios: HORARIO_UNIFORME.texto,
+            horaInicio: HORARIO_UNIFORME.horaInicio,
+            horaFin: HORARIO_UNIFORME.horaFin,
+            icon: '🛒'
+          }
+        ]);
+      } finally {
+        setCargandoSedes(false);
+      }
+    };
+
+    cargarSedes();
+  }, []);
 
   // Función para agregar una alerta
   const agregarAlerta = (tipo, mensaje) => {
@@ -134,7 +173,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     }
     
     setErrores(nuevosErrores);
-  }, [ubicacionSeleccionada, datosEntrega]);
+  }, [ubicacionSeleccionada, datosEntrega, ubicaciones]);
 
   // Manejar selección de ubicación
   const manejarSeleccionUbicacion = (ubicacionId) => {
@@ -216,8 +255,10 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     agregarAlerta('success', '✅ Formulario completado correctamente');
     
     setTimeout(() => {
+      const ubicacionSeleccionadaData = ubicaciones.find(u => u.id === ubicacionSeleccionada);
       onOpcionSeleccionada({
         ubicacion: ubicacionSeleccionada,
+        ubicacionData: ubicacionSeleccionadaData,
         datosEntrega: datosEntrega
       });
       onSiguiente();
@@ -270,35 +311,65 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
 
         <div className="ubicaciones-container">
           <h3 className="subsection-title">Nuestros Carritos Móviles</h3>
-          <div className="ubicaciones-grid">
-            {ubicaciones.map((ubicacion) => (
-              <label 
-                key={ubicacion.id}
-                className={`ubicacion-card ${ubicacionSeleccionada === ubicacion.id ? 'selected' : ''} ${errores.ubicacion ? 'error' : ''}`}
-              >
-                <input 
-                  type="radio" 
-                  name="ubicacion" 
-                  value={ubicacion.id}
-                  checked={ubicacionSeleccionada === ubicacion.id}
-                  onChange={(e) => manejarSeleccionUbicacion(e.target.value)}
-                  className="radio-input"
-                />
-                <div className="card-content">
-                  <div className="ubicacion-icon">{ubicacion.icon}</div>
-                  <div className="ubicacion-info">
-                    <span className="ubicacion-nombre">{ubicacion.nombre}</span>
-                    <span className="ubicacion-direccion">{ubicacion.direccion}</span>
-                    <span className="ubicacion-horarios">{ubicacion.horarios}</span>
+          
+          {cargandoSedes ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <span>Cargando ubicaciones disponibles...</span>
+            </div>
+          ) : (
+            <div className="ubicaciones-grid">
+              {ubicaciones.map((ubicacion) => (
+                <label 
+                  key={ubicacion.id}
+                  className={`ubicacion-card ${ubicacionSeleccionada === ubicacion.id ? 'selected' : ''} ${errores.ubicacion ? 'error' : ''}`}
+                >
+                  <input 
+                    type="radio" 
+                    name="ubicacion" 
+                    value={ubicacion.id}
+                    checked={ubicacionSeleccionada === ubicacion.id}
+                    onChange={(e) => manejarSeleccionUbicacion(e.target.value)}
+                    className="radio-input"
+                  />
+                  <div className="card-content">
+                    <div className="ubicacion-icon">
+                      {ubicacion.imagenUrl ? (
+                        <img 
+                          src={ubicacion.imagenUrl} 
+                          alt={ubicacion.nombre}
+                          className="ubicacion-imagen"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                      ) : null}
+                      <span 
+                        className="ubicacion-icon-fallback" 
+                        style={{ display: ubicacion.imagenUrl ? 'none' : 'block' }}
+                      >
+                        {ubicacion.icon}
+                      </span>
+                    </div>
+                    <div className="ubicacion-info">
+                      <span className="ubicacion-nombre">{ubicacion.nombre}</span>
+                      <span className="ubicacion-direccion">{ubicacion.direccion}</span>
+                      <span className="ubicacion-horarios">{ubicacion.horarios}</span>
+                      {ubicacion.telefono && (
+                        <span className="ubicacion-telefono">📞 {ubicacion.telefono}</span>
+                      )}
+                    </div>
+                    <div className="radio-indicator"></div>
                   </div>
-                  <div className="radio-indicator"></div>
-                </div>
-              </label>
-            ))}
-          </div>
+                </label>
+              ))}
+            </div>
+          )}
+          
           {errores.ubicacion && <span className="error-message">* {errores.ubicacion}</span>}
 
-          {ubicacionSeleccionada && (
+          {ubicacionSeleccionada && !cargandoSedes && (
             <div className="formulario-entrega">
               <h3 className="form-title">Datos de tu Pedido</h3>
               
@@ -322,12 +393,14 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
 
                 <div className="form-group">
                   <label className="form-label">
-                    <span className="label-icon">🕐</span>
+                    <span className="label-icon">🕒</span>
                     Hora de entrega *
                   </label>
                   <input 
                     type="time" 
                     value={datosEntrega.hora}
+                    min="11:00"
+                    max="15:30"
                     onChange={(e) => manejarCambioHora(e.target.value)}
                     className={`form-input ${errores.hora ? 'error' : ''}`}
                     step="1800" // Pasos de 30 minutos
@@ -335,7 +408,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
                   {errores.hora && <span className="error-message">* {errores.hora}</span>}
                   {ubicacionSeleccionada && (
                     <small className="form-help">
-                      Horario disponible: {obtenerRangoHorarios()}
+                      Horario disponible: {obtenerRangoHorarios()} (11:00 AM - 4:00 PM)
                     </small>
                   )}
                 </div>
@@ -387,7 +460,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
           </button>
           <button 
             onClick={handleContinue}
-            disabled={!isFormValid}
+            disabled={!isFormValid || cargandoSedes}
             className="btn-continuar"
           >
             Continuar

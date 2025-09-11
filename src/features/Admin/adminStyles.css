@@ -1660,3 +1660,106 @@
     justify-content: space-between; /* Pushes content to top and buttons to bottom */
     min-height: 100vh; /* Example: ensure the form container takes full viewport height */
 }
+.fila-admin {
+  background-color: #ffebee !important;
+  border-left: 4px solid #d81b60 !important;
+  font-weight: 500;
+}
+
+.fila-admin:hover {
+  background-color: #ffcdd2 !important;
+}
+
+/* Clase para filas inactivas (ya existente, pero asegurándonos que esté) */
+.fila-inactiva {
+  background-color: #f5f5f5 !important;
+  opacity: 0.7;
+  color: #999 !important;
+}
+
+.fila-inactiva:hover {
+  background-color: #eeeeee !important;
+}
+
+/* Botones deshabilitados */
+.admin-button.disabled {
+  background-color: #e0e0e0 !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+.admin-button.disabled:hover {
+  background-color: #e0e0e0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Estilos para el botón de guardar deshabilitado */
+.modal-btn.save-btn-disabled {
+  background-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.modal-btn.save-btn-disabled:hover {
+  background-color: #e0e0e0;
+  transform: none;
+}
+
+/* Badge para rol del sistema */
+.sistema-badge {
+  background-color: #d81b60;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+/* Campos protegidos en formularios */
+.campo-protegido {
+  background-color: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Mensaje de advertencia para rol protegido */
+.alerta-rol-protegido {
+  background-color: #ffebee;
+  border: 1px solid #d81b60;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alerta-rol-protegido .pi {
+  color: #d81b60;
+}
+
+.alerta-rol-protegido span {
+  color: #d81b60;
+  font-weight: 500;
+}
+
+/* Permisos del rol Admin */
+.permiso-admin {
+  background-color: #ffebee !important;
+  color: #d81b60 !important;
+  border: 1px solid #d81b60 !important;
+  font-weight: bold !important;
+  opacity: 0.9;
+}
+
+/* Icono de candado para elementos protegidos */
+.icono-protegido {
+  color: #d81b60;
+  font-size: 0.8rem;
+  margin-left: 0.3rem;
+}

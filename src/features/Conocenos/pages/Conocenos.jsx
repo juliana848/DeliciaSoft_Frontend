@@ -6,10 +6,33 @@ const Conocenos = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalContenido, setModalContenido] = useState(null);
+  const [imagenes, setImagenes] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
+    cargarImagenes();
   }, []);
+
+  // Cargar las imágenes desde la API
+  const cargarImagenes = async () => {
+    try {
+      const response = await fetch('https://deliciasoft-backend.onrender.com/api/imagenes');
+      const data = await response.json();
+      
+      // Mapear las imágenes por ID para fácil acceso
+      const imagenesMap = {};
+      data.forEach(imagen => {
+        imagenesMap[imagen.idimagen] = imagen.urlimg;
+      });
+      
+      setImagenes(imagenesMap);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error al cargar las imágenes:', error);
+      setLoading(false);
+    }
+  };
 
   const abrirModal = (contenido) => {
     setModalContenido(contenido);
@@ -62,14 +85,25 @@ const Conocenos = () => {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="conocenos-container">
+        <div className="page-content">
+          <h1 className="page-title">¡Conócenos somos Delicias Darsy!</h1>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            Cargando contenido...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="conocenos-container">
       <div className={`page-content ${isVisible ? 'fade-in' : ''}`}>
         <h1 className="page-title">¡Conócenos somos Delicias Darsy!</h1>
         
-
         <div className="zigzag-timeline">
-
           <div className="center-line"></div>
           
           <div className="zigzag-item right-item">
@@ -80,7 +114,14 @@ const Conocenos = () => {
             
             <div className="zigzag-content">
               <div className="logo-circle">
-                <img src="/imagenes/logo-delicias-darsy.png" alt="Logo" className="logo-image" />
+                <img 
+                  src={imagenes[3] || 'https://via.placeholder.com/150x150?text=Logo'} 
+                  alt="Logo" 
+                  className="logo-image"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/150x150?text=Error+logo';
+                  }}
+                />
               </div>
               <div className="item-info">
                 <p className="social-handle">@delicias_Darsy</p>
@@ -103,7 +144,14 @@ const Conocenos = () => {
             
             <div className="zigzag-content">
               <div className="image-container">
-                <img src="/imagenes/Conocenos/tienda.png" alt="Tienda" className="item-image" />
+                <img 
+                  src={imagenes[4] || 'https://via.placeholder.com/300x200?text=Tienda'} 
+                  alt="Tienda" 
+                  className="item-image"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/300x200?text=Error+tienda';
+                  }}
+                />
               </div>
               <button 
                 className="pink-button"
@@ -115,16 +163,21 @@ const Conocenos = () => {
           </div>
           
           <div className="zigzag-item right-item">
-
             <div className="zigzag-marker">
               <span>3</span>
             </div>
-
             <h2 className="zigzag-title title-left">{modalInfo[2].titulo}</h2>
             
             <div className="zigzag-content">
               <div className="image-container">
-                <img src="/imagenes/Conocenos/postre.jpg" alt="Postre" className="item-image" />
+                <img 
+                  src={imagenes[5] || 'https://via.placeholder.com/300x200?text=Postre'} 
+                  alt="Postre" 
+                  className="item-image"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/300x200?text=Error+postre';
+                  }}
+                />
               </div>
               <button 
                 className="pink-button"

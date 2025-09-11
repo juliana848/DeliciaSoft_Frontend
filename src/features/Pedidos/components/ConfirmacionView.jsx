@@ -1,34 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { CartContext } from "../../Cartas/pages/CartContext";
 
-const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
+const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarProducto, onActualizarCantidad }) => {
   const [comentarios, setComentarios] = useState('');
   const [alerta, setAlerta] = useState({ mostrar: false, tipo: '', mensaje: '' });
-  const [productos, setProductos] = useState([
-    {
-      id: 1,
-      nombre: 'Torta de chocolate',
-      cantidad: 1,
-      precio: 25000,
-      toppings: ['Fresas', 'Chocolate derretido', 'Crema batida'],
-      salsas: ['Salsa de chocolate', 'Caramelo'],
-      adicciones: ['Vela personalizada', 'Decoración especial'],
-      personalizado: true
-    },
-    {
-      id: 2,
-      nombre: 'Mini donas',
-      cantidad: 15,
-      precio: 40000,
-      toppings: ['Glaseado', 'Chispas de colores'],
-      salsas: ['Glaseado de vainilla'],
-      adicciones: ['Caja decorativa'],
-      personalizado: true
-    }
-  ]);
-
   const [mostrarDetalles, setMostrarDetalles] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+
+  // Obtener productos del contexto como fallback
+  const { productosSeleccionados: productosDelContexto } = useContext(CartContext);
+
+  // Función para obtener todos los productos (prioritizando los del pedido principal)
+  const obtenerTodosLosProductos = () => {
+    if (pedido && pedido.productos && pedido.productos.length > 0) {
+      return pedido.productos;
+    }
+    // Fallback al contexto si no hay productos en el pedido principal
+    return productosDelContexto || [];
+  };
 
   // Función para mostrar alertas
   const mostrarAlerta = (tipo, mensaje) => {
@@ -46,6 +36,7 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
   };
 
   const eliminarProducto = (productId) => {
+    const productos = obtenerTodosLosProductos();
     if (productos.length === 1) {
       mostrarAlerta('error', '⚠️ No puedes eliminar el último producto. Debe haber al menos un producto en el pedido.');
       return;
@@ -57,7 +48,9 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
   };
 
   const confirmDeletion = () => {
-    setProductos(prev => prev.filter(p => p.id !== productToDelete.id));
+    if (onEliminarProducto) {
+      onEliminarProducto(productToDelete.id);
+    }
     setShowConfirmModal(false);
     setProductToDelete(null);
     mostrarAlerta('success', `✅ Producto "${productToDelete.nombre}" eliminado correctamente del pedido.`);
@@ -69,87 +62,79 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
     mostrarAlerta('info', 'Eliminación de producto cancelada.');
   };
 
-  const eliminarTopping = (productId, topping) => {
-    const producto = productos.find(p => p.id === productId);
-
-    if (producto.toppings.length === 1 && producto.salsas.length === 0) { // Added check for salsas as well
-      mostrarAlerta('warning', `⚠️ Este es el último topping "${topping}" del producto y no hay salsas. Considera que el producto puede quedar sin extras.`);
-      setTimeout(() => {
-        setProductos(prev => prev.map(p =>
-          p.id === productId
-            ? { ...p, toppings: p.toppings.filter(t => t !== topping) }
-            : p
-        ));
-        mostrarAlerta('success', `✅ Topping "${topping}" eliminado correctamente.`);
-      }, 1500);
-    } else {
-      setProductos(prev => prev.map(p =>
-        p.id === productId
-          ? { ...p, toppings: p.toppings.filter(t => t !== topping) }
-          : p
-      ));
-      mostrarAlerta('success', `✅ Topping "${topping}" eliminado correctamente.`);
+  const actualizarCantidadProducto = (productoId, nuevaCantidad) => {
+    if (nuevaCantidad <= 0) {
+      eliminarProducto(productoId);
+      return;
     }
-  };
-
-  const eliminarSalsa = (productId, salsa) => {
-    const producto = productos.find(p => p.id === productId);
-
-    if (producto.salsas.length === 1 && producto.toppings.length === 0) { // Added check for toppings as well
-      mostrarAlerta('warning', `⚠️ Esta es la última salsa "${salsa}" del producto y no hay toppings. Considera que el producto puede quedar sin extras.`);
-      setTimeout(() => {
-        setProductos(prev => prev.map(p =>
-          p.id === productId
-            ? { ...p, salsas: p.salsas.filter(s => s !== salsa) }
-            : p
-        ));
-        mostrarAlerta('success', `✅ Salsa "${salsa}" eliminada correctamente.`);
-      }, 1500);
-    } else {
-      setProductos(prev => prev.map(p =>
-        p.id === productId
-          ? { ...p, salsas: p.salsas.filter(s => s !== salsa) }
-          : p
-      ));
-      mostrarAlerta('success', `✅ Salsa "${salsa}" eliminada correctamente.`);
+    
+    if (onActualizarCantidad) {
+      onActualizarCantidad(productoId, nuevaCantidad);
+      mostrarAlerta('success', '✅ Cantidad actualizada correctamente.');
     }
-  };
-
-  const eliminarAdiccion = (productId, adiccion) => {
-    setProductos(prev => prev.map(p =>
-      p.id === productId
-        ? { ...p, adicciones: p.adicciones.filter(a => a !== adiccion) }
-        : p
-    ));
-    mostrarAlerta('success', `✅ Adicional "${adiccion}" eliminado correctamente.`);
   };
 
   const validarPedido = () => {
+    const productos = obtenerTodosLosProductos();
+    
     if (productos.length === 0) {
       mostrarAlerta('error', '❌ No hay productos en el pedido. Agrega al menos un producto.');
       return false;
     }
 
-    const productosIncompletos = productos.filter(p =>
-      (!p.toppings || p.toppings.length === 0) &&
-      (!p.salsas || p.salsas.length === 0)
-    );
+    // Calcular cantidad total
+    const cantidadTotal = productos.reduce((total, producto) => total + (producto.cantidad || 1), 0);
+    
+    if (cantidadTotal < 10) {
+      mostrarAlerta('error', `❌ Necesitas al menos 10 productos en total. Tienes ${cantidadTotal} productos.`);
+      return false;
+    }
 
-    if (productosIncompletos.length > 0) {
-      mostrarAlerta('warning', '⚠️ Algunos productos no tienen toppings ni salsas. ¿Deseas continuar?');
-      setTimeout(() => {
-        mostrarAlerta('success', '✅ Pedido validado correctamente. Continuando al pago...');
-        onSiguiente({ productos, comentarios });
-      }, 2000);
+    if (cantidadTotal > 100) {
+      mostrarAlerta('error', `❌ Máximo 100 productos permitidos. Tienes ${cantidadTotal} productos.`);
       return false;
     }
 
     mostrarAlerta('success', '✅ Pedido validado correctamente. Continuando al pago...');
     setTimeout(() => {
-      onSiguiente({ productos, comentarios });
+      onSiguiente({ ...pedido, comentarios });
     }, 1000);
     return true;
   };
+
+  const calcularTotalPedido = () => {
+    if (total && typeof total === 'number') {
+      return total;
+    }
+    
+    const productos = obtenerTodosLosProductos();
+    let totalCalculado = 0;
+    
+    // Sumar productos
+    totalCalculado += productos.reduce((sum, producto) => 
+      sum + (producto.precio * (producto.cantidad || 1)), 0
+    );
+    
+    // Sumar toppings (si existen)
+    if (pedido && pedido.toppings) {
+      totalCalculado += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
+    }
+    
+    // Sumar adiciones (si existen)
+    if (pedido && pedido.adiciones) {
+      totalCalculado += pedido.adiciones.reduce((sum, adicion) => sum + (adicion.precio || 0), 0);
+    }
+    
+    // Sumar salsas (si existen)
+    if (pedido && pedido.salsas) {
+      totalCalculado += pedido.salsas.reduce((sum, salsa) => sum + (salsa.precio || 0), 0);
+    }
+    
+    return totalCalculado;
+  };
+
+  const productos = obtenerTodosLosProductos();
+  const totalPedido = calcularTotalPedido();
 
   return (
     <div style={{
@@ -159,7 +144,7 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
       fontFamily: 'Inter, sans-serif',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'flex-start' // Changed to flex-start to align content at the top
+      alignItems: 'flex-start'
     }}>
       {/* Alerta dinámica */}
       {alerta.mostrar && (
@@ -180,7 +165,7 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                 ? 'linear-gradient(135deg, #10b981, #059669)'
                 : alerta.tipo === 'error'
                 ? 'linear-gradient(135deg, #ec4899, #be185d)'
-                : 'linear-gradient(135deg, #0ea5e9, #0284c7)', // Color for 'info' and 'warning' types
+                : 'linear-gradient(135deg, #0ea5e9, #0284c7)',
             boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
             animation: 'slideInRight 0.5s ease-out',
             display: 'flex',
@@ -205,7 +190,15 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
         </div>
       )}
 
-      <div style={{ maxWidth: '900px', width: '100%', margin: '20px auto', background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', padding: '30px' }}>
+      <div style={{ 
+        maxWidth: '900px', 
+        width: '100%', 
+        margin: '20px auto', 
+        background: 'white', 
+        borderRadius: '20px', 
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)', 
+        padding: '30px' 
+      }}>
         <div style={{
           textAlign: 'center',
           marginBottom: '30px',
@@ -228,8 +221,8 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
             gap: '8px',
             padding: '8px 16px',
             borderRadius: '20px',
-            background: '#ffc10715', // light yellow
-            border: '2px solid #ffc10730', // yellow border
+            background: '#ffc10715',
+            border: '2px solid #ffc10730',
             color: '#ffc107',
             fontWeight: '600',
             fontSize: '14px'
@@ -313,21 +306,59 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                         {producto.nombre}
                       </h4>
                       <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                        Cantidad: <span style={{ fontWeight: '600' }}>{producto.cantidad}</span>
+                        Cantidad: <span style={{ fontWeight: '600' }}>{producto.cantidad || 1}</span>
                         <span style={{ margin: '0 8px' }}>•</span>
-                        Precio: <span style={{ fontWeight: '600' }}>${producto.precio.toLocaleString()}</span>
-                        {producto.personalizado && <span style={{
-                          marginLeft: '10px',
-                          padding: '4px 10px',
-                          borderRadius: '15px',
-                          background: '#6f42c115',
-                          color: '#6f42c1',
-                          fontSize: '12px',
-                          fontWeight: '500'
-                        }}>Personalizado</span>}
+                        Precio unitario: <span style={{ fontWeight: '600' }}>${producto.precio.toLocaleString()}</span>
+                        <span style={{ margin: '0 8px' }}>•</span>
+                        Subtotal: <span style={{ fontWeight: '600', color: '#e91e63' }}>
+                          ${(producto.precio * (producto.cantidad || 1)).toLocaleString()}
+                        </span>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      {/* Controles de cantidad */}
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                        <button
+                          onClick={() => actualizarCantidadProducto(producto.id, (producto.cantidad || 1) - 1)}
+                          style={{
+                            padding: '5px 10px',
+                            border: 'none',
+                            borderRadius: '5px',
+                            backgroundColor: '#e74c3c',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          -
+                        </button>
+                        <span style={{ 
+                          padding: '5px 10px', 
+                          fontSize: '14px', 
+                          fontWeight: 'bold',
+                          minWidth: '30px',
+                          textAlign: 'center'
+                        }}>
+                          {producto.cantidad || 1}
+                        </span>
+                        <button
+                          onClick={() => actualizarCantidadProducto(producto.id, (producto.cantidad || 1) + 1)}
+                          style={{
+                            padding: '5px 10px',
+                            border: 'none',
+                            borderRadius: '5px',
+                            backgroundColor: '#2ecc71',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      
                       <button
                         onClick={() => toggleDetalles(producto.id)}
                         style={{
@@ -374,7 +405,8 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
 
                   {mostrarDetalles[producto.id] && (
                     <div style={{ padding: '20px', background: '#f8f9fa', borderTop: '1px solid #eee' }}>
-                      {(producto.toppings && producto.toppings.length > 0) && (
+                      {/* Mostrar toppings del pedido */}
+                      {pedido && pedido.toppings && pedido.toppings.length > 0 && (
                         <div style={{ marginBottom: '15px' }}>
                           <h5 style={{
                             fontSize: '15px',
@@ -385,10 +417,10 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                             alignItems: 'center',
                             gap: '5px'
                           }}>
-                            🍓 Toppings ({producto.toppings.length}):
+                            🧁 Toppings Seleccionados ({pedido.toppings.length}):
                           </h5>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {producto.toppings.map((topping, index) => (
+                            {pedido.toppings.map((topping, index) => (
                               <span key={index} style={{
                                 padding: '6px 12px',
                                 background: '#e91e63',
@@ -400,29 +432,20 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                                 alignItems: 'center',
                                 gap: '5px'
                               }}>
-                                {topping}
-                                <button
-                                  onClick={() => eliminarTopping(producto.id, topping)}
-                                  title={`Eliminar ${topping}`}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    padding: '0',
-                                    marginLeft: '5px'
-                                  }}
-                                >
-                                  ✕
-                                </button>
+                                {topping.nombre}
+                                {topping.precio > 0 && (
+                                  <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                    (+${topping.precio.toLocaleString()})
+                                  </span>
+                                )}
                               </span>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {(producto.salsas && producto.salsas.length > 0) && (
+                      {/* Mostrar adiciones del pedido */}
+                      {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
                         <div style={{ marginBottom: '15px' }}>
                           <h5 style={{
                             fontSize: '15px',
@@ -433,58 +456,10 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                             alignItems: 'center',
                             gap: '5px'
                           }}>
-                            🍯 Salsas ({producto.salsas.length}):
+                            ✨ Adiciones Seleccionadas ({pedido.adiciones.length}):
                           </h5>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {producto.salsas.map((salsa, index) => (
-                              <span key={index} style={{
-                                padding: '6px 12px',
-                                background: '#007bff',
-                                color: 'white',
-                                borderRadius: '15px',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                              }}>
-                                {salsa}
-                                <button
-                                  onClick={() => eliminarSalsa(producto.id, salsa)}
-                                  title={`Eliminar ${salsa}`}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    padding: '0',
-                                    marginLeft: '5px'
-                                  }}
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {(producto.adicciones && producto.adicciones.length > 0) && (
-                        <div>
-                          <h5 style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: '#495057',
-                            marginBottom: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            ✨ Adicionales ({producto.adicciones.length}):
-                          </h5>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {producto.adicciones.map((adiccion, index) => (
+                            {pedido.adiciones.map((adicion, index) => (
                               <span key={index} style={{
                                 padding: '6px 12px',
                                 background: '#17a2b8',
@@ -496,44 +471,77 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
                                 alignItems: 'center',
                                 gap: '5px'
                               }}>
-                                {adiccion}
-                                <button
-                                  onClick={() => eliminarAdiccion(producto.id, adiccion)}
-                                  title={`Eliminar ${adiccion}`}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    padding: '0',
-                                    marginLeft: '5px'
-                                  }}
-                                >
-                                  ✕
-                                </button>
+                                {adicion.nombre}
+                                <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                  (+${adicion.precio.toLocaleString()})
+                                </span>
                               </span>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {(!producto.toppings || producto.toppings.length === 0) &&
-                       (!producto.salsas || producto.salsas.length === 0) &&
-                       (!producto.adicciones || producto.adicciones.length === 0) && (
+                      {/* Mostrar salsas del pedido */}
+                      {pedido && pedido.salsas && pedido.salsas.length > 0 && (
+                        <div style={{ marginBottom: '15px' }}>
+                          <h5 style={{
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            color: '#495057',
+                            marginBottom: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}>
+                            🍯 Salsas Seleccionadas ({pedido.salsas.length}):
+                          </h5>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            {pedido.salsas.map((salsa, index) => (
+                              <span key={index} style={{
+                                padding: '6px 12px',
+                                background: '#007bff',
+                                color: 'white',
+                                borderRadius: '15px',
+                                fontSize: '13px',
+                                fontWeight: '500',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}>
+                                {salsa.nombre}
+                                <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                                  (+${salsa.precio.toLocaleString()})
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mensaje cuando no hay extras */}
+                      {(!pedido || 
+                        (!pedido.toppings || pedido.toppings.length === 0) &&
+                        (!pedido.adiciones || pedido.adiciones.length === 0) &&
+                        (!pedido.salsas || pedido.salsas.length === 0)
+                      ) && (
                         <div style={{
-                          background: '#fff3cd', // light yellow background
-                          color: '#856404', // dark yellow text
-                          padding: '10px 15px',
+                          background: '#fff3cd',
+                          color: '#856404',
+                          padding: '15px',
                           borderRadius: '10px',
                           fontSize: '14px',
                           fontWeight: '500',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px'
+                          gap: '8px',
+                          textAlign: 'center'
                         }}>
                           <span style={{ fontSize: '20px', lineHeight: 1 }}>ℹ️</span>
-                          Este producto no tiene extras seleccionados.
+                          <div>
+                            <strong>Sin extras seleccionados</strong>
+                            <br />
+                            <small>Este producto se servirá en su presentación estándar.</small>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -544,6 +552,86 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
           )}
         </div>
 
+        {/* Resumen de totales */}
+        <div style={{
+          background: '#f8f9fa',
+          borderRadius: '15px',
+          padding: '20px',
+          marginBottom: '30px',
+          border: '1px solid #e9ecef'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#495057',
+            marginBottom: '15px'
+          }}>
+            💰 Resumen de Costos
+          </h3>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '8px 0',
+              borderBottom: '1px solid #dee2e6'
+            }}>
+              <span>Productos ({productos.reduce((sum, p) => sum + (p.cantidad || 1), 0)} unidades):</span>
+              <span>${productos.reduce((sum, p) => sum + (p.precio * (p.cantidad || 1)), 0).toLocaleString()}</span>
+            </div>
+            
+            {pedido && pedido.toppings && pedido.toppings.length > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid #dee2e6'
+              }}>
+                <span>Toppings ({pedido.toppings.length}):</span>
+                <span>${pedido.toppings.reduce((sum, t) => sum + (t.precio || 0), 0).toLocaleString()}</span>
+              </div>
+            )}
+            
+            {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid #dee2e6'
+              }}>
+                <span>Adiciones ({pedido.adiciones.length}):</span>
+                <span>${pedido.adiciones.reduce((sum, a) => sum + a.precio, 0).toLocaleString()}</span>
+              </div>
+            )}
+            
+            {pedido && pedido.salsas && pedido.salsas.length > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                borderBottom: '1px solid #dee2e6'
+              }}>
+                <span>Salsas ({pedido.salsas.length}):</span>
+                <span>${pedido.salsas.reduce((sum, s) => sum + s.precio, 0).toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            paddingTop: '15px',
+            borderTop: '2px solid #dee2e6',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#e91e63'
+          }}>
+            <span>Total del Pedido:</span>
+            <span>${totalPedido.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Comentarios */}
         <div style={{
           background: '#f8f9fa',
           borderRadius: '15px',
@@ -595,6 +683,7 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
           </small>
         </div>
 
+        {/* Botones de navegación */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -747,6 +836,33 @@ const ConfirmacionView = ({ pedido, onSiguiente, onAnterior }) => {
           </div>
         </div>
       )}
+
+      {/* CSS Animations */}
+      <style>
+        {`
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes fadeInUp {
+            from {
+              transform: translateY(20px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

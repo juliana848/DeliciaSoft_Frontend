@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// CambiarContrasena.jsx - Versión optimizada con estilo similar al de verificar
+import React, { useState, useEffect } from 'react';
+import { Lock, Eye, EyeOff, CheckCircle, XCircle, X, Shield } from 'lucide-react';
 
 const ModalCambiarContrasena = ({ onClose, onContrasenaCambiada }) => {
   const [nuevaContrasena, setNuevaContrasena] = useState('');
@@ -9,22 +11,34 @@ const ModalCambiarContrasena = ({ onClose, onContrasenaCambiada }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Recuperar datos temporales del sessionStorage
-  const correo = sessionStorage.getItem('tempEmailRecovery');
+  const correo = sessionStorage.getItem('tempEmailRecovery') || 'tu@email.com';
   const userType = sessionStorage.getItem('tempUserType') || 'cliente';
+
+  // Agregar clase al body para ocultar el toggle
+  useEffect(() => {
+    document.body.classList.add('hide-toggle');
+    return () => {
+      document.body.classList.remove('hide-toggle');
+    };
+  }, []);
 
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
       setShowAlert({ show: false, type: '', message: '' });
-    }, 4000);
+    }, 3000);
   };
 
   const validarContrasena = (contrasena) => {
-    const regex = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
-    return regex.test(contrasena);
+    return {
+      length: contrasena.length >= 8,
+      uppercase: /[A-Z]/.test(contrasena),
+      lowercase: /[a-z]/.test(contrasena),
+      number: /[0-9]/.test(contrasena),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(contrasena)
+    };
   };
 
-  // Función auxiliar para manejar errores de respuesta
   const handleResponse = async (response) => {
     const contentType = response.headers.get('content-type');
     
@@ -43,9 +57,7 @@ const ModalCambiarContrasena = ({ onClose, onContrasenaCambiada }) => {
     }
   };
 
-  const manejarCambio = async (e) => {
-    e.preventDefault();
-
+  const manejarCambio = async () => {
     if (!correo) {
       showCustomAlert('error', 'Error: No se encontró el correo para recuperar.');
       return;
@@ -61,8 +73,11 @@ const ModalCambiarContrasena = ({ onClose, onContrasenaCambiada }) => {
       return;
     }
 
-    if (!validarContrasena(nuevaContrasena)) {
-      showCustomAlert('error', 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial.');
+    const validation = validarContrasena(nuevaContrasena);
+    const allValid = validation.length && validation.uppercase && validation.lowercase && validation.number && validation.special;
+    
+    if (!allValid) {
+      showCustomAlert('error', 'La contraseña no cumple con todos los requisitos de seguridad.');
       return;
     }
 
@@ -133,326 +148,556 @@ const ModalCambiarContrasena = ({ onClose, onContrasenaCambiada }) => {
     }
   };
 
+  const passwordValidation = validarContrasena(nuevaContrasena);
+  const isPasswordMatch = nuevaContrasena === confirmarContrasena && confirmarContrasena.length > 0;
+  const allRequirementsMet = passwordValidation.length && passwordValidation.uppercase && passwordValidation.lowercase && passwordValidation.number && passwordValidation.special;
+
   return (
-    <div className="modalrecuperar">
-      {/* Alerta personalizada */}
+    <div className="recovery-overlay">
       {showAlert.show && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 2000,
-            padding: '1rem 1.5rem',
-            borderRadius: '15px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            minWidth: '300px',
-            background:
-              showAlert.type === 'success'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : 'linear-gradient(135deg, #ec4899, #be185d)',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            animation: 'slideInRight 0.5s ease-out'
-          }}
-        >
+        <div className={`custom-alert alert-${showAlert.type}`}>
           {showAlert.message}
         </div>
       )}
 
-      <div className="modal-contenidorecupera">
-        <h2>Cambiar Contraseña</h2>
-        <p>Crea una nueva contraseña segura para tu cuenta: <strong>{correo}</strong></p>
-        <form onSubmit={manejarCambio}>
-          <div className="password-input-group">
-            <input
-              type={showNuevaContrasena ? "text" : "password"}
-              placeholder="Nueva contraseña"
-              value={nuevaContrasena}
-              onChange={(e) => setNuevaContrasena(e.target.value)}
-              required
-              disabled={isLoading}
-              maxLength={50}
-            />
-            <button
-              type="button"
-              className="password-toggle-btn"
-              onClick={() => setShowNuevaContrasena(!showNuevaContrasena)}
-              disabled={isLoading}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {showNuevaContrasena ? (
-                  <>
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </>
-                ) : (
-                  <>
-                    <path d="m15 18-.722-3.25"/>
-                    <path d="M2 8a10.645 10.645 0 0 0 20 0"/>
-                    <path d="m20 15-1.726-2.05"/>
-                    <path d="m4 15 1.726-2.05"/>
-                    <path d="m9 18 .722-3.25"/>
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
-          
-          <div className="password-input-group">
-            <input
-              type={showConfirmarContrasena ? "text" : "password"}
-              placeholder="Confirmar contraseña"
-              value={confirmarContrasena}
-              onChange={(e) => setConfirmarContrasena(e.target.value)}
-              required
-              disabled={isLoading}
-              maxLength={50}
-            />
-            <button
-              type="button"
-              className="password-toggle-btn"
-              onClick={() => setShowConfirmarContrasena(!showConfirmarContrasena)}
-              disabled={isLoading}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {showConfirmarContrasena ? (
-                  <>
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </>
-                ) : (
-                  <>
-                    <path d="m15 18-.722-3.25"/>
-                    <path d="M2 8a10.645 10.645 0 0 0 20 0"/>
-                    <path d="m20 15-1.726-2.05"/>
-                    <path d="m4 15 1.726-2.05"/>
-                    <path d="m9 18 .722-3.25"/>
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
-          
-          {/* Información sobre requisitos de contraseña */}
-          <div className="password-requirements-modal">
-            <strong>Requisitos de contraseña:</strong>
-            <ul>
-              <li style={{ color: nuevaContrasena.length >= 8 ? '#10b981' : '#666' }}>
-                Al menos 8 caracteres
-              </li>
-              <li style={{ color: /(?=.*[A-Z])/.test(nuevaContrasena) ? '#10b981' : '#666' }}>
-                Una letra mayúscula
-              </li>
-              <li style={{ color: /(?=.*[!@#$%^&*])/.test(nuevaContrasena) ? '#10b981' : '#666' }}>
-                Un carácter especial (!@#$%^&*)
-              </li>
-            </ul>
-          </div>
+      <div className="recovery-modal" style={{ 
+        maxWidth: '500px', 
+        padding: '1.8rem 1.5rem',
+        maxHeight: '90vh',
+        overflowY: 'auto'
+      }}>
+        {/* Botón de cierre compacto */}
+        <button 
+          className="close-button" 
+          onClick={onClose}
+          disabled={isLoading}
+          style={{
+            position: 'absolute',
+            top: '15px',
+            right: '15px',
+            background: 'none',
+            border: 'none',
+            color: '#9aa0a6',
+            cursor: 'pointer',
+            padding: '6px',
+            borderRadius: '6px',
+            transition: 'all 0.3s ease',
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.color = '#e91e63';
+            e.target.style.background = 'rgba(233, 30, 99, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = '#9aa0a6';
+            e.target.style.background = 'none';
+          }}
+        >
+          <X size={18} />
+        </button>
 
-          <div className="botones" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="btn-enviar btn-cancelar"
-              disabled={isLoading}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className="btn-enviar btn-confirmar"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Cambiando...' : 'Cambiar'}
-            </button>
-          </div>
-
-          {isLoading && (
-            <div className="loading-spinner">
-              <div className="spinner"></div>
+        {/* Indicador de progreso compacto */}
+        <div className="progress-indicator" style={{ marginBottom: '1.2rem' }}>
+          <div className="step completed">
+            <div className="step-circle">
+              <CheckCircle size={16} />
             </div>
-          )}
-        </form>
+            <span>Correo</span>
+          </div>
+          <div className="step-line completed"></div>
+          <div className="step completed">
+            <div className="step-circle">
+              <CheckCircle size={16} />
+            </div>
+            <span>Código</span>
+          </div>
+          <div className="step-line completed"></div>
+          <div className="step active">
+            <div className="step-circle">3</div>
+            <span>Nueva Contraseña</span>
+          </div>
+        </div>
+
+        <div className="modal-content">
+          <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
+            <div className="icon-container" style={{ 
+              width: '60px', 
+              height: '60px',
+              marginBottom: '1rem'
+            }}>
+              <Shield size={24} />
+            </div>
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>
+              Nueva Contraseña
+            </h2>
+            <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+              Crea una contraseña segura para <strong>{correo}</strong>
+            </p>
+          </div>
+
+          <div className="modal-body">
+            {/* Campo nueva contraseña */}
+            <div className="input-group" style={{ marginBottom: '1rem' }}>
+              <div className="input-wrapper">
+                <Lock className="input-icon" size={18} />
+                <input
+                  type={showNuevaContrasena ? "text" : "password"}
+                  placeholder="Nueva contraseña"
+                  value={nuevaContrasena}
+                  onChange={(e) => setNuevaContrasena(e.target.value)}
+                  disabled={isLoading}
+                  className="styled-input"
+                  maxLength={50}
+                  autoComplete="new-password"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 44px',
+                    fontSize: '15px'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNuevaContrasena(!showNuevaContrasena)}
+                  className="password-toggle"
+                  disabled={isLoading}
+                  tabIndex={-1}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#9aa0a6'
+                  }}
+                >
+                  {showNuevaContrasena ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Campo confirmar contraseña */}
+            <div className="input-group" style={{ marginBottom: '1rem' }}>
+              <div className="input-wrapper">
+                <Lock className="input-icon" size={18} />
+                <input
+                  type={showConfirmarContrasena ? "text" : "password"}
+                  placeholder="Confirmar contraseña"
+                  value={confirmarContrasena}
+                  onChange={(e) => setConfirmarContrasena(e.target.value)}
+                  disabled={isLoading}
+                  className="styled-input"
+                  maxLength={50}
+                  autoComplete="new-password"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 44px',
+                    fontSize: '15px'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmarContrasena(!showConfirmarContrasena)}
+                  className="password-toggle"
+                  disabled={isLoading}
+                  tabIndex={-1}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#9aa0a6'
+                  }}
+                >
+                  {showConfirmarContrasena ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Indicador compacto de coincidencia */}
+            {confirmarContrasena.length > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                color: isPasswordMatch ? '#10b981' : '#ef4444',
+                marginBottom: '1rem',
+                padding: '8px 12px',
+                background: isPasswordMatch ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+                borderRadius: '6px',
+                border: `1px solid ${isPasswordMatch ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+              }}>
+                {isPasswordMatch ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                {isPasswordMatch ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden'}
+              </div>
+            )}
+
+            {/* Requisitos compactos en cuadrícula */}
+            {nuevaContrasena.length > 0 && (
+              <div style={{
+                background: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '1.5rem'
+              }}>
+                <h4 style={{ 
+                  fontSize: '13px', 
+                  color: '#374151', 
+                  marginBottom: '8px',
+                  fontWeight: '600'
+                }}>
+                  Requisitos de contraseña:
+                </h4>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: '6px'
+                }}>
+                  {[
+                    { key: 'length', text: '8+ caracteres' },
+                    { key: 'uppercase', text: 'Mayúscula (A-Z)' },
+                    { key: 'lowercase', text: 'Minúscula (a-z)' },
+                    { key: 'number', text: 'Número (0-9)' },
+                    { key: 'special', text: 'Especial (!@#$...)' }
+                  ].map(req => (
+                    <div key={req.key} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      color: passwordValidation[req.key] ? '#10b981' : '#9ca3af'
+                    }}>
+                      {passwordValidation[req.key] ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                      <span>{req.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Botones */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
+              <button 
+                onClick={manejarCambio}
+                className="btn-primary"
+                disabled={isLoading || !allRequirementsMet || !isPasswordMatch}
+                style={{
+                  flex: '1',
+                  background: '#e91e63',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease',
+                  padding: '14px 20px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  minHeight: '48px'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.background = '#c2185b';
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(233, 30, 99, 0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = '#e91e63';
+                  e.target.style.transform = 'none';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="spinner" style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid transparent',
+                      borderTop: '2px solid currentColor',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                    Cambiando...
+                  </>
+                ) : (
+                  <>
+                    Cambiar Contraseña
+                    <Shield size={16} />
+                  </>
+                )}
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="btn-secondary"
+                disabled={isLoading}
+                style={{
+                  flex: '1',
+                  background: 'white',
+                  border: '2px solid #f1f3f4',
+                  borderRadius: '12px',
+                  color: '#5f6368',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  padding: '14px 20px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  minHeight: '48px'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.borderColor = '#e91e63';
+                    e.target.style.color = '#e91e63';
+                    e.target.style.background = 'rgba(233, 30, 99, 0.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#f1f3f4';
+                  e.target.style.color = '#5f6368';
+                  e.target.style.background = 'white';
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+
+            {/* Información de seguridad compacta */}
+            <div style={{
+              background: 'rgba(233, 30, 99, 0.05)',
+              border: '1px solid rgba(233, 30, 99, 0.1)',
+              borderRadius: '8px',
+              padding: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                color: '#5f6368',
+                fontSize: '13px',
+                lineHeight: '1.4'
+              }}>
+                🔒 Tu contraseña estará encriptada y segura
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
-        .password-input-group {
-          position: relative;
-          margin-bottom: 15px;
-        }
-
-        .password-input-group input {
-          width: 100%;
-          padding: 12px 45px 12px 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          font-size: 14px;
-          transition: all 0.3s ease;
-          background: white;
-        }
-
-        .password-input-group input:focus {
-          outline: none;
-          border-color: #ff58a6;
-          box-shadow: 0 0 0 3px rgba(255, 88, 166, 0.1);
-        }
-
-        .password-input-group input:disabled {
-          background-color: #f5f5f5;
-          cursor: not-allowed;
-          opacity: 0.7;
-        }
-
-        .password-toggle-btn {
-          position: absolute;
-          right: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: linear-gradient(135deg, #ff58a6, #fc0278);
-          border: none;
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          color: white;
-          box-shadow: 0 2px 8px rgba(255, 88, 166, 0.3);
-        }
-
-        .password-toggle-btn:hover:not(:disabled) {
-          background: linear-gradient(135deg, #fc0278, #e91e63);
-          transform: translateY(-50%) scale(1.05);
-          box-shadow: 0 4px 12px rgba(255, 88, 166, 0.4);
-        }
-
-        .password-toggle-btn:active:not(:disabled) {
-          transform: translateY(-50%) scale(0.95);
-        }
-
-        .password-toggle-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          background: #ccc;
-          box-shadow: none;
-        }
-
-        .password-requirements-modal {
-          font-size: 12px;
-          color: #666;
-          margin-top: 10px;
-          background-color: #f8f9fa;
-          padding: 12px;
-          border-radius: 6px;
-          border: 1px solid #dee2e6;
-        }
-
-        .password-requirements-modal strong {
-          color: #333;
-          display: block;
-          margin-bottom: 8px;
-        }
-
-        .password-requirements-modal ul {
-          margin: 0;
-          padding-left: 15px;
-        }
-
-        .password-requirements-modal li {
-          margin: 4px 0;
-          transition: color 0.3s ease;
-          font-weight: 500;
-        }
-
-        .btn-enviar {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 14px;
-          transition: all 0.3s ease;
-          flex: 1;
-          min-height: 44px;
-        }
-
-        .btn-cancelar {
-          background-color: #6c757d;
-          color: white;
-        }
-
-        .btn-cancelar:hover:not(:disabled) {
-          background-color: #5a6268;
-          transform: translateY(-1px);
-        }
-
-        .btn-confirmar {
-          background-color: #ff58a6;
-          color: white;
-        }
-
-        .btn-confirmar:hover:not(:disabled) {
-          background-color: #fc0278;
-          transform: translateY(-1px);
-        }
-
-        .btn-enviar:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .loading-spinner {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: 15px;
-        }
-
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 2px solid #ff58a6;
-          border-top: 2px solid transparent;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
 
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
+        .recovery-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 20px;
+        }
+
+        .recovery-modal {
+          background: white;
+          border-radius: 16px;
+          position: relative;
+          width: 100%;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .input-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #9aa0a6;
+          z-index: 2;
+        }
+
+        .styled-input {
+          border: 2px solid #f1f3f4;
+          border-radius: 12px;
+          outline: none;
+          transition: all 0.3s ease;
+        }
+
+        .styled-input:focus {
+          border-color: #e91e63 !important;
+          box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1) !important;
+        }
+
+        .custom-alert {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          color: white;
+          font-weight: 500;
+          z-index: 1001;
+          font-size: 14px;
+        }
+
+        .alert-success {
+          background: #10b981;
+        }
+
+        .alert-error {
+          background: #ef4444;
+        }
+
+        .progress-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+        }
+
+        .step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .step-circle {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+          background: #e91e63;
+          color: white;
+        }
+
+        .step.completed .step-circle {
+          background: #10b981;
+          color: white;
+        }
+
+        .step:not(.active):not(.completed) .step-circle {
+          background: #f1f3f4;
+          color: #9aa0a6;
+        }
+
+        .step span {
+          font-size: 12px;
+          color: #5f6368;
+          text-align: center;
+          font-weight: 500;
+        }
+
+        .step-line {
+          width: 40px;
+          height: 2px;
+          margin: 0 -2px;
+          margin-top: -16px;
+          transition: all 0.3s ease;
+        }
+
+        .step-line.completed {
+          background: #10b981;
+        }
+
+        .step-line:not(.completed) {
+          background: #f1f3f4;
+        }
+
+        .icon-container {
+          background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(233, 30, 99, 0.05));
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #e91e63;
+          margin: 0 auto;
+        }
+
+        .modal-header {
+          text-align: center;
+        }
+
+        .modal-header h2 {
+          color: #1f2937;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .modal-header p {
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .btn-primary:disabled, .btn-secondary:disabled {
+          opacity: 0.6 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+
+        @media (max-width: 640px) {
+          .recovery-modal {
+            margin: 1rem !important;
+            padding: 1.5rem 1rem !important;
+            max-height: 95vh !important;
           }
-          to {
-            opacity: 1;
-            transform: translateX(0);
+
+          .progress-indicator {
+            margin-bottom: 1rem !important;
+          }
+
+          .step-circle {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 13px !important;
+          }
+
+          .step-line {
+            width: 30px !important;
+          }
+
+          .modal-header h2 {
+            font-size: 1.3rem !important;
+          }
+
+          .icon-container {
+            width: 50px !important;
+            height: 50px !important;
+          }
+
+          .styled-input {
+            padding: 10px 12px 10px 40px !important;
+            font-size: 14px !important;
           }
         }
       `}</style>

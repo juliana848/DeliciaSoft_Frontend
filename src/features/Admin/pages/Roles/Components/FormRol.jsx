@@ -38,7 +38,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     return acc;
   }, {});
 
-  // VALIDACIONES AJUSTADAS A LOS LÍMITES DE LA BASE DE DATOS
+  // ✅ ACTUALIZADO: Validaciones que incluyen verificación de Admin
   const validarNombre = (nombre) => {
     const nombreTrimmed = nombre.trim();
 
@@ -57,6 +57,11 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
     if (nombreTrimmed.length > 20) {
       return { valido: false, mensaje: 'El nombre no puede tener más de 20 caracteres' };
+    }
+
+    // ✅ NUEVO: Validación específica para Admin
+    if (roleApiService.esRolAdmin(nombreTrimmed) && formType === 'agregar') {
+      return { valido: false, mensaje: 'No se puede crear otro rol con el nombre "Admin"' };
     }
 
     const nombreExiste = allRoles.some(
@@ -93,6 +98,12 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   const manejarCambioNombre = (valor) => {
     if (isReadOnly) return;
     
+    // ✅ NUEVO: Si es edición de Admin, bloquear cambios
+    if (formType === 'editar' && roleApiService.esRolAdmin(formData.nombre)) {
+      showNotification('No se puede modificar el nombre del rol Admin', 'error');
+      return;
+    }
+    
     const soloLetras = valor.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
     const sinEspaciosMultiples = soloLetras.replace(/\s+/g, ' ');
     setFormData(prev => ({ ...prev, nombre: sinEspaciosMultiples }));
@@ -102,6 +113,14 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
   const handleInputChange = (field, value) => {
     if (isReadOnly) return;
+    
+    // ✅ NUEVO: Proteger campos del rol Admin
+    if (formType === 'editar' && roleApiService.esRolAdmin(formData.nombre)) {
+      if (field === 'nombre' || field === 'descripcion' || field === 'activo') {
+        showNotification('No se pueden modificar los datos del rol Admin', 'error');
+        return;
+      }
+    }
     
     console.log(`Cambiando campo ${field} a:`, value);
     
@@ -118,6 +137,12 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
 
   const handlePermisoChange = (permisoId, checked) => {
     if (isReadOnly) return;
+    
+    // ✅ NUEVO: Proteger permisos del rol Admin
+    if (formType === 'editar' && roleApiService.esRolAdmin(formData.nombre)) {
+      showNotification('No se pueden modificar los permisos del rol Admin', 'error');
+      return;
+    }
     
     console.log(`Cambiando permiso ${permisoId} a ${checked}`);
     
@@ -213,6 +238,10 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     }
   };
 
+  // ✅ NUEVO: Determinar si los campos deben estar deshabilitados
+  const esRolAdminEnEdicion = formType === 'editar' && roleApiService.esRolAdmin(formData.nombre);
+  const camposDeshabilitados = isReadOnly || esRolAdminEnEdicion;
+
   // CORREGIDO: Validación más flexible que permite guardar con solo validaciones básicas
   const formularioValido = formType === 'agregar' 
     ? validaciones.nombre.valido && validaciones.descripcion.valido && formData.permisos.length > 0
@@ -235,7 +264,40 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
     <div style={{ width: '900px', maxWidth: '90vw' }}>
       <h2 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#000000' }}>
         {getTitleByType()}
+        {/* ✅ NUEVO: Mostrar indicador si es rol Admin */}
+        {roleApiService.esRolAdmin(formData.nombre) && (
+          <span style={{
+            marginLeft: '1rem',
+            backgroundColor: '#d32f2f',
+            color: 'white',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '15px',
+            fontSize: '0.8rem',
+            fontWeight: 'bold'
+          }}>
+            ROL DEL SISTEMA
+          </span>
+        )}
       </h2>
+
+      {/* ✅ NUEVO: Mensaje informativo para rol Admin */}
+      {esRolAdminEnEdicion && (
+        <div style={{
+          backgroundColor: '#ffebee',
+          border: '1px solid #f44336',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <i className="pi pi-info-circle" style={{ color: '#d32f2f' }}></i>
+          <span style={{ color: '#d32f2f', fontWeight: '500' }}>
+            Este es un rol del sistema protegido. Solo se pueden visualizar sus datos, no se pueden modificar.
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
@@ -246,30 +308,31 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 Nombre del Rol
-                {!isReadOnly && <span style={{ color: 'red' }}> *</span>}
+                {!isReadOnly && !esRolAdminEnEdicion && <span style={{ color: 'red' }}> *</span>}
+                {esRolAdminEnEdicion && <span style={{ color: '#d32f2f', fontSize: '0.8rem' }}> (Protegido)</span>}
               </label>
               <input
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => handleInputChange('nombre', e.target.value)}
-                readOnly={isReadOnly}
+                readOnly={camposDeshabilitados}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: isReadOnly 
+                  border: camposDeshabilitados 
                     ? '2px solid #e0e0e0' 
                     : `2px solid ${validaciones.nombre.valido ? '#4caf50' : (validaciones.nombre.mensaje ? '#f44336' : '#f48fb1')}`,
                   borderRadius: '6px',
                   outline: 'none',
-                  backgroundColor: isReadOnly 
+                  backgroundColor: camposDeshabilitados 
                     ? '#f5f5f5' 
                     : validaciones.nombre.valido ? '#f1f8e9' : (validaciones.nombre.mensaje ? '#ffebee' : 'white'),
-                  cursor: isReadOnly ? 'default' : 'text'
+                  cursor: camposDeshabilitados ? 'not-allowed' : 'text'
                 }}
-                placeholder={isReadOnly ? '' : "Ej: Administrador"}
+                placeholder={camposDeshabilitados ? '' : "Ej: Administrador"}
                 maxLength={20}
               />
-              {!isReadOnly && validaciones.nombre.mensaje && (
+              {!camposDeshabilitados && validaciones.nombre.mensaje && (
                 <small style={{
                   color: validaciones.nombre.valido ? '#4caf50' : '#f44336',
                   fontSize: '0.8rem',
@@ -279,7 +342,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   {validaciones.nombre.mensaje}
                 </small>
               )}
-              {!isReadOnly && (
+              {!camposDeshabilitados && (
                 <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
                   Solo se permiten letras y espacios ({formData.nombre.length}/20)
                 </small>
@@ -289,31 +352,32 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 Descripción
-                {!isReadOnly && <span style={{ color: 'red' }}> *</span>}
+                {!isReadOnly && !esRolAdminEnEdicion && <span style={{ color: 'red' }}> *</span>}
+                {esRolAdminEnEdicion && <span style={{ color: '#d32f2f', fontSize: '0.8rem' }}> (Protegido)</span>}
               </label>
               <textarea
                 value={formData.descripcion}
                 onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                readOnly={isReadOnly}
+                readOnly={camposDeshabilitados}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: isReadOnly 
+                  border: camposDeshabilitados 
                     ? '2px solid #e0e0e0' 
                     : `2px solid ${validaciones.descripcion.valido ? '#4caf50' : (validaciones.descripcion.mensaje ? '#f44336' : '#f48fb1')}`,
                   borderRadius: '6px',
                   outline: 'none',
                   minHeight: '80px',
-                  resize: isReadOnly ? 'none' : 'vertical',
-                  backgroundColor: isReadOnly 
+                  resize: camposDeshabilitados ? 'none' : 'vertical',
+                  backgroundColor: camposDeshabilitados 
                     ? '#f5f5f5' 
                     : validaciones.descripcion.valido ? '#f1f8e9' : (validaciones.descripcion.mensaje ? '#ffebee' : 'white'),
-                  cursor: isReadOnly ? 'default' : 'text'
+                  cursor: camposDeshabilitados ? 'not-allowed' : 'text'
                 }}
-                placeholder={isReadOnly ? '' : "Describe las responsabilidades..."}
+                placeholder={camposDeshabilitados ? '' : "Describe las responsabilidades..."}
                 maxLength={30}
               />
-              {!isReadOnly && validaciones.descripcion.mensaje && (
+              {!camposDeshabilitados && validaciones.descripcion.mensaje && (
                 <small style={{
                   color: validaciones.descripcion.valido ? '#4caf50' : '#f44336',
                   fontSize: '0.8rem',
@@ -323,7 +387,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   {validaciones.descripcion.mensaje}
                 </small>
               )}
-              {!isReadOnly && (
+              {!camposDeshabilitados && (
                 <small style={{ color: '#666', fontSize: '0.75rem', display: 'block', marginTop: '0.2rem' }}>
                   {formData.descripcion.length}/30 caracteres
                 </small>
@@ -334,11 +398,14 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             {(formType === 'editar' || formType === 'visualizar') && (
               <div style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                  <label style={{ fontWeight: 'bold' }}>Estado:</label>
+                  <label style={{ fontWeight: 'bold' }}>
+                    Estado:
+                    {esRolAdminEnEdicion && <span style={{ color: '#d32f2f', fontSize: '0.8rem' }}> (Protegido)</span>}
+                  </label>
                   <InputSwitch
                     checked={formData.activo}
                     onChange={(e) => handleInputChange('activo', e.value)}
-                    disabled={isReadOnly}
+                    disabled={camposDeshabilitados}
                   />
                   <span style={{
                     color: formData.activo ? '#4caf50' : '#f44336',
@@ -347,6 +414,13 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                   }}>
                     {formData.activo ? 'Activo' : 'Inactivo'}
                   </span>
+                  {esRolAdminEnEdicion && (
+                    <i 
+                      className="pi pi-lock" 
+                      title="El rol Admin no se puede modificar"
+                      style={{ color: '#d32f2f', fontSize: '0.8rem' }}
+                    />
+                  )}
                 </div>
               </div>
             )}
@@ -356,14 +430,15 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
           <div>
             <h3 style={{ color: '#c2185b', marginBottom: '1rem' }}>
               Permisos del Sistema
-              {!isReadOnly && formType === 'agregar' && <span style={{ color: 'red' }}> *</span>}
+              {!isReadOnly && !esRolAdminEnEdicion && formType === 'agregar' && <span style={{ color: 'red' }}> *</span>}
+              {esRolAdminEnEdicion && <span style={{ color: '#d32f2f', fontSize: '0.8rem' }}> (Protegido)</span>}
             </h3>
 
             <div style={{
               padding: '1rem',
-              border: `2px solid ${formData.permisos.length === 0 && !isReadOnly && formType === 'agregar' ? '#f44336' : '#f48fb1'}`,
+              border: `2px solid ${formData.permisos.length === 0 && !isReadOnly && !esRolAdminEnEdicion && formType === 'agregar' ? '#f44336' : '#f48fb1'}`,
               borderRadius: '10px',
-              backgroundColor: isReadOnly ? '#f8f8f8' : '#fafafa',
+              backgroundColor: isReadOnly || esRolAdminEnEdicion ? '#f8f8f8' : '#fafafa',
               maxHeight: '350px',
               overflowY: 'auto'
             }}>
@@ -394,18 +469,19 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                           borderRadius: '4px',
                           backgroundColor: formData.permisos.includes(permiso.id) 
                             ? '#f3e5f5' 
-                            : 'transparent'
+                            : 'transparent',
+                          opacity: esRolAdminEnEdicion ? 0.7 : 1
                         }}>
                           <input
                             type="checkbox"
                             id={`permiso-${permiso.id}`}
                             checked={formData.permisos.includes(permiso.id)}
                             onChange={(e) => handlePermisoChange(permiso.id, e.target.checked)}
-                            disabled={isReadOnly}
+                            disabled={isReadOnly || esRolAdminEnEdicion}
                             style={{ 
                               width: '16px', 
                               height: '16px', 
-                              cursor: isReadOnly ? 'default' : 'pointer',
+                              cursor: isReadOnly || esRolAdminEnEdicion ? 'not-allowed' : 'pointer',
                               accentColor: '#c2185b'
                             }}
                           />
@@ -413,7 +489,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                             htmlFor={`permiso-${permiso.id}`}
                             style={{
                               fontSize: '0.85rem',
-                              cursor: isReadOnly ? 'default' : 'pointer',
+                              cursor: isReadOnly || esRolAdminEnEdicion ? 'not-allowed' : 'pointer',
                               margin: 0,
                               fontWeight: formData.permisos.includes(permiso.id) ? '600' : 'normal',
                               color: formData.permisos.includes(permiso.id) ? '#c2185b' : 'inherit'
@@ -434,7 +510,7 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
               )}
             </div>
             
-            {!isReadOnly && (
+            {!isReadOnly && !esRolAdminEnEdicion && (
               <div style={{ marginTop: '0.5rem' }}>
                 <small style={{ 
                   color: formData.permisos.length === 0 && formType === 'agregar' ? '#f44336' : '#666',
@@ -448,8 +524,8 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
               </div>
             )}
 
-            {/* Mostrar permisos seleccionados en modo visualizar */}
-            {isReadOnly && formData.permisos.length > 0 && (
+            {/* Mostrar permisos seleccionados en modo visualizar o Admin */}
+            {(isReadOnly || esRolAdminEnEdicion) && formData.permisos.length > 0 && (
               <div style={{ marginTop: '1rem' }}>
                 <h4 style={{ color: '#c2185b', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
                   Permisos Asignados:
@@ -465,15 +541,22 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
                       <span
                         key={permiso.id}
                         style={{
-                          backgroundColor: '#e8f5e8',
-                          color: '#2e7d2e',
+                          backgroundColor: esRolAdminEnEdicion ? '#ffebee' : '#e8f5e8',
+                          color: esRolAdminEnEdicion ? '#d32f2f' : '#2e7d2e',
                           padding: '0.3rem 0.6rem',
                           borderRadius: '15px',
                           fontSize: '0.8rem',
-                          border: '1px solid #c8e6c9'
+                          border: esRolAdminEnEdicion ? '1px solid #f44336' : '1px solid #c8e6c9',
+                          fontWeight: esRolAdminEnEdicion ? 'bold' : 'normal'
                         }}
                       >
                         {permiso.nombre}
+                        {esRolAdminEnEdicion && (
+                          <i 
+                            className="pi pi-lock" 
+                            style={{ marginLeft: '0.3rem', fontSize: '0.7rem' }}
+                          />
+                        )}
                       </span>
                     ))
                   }
@@ -498,9 +581,9 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
             onClick={onCancel}
             disabled={guardando}
           >
-            {isReadOnly ? 'Cerrar' : 'Cancelar'}
+            {isReadOnly || esRolAdminEnEdicion ? 'Cerrar' : 'Cancelar'}
           </button>
-          {!isReadOnly && (
+          {!isReadOnly && !esRolAdminEnEdicion && (
             <button
               className={`modal-btn ${formularioValido && !guardando ? 'save-btn' : 'save-btn-disabled'}`}
               type="submit"

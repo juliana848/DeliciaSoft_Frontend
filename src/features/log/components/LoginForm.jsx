@@ -10,7 +10,7 @@ const LoginForm = () => {
   const [mostrarModalCodigo, setMostrarModalCodigo] = useState(false);
   const [mostrarModalCambio, setMostrarModalCambio] = useState(false);
   
-  // Nuevo estado para la validación de login
+  // Estado para la validación de login - CORREGIDO
   const [mostrarModalValidacionLogin, setMostrarModalValidacionLogin] = useState(false);
   const [codigoValidacionLogin, setCodigoValidacionLogin] = useState(null);
   const [datosLoginPendiente, setDatosLoginPendiente] = useState(null);
@@ -44,6 +44,8 @@ const LoginForm = () => {
     setMostrarModalCodigo(false);
     setMostrarModalCambio(false);
     setMostrarModalValidacionLogin(false);
+    setDatosLoginPendiente(null);
+    setCodigoValidacionLogin(null);
   };
 
   const manejarCodigoValido = () => {
@@ -56,46 +58,85 @@ const LoginForm = () => {
     cerrarModales();
   };
 
-  // Nuevo manejador para validación de login
-  const manejarCodigoValidacionLogin = (codigo) => {
-    setCodigoValidacionLogin(codigo);
-    setMostrarModalValidacionLogin(true);
+  // Función para manejar redirección después del login exitoso
+  const handleLoginSuccess = (userData, userType) => {
+    const redirectPath = localStorage.getItem('redirectAfterLogin');
+    
+    localStorage.setItem('authToken', 'jwt-token-' + Date.now());
+    localStorage.setItem('userRole', userType);
+    localStorage.setItem('userEmail', datosLoginPendiente.email);
+    localStorage.setItem('userData', JSON.stringify(userData));
+    
+    const userForContact = {
+      idcliente: userData.idcliente || userData.id,
+      nombre: userData.nombre || '',
+      apellidos: userData.apellidos || userData.apellido || '',
+      correo: userData.correo || userData.email || datosLoginPendiente.email,
+      telefono: userData.telefono || userData.celular || userData.phone || ''
+    };
+    
+    console.log('Guardando datos de usuario para contacto:', userForContact);
+    localStorage.setItem('user', JSON.stringify(userForContact));
+    
+    if (redirectPath === '/contactenos') {
+      localStorage.removeItem('redirectAfterLogin');
+      sessionStorage.setItem('fromLogin', 'true');
+      showCustomAlert('success', `¡Bienvenido ${userData.nombre}! Te hemos redirigido al formulario de contacto ✅`);
+      
+      setTimeout(() => {
+        navigate('/contactenos');
+      }, 1000);
+      return;
+    }
+    
+    if (redirectPath) {
+      localStorage.removeItem('redirectAfterLogin');
+      sessionStorage.setItem('fromLogin', 'true');
+      showCustomAlert('success', 'Inicio de sesión exitoso ✅');
+      
+      setTimeout(() => {
+        navigate(redirectPath);
+      }, 1500);
+      return;
+    }
+    
+    showCustomAlert('success', 'Inicio de sesión exitoso ✅');
+    
+    setTimeout(() => {
+      if (userType === 'admin') {
+        navigate('/admin/pages/Dashboard');
+      } else {
+        const productosTemporales = localStorage.getItem('productosTemporales');
+        if (productosTemporales) {
+          navigate('/pedidos');
+        } else {
+          navigate('/');
+        }
+      }
+    }, 1500);
   };
 
+  // CORREGIDO: Función para completar el login después de validar código
   const completarLogin = async () => {
-    if (!datosLoginPendiente) return;
+    if (!datosLoginPendiente) {
+      console.error('No hay datos de login pendientes');
+      showCustomAlert('error', 'Error: No hay datos de login');
+      return;
+    }
 
     setIsLoading(true);
     try {
+      console.log('Completando login con:', datosLoginPendiente);
       const result = await authService.loginConValidacion(datosLoginPendiente.email, datosLoginPendiente.password);
 
       if (result.success) {
-        localStorage.setItem('authToken', 'jwt-token-' + Date.now());
-        localStorage.setItem('userRole', result.userType);
-        localStorage.setItem('userEmail', datosLoginPendiente.email);
-        localStorage.setItem('userData', JSON.stringify(result.user));
-
-        showCustomAlert('success', 'Inicio de sesión exitoso ✅');
         setMostrarModalValidacionLogin(false);
-
-        setTimeout(() => {
-          if (result.userType === 'admin') {
-            navigate('/admin/pages/Dashboard');
-          } else {
-            const productosTemporales = localStorage.getItem('productosTemporales');
-            if (productosTemporales) {
-              navigate('/pedidos');
-            } else {
-              navigate('/');
-              window.location.reload();
-            }
-          }
-        }, 1500);
+        handleLoginSuccess(result.user, result.userType);
       } else {
         showCustomAlert('error', result.message || 'Error al iniciar sesión');
       }
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('Error en completarLogin:', error);
       showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
@@ -109,6 +150,7 @@ const LoginForm = () => {
     });
   };
 
+  // CORREGIDO: Función principal de submit
   const manejarSubmit = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
@@ -133,22 +175,37 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      // Primero verificar si el usuario existe y enviar código
+      console.log('Iniciando proceso de login para:', email);
+      
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath === '/contactenos') {
+        showCustomAlert('success', 'Código de validación enviado. Una vez verificado, te redirigiremos al formulario de contacto ✅');
+      }
+
+      // Enviar código de validación
       const validacionResult = await authService.enviarCodigoValidacionLogin(email);
+      console.log('Resultado envío código:', validacionResult);
 
       if (validacionResult.success) {
-        // Guardar datos para usar después de la validación
+        // IMPORTANTE: Guardar los datos ANTES de mostrar el modal
         setDatosLoginPendiente({ email, password });
-        showCustomAlert('success', 'Código de validación enviado a tu correo ✅');
+        setCodigoValidacionLogin(validacionResult.codigo);
+        
+        if (!redirectPath || redirectPath !== '/contactenos') {
+          showCustomAlert('success', 'Código de validación enviado a tu correo ✅');
+        }
+        
+        console.log('Mostrando modal de validación con código:', validacionResult.codigo);
+        console.log('Datos guardados:', { email, password });
         
         // Mostrar modal de validación
-        manejarCodigoValidacionLogin(validacionResult.codigo);
+        setMostrarModalValidacionLogin(true);
       } else {
         showCustomAlert('error', validacionResult.message || 'Error al enviar código de validación');
       }
 
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('Error en manejarSubmit:', error);
       showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
@@ -180,6 +237,24 @@ const LoginForm = () => {
           }}
         >
           {showAlert.message}
+        </div>
+      )}
+
+      {/* Mostrar información si viene desde contacto */}
+      {localStorage.getItem('redirectAfterLogin') === '/contactenos' && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fef3c7, #fcd34d)',
+          color: '#92400e',
+          padding: '15px',
+          borderRadius: '12px',
+          marginBottom: '20px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: '600',
+          border: '2px solid #f59e0b'
+        }}>
+          <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+          Inicia sesión para autocompletar tus datos en el formulario de contacto
         </div>
       )}
 
@@ -243,15 +318,18 @@ const LoginForm = () => {
         )}
       </form>
 
-      {/* Modal validación de login */}
-      {mostrarModalValidacionLogin && (
-        <ModalIngresarCodigoLogin
+      {/* CORREGIDO: Modal validación de login usando el componente correcto */}
+      {mostrarModalValidacionLogin && codigoValidacionLogin && datosLoginPendiente && (
+        <ModalIngresarCodigo
           codigoCorrecto={codigoValidacionLogin}
           onClose={cerrarModales}
           onCodigoValido={completarLogin}
+          correoEmail={datosLoginPendiente.email}
+          esParaLogin={true}
         />
       )}
 
+      {/* Modales para recuperación de contraseña */}
       {mostrarModalCorreo && (
         <ModalVerificarCorreo onCodigoGenerado={manejarCodigoGenerado} onClose={cerrarModales} />
       )}
@@ -276,122 +354,17 @@ const LoginForm = () => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
       `}</style>
-    </div>
-  );
-};
-
-// Componente para validación de código de login
-const ModalIngresarCodigoLogin = ({ codigoCorrecto, onClose, onCodigoValido }) => {
-  const [codigoIngresado, setCodigoIngresado] = useState('');
-  const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
-
-  const showCustomAlert = (type, message) => {
-    setShowAlert({ show: true, type, message });
-    setTimeout(() => {
-      setShowAlert({ show: false, type: '', message: '' });
-    }, 3000);
-  };
-
-  const manejarVerificacion = (e) => {
-    e.preventDefault();
-    
-    if (!codigoIngresado.trim()) {
-      showCustomAlert('error', 'Por favor, ingresa el código de verificación.');
-      return;
-    }
-
-    if (codigoIngresado === codigoCorrecto) {
-      showCustomAlert('success', '✅ Código verificado correctamente');
-      
-      setTimeout(() => {
-        onCodigoValido();
-      }, 1500);
-    } else {
-      showCustomAlert('error', '❌ Código incorrecto. Inténtalo nuevamente.');
-      setCodigoIngresado('');
-    }
-  };
-
-  return (
-    <div className="modalrecuperar">
-      {showAlert.show && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 2000,
-            padding: '1rem 1.5rem',
-            borderRadius: '15px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            minWidth: '300px',
-            background:
-              showAlert.type === 'success'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : 'linear-gradient(135deg, #ec4899, #be185d)',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            animation: 'slideInRight 0.5s ease-out'
-          }}
-        >
-          {showAlert.message}
-        </div>
-      )}
-
-      <div className="modal-contenidorecupera">
-        <h2>Verificar Acceso</h2>
-        <p>Ingresa el código de 6 dígitos que enviamos a tu correo para iniciar sesión.</p>
-        <form onSubmit={manejarVerificacion}>
-          <input
-            type="text"
-            placeholder="Ingresa el código (ej: 123456)"
-            value={codigoIngresado}
-            onChange={(e) => setCodigoIngresado(e.target.value)}
-            maxLength="6"
-            style={{
-              textAlign: 'center',
-              fontSize: '18px',
-              letterSpacing: '2px'
-            }}
-            required
-          />
-          <div className="botones" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="btn-enviar"
-              style={{
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                flex: 1
-              }}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className="btn-enviar"
-              style={{
-                backgroundColor: '#ff58a6',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                flex: 1
-              }}
-            >
-              Verificar e Iniciar
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 };

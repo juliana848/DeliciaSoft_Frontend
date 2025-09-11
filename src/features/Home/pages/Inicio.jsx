@@ -6,7 +6,7 @@ import Cotizacion  from './components/Cotizacion/Cotizacion';
 import Secreto  from './components/Secreto/NuestroSecreto';
 
 function Inicio() { 
-    const botonProductosStyle = {
+  const botonProductosStyle = {
     position: 'absolute',
     bottom: '180px',
     right: '70px',
@@ -17,13 +17,16 @@ function Inicio() {
     cursor: 'pointer',
     fontSize: '25px',
     outline: 'none',
+    with: '100px',
+    
   };
+
   return (
     <div>
-        <CarouselInicio buttonStyle={botonProductosStyle} />
-        <CategoriasInicio />
-        <Cotizacion /> 
-        <Secreto />
+      <CarouselInicio buttonStyle={botonProductosStyle} />
+      <CategoriasInicio />
+      <Cotizacion /> 
+      <Secreto />
     </div>
   );
 }

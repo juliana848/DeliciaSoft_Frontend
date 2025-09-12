@@ -85,17 +85,126 @@ class SedeApiService {
         throw new Error("Faltan datos obligatorios");
       }
 
-      const response = await fetch(`${BASE_URL}/upload`, {
+      // Intentar primero con el endpoint correcto (sin /upload)
+      const response = await fetch(`${BASE_URL}`, {
         method: "POST",
         // No incluir headers para FormData - el navegador los establece automáticamente
         body: formData,
       });
 
+      if (!response.ok) {
+        // Si falla, intentar con endpoints alternativos
+        console.warn(`POST ${BASE_URL} falló, intentando endpoints alternativos...`);
+        return await this.crearSedeConImagenAlternativo(formData);
+      }
+
       const data = await this.handleResponse(response);
       return this.transformarSedeDesdeAPI(data);
     } catch (error) {
       console.error("Error en crearSedeConImagen:", error);
-      throw new Error("Error al crear la sede con imagen: " + error.message);
+      // Intentar método alternativo
+      return await this.crearSedeConImagenAlternativo(formData);
+    }
+  }
+
+  async crearSedeConImagenAlternativo(formData) {
+    try {
+      // Método 1: Probar con diferentes endpoints
+      const endpoints = [
+        `${BASE_URL}/crear`, // Endpoint alternativo 1
+        `${BASE_URL}/new`,   // Endpoint alternativo 2
+        `${BASE_URL}/add`,   // Endpoint alternativo 3
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`Intentando con endpoint: ${endpoint}`);
+          const response = await fetch(endpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await this.handleResponse(response);
+            return this.transformarSedeDesdeAPI(data);
+          }
+        } catch (endpointError) {
+          console.warn(`Falló endpoint ${endpoint}:`, endpointError.message);
+          continue;
+        }
+      }
+
+      // Método 2: Crear sede primero, luego subir imagen
+      return await this.crearSedeDosEtapas(formData);
+    } catch (error) {
+      console.error("Error en métodos alternativos:", error);
+      throw new Error("Error al crear la sede con imagen. Verifique la configuración del servidor.");
+    }
+  }
+
+  async crearSedeDosEtapas(formData) {
+    try {
+      // Paso 1: Crear sede sin imagen
+      const sedeData = {
+        nombre: formData.get('nombre'),
+        Telefono: formData.get('Telefono'),
+        Direccion: formData.get('Direccion'),
+        activo: formData.get('activo') === 'true',
+      };
+
+      const sedeCreada = await this.crearSede(sedeData);
+
+      // Paso 2: Subir imagen si existe
+      const imagen = formData.get('imagen');
+      if (imagen && sedeCreada.id) {
+        try {
+          await this.subirImagenSede(sedeCreada.id, imagen);
+          // Recargar la sede para obtener la imagen actualizada
+          return await this.obtenerSedePorId(sedeCreada.id);
+        } catch (imageError) {
+          console.warn("Sede creada pero error al subir imagen:", imageError);
+          // Devolver la sede sin imagen
+          return sedeCreada;
+        }
+      }
+
+      return sedeCreada;
+    } catch (error) {
+      console.error("Error en crearSedeDosEtapas:", error);
+      throw error;
+    }
+  }
+
+  async subirImagenSede(sedeId, imagenFile) {
+    try {
+      const formData = new FormData();
+      formData.append('imagen', imagenFile);
+
+      const endpoints = [
+        `${BASE_URL}/${sedeId}/imagen`,
+        `${BASE_URL}/${sedeId}/upload-image`,
+        `${BASE_URL}/${sedeId}/photo`,
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            return await this.handleResponse(response);
+          }
+        } catch (endpointError) {
+          continue;
+        }
+      }
+
+      throw new Error("No se pudo encontrar endpoint válido para subir imagen");
+    } catch (error) {
+      console.error("Error al subir imagen:", error);
+      throw error;
     }
   }
 
@@ -135,17 +244,54 @@ class SedeApiService {
         throw new Error("Faltan datos obligatorios");
       }
 
-      const response = await fetch(`${BASE_URL}/${id}/upload`, {
+      // Intentar con endpoint directo primero
+      const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
-        // No incluir headers para FormData
         body: formData,
       });
 
-      const data = await this.handleResponse(response);
-      return this.transformarSedeDesdeAPI(data);
+      if (response.ok) {
+        const data = await this.handleResponse(response);
+        return this.transformarSedeDesdeAPI(data);
+      }
+
+      // Si falla, usar método de dos etapas
+      return await this.actualizarSedeDosEtapas(id, formData);
     } catch (error) {
       console.error("Error en actualizarSedeConImagen:", error);
-      throw new Error("Error al actualizar la sede con imagen: " + error.message);
+      return await this.actualizarSedeDosEtapas(id, formData);
+    }
+  }
+
+  async actualizarSedeDosEtapas(id, formData) {
+    try {
+      // Paso 1: Actualizar datos básicos
+      const sedeData = {
+        nombre: formData.get('nombre'),
+        Telefono: formData.get('Telefono'),
+        Direccion: formData.get('Direccion'),
+        activo: formData.get('activo') === 'true',
+      };
+
+      const sedeActualizada = await this.actualizarSede(id, sedeData);
+
+      // Paso 2: Actualizar imagen si se envió una nueva
+      const imagen = formData.get('imagen');
+      if (imagen && imagen.size > 0) {
+        try {
+          await this.subirImagenSede(id, imagen);
+          // Recargar la sede para obtener la imagen actualizada
+          return await this.obtenerSedePorId(id);
+        } catch (imageError) {
+          console.warn("Sede actualizada pero error al subir imagen:", imageError);
+          return sedeActualizada;
+        }
+      }
+
+      return sedeActualizada;
+    } catch (error) {
+      console.error("Error en actualizarSedeDosEtapas:", error);
+      throw error;
     }
   }
 
@@ -280,6 +426,27 @@ class SedeApiService {
     }
 
     return true;
+  }
+
+  // Método de depuración para probar endpoints
+  async probarEndpoints() {
+    const endpoints = [
+      `${BASE_URL}`,
+      `${BASE_URL}/upload`,
+      `${BASE_URL}/crear`,
+      `${BASE_URL}/new`,
+      `${BASE_URL}/add`,
+    ];
+
+    console.log("Probando endpoints disponibles:");
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, { method: "GET" });
+        console.log(`${endpoint}: ${response.status} ${response.statusText}`);
+      } catch (error) {
+        console.log(`${endpoint}: Error - ${error.message}`);
+      }
+    }
   }
 }
 

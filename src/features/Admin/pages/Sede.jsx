@@ -9,7 +9,7 @@ import Notification from "../components/Notification";
 import sedeApiService from "../services/sedes_services";
 
 // Componente para el selector de direcciones con Google Places
-const GooglePlacesAutocomplete = ({ value, onChange, placeholder, className }) => {
+const GooglePlacesAutocomplete = ({ value, onChange, placeholder, className, required }) => {
   const inputRef = useRef(null);
   const autocompleteRef = useRef(null);
 
@@ -52,6 +52,7 @@ const GooglePlacesAutocomplete = ({ value, onChange, placeholder, className }) =
       placeholder={placeholder}
       className={className}
       autoComplete="off"
+      required={required}
     />
   );
 };
@@ -197,6 +198,7 @@ export default function SedesTable() {
         ...sede,
         imagen: null,
         imagenPreview: sede.imagenUrl || null,
+        imagenUrl: sede.imagenUrl || null,
       });
     }
 
@@ -263,7 +265,8 @@ export default function SedesTable() {
     setFormData(prev => ({
       ...prev,
       imagen: null,
-      imagenPreview: null
+      imagenPreview: null,
+      imagenUrl: modalTipo === "editar" ? null : prev.imagenUrl // Mantener URL original si es edición
     }));
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -273,23 +276,65 @@ export default function SedesTable() {
   const validarFormulario = () => {
     const { nombre, Direccion, Telefono } = formData;
 
+    // Validar campos obligatorios
     if (!nombre.trim()) {
       showNotification("El nombre es obligatorio", "error");
       return false;
     }
+
+    if (nombre.trim().length < 2) {
+      showNotification("El nombre debe tener al menos 2 caracteres", "error");
+      return false;
+    }
+
+    if (nombre.trim().length > 50) {
+      showNotification("El nombre no puede exceder 50 caracteres", "error");
+      return false;
+    }
+
     if (!Direccion.trim()) {
       showNotification("La dirección es obligatoria", "error");
       return false;
     }
+
+    if (Direccion.trim().length < 10) {
+      showNotification("La dirección debe tener al menos 10 caracteres", "error");
+      return false;
+    }
+
     if (!Telefono.trim()) {
       showNotification("El teléfono es obligatorio", "error");
       return false;
     }
 
-    // Validar formato de teléfono colombiano básico
-    const telefonoRegex = /^[3][0-9]{9}$/;
-    if (!telefonoRegex.test(Telefono.replace(/\s/g, ''))) {
+    // Validar formato de teléfono colombiano
+    const telefonoLimpio = Telefono.replace(/\s/g, '');
+    const telefonoRegex = /^3[0-9]{9}$/;
+    
+    if (!telefonoRegex.test(telefonoLimpio)) {
       showNotification("Ingrese un número de teléfono colombiano válido (10 dígitos comenzando con 3)", "error");
+      return false;
+    }
+
+    // Validar que no exista otra sede con el mismo nombre (excluyendo la sede actual si es edición)
+    const sedeExistente = sedes.find(sede => 
+      sede.nombre.toLowerCase().trim() === nombre.toLowerCase().trim() &&
+      sede.id !== (sedeSeleccionada?.id || 0)
+    );
+
+    if (sedeExistente) {
+      showNotification("Ya existe una sede con este nombre", "error");
+      return false;
+    }
+
+    // Validar que no exista otra sede con el mismo teléfono (excluyendo la sede actual si es edición)
+    const telefonoExistente = sedes.find(sede => 
+      sede.Telefono === telefonoLimpio &&
+      sede.id !== (sedeSeleccionada?.id || 0)
+    );
+
+    if (telefonoExistente) {
+      showNotification("Ya existe una sede con este número de teléfono", "error");
       return false;
     }
 
@@ -304,9 +349,9 @@ export default function SedesTable() {
 
       // Crear FormData para enviar archivos
       const formDataToSend = new FormData();
-      formDataToSend.append('nombre', formData.nombre);
-      formDataToSend.append('Direccion', formData.Direccion);
-      formDataToSend.append('Telefono', formData.Telefono);
+      formDataToSend.append('nombre', formData.nombre.trim());
+      formDataToSend.append('Direccion', formData.Direccion.trim());
+      formDataToSend.append('Telefono', formData.Telefono.replace(/\s/g, ''));
       formDataToSend.append('activo', formData.activo);
       
       if (formData.imagen) {
@@ -381,21 +426,29 @@ export default function SedesTable() {
           className="modal-input"
           style={{ marginBottom: '10px' }}
         />
+        <small style={{ color: '#666', fontSize: '12px', display: 'block', marginBottom: '10px' }}>
+          Formatos permitidos: JPEG, PNG, GIF, WebP. Tamaño máximo: 5MB
+        </small>
         {formData.imagenPreview && (
-          <div style={{ marginTop: '10px', textAlign: 'center', position: 'relative' }}>
+          <div style={{ 
+            marginTop: '10px', 
+            textAlign: 'center', 
+            position: 'relative',
+            maxHeight: '250px',
+            overflow: 'hidden',
+            border: '1px solid #ddd',
+            borderRadius: '8px'
+          }}>
             <img 
               src={formData.imagenPreview} 
               alt="Preview"
               style={{ 
-                maxWidth: '200px', 
+                width: '100%',
                 maxHeight: '200px', 
-                objectFit: 'cover',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                objectFit: 'contain',
+                backgroundColor: '#f9fafb'
               }} 
               onLoad={(e) => {
-                // Mejorar la carga de imágenes sin overlay negro
                 e.target.style.opacity = '1';
               }}
               onError={(e) => {
@@ -409,20 +462,21 @@ export default function SedesTable() {
               style={{
                 position: 'absolute',
                 top: '5px',
-                right: 'calc(50% - 105px)',
+                right: '5px',
                 background: '#ef4444',
                 color: 'white',
                 border: 'none',
                 borderRadius: '50%',
-                width: '25px',
-                height: '25px',
+                width: '30px',
+                height: '30px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                zIndex: 10
               }}
               title="Eliminar imagen"
               onMouseOver={(e) => {
@@ -455,7 +509,9 @@ export default function SedesTable() {
             <div className="modal-body">
               <div className="modal-grid">
                 <div className="modal-field">
-                  <label className="modal-label">Nombre:</label>
+                  <label className="modal-label">
+                    Nombre: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.nombre}
@@ -465,17 +521,29 @@ export default function SedesTable() {
                     className="modal-input"
                     placeholder="Ingrese el nombre de la sede"
                     maxLength="50"
+                    required
                   />
+                  <small style={{ color: '#666', fontSize: '12px' }}>
+                    Mínimo 2 caracteres, máximo 50
+                  </small>
                 </div>
                 <div className="modal-field">
-                  <label className="modal-label">Dirección:</label>
+                  <label className="modal-label">
+                    Dirección: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   {googleMapsLoaded ? (
-                    <GooglePlacesAutocomplete
-                      value={formData.Direccion}
-                      onChange={(value) => handleInputChange("Direccion", value)}
-                      placeholder="Busque y seleccione una dirección"
-                      className="modal-input"
-                    />
+                    <>
+                      <GooglePlacesAutocomplete
+                        value={formData.Direccion}
+                        onChange={(value) => handleInputChange("Direccion", value)}
+                        placeholder="Escriba para buscar dirección..."
+                        className="modal-input"
+                        required
+                      />
+                      <small style={{ color: '#666', fontSize: '12px' }}>
+                        Escriba para ver sugerencias de Google Maps
+                      </small>
+                    </>
                   ) : (
                     <input
                       type="text"
@@ -490,7 +558,9 @@ export default function SedesTable() {
                   )}
                 </div>
                 <div className="modal-field">
-                  <label className="modal-label">Teléfono:</label>
+                  <label className="modal-label">
+                    Teléfono: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input
                     type="tel"
                     value={formData.Telefono}
@@ -504,6 +574,7 @@ export default function SedesTable() {
                     className="modal-input"
                     placeholder="3001234567"
                     maxLength="10"
+                    required
                   />
                   <small style={{ color: '#666', fontSize: '12px' }}>
                     Formato: 10 dígitos comenzando con 3
@@ -540,7 +611,9 @@ export default function SedesTable() {
             <div className="modal-body">
               <div className="modal-grid">
                 <div className="modal-field">
-                  <label className="modal-label">Nombre:</label>
+                  <label className="modal-label">
+                    Nombre: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.nombre}
@@ -550,17 +623,29 @@ export default function SedesTable() {
                     className="modal-input"
                     placeholder="Ingrese el nombre de la sede"
                     maxLength="50"
+                    required
                   />
+                  <small style={{ color: '#666', fontSize: '12px' }}>
+                    Mínimo 2 caracteres, máximo 50
+                  </small>
                 </div>
                 <div className="modal-field">
-                  <label className="modal-label">Dirección:</label>
+                  <label className="modal-label">
+                    Dirección: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   {googleMapsLoaded ? (
-                    <GooglePlacesAutocomplete
-                      value={formData.Direccion}
-                      onChange={(value) => handleInputChange("Direccion", value)}
-                      placeholder="Busque y seleccione una dirección"
-                      className="modal-input"
-                    />
+                    <>
+                      <GooglePlacesAutocomplete
+                        value={formData.Direccion}
+                        onChange={(value) => handleInputChange("Direccion", value)}
+                        placeholder="Escriba para buscar dirección..."
+                        className="modal-input"
+                        required
+                      />
+                      <small style={{ color: '#666', fontSize: '12px' }}>
+                        Escriba para ver sugerencias de Google Maps
+                      </small>
+                    </>
                   ) : (
                     <input
                       type="text"
@@ -574,7 +659,9 @@ export default function SedesTable() {
                   )}
                 </div>
                 <div className="modal-field">
-                  <label className="modal-label">Teléfono:</label>
+                  <label className="modal-label">
+                    Teléfono: <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input
                     type="tel"
                     value={formData.Telefono}
@@ -588,6 +675,7 @@ export default function SedesTable() {
                     className="modal-input"
                     placeholder="3001234567"
                     maxLength="10"
+                    required
                   />
                   <small style={{ color: '#666', fontSize: '12px' }}>
                     Formato: 10 dígitos comenzando con 3
@@ -609,7 +697,7 @@ export default function SedesTable() {
                 onClick={guardarSede}
                 disabled={loading}
               >
-                {loading ? "Guardando..." : "Guardar"}
+                {loading ? "Guardando..." : "Actualizar"}
               </button>
             </div>
           </Modal>

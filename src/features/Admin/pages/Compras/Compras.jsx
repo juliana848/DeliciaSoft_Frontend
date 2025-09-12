@@ -9,8 +9,9 @@ import Notification from '../../components/Notification';
 import AgregarInsumosModal from '../../components/AgregarInsumosModal';
 import { generarPDFCompra, configurarEmpresa } from '../pdf';
 import { XCircle } from 'lucide-react';
-import compraApiService from '../../services/compras_services'; 
+import compraApiService from '../../services/compras_services';
 import proveedorApiService from '../../services/proveedor_services';
+import insumoApiService from '../../services/insumos'; // AGREGADO: Import para actualizar stock
 
 export default function ComprasTable() {
     const [compras, setCompras] = useState([]);
@@ -115,7 +116,7 @@ export default function ComprasTable() {
                         error = 'El nombre debe tener al menos 3 caracteres';
                     } else if (value.trim().length > 50) {
                         error = 'El nombre no puede tener más de 50 caracteres';
-                    } else if (!/^[A-Za-zÀÁÉÍÓÚÑÜàáéíóúñ\s.]+$/.test(value)) {
+                    } else if (!/^[A-Za-zÀÁÉÍÓÚÑÜ àáéíóúñ\s.]+$/.test(value)) {
                         error = 'El nombre solo puede contener letras, espacios y puntos';
                     }
                 }
@@ -141,7 +142,7 @@ export default function ComprasTable() {
                         error = 'El nombre del contacto debe tener al menos 3 caracteres';
                     } else if (value.trim().length > 50) {
                         error = 'El nombre del contacto no puede tener más de 50 caracteres';
-                    } else if (!/^[A-Za-zÀÁÉÍÓÚÑÜàáéíóúñ\s.]+$/.test(value)) {
+                    } else if (!/^[A-Za-zÀÁÉÍÓÚÑÜ àáéíóúñ\s.]+$/.test(value)) {
                         error = 'El nombre del contacto solo puede contener letras, espacios y puntos';
                     }
                 }
@@ -383,7 +384,7 @@ export default function ComprasTable() {
                 tipo: tipoProveedor,
                 tipoDocumento,
                 documento: documentoONit,
-                extra: documentoONit, 
+                extra: documentoONit,
                 contacto: contacto,
                 correo,
                 direccion,
@@ -399,19 +400,19 @@ export default function ComprasTable() {
             };
 
             const nuevoProveedor = await proveedorApiService.crearProveedor(proveedorData);
-            
+
             // Recargar la lista de proveedores
             await cargarProveedores();
-            
+
             // Seleccionar automáticamente el nuevo proveedor
             setCompraData(prev => ({
                 ...prev,
                 idProveedor: nuevoProveedor.idProveedor || nuevoProveedor.id,
                 proveedor: nuevoProveedor.nombre || nuevoProveedor.nombreProveedor
             }));
-            
+
             setErrores(prev => ({ ...prev, proveedor: '' }));
-            
+
             showNotification('Proveedor agregado exitosamente');
             cerrarModalProveedor();
         } catch (error) {
@@ -425,7 +426,7 @@ export default function ComprasTable() {
     const generarPDF = async (compra) => {
         try {
             const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
-            
+
             if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
                 setNotification({
                     visible: true,
@@ -555,79 +556,194 @@ export default function ComprasTable() {
         }
     };
 
+    // NUEVA FUNCIÓN: Actualizar stock de insumos
+    const actualizarStockInsumos = async (insumosComprados) => {
+        try {
+            console.log('=== ACTUALIZANDO STOCK DE INSUMOS ===');
+            console.log('Insumos a actualizar:', insumosComprados);
+
+            const actualizaciones = [];
+
+            for (const insumo of insumosComprados) {
+                try {
+                    console.log(`Actualizando insumo ID ${insumo.id}:`);
+                    console.log(`  - Cantidad a sumar: ${insumo.cantidad}`);
+
+                    // Obtener datos actuales del insumo
+                    const insumoActual = await insumoApiService.obtenerInsumoPorId(insumo.id);
+                    console.log(`  - Stock actual: ${insumoActual.cantidad}`);
+
+                    // Calcular nuevo stock
+                    const nuevoStock = (insumoActual.cantidad || 0) + (insumo.cantidad || 0);
+                    console.log(`  - Nuevo stock: ${nuevoStock}`);
+
+                    // Preparar datos para actualización (usando la estructura correcta para la API)
+                    const datosActualizacion = {
+                        nombreInsumo: insumoActual.nombreInsumo,
+                        idCategoriaInsumos: insumoActual.idCategoriaInsumos,
+                        idUnidadMedida: insumoActual.idUnidadMedida,
+                        cantidad: nuevoStock,
+                        estado: insumoActual.estado,
+                        idImagen: insumoActual.idImagen
+                    };
+
+                    console.log(`  - Datos para actualización:`, datosActualizacion);
+
+                    // Actualizar el insumo
+                    const insumoActualizado = await insumoApiService.actualizarInsumo(insumo.id, datosActualizacion);
+
+                    actualizaciones.push({
+                        id: insumo.id,
+                        nombre: insumo.nombre,
+                        stockAnterior: insumoActual.cantidad,
+                        cantidadComprada: insumo.cantidad,
+                        stockNuevo: nuevoStock,
+                        exito: true
+                    });
+
+                    console.log(`  ✅ Stock actualizado exitosamente`);
+
+                } catch (error) {
+                    console.error(`❌ Error al actualizar insumo ${insumo.id}:`, error);
+
+                    actualizaciones.push({
+                        id: insumo.id,
+                        nombre: insumo.nombre,
+                        error: error.message,
+                        exito: false
+                    });
+
+                    // No lanzar el error para que continúe con los demás insumos
+                    showNotification(
+                        `Advertencia: No se pudo actualizar el stock de "${insumo.nombre}": ${error.message}`,
+                        'warning'
+                    );
+                }
+            }
+
+            // Mostrar resumen de actualizaciones
+            const exitosos = actualizaciones.filter(a => a.exito);
+            const fallidos = actualizaciones.filter(a => !a.exito);
+
+            console.log('=== RESUMEN DE ACTUALIZACIONES ===');
+            console.log(`✅ Exitosos: ${exitosos.length}`);
+            console.log(`❌ Fallidos: ${fallidos.length}`);
+
+            if (exitosos.length > 0) {
+                console.log('Actualizaciones exitosas:');
+                exitosos.forEach(a => {
+                    console.log(`  - ${a.nombre}: ${a.stockAnterior} + ${a.cantidadComprada} = ${a.stockNuevo}`);
+                });
+            }
+
+            if (fallidos.length > 0) {
+                console.log('Actualizaciones fallidas:');
+                fallidos.forEach(a => {
+                    console.log(`  - ${a.nombre}: ${a.error}`);
+                });
+            }
+
+            console.log('================================');
+
+            // Mostrar notificación resumen
+            if (exitosos.length > 0 && fallidos.length === 0) {
+                showNotification(
+                    `✅ Stock actualizado para ${exitosos.length} insumo(s)`,
+                    'success'
+                );
+            } else if (exitosos.length > 0 && fallidos.length > 0) {
+                showNotification(
+                    `⚠️ Stock actualizado para ${exitosos.length} insumo(s), ${fallidos.length} fallaron`,
+                    'warning'
+                );
+            } else if (fallidos.length > 0) {
+                showNotification(
+                    `❌ Error: No se pudo actualizar el stock de ${fallidos.length} insumo(s)`,
+                    'error'
+                );
+            }
+
+            return actualizaciones;
+
+        } catch (error) {
+            console.error('❌ Error general al actualizar stocks:', error);
+            throw new Error(`Error al actualizar stock de insumos: ${error.message}`);
+        }
+    };
+
     const abrirModal = async (tipo, compra = null) => {
         console.log("abrirModal llamado con:", tipo, compra);
         setModalTipo(tipo);
         setCompraSeleccionada(compra);
 
         if (tipo === "ver" && compra) {
-          try {
-            setCargando(true);
-      
-            const compraId =
-              compra.id ||
-              compra.idcompra ||
-              compra.idCompra ||
-              compra.id_compra ||
-              compra.compraId;
+            try {
+                setCargando(true);
 
-            if (!compraId) {
-              console.error("❌ No se pudo determinar el ID de la compra:", compra);
-              showNotification("Error: No se encontró un ID válido", "error");
-              return;
+                const compraId =
+                    compra.id ||
+                    compra.idcompra ||
+                    compra.idCompra ||
+                    compra.id_compra ||
+                    compra.compraId;
+
+                if (!compraId) {
+                    console.error("❌ No se pudo determinar el ID de la compra:", compra);
+                    showNotification("Error: No se encontró un ID válido", "error");
+                    return;
+                }
+
+                console.log("🆔 ID detectado:", compraId);
+
+                // Obtener la compra del backend
+                const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
+                console.log("📊 Compra obtenida:", datosCompra);
+
+                // Mapear proveedor y campos principales
+                setCompraData({
+                    proveedor: datosCompra.proveedor?.nombre || "N/A",
+                    idProveedor: datosCompra.idProveedor || null,
+                    fechaCompra: datosCompra.fechaCompra
+                        ? String(datosCompra.fechaCompra).slice(0, 10)
+                        : "",
+                    fechaRegistro: datosCompra.fechaRegistro
+                        ? String(datosCompra.fechaRegistro).slice(0, 10)
+                        : "",
+                    observaciones: datosCompra.observaciones || "",
+                });
+
+                const detalles = datosCompra.detalles || [];
+                console.log("📋 Detalles encontrados:", detalles);
+
+                const insumosFormateados = detalles.map((detalle) => ({
+                    id: detalle.insumo?.id || detalle.idInsumo,
+                    nombre: detalle.insumo?.nombre || "N/A",
+                    cantidad: Number(detalle.cantidad) || 0,
+                    precioUnitario: Number(detalle.precioUnitario) || 0,
+                    unidad: detalle.insumo?.unidad || "N/A",
+                }));
+
+                setInsumosSeleccionados(insumosFormateados);
+                setMostrarAgregarCompra(true);
+            } catch (error) {
+                console.error("❌ Error al cargar compra:", error);
+                showNotification("Error al cargar la compra: " + error.message, "error");
+            } finally {
+                setCargando(false);
             }
-
-            console.log("🆔 ID detectado:", compraId);
-            
-            // Obtener la compra del backend
-            const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
-            console.log("📊 Compra obtenida:", datosCompra);
-
-            // Mapear proveedor y campos principales
-            setCompraData({
-              proveedor: datosCompra.proveedor?.nombre || "N/A",
-              idProveedor: datosCompra.idProveedor || null,
-              fechaCompra: datosCompra.fechaCompra
-                ? String(datosCompra.fechaCompra).slice(0, 10)
-                : "",
-              fechaRegistro: datosCompra.fechaRegistro
-                ? String(datosCompra.fechaRegistro).slice(0, 10)
-                : "",
-              observaciones: datosCompra.observaciones || "",
-            });
-
-            const detalles = datosCompra.detalles || [];
-            console.log("📋 Detalles encontrados:", detalles);
-
-            const insumosFormateados = detalles.map((detalle) => ({
-              id: detalle.insumo?.id || detalle.idInsumo,
-              nombre: detalle.insumo?.nombre || "N/A",
-              cantidad: Number(detalle.cantidad) || 0,
-              precioUnitario: Number(detalle.precioUnitario) || 0,
-              unidad: detalle.insumo?.unidad || "N/A",
-            }));
-
-            setInsumosSeleccionados(insumosFormateados);
-            setMostrarAgregarCompra(true);
-          } catch (error) {
-            console.error("❌ Error al cargar compra:", error);
-            showNotification("Error al cargar la compra: " + error.message, "error");
-          } finally {
-            setCargando(false);
-          }
         } else if (tipo === "agregar") {
-          setCompraData({
-            proveedor: "",
-            idProveedor: null,
-            fechaCompra: "",
-            fechaRegistro: new Date().toISOString().split("T")[0],
-            observaciones: "",
-          });
-          setInsumosSeleccionados([]);
-          setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
-          setMostrarAgregarCompra(true);
+            setCompraData({
+                proveedor: "",
+                idProveedor: null,
+                fechaCompra: "",
+                fechaRegistro: new Date().toISOString().split("T")[0],
+                observaciones: "",
+            });
+            setInsumosSeleccionados([]);
+            setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
+            setMostrarAgregarCompra(true);
         } else if (tipo === "anular") {
-          setModalVisible(true);
+            setModalVisible(true);
         }
     };
 
@@ -695,17 +811,27 @@ export default function ComprasTable() {
     };
 
     const agregarInsumos = (nuevos) => {
+        // ASEGURAR QUE LOS DATOS SEAN NÚMEROS AL AGREGAR
+        const nuevosInsumosNormalizados = nuevos.map(insumo => ({
+            ...insumo,
+            cantidad: parseInt(insumo.cantidad) || 1, // Forzar entero
+            precio: parseFloat(insumo.precio || insumo.precioUnitario) || 0, // Forzar decimal
+            precioUnitario: parseFloat(insumo.precio || insumo.precioUnitario) || 0
+        }));
+
         const nuevosInsumos = [
             ...insumosSeleccionados,
-            ...nuevos.filter(n => !insumosSeleccionados.some(i => i.id === n.id))
+            ...nuevosInsumosNormalizados.filter(n => !insumosSeleccionados.some(i => i.id === n.id))
         ];
+        
+        console.log('Insumos agregados normalizados:', nuevosInsumosNormalizados);
         setInsumosSeleccionados(nuevosInsumos);
         setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
         showNotification('Insumos agregados exitosamente');
     };
 
     const handleCantidadChange = (id, value) => {
-        const val = Math.max(1, Number(value) || 1);
+        const val = Math.max(1, parseInt(value) || 1); // Usar parseInt en lugar de Number
         setInsumosSeleccionados(prev =>
             prev.map(item => (item.id === id ? { ...item, cantidad: val } : item))
         );
@@ -744,12 +870,15 @@ export default function ComprasTable() {
         return true;
     };
 
+    // FUNCIÓN MODIFICADA: Guardar compra con actualización de stock
     const guardarCompra = async () => {
         try {
             if (!compraData.idProveedor || insumosSeleccionados.length === 0) {
                 showNotification("Debe seleccionar un proveedor y agregar al menos un insumo", "error");
                 return;
             }
+
+            setCargando(true); // Mostrar loading
 
             const subtotal = insumosSeleccionados.reduce(
                 (acc, item) => acc + (item.cantidad || 0) * (item.precioUnitario || item.precio || 0),
@@ -774,14 +903,24 @@ export default function ComprasTable() {
                 total
             };
 
-            await compraApiService.crearCompra(nuevaCompraData);
+            console.log('Guardando compra con datos:', nuevaCompraData);
 
-            showNotification("Compra guardada correctamente");
+            // Crear la compra
+            const compraCreada = await compraApiService.crearCompra(nuevaCompraData);
+            console.log('Compra creada exitosamente:', compraCreada);
+
+            // NUEVA FUNCIONALIDAD: Actualizar stock de insumos
+            console.log('Actualizando stock de insumos...');
+            await actualizarStockInsumos(insumosSeleccionados);
+
+            showNotification("Compra guardada correctamente y stock actualizado");
             cancelarFormulario();
             await cargarCompras();
         } catch (error) {
             console.error("Error al guardar la compra:", error);
             showNotification("Error al guardar la compra: " + error.message, "error");
+        } finally {
+            setCargando(false);
         }
     };
 

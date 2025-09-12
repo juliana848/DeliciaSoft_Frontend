@@ -691,10 +691,10 @@ export default function InsumosTable() {
     const status = getStockStatus(insumo);
     const style = getStockStyle(insumo);
     const icons = {
-      'agotado': 'â›"',
-      'critico': 'âš ï¸',
-      'bajo': 'âš¡',
-      'normal': 'âœ…'
+      'agotado': 'A',
+      'critico': 'C',
+      'bajo': 'B',
+      'normal': 'N'
     };
     
     return (

@@ -1,41 +1,24 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from "../../Cartas/pages/CartContext";
+import categoriaProductoApiService from '../../Admin/services/categoriaProductosService';
+import productoApiService from '../../Admin/services/productos_services';
 
 const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
-  const [categoriaActiva, setCategoriaActiva] = useState('donas');
+  const [categoriaActiva, setCategoriaActiva] = useState(null);
   const [modalDetalle, setModalDetalle] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showAuthAlert, setShowAuthAlert] = useState(false); 
+  const [showAuthAlert, setShowAuthAlert] = useState(false);
   
-  useEffect(() => {
-    // Recuperar productos temporales al cargar el componente
-    const productosTemporales = localStorage.getItem('productosTemporales');
-    if (productosTemporales) {
-        try {
-            const productos = JSON.parse(productosTemporales);
-            console.log('Productos recuperados:', productos);
-            
-            // Agregar cada producto al contexto
-            productos.forEach(producto => {
-                agregarProductoSeleccionado(producto);
-            });
-            
-            // Limpiar productos temporales
-            localStorage.removeItem('productosTemporales');
-            
-            // Mostrar mensaje de éxito
-            showCustomAlert('success', 'Productos recuperados correctamente');
-        } catch (error) {
-            console.error('Error al recuperar productos:', error);
-            localStorage.removeItem('productosTemporales');
-        }
-    }
-}, []);
+  // Nuevos estados para datos de la API
+  const [categorias, setCategorias] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
-   const { 
+  const { 
     carrito, 
     actualizarCantidadCarrito, 
     eliminarDelCarrito,
@@ -43,154 +26,127 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     agregarProductoSeleccionado,
     actualizarCantidadSeleccionado,
     eliminarProductoSeleccionado
-} = useContext(CartContext);
+  } = useContext(CartContext);
 
-  const categorias = [
-    { id: 'fresas', nombre: 'Fresas con Crema', icon: '🍓' },
-    { id: 'donas', nombre: 'Donas', icon: '🍩' },
-    { id: 'postres', nombre: 'Postres', icon: '🍮' },
-    { id: 'cupcakes', nombre: 'Cupcakes', icon: '🧁' },
-    { id: 'arroz', nombre: 'Arroz con Leche', icon: '🍚' },
-    { id: 'sanduches', nombre: 'Sanduches', icon: '🥪' },
-    { id: 'tortas', nombre: 'Tortas', icon: '🎂' }
-  ];
+  // Cargar datos de la API al montar el componente
+  useEffect(() => {
+    cargarDatos();
+  }, []);
 
-  const productos = {
-    fresas: [
-      {
-        id: 'f1',
-        nombre: 'Fresas con Crema Clásica',
-        imagen: 'https://7diasdesabor.com/wp-content/uploads/2024/08/WEB-POSTRE-1-1536x827.png',
-        precio: 12000,
-        descripcion: 'Deliciosas fresas frescas con crema batida y azúcar',
-        categoria: 'fresas'
-      },
-      {
-        id: 'f2',
-        nombre: 'Fresas con Crema Premium',
-        imagen: 'https://animalgourmet.com/wp-content/uploads/2024/03/Crema-para-fresas-con-crema1-jpg.webp',
-        precio: 18000,
-        descripcion: 'Fresas premium con crema de vainilla y toppings especiales',
-        categoria: 'fresas'
+  // Recuperar productos temporales
+  useEffect(() => {
+    const productosTemporales = localStorage.getItem('productosTemporales');
+    if (productosTemporales) {
+        try {
+            const productos = JSON.parse(productosTemporales);
+            console.log('Productos recuperados:', productos);
+            
+            productos.forEach(producto => {
+                agregarProductoSeleccionado(producto);
+            });
+            
+            localStorage.removeItem('productosTemporales');
+            showCustomAlert('success', 'Productos recuperados correctamente');
+        } catch (error) {
+            console.error('Error al recuperar productos:', error);
+            localStorage.removeItem('productosTemporales');
+        }
+    }
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Cargar categorías y productos en paralelo
+      const [categoriasResponse, productosResponse] = await Promise.all([
+        categoriaProductoApiService.obtenerCategoriasActivas(),
+        productoApiService.obtenerProductos()
+      ]);
+
+      console.log('Categorías obtenidas:', categoriasResponse);
+      console.log('Productos obtenidos:', productosResponse);
+
+      // Transformar categorías para que coincidan con el formato esperado
+      const categoriasTransformadas = categoriasResponse.map(cat => ({
+        id: cat.idcategoriaproducto || cat.id,
+        nombre: cat.nombrecategoria || cat.nombre,
+        icon: obtenerIconoCategoria(cat.nombrecategoria || cat.nombre),
+        descripcion: cat.descripcion,
+        imagen: cat.imagen
+      }));
+
+      // Agrupar productos por categoría
+      const productosAgrupados = agruparProductosPorCategoria(productosResponse, categoriasTransformadas);
+
+      setCategorias(categoriasTransformadas);
+      setProductos(productosAgrupados);
+      
+      // Establecer la primera categoría como activa
+      if (categoriasTransformadas.length > 0) {
+        setCategoriaActiva(categoriasTransformadas[0].id);
       }
-    ],
-    donas: [
-      {
-        id: 'd1',
-        nombre: 'Mini donas x4',
-        imagen: 'https://i.pinimg.com/736x/57/4c/b7/574cb74e69958defd5b2fae7f70f23af.jpg',
-        precio: 15000,
-        descripcion: 'Pack de 4 mini donas con glaseado variado',
-        categoria: 'donas'
-      },
-      {
-        id: 'd2',
-        nombre: 'Mini donas x9',
-        imagen: 'https://i.pinimg.com/736x/ae/ee/df/aeeedf00b249fe03600d30ad8ed69bfa.jpg',
-        precio: 25000,
-        descripcion: 'Pack de 9 mini donas con diferentes sabores y coberturas',
-        categoria: 'donas'
-      },
-      {
-        id: 'd3',
-        nombre: 'Mini donas x15',
-        imagen: 'https://i.pinimg.com/736x/de/bd/b8/debdb8444b386c8155246d2366da04ea.jpg',
-        precio: 40000,
-        descripcion: 'Pack familiar de 15 mini donas surtidas',
-        categoria: 'donas'
-      }
-    ],
-    postres: [
-      {
-        id: 'p1',
-        nombre: 'Tiramisu Individual',
-        imagen: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=300&h=200&fit=crop',
-        precio: 8000,
-        descripcion: 'Clásico postre italiano con café y mascarpone',
-        categoria: 'postres'
-      },
-      {
-        id: 'p2',
-        nombre: 'Cheesecake de Fresa',
-        imagen: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300&h=200&fit:crop',
-        precio: 10000,
-        descripcion: 'Cremoso cheesecake con topping de fresas naturales',
-        categoria: 'postres'
-      }
-    ],
-    cupcakes: [
-      {
-        id: 'c1',
-        nombre: 'Cupcake de Vainilla',
-        imagen: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=300&h=200&fit=crop',
-        precio: 6000,
-        descripcion: 'Suave cupcake de vainilla con buttercream',
-        categoria: 'cupcakes'
-      },
-      {
-        id: 'c2',
-        nombre: 'Cupcake de Chocolate',
-        imagen: 'https://i.pinimg.com/736x/7f/ee/25/7fee254ebbc03272b2f38ca2473f575f.jpg',
-        precio: 6500,
-        descripcion: 'Rico cupcake de chocolate con ganache',
-        categoria: 'cupcakes'
-      }
-    ],
-    arroz: [
-      {
-        id: 'a1',
-        nombre: 'Arroz con Leche Tradicional',
-        imagen: 'https://i.pinimg.com/736x/39/5d/d8/395dd87946906f0570ef9e2d104e859f.jpg',
-        precio: 5000,
-        descripcion: 'Cremoso arroz con leche con canela y pasas',
-        categoria: 'arroz'
-      }
-    ],
-    sanduches: [
-      {
-        id: 's1',
-        nombre: 'Sandwich Club',
-        imagen: 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=300&h=200&fit=crop',
-        precio: 14000,
-        descripcion: 'Sandwich triple con pollo, tocineta y vegetales',
-        categoria: 'sanduches'
-      },
-      {
-        id: 's2',
-        nombre: 'Sandwich Veggie',
-        imagen: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=300&h=200&fit:crop',
-        precio: 11000,
-        descripcion: 'Sandwich vegetariano con queso y verduras frescas',
-        categoria: 'sanduches'
-      }
-    ],
-    tortas: [
-      {
-        id: 't1',
-        nombre: 'Torta de Chocolate',
-        imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit:crop',
-        precio: 35000,
-        descripcion: 'Deliciosa torta de chocolate para 8 personas',
-        categoria: 'tortas'
-      },
-      {
-        id: 't2',
-        nombre: 'Torta de Vainilla',
-        imagen: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=300&h=200&fit:crop',
-        precio: 32000,
-        descripcion: 'Suave torta de vainilla con decoración especial',
-        categoria: 'tortas'
-      }
-    ]
+
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      setError(`Error al cargar datos: ${error.message}`);
+      showCustomAlert('error', 'Error al cargar categorías y productos');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Función para verificar si el usuario está autenticado
-    const isUserAuthenticated = () => {
-        const token = localStorage.getItem('authToken');
-        console.log('Token encontrado:', token);
-        return !!token; // Devuelve true si hay token, false si no
-    };
+  // Función para obtener icono según el nombre de la categoría
+  const obtenerIconoCategoria = (nombreCategoria) => {
+    const nombre = nombreCategoria.toLowerCase();
     
+    if (nombre.includes('fresa')) return '🍓';
+    if (nombre.includes('dona')) return '🍩';
+    if (nombre.includes('postre')) return '🍮';
+    if (nombre.includes('cupcake')) return '🧁';
+    if (nombre.includes('arroz')) return '🍚';
+    if (nombre.includes('sandwich') || nombre.includes('sanduche')) return '🥪';
+    if (nombre.includes('torta') || nombre.includes('cake')) return '🎂';
+    if (nombre.includes('bebida')) return '🥤';
+    if (nombre.includes('helado')) return '🍦';
+    
+    return '🍰'; // Icono por defecto
+  };
+
+  // Función para agrupar productos por categoría
+  const agruparProductosPorCategoria = (productos, categorias) => {
+    const productosAgrupados = {};
+    
+    // Inicializar cada categoría con array vacío
+    categorias.forEach(categoria => {
+      productosAgrupados[categoria.id] = [];
+    });
+
+    // Agrupar productos por su categoría
+    productos.forEach(producto => {
+      const categoriaId = producto.idcategoria || producto.idcategoriaproducto;
+      
+      if (categoriaId && productosAgrupados[categoriaId]) {
+        // Transformar producto para que coincida con el formato esperado
+        const productoTransformado = {
+          id: producto.id,
+          nombre: producto.nombre,
+          imagen: producto.imagen || 'https://via.placeholder.com/300x200?text=Producto',
+          precio: producto.precio,
+          descripcion: producto.descripcion || 'Descripción no disponible',
+          categoria: categoriaId,
+          estado: producto.estado,
+          cantidad: producto.cantidad
+        };
+
+        productosAgrupados[categoriaId].push(productoTransformado);
+      }
+    });
+
+    return productosAgrupados;
+  };
+
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -198,9 +154,15 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     }, 3000);
   };
 
-const seleccionarProducto = (producto) => {
+  // Función para verificar si el usuario está autenticado
+  const isUserAuthenticated = () => {
+    const token = localStorage.getItem('authToken');
+    console.log('Token encontrado:', token);
+    return !!token;
+  };
+
+  const seleccionarProducto = (producto) => {
     const productoConCantidad = { ...producto, cantidad: 1 };
-    // Solo agregar al contexto, no duplicar
     agregarProductoSeleccionado(productoConCantidad);
     showCustomAlert('success', `${producto.nombre} ha sido agregado al pedido!`);
     setTimeout(() => {
@@ -209,14 +171,13 @@ const seleccionarProducto = (producto) => {
             resumenElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }, 100);
-};
+  };
 
   const actualizarCantidadUnificada = (productoId, nuevaCantidad) => {
       const enProductosSeleccionados = productosSeleccionados.find(p => p.id === productoId);
       const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
       
       if (enProductosSeleccionados) {
-          // Es un producto seleccionado localmente
           if (nuevaCantidad <= 0) {
               onEliminarProducto(productoId);
               eliminarProductoSeleccionado(productoId);
@@ -227,7 +188,6 @@ const seleccionarProducto = (producto) => {
               showCustomAlert('success', `Cantidad actualizada.`);
           }
       } else if (enProductosContexto) {
-          // Es un producto del contexto
           if (nuevaCantidad <= 0) {
               eliminarProductoSeleccionado(productoId);
               showCustomAlert('error', `Producto eliminado del pedido.`);
@@ -236,7 +196,6 @@ const seleccionarProducto = (producto) => {
               showCustomAlert('success', `Cantidad actualizada.`);
           }
       } else {
-          // Es un producto del carrito
           if (nuevaCantidad <= 0) {
               eliminarDelCarrito(productoId);
               showCustomAlert('error', `Producto eliminado del pedido.`);
@@ -252,14 +211,11 @@ const seleccionarProducto = (producto) => {
       const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
       
       if (enProductosSeleccionados) {
-          // Es un producto seleccionado localmente
           onEliminarProducto(productoId);
           eliminarProductoSeleccionado(productoId);
       } else if (enProductosContexto) {
-          // Es un producto del contexto
           eliminarProductoSeleccionado(productoId);
       } else {
-          // Es un producto del carrito
           eliminarDelCarrito(productoId);
       }
       showCustomAlert('error', `Producto eliminado del pedido.`);
@@ -273,11 +229,9 @@ const seleccionarProducto = (producto) => {
     setModalDetalle(null);
   };
 
-const continuar = () => {
+  const continuar = () => {
     console.log('=== INICIANDO FUNCIÓN CONTINUAR ===');
     const todosLosProductos = obtenerTodosLosProductos();
-    console.log('Todos los productos obtenidos:', todosLosProductos);
-
     console.log('Todos los productos obtenidos:', todosLosProductos);
     
     const cantidadTotal = todosLosProductos.reduce((total, producto) => total + (producto.cantidad || 1), 0);
@@ -293,7 +247,6 @@ const continuar = () => {
         return;
     }
 
-    // Verificar si el usuario está autenticado
     if (!isUserAuthenticated()) {
         console.log('Usuario no autenticado');
         setShowAuthAlert(true);
@@ -302,7 +255,7 @@ const continuar = () => {
 
     console.log('Todo correcto, mostrando confirmación');
     setShowConfirmation(true);
-};
+  };
 
   const handleConfirmContinue = () => {
     setShowConfirmation(false);
@@ -313,17 +266,13 @@ const continuar = () => {
     setShowConfirmation(false);
   };
 
+  const handleGoToLogin = () => {
+    setShowAuthAlert(false);
+    const todosLosProductos = obtenerTodosLosProductos();
+    localStorage.setItem('productosTemporales', JSON.stringify(todosLosProductos));
+    navigate('/iniciar-sesion');
+  };
 
-    // Función para manejar el ir al login
-    const handleGoToLogin = () => {
-        setShowAuthAlert(false);
-        // Guardar productos en localStorage antes de ir al login
-        const todosLosProductos = obtenerTodosLosProductos();
-        localStorage.setItem('productosTemporales', JSON.stringify(todosLosProductos));
-        navigate('/iniciar-sesion');
-    };
-
-  // Función para cancelar el ir al login
   const handleCancelLogin = () => {
     setShowAuthAlert(false);
   };
@@ -344,27 +293,95 @@ const continuar = () => {
       return totalProductosSeleccionados + totalCarrito + totalProductosContexto;
   };
 
- const obtenerTodosLosProductos = () => {
-        // Combinar productos del contexto y del carrito
-        const todosLosProductos = [...productosDelContexto, ...carrito];
-      
-      // Agrupar productos por ID y sumar las cantidades
-      const productosAgrupados = todosLosProductos.reduce((acc, producto) => {
-          const productoExistente = acc.find(p => p.id === producto.id);
-          
-          if (productoExistente) {
-              // Si ya existe, suma la cantidad
-              productoExistente.cantidad += producto.cantidad;
-          } else {
-              // Si no existe, agrega el producto
-              acc.push({ ...producto });
-          }
-          
-          return acc;
-      }, []);
-      
-      return productosAgrupados;
+  const obtenerTodosLosProductos = () => {
+    const todosLosProductos = [...productosDelContexto, ...carrito];
+    
+    const productosAgrupados = todosLosProductos.reduce((acc, producto) => {
+        const productoExistente = acc.find(p => p.id === producto.id);
+        
+        if (productoExistente) {
+            productoExistente.cantidad += producto.cantidad;
+        } else {
+            acc.push({ ...producto });
+        }
+        
+        return acc;
+    }, []);
+    
+    return productosAgrupados;
   };
+
+  // Mostrar loading
+  if (loading) {
+    return (
+      <div style={{ 
+        backgroundColor: '#f8f9fa', 
+        minHeight: '100vh', 
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '5px solid #f3f3f3',
+            borderTop: '5px solid #e91e63',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <h3 style={{ color: '#2c3e50' }}>Cargando productos...</h3>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar error
+  if (error) {
+    return (
+      <div style={{ 
+        backgroundColor: '#f8f9fa', 
+        minHeight: '100vh', 
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{ 
+          textAlign: 'center',
+          backgroundColor: 'white',
+          padding: '30px',
+          borderRadius: '20px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+          <h3 style={{ color: '#e74c3c', marginBottom: '15px' }}>Error al cargar datos</h3>
+          <p style={{ color: '#7f8c8d', marginBottom: '20px' }}>{error}</p>
+          <button
+            onClick={cargarDatos}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '10px',
+              backgroundColor: '#e91e63',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Obtener productos de la categoría activa
+  const productosCategoria = productos[categoriaActiva] || [];
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
       {/* Custom Alert */}
@@ -447,202 +464,189 @@ const continuar = () => {
         ))}
       </div>
 
-{/* Productos */}
+      {/* Productos */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
       }}>
-        {/* Botón especial para fresas */}
-        {categoriaActiva === 'fresas' && (
+        {productosCategoria.length === 0 ? (
           <div style={{ 
-            textAlign: 'center', 
-            marginBottom: '20px',
-            gridColumn: '1 / -1' // Ocupa todo el ancho del grid
+            gridColumn: '1 / -1',
+            textAlign: 'center',
+            padding: '40px',
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
           }}>
-            <button
-              onClick={() => navigate('/detalle-fresas')}
-              style={{
-                backgroundColor: '#ff6b9d',
-                color: 'white',
-                fontWeight: 'bold',
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              🍓 Ver más fresas →
-            </button>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>📦</div>
+            <h3 style={{ color: '#7f8c8d' }}>No hay productos disponibles en esta categoría</h3>
           </div>
-        )}
+        ) : (
+          productosCategoria.map(producto => {
+            const yaSeleccionado = obtenerTodosLosProductos().find(p => p.id === producto.id);
 
-        {productos[categoriaActiva]?.map(producto => {
-          const yaSeleccionado = obtenerTodosLosProductos().find(p => p.id === producto.id);
-
-          return (
-            <div
-              key={producto.id}
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                boxShadow: yaSeleccionado ? '0 8px 25px rgba(233,30,99,0.2)' : '0 4px 20px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                border: yaSeleccionado ? '2px solid #e91e63' : '2px solid transparent',
-                transform: yaSeleccionado ? 'translateY(-5px)' : 'none'
-              }}
-              onClick={() => seleccionarProducto(producto)}
-            >
-              <div style={{ 
-                height: '200px', 
-                backgroundImage: `url(${producto.imagen})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                position: 'relative'
-              }}>
-                {yaSeleccionado && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    backgroundColor: '#e91e63',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px'
+            return (
+              <div
+                key={producto.id}
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  boxShadow: yaSeleccionado ? '0 8px 25px rgba(233,30,99,0.2)' : '0 4px 20px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  border: yaSeleccionado ? '2px solid #e91e63' : '2px solid transparent',
+                  transform: yaSeleccionado ? 'translateY(-5px)' : 'none'
+                }}
+                onClick={() => seleccionarProducto(producto)}
+              >
+                <div style={{ 
+                  height: '200px', 
+                  backgroundImage: `url(${producto.imagen})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  position: 'relative'
+                }}>
+                  {yaSeleccionado && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      backgroundColor: '#e91e63',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px'
+                    }}>
+                      ✓
+                    </div>
+                  )}
+                </div>
+                
+                <div style={{ padding: '20px' }}>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 'bold', 
+                    color: '#2c3e50',
+                    marginBottom: '8px',
+                    margin: '0 0 8px 0'
                   }}>
-                    ✓
-                  </div>
-                )}
-              </div>
-              
-              <div style={{ padding: '20px' }}>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 'bold', 
-                  color: '#2c3e50',
-                  marginBottom: '8px',
-                  margin: '0 0 8px 0'
-                }}>
-                  {producto.nombre}
-                </h3>
-                
-                <p style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold',
-                  color: '#e91e63',
-                  margin: '0 0 15px 0'
-                }}>
-                  ${producto.precio.toLocaleString()}
-                </p>
-                
-                <button
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    backgroundColor: yaSeleccionado ? '#4caf50' : '#e91e63',
-                    color: 'white'
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    seleccionarProducto(producto);
-                  }}
-                >
-                  {yaSeleccionado ? 'Seleccionado' : 'Seleccionar'}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-{/* Resumen */}
-  {(productosSeleccionados.length > 0 || carrito.length > 0 || productosDelContexto.length > 0) && (
-  <div id="resumen-pedido" style={{
-        backgroundColor: 'white',
-        borderRadius: '20px',
-        padding: '25px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{ 
-          fontSize: '20px', 
-          fontWeight: 'bold', 
-          color: '#2c3e50',
-          marginBottom: '20px',
-          margin: '0 0 20px 0'
-        }}>
-          Resumen de Pedido ({obtenerTodosLosProductos().length + carrito.length} productos)
-        </h3>
-        
-        <div style={{ marginBottom: '20px' }}>
-          {/* Todos los productos unificados */}
-          {obtenerTodosLosProductos().map(producto => (
-            <div
-              key={`producto-${producto.id}`}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '15px 0',
-                borderBottom: '1px solid #ecf0f1'
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>
-                  {producto.nombre}
-                </span>
-                <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
-                  ${producto.precio.toLocaleString()}
+                    {producto.nombre}
+                  </h3>
+                  
+                  <p style={{ 
+                    fontSize: '24px', 
+                    fontWeight: 'bold',
+                    color: '#e91e63',
+                    margin: '0 0 15px 0'
+                  }}>
+                    ${producto.precio.toLocaleString()}
+                  </p>
+                  
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      backgroundColor: yaSeleccionado ? '#4caf50' : '#e91e63',
+                      color: 'white'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      seleccionarProducto(producto);
+                    }}
+                  >
+                    {yaSeleccionado ? 'Seleccionado' : 'Seleccionar'}
+                  </button>
                 </div>
               </div>
-              
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <button
+            );
+          })
+        )}
+      </div>
+
+      {/* Resumen */}
+      {(productosSeleccionados.length > 0 || carrito.length > 0 || productosDelContexto.length > 0) && (
+        <div id="resumen-pedido" style={{
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          padding: '25px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: '#2c3e50',
+            marginBottom: '20px',
+            margin: '0 0 20px 0'
+          }}>
+            Resumen de Pedido ({obtenerTodosLosProductos().length + carrito.length} productos)
+          </h3>
+          
+          <div style={{ marginBottom: '20px' }}>
+            {obtenerTodosLosProductos().map(producto => (
+              <div
+                key={`producto-${producto.id}`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '15px 0',
+                  borderBottom: '1px solid #ecf0f1'
+                }}
+              >
+                <div>
+                  <span style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>
+                    {producto.nombre}
+                  </span>
+                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
+                    ${producto.precio.toLocaleString()}
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <button
                     onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad - 1)}
                     style={{
-                        padding: '5px 10px',
-                        border: 'none',
-                        borderRadius: '5px',
-                        backgroundColor: '#e74c3c',
-                        color: 'white',
-                        cursor: 'pointer'
+                      padding: '5px 10px',
+                      border: 'none',
+                      borderRadius: '5px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      cursor: 'pointer'
                     }}
-                >
-                -
-              </button>
-              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
-              <button
-                  onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad + 1)}
-                  style={{
+                  >
+                    -
+                  </button>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
+                  <button
+                    onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad + 1)}
+                    style={{
                       padding: '5px 10px',
                       border: 'none',
                       borderRadius: '5px',
                       backgroundColor: '#2ecc71',
                       color: 'white',
                       cursor: 'pointer'
-                  }}
-              >
-                  +
-              </button>
-              <button
-                  onClick={() => eliminarProductoUnificado(producto.id)}
-                  style={{
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => eliminarProductoUnificado(producto.id)}
+                    style={{
                       padding: '8px 16px',
                       border: 'none',
                       borderRadius: '8px',
@@ -652,13 +656,13 @@ const continuar = () => {
                       backgroundColor: '#e74c3c',
                       color: 'white',
                       transition: 'all 0.3s ease'
-                  }}
-              >
-                  Eliminar
-              </button>
-              <button
-                  onClick={() => abrirModal(producto)}
-                  style={{
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                  <button
+                    onClick={() => abrirModal(producto)}
+                    style={{
                       padding: '8px 16px',
                       border: 'none',
                       borderRadius: '8px',
@@ -668,46 +672,46 @@ const continuar = () => {
                       backgroundColor: '#3498db',
                       color: 'white',
                       transition: 'all 0.3s ease'
-                  }}
-              >
-                  Ver detalles
-              </button>
+                    }}
+                  >
+                    Ver detalles
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-        
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: '20px',
-          borderTop: '2px solid #ecf0f1'
-        }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
-            Total: ${calcularTotal().toLocaleString()}
+            ))}
           </div>
           
-          <button
-            onClick={continuar}
-            style={{
-              padding: '15px 30px',
-              border: 'none',
-              borderRadius: '25px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
-              color: 'white',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
-            }}
-          >
-            Continuar con Personalización →
-          </button>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: '20px',
+            borderTop: '2px solid #ecf0f1'
+          }}>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
+              Total: ${calcularTotal().toLocaleString()}
+            </div>
+            
+            <button
+              onClick={continuar}
+              style={{
+                padding: '15px 30px',
+                border: 'none',
+                borderRadius: '25px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
+                color: 'white',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
+              }}
+            >
+              Continuar con Personalización →
+            </button>
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* Modal de detalles */}
       {modalDetalle && (
@@ -876,7 +880,7 @@ const continuar = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1002 // Más alto que otros modales
+          zIndex: 1002
         }}>
           <div style={{
             backgroundColor: 'white',
@@ -947,6 +951,26 @@ const continuar = () => {
           </div>
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

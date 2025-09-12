@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LogoutButton from '../LogoutButton/LogoutButton';
 import './Sidebar.css';
@@ -6,6 +6,324 @@ import './Sidebar.css';
 const Sidebar = ({ userRole = 'admin' }) => {
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [filteredMenuItems, setFilteredMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Definición completa del menú de administrador con permisos
+  const allAdminMenuItems = [
+    {
+      key: 'dashboard',
+      title: 'Dashboard',
+      icon: 'bi bi-speedometer2',
+      path: '/admin/pages/Dashboard',
+      permission: 'Dashboard'
+    },
+    {
+      key: 'configuracion',
+      title: 'Configuración',
+      icon: 'bi bi-gear-wide-connected',
+      hasSubmenu: true,
+      submenu: [
+        { 
+          title: 'Roles', 
+          path: '/admin/pages/Roles', 
+          icon: 'bi bi-person-badge-fill',
+          permission: 'Roles'
+        }
+      ]
+    },
+    {
+      key: 'usuarios',
+      title: 'Usuarios',
+      icon: 'bi bi-people-fill',
+      path: '/admin/pages/Usuarios',
+      permission: 'Usuarios'
+    },
+    {
+      key: 'ventas',
+      title: 'Ventas',
+      icon: 'bi bi-credit-card-2-front-fill',
+      hasSubmenu: true,
+      submenu: [
+        { 
+          title: 'Clientes', 
+          path: '/admin/pages/Clientes', 
+          icon: 'bi bi-person-hearts',
+          permission: 'Cliente'
+        },
+        { 
+          title: 'Sedes', 
+          path: '/admin/pages/Sede', 
+          icon: 'bi bi-geo-alt-fill',
+          permission: 'Sedes'
+        },
+        { 
+          title: 'Ventas', 
+          path: '/admin/pages/Ventas', 
+          icon: 'bi bi-graph-up-arrow',
+          permission: 'Ventas'
+        }
+      ]
+    },
+    {
+      key: 'compras',
+      title: 'Compras',
+      icon: 'bi bi-cart-check-fill',
+      hasSubmenu: true,
+      submenu: [
+        { 
+          title: 'Insumos', 
+          path: '/admin/pages/insumos', 
+          icon: 'bi bi-box-seam-fill',
+          permission: 'Insumos'
+        },
+        { 
+          title: 'Cat. Insumos', 
+          path: '/admin/pages/CategoriaInsumo', 
+          icon: 'bi bi-tags-fill',
+          permission: 'Cat.Insumos'
+        },
+        { 
+          title: 'Proveedores', 
+          path: '/admin/pages/proveedores', 
+          icon: 'bi bi-truck-flatbed',
+          permission: 'Proveedores'
+        },
+        { 
+          title: 'Compras', 
+          path: '/admin/pages/compras', 
+          icon: 'bi bi-receipt-cutoff',
+          permission: 'Compras'
+        }
+      ]
+    },
+    {
+      key: 'productos',
+      title: 'Productos',
+      icon: 'bi bi-cake2-fill',
+      hasSubmenu: true,
+      submenu: [
+        { 
+          title: 'Cat. Productos', 
+          path: '/admin/pages/CategoriaProductos', 
+          icon: 'bi bi-grid-3x3-gap-fill',
+          permission: 'Cat.Productos'
+        },
+        { 
+          title: 'Productos', 
+          path: '/admin/pages/productos', 
+          icon: 'bi bi-star-fill',
+          permission: 'Productos'
+        },
+        { 
+          title: 'Recetas', 
+          path: '/admin/pages/Recetas', 
+          icon: 'bi bi-book-half',
+          permission: 'Productos'
+        }
+      ]
+    },
+    {
+      key: 'produccion',
+      title: 'Producción',
+      icon: 'bi bi-buildings-fill',
+      path: '/admin/pages/produccion',
+      permission: 'Produccion'
+    }
+  ];
+
+  const clienteMenuItems = [
+    {
+      key: 'inicio',
+      title: 'Inicio',
+      icon: 'bi bi-house-heart-fill',
+      path: '/'
+    },
+    {
+      key: 'cartas',
+      title: 'Cartas',
+      icon: 'bi bi-menu-button-wide-fill',
+      path: '/cartas'
+    },
+    {
+      key: 'sedes',
+      title: 'Sedes',
+      icon: 'bi bi-pin-map-fill',
+      path: '/sedes'
+    },
+    {
+      key: 'perfil',
+      title: 'Mi Perfil',
+      icon: 'bi bi-person-circle',
+      path: '/perfil'
+    }
+  ];
+
+  // Obtener permisos del usuario
+  useEffect(() => {
+    const getUserPermissions = async () => {
+      try {
+        setLoading(true);
+        
+        if (userRole === 'cliente') {
+          setUserPermissions(['all']);
+          setLoading(false);
+          return;
+        }
+
+        // Obtener datos del usuario desde localStorage
+        const userData = localStorage.getItem('userData');
+        
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('Datos del usuario:', user);
+          
+          // Obtener ID del rol del usuario
+          const rolId = user.idrol || user.rol_id;
+          
+          if (rolId) {
+            await fetchUserPermissions(rolId);
+          } else {
+            console.warn('No se encontró ID de rol en los datos del usuario');
+            setUserPermissions(['Dashboard']); // Permiso mínimo
+          }
+        } else {
+          console.warn('No se encontraron datos de usuario');
+          setUserPermissions(['Dashboard']); // Permiso mínimo
+        }
+      } catch (error) {
+        console.error('Error al obtener permisos del usuario:', error);
+        setUserPermissions(['Dashboard']); // Permiso mínimo en caso de error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserPermissions();
+  }, [userRole]);
+
+  // Función para obtener permisos del usuario desde la API
+  const fetchUserPermissions = async (rolId) => {
+    try {
+      const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
+      
+      console.log(`Obteniendo permisos para el rol: ${rolId}`);
+      
+      // Método directo: obtener permisos del rol
+      const permisosResponse = await fetch(`${API_BASE_URL}/rol/${rolId}/permisos`);
+      
+      if (permisosResponse.ok) {
+        const permisos = await permisosResponse.json();
+        console.log('Permisos obtenidos directamente:', permisos);
+        
+        // Usar el campo 'modulo' en lugar de 'descripcion'
+        const permissionNames = permisos.map(p => p.modulo).filter(modulo => modulo);
+        
+        console.log('Nombres de permisos extraídos:', permissionNames);
+        
+        if (permissionNames.length > 0) {
+          setUserPermissions(permissionNames);
+          return;
+        }
+      }
+      
+      // Fallback: método alternativo
+      const rolResponse = await fetch(`${API_BASE_URL}/rol/${rolId}`);
+      
+      if (rolResponse.ok) {
+        const rolData = await rolResponse.json();
+        console.log('Datos del rol:', rolData);
+        
+        if (rolData.permisos && Array.isArray(rolData.permisos)) {
+          // Obtener todos los permisos para mapear IDs a nombres
+          const permisosResponse = await fetch(`${API_BASE_URL}/permisos`);
+          
+          if (permisosResponse.ok) {
+            const todosLosPermisos = await permisosResponse.json();
+            
+            // Mapear los IDs de permisos a módulos
+            const permissionNames = rolData.permisos
+              .map(permisoId => {
+                const permiso = todosLosPermisos.find(p => p.idpermiso === permisoId);
+                return permiso ? permiso.modulo : null;
+              })
+              .filter(nombre => nombre !== null);
+            
+            console.log('Nombres de permisos (método alternativo):', permissionNames);
+            setUserPermissions(permissionNames);
+            return;
+          }
+        }
+      }
+      
+      // Si todo falla, permisos mínimos
+      console.warn('No se pudieron obtener permisos del rol, asignando permisos mínimos');
+      setUserPermissions(['Dashboard']);
+      
+    } catch (error) {
+      console.error('Error al obtener permisos:', error);
+      setUserPermissions(['Dashboard']); // Permiso mínimo
+    }
+  };
+
+  // Filtrar elementos del menú basado en permisos
+  useEffect(() => {
+    if (userRole === 'cliente') {
+      setFilteredMenuItems(clienteMenuItems);
+      return;
+    }
+
+    if (loading) {
+      return;
+    }
+
+    // Para administradores, filtrar según permisos
+    const filterMenuItems = (items) => {
+      return items.map(item => {
+        // Si el item tiene permiso específico, verificar que el usuario lo tenga
+        if (item.permission) {
+          const hasPermission = userPermissions.includes(item.permission);
+          console.log(`Verificando permiso para ${item.title}: ${item.permission} - Usuario tiene: [${userPermissions.join(', ')}] - Resultado: ${hasPermission}`);
+          
+          if (!hasPermission) {
+            return null; // No mostrar este item
+          }
+        }
+
+        // Si tiene submenú, filtrar los subitems
+        if (item.hasSubmenu && item.submenu) {
+          const filteredSubmenu = item.submenu.filter(subItem => {
+            if (subItem.permission) {
+              const hasSubPermission = userPermissions.includes(subItem.permission);
+              console.log(`Verificando permiso para subitem ${subItem.title}: ${subItem.permission} - Resultado: ${hasSubPermission}`);
+              return hasSubPermission;
+            }
+            return true;
+          });
+
+          // Solo mostrar el menú padre si tiene al menos un subitem
+          if (filteredSubmenu.length === 0) {
+            console.log(`Menú ${item.title} oculto porque no tiene subitems con permisos`);
+            return null;
+          }
+
+          // Retornar una copia del item con el submenú filtrado
+          return {
+            ...item,
+            submenu: filteredSubmenu
+          };
+        }
+
+        return item;
+      }).filter(item => item !== null); // Remover items nulos
+    };
+
+    console.log('Permisos del usuario:', userPermissions);
+    const filtered = filterMenuItems(allAdminMenuItems);
+    console.log('Menú filtrado:', filtered);
+    setFilteredMenuItems(filtered);
+  }, [userPermissions, userRole, loading]);
 
   const toggleMenu = (menuKey) => {
     setExpandedMenus(prev => ({
@@ -15,99 +333,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
   };
 
   const isActive = (path) => location.pathname === path;
-
-  const adminMenuItems = [
-    {
-      key: 'dashboard',
-      title: 'Dashboard',
-      icon: 'bi bi-bar-chart-fill',
-      path: '/admin/pages/Dashboard'
-    },
-    {
-      key: 'configuracion',
-      title: 'Configuración',
-      icon: 'bi bi-gear-fill',
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Roles', path: '/admin/pages/Roles', icon: 'bi bi-person-badge' }
-      ]
-    },
-    {
-      key: 'usuarios',
-      title: 'Usuarios',
-      icon: 'bi bi-people-fill',
-      path: '/admin/pages/Usuarios'
-    },
-    {
-      key: 'ventas',
-      title: 'Ventas',
-      icon: 'bi bi-credit-card-fill',
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Clientes', path: '/admin/pages/Clientes', icon: 'bi bi-people' },
-        { title: 'Sedes', path: '/admin/pages/Sede', icon: 'bi bi-geo-alt' },
-        { title: 'Ventas', path: '/admin/pages/Ventas', icon: 'bi bi-graph-up' }
-      ]
-    },
-    {
-      key: 'compras',
-      title: 'Compras',
-      icon: 'bi bi-cart-fill',
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Insumos', path: '/admin/pages/insumos', icon: 'bi bi-box' },
-        { title: 'Cat. Insumos', path: '/admin/pages/CategoriaInsumo', icon: 'bi bi-tags' },
-        { title: 'Proveedores', path: '/admin/pages/proveedores', icon: 'bi bi-truck' },
-        { title: 'Compras', path: '/admin/pages/compras', icon: 'bi bi-receipt' }
-      ]
-    },
-    {
-      key: 'productos',
-      title: 'Productos',
-      icon: 'bi bi-cake-fill',
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Cat. Productos', path: '/admin/pages/CategoriaProductos', icon: 'bi bi-grid' },
-        { title: 'Productos', path: '/admin/pages/productos', icon: 'bi bi-cake2' },
-        { title: 'Recetas', path: '/admin/pages/Recetas', icon: 'bi bi-cake2' },
-      ]
-    },
-    {
-      key: 'produccion',
-      title: 'Producción',
-      icon: 'bi bi-building',
-      path: '/admin/pages/produccion'
-    }
-  ];
-
-  const clienteMenuItems = [
-    {
-      key: 'inicio',
-      title: 'Inicio',
-      icon: 'bi bi-house-fill',
-      path: '/'
-    },
-    {
-      key: 'cartas',
-      title: 'Cartas',
-      icon: 'bi bi-card-list',
-      path: '/cartas'
-    },
-    {
-      key: 'sedes',
-      title: 'Sedes',
-      icon: 'bi bi-geo-alt-fill',
-      path: '/sedes'
-    },
-    {
-      key: 'perfil',
-      title: 'Mi Perfil',
-      icon: 'bi bi-person-fill',
-      path: '/perfil'
-    }
-  ];
-
-  const menuItems = userRole === 'admin' ? adminMenuItems : clienteMenuItems;
 
   return (
     <>
@@ -122,19 +347,73 @@ const Sidebar = ({ userRole = 'admin' }) => {
         rel="stylesheet"
       />
       
+       {/* Estilos globales para espaciado del botón */}
+      <style>
+        {`
+          /* Asegurar espacio para el botón de cerrar sesión */
+          body, 
+          #root,
+          .app,
+          .main-content,
+          .content-area,
+          .page-wrapper,
+          [class*="container"],
+          [class*="wrapper"],
+          [class*="content"] {
+            padding-top: 15px !important;
+          }
+          
+          @media (max-width: 768px) {
+            .content-with-sidebar {
+              margin-left: 0;
+              padding-top: 60px !important;
+            }
+          }
+        `}
+      </style>
+
+      {/* Botón de cerrar sesión fijo en esquina superior derecha */}
+      <LogoutButton className="logout-button-fixed" showText={true} />
+      
       <div className="sidebar">
         <div className="sidebar-header">
           <div className="logo-container">
             <img 
               src="/imagenes/logo-delicias-darsy.png" 
-              alt="Logo" 
+              alt="Logo Delicias Darsy" 
               className="sidebar-logo"
             />
+            <div className="logo-text">
+              <h6>Delicias Darsy</h6>
+              <small>Sistema de Gestión</small>
+            </div>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item, index) => (
+          {loading && userRole === 'admin' && (
+            <div className="nav-item">
+              <div className="nav-link nav-message loading-animation">
+                <div className="nav-content">
+                  <i className="nav-icon bi bi-hourglass-split"></i>
+                  <span className="nav-text">Cargando permisos...</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && filteredMenuItems.length === 0 && userRole === 'admin' && (
+            <div className="nav-item">
+              <div className="nav-link nav-message error">
+                <div className="nav-content">
+                  <i className="nav-icon bi bi-shield-exclamation"></i>
+                  <span className="nav-text">Sin permisos asignados</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && filteredMenuItems.map((item) => (
             <div key={item.key} className="nav-item">
               {item.hasSubmenu ? (
                 <>
@@ -156,7 +435,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
                       id={`submenu-${item.key}`}
                       role="menu"
                     >
-                      {item.submenu.map((subItem, subIndex) => (
+                      {item.submenu?.map((subItem) => (
                         <Link
                           key={subItem.path}
                           to={subItem.path}
@@ -195,16 +474,17 @@ const Sidebar = ({ userRole = 'admin' }) => {
               alt="Usuario" 
               className="user-avatar"
               onError={(e) => {
-                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzE0LjIxIDEyIDE2IDEwLjIxIDE2IDhDMTYgNS43OSAxNC4yMSA0IDEyIDRDOS43OSA0IDggNS43OSA4IDhDOCAxMC4yMSA5Ljc5IDEyIDEyIDEyWk0xMiAxNEM5LjMzIDE0IDQgMTUuMzQgNCAyMFYyMkgyMFYyMEMyMCAxNS4zNCAxNC42NyAxNCAxMiAxNFoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+Cjwvc3ZnPgo=';
+                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNmZjY5YjQiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzE0LjIxIDEyIDE2IDEwLjIxIDE2IDhDMTYgNS43OSAxNC4yMSA0IDEyIDRDOS43OSA0IDggNS43OSA4IDhDOCAxMC4yMSA5Ljc5IDEyIDEyIDEyWk0xMiAxNEM5LjMzIDE0IDQgMTUuMzQgNCAyMFYyMkgyMFYyMEMyMCAxNS4zNCAxNC42NyAxNCAxMiAxNFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo8L3N2Zz4K';
               }}
             />
             <div className="user-details">
               <span className="user-role">
-                {userRole === 'admin' ? 'Admin' : 'Cliente'}
+                {userRole === 'admin' ? 'Administrador' : 'Cliente'}
               </span>
-              <small className="user-id">Id: 12345678</small>
+              <small className="user-id">
+                {loading ? 'Cargando...' : `${userPermissions.length} módulos`}
+              </small>
             </div>
-            <LogoutButton />
           </div>
         </div>
       </div>

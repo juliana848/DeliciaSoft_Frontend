@@ -442,6 +442,47 @@ class AuthService {
     }
   }
 
+  async obtenerDatosClienteLogueado() {
+  try {
+    const profile = this.getUserProfile();
+    if (!profile || profile.role !== 'cliente') {
+      throw new Error('No hay sesión de cliente activa');
+    }
+
+    // Si ya tenemos los datos completos en userData
+    if (profile.data && profile.data.idcliente) {
+      return profile.data;
+    }
+
+    // Si no, buscar en el endpoint de clientes
+    const response = await fetch(`${API_BASE_URL}/clientes`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener datos del cliente');
+    }
+
+    const clientes = await response.json();
+    const cliente = clientes.find(c => c.correo === profile.email);
+    
+    if (!cliente) {
+      throw new Error('Cliente no encontrado');
+    }
+
+    // Actualizar localStorage con datos completos
+    localStorage.setItem('userData', JSON.stringify(cliente));
+    
+    return cliente;
+  } catch (error) {
+    console.error('Error obteniendo datos del cliente:', error);
+    throw error;
+  }
+}
+
   // Obtener perfil del usuario logueado
   getUserProfile() {
     const userEmail = localStorage.getItem('userEmail');

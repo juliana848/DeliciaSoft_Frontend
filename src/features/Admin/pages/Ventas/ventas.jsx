@@ -1,4 +1,4 @@
-// ventas.jsx - Versión corregida
+// ventas.jsx - Versión corregida con abonos funcionales
 import React, { useState, useEffect, useMemo } from 'react';
 import '../../adminStyles.css';
 
@@ -98,7 +98,6 @@ export default function Ventas() {
         } catch (error) {
             console.error('Error al obtener ventas:', error);
             showNotification(error.message || 'Error al obtener las ventas', 'error');
-            // Cargar datos mock como fallback
             cargarVentasMock();
         } finally {
             setLoading(false);
@@ -149,17 +148,6 @@ export default function Ventas() {
                 nombreEstado: 'Pendiente',
                 nombreCliente: 'María González',
                 nombreSede: 'San Benito'
-            },
-            {
-                idVenta: 3,
-                fechaVenta: '2024-12-13',
-                total: 30000,
-                metodoPago: 'efectivo',
-                tipoVenta: 'directa',
-                idEstadoVenta: 5,
-                nombreEstado: 'Anulada',
-                nombreCliente: 'Carlos López',
-                nombreSede: 'San Pablo'
             }
         ];
         setAllSales(ventasMock);
@@ -214,64 +202,85 @@ export default function Ventas() {
         setVentaSeleccionada(null);
         setModalTipo(null);
     };
-    
 
-const verDetalleVenta = async (venta) => {
-    // Mostrar detalle al instante con la info disponible
-    setVentaSeleccionada(venta);
-    setMostrarVerDetalle(true);
+    // Ver detalle de venta con abonos
+    const verDetalleVenta = async (venta) => {
+        setVentaSeleccionada(venta);
+        setMostrarVerDetalle(true);
 
-    try {
-        console.log('Intentando obtener el detalle de la venta con ID:', venta.idVenta);
-        const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
-        setVentaSeleccionada(ventaCompleta); // Actualizar con más datos si llega la respuesta
-    } catch (error) {
-        console.error('Error al obtener detalle:', error);
-        showNotification(error.message || 'No se pudo obtener información completa de la venta', 'error');
-    }
-};
+        try {
+            console.log('Obteniendo detalle completo de la venta:', venta.idVenta);
+            const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+            console.log('Venta completa obtenida:', ventaCompleta);
+            setVentaSeleccionada(ventaCompleta);
+        } catch (error) {
+            console.error('Error al obtener detalle:', error);
+            showNotification(error.message || 'No se pudo obtener información completa de la venta', 'error');
+        }
+    };
 
-    
-    // Función para anular venta - CORREGIDA
-   // Función para anular venta - CORREGIDA
-const anularVenta = async () => {
-    if (!ventaSeleccionada?.idVenta) {
-        showNotification('No se pudo identificar la venta a anular', 'error');
+    // Ver abonos de una venta
+const verAbonosVenta = async (venta) => {
+    console.log('Venta recibida para abonos:', venta);
+    if (!venta || !venta.idVenta) {
+        showNotification('Error: Venta no válida', 'error');
         return;
     }
-
+    
+    setVentaSeleccionada(venta);
+    setMostrarModalAbonos(true); // IMPORTANTE: Abrir modal primero
+    
     try {
-        console.log('Anulando venta con ID:', ventaSeleccionada.idVenta);
-        await ventaApiService.anularVenta(ventaSeleccionada.idVenta);
-
-        // Actualizar solo la venta anulada en el estado
-        setAllSales(prevSales =>
-            prevSales.map(v =>
-                v.idVenta === ventaSeleccionada.idVenta
-                    ? {
-                          ...v,
-                          idEstadoVenta: estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa,
-                          nombreEstado: 'Anulada'
-                      }
-                    : v
-            )
-        );
-
-        showNotification('Venta anulada correctamente', 'success');
-        cerrarModal();
+        console.log('Obteniendo detalle completo de la venta:', venta.idVenta);
+        const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+        console.log('Venta completa obtenida:', ventaCompleta);
+        
+        // Actualizar la venta seleccionada con los datos completos
+        setVentaSeleccionada(ventaCompleta);
     } catch (error) {
-        console.error('Error al anular venta:', error);
-        showNotification(error.message || 'Error al anular la venta', 'error');
+        console.error('Error al obtener abonos:', error);
+        showNotification('Error al obtener los abonos de la venta', 'error');
+        // Mantener el modal abierto con los datos básicos
     }
 };
     
-    // Función para cambiar estado de venta
- const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
+    // Función para anular venta - CORREGIDA
+    const anularVenta = async () => {
+        if (!ventaSeleccionada?.idVenta) {
+            showNotification('No se pudo identificar la venta a anular', 'error');
+            return;
+        }
+
         try {
-            // Hacer la llamada a la API
+            console.log('Anulando venta con ID:', ventaSeleccionada.idVenta);
+            await ventaApiService.anularVenta(ventaSeleccionada.idVenta);
+
+            // Actualizar solo la venta anulada en el estado
+            setAllSales(prevSales =>
+                prevSales.map(v =>
+                    v.idVenta === ventaSeleccionada.idVenta
+                        ? {
+                              ...v,
+                              idEstadoVenta: estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa,
+                              nombreEstado: 'Anulada'
+                          }
+                        : v
+                )
+            );
+
+            showNotification('Venta anulada correctamente', 'success');
+            cerrarModal();
+        } catch (error) {
+            console.error('Error al anular venta:', error);
+            showNotification(error.message || 'Error al anular la venta', 'error');
+        }
+    };
+    
+    // Función para cambiar estado de venta
+    const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
+        try {
             await ventaApiService.actualizarEstadoVenta(idVenta, nuevoEstadoId);
             
-            // Actualizar el estado local inmediatamente sin recargar
             setAllSales(prevSales => 
                 prevSales.map(venta => 
                     venta.idVenta === idVenta 
@@ -294,7 +303,6 @@ const anularVenta = async () => {
     // Función para generar PDF
     const generarPDFVenta = (venta) => {
         console.log('Generando PDF para venta:', venta.idVenta);
-        // Aquí iría la lógica para generar PDF
         showNotification('PDF generado correctamente', 'success');
     };
     
@@ -317,94 +325,84 @@ const anularVenta = async () => {
     const iva = useMemo(() => subtotal * 0.16, [subtotal]);
     const total = useMemo(() => subtotal + iva, [subtotal, iva]);
 
-
-const guardarVenta = async () => {
-    // Validaciones básicas
-    const errores = {};
-    if (!ventaData.tipo_venta) errores.tipo_venta = 'El tipo de venta es requerido';
-    if (!ventaData.cliente) errores.cliente = 'El cliente es requerido';
-    if (!ventaData.sede) errores.sede = 'La sede es requerida';
-    if (!ventaData.metodo_pago) errores.metodo_pago = 'El método de pago es requerido';
-    if (insumosSeleccionados.length === 0) errores.productos = 'Debe agregar al menos un producto';
-    
-    // Validación especial para pedidos
-    if (ventaData.tipo_venta === 'pedido' && !ventaData.fecha_entrega) {
-        errores.fecha_entrega = 'La fecha de entrega es requerida para pedidos';
-    }
-
-    if (Object.keys(errores).length > 0) {
-        setErroresValidacion(errores);
-        showNotification('Por favor corrija los errores en el formulario', 'error');
-        return;
-    }
-
-    try {
-        // Mapear sede a ID numérico
-        const sedeId = ventaData.sede === 'San Pablo' ? 1 : 2;
+    // Guardar venta
+    const guardarVenta = async () => {
+        const errores = {};
+        if (!ventaData.tipo_venta) errores.tipo_venta = 'El tipo de venta es requerido';
+        if (!ventaData.cliente) errores.cliente = 'El cliente es requerido';
+        if (!ventaData.sede) errores.sede = 'La sede es requerida';
+        if (!ventaData.metodo_pago) errores.metodo_pago = 'El método de pago es requerido';
+        if (insumosSeleccionados.length === 0) errores.productos = 'Debe agregar al menos un producto';
         
-        // Buscar el ID del estado "Activa"
-        const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa || 5;
-        
-        // Preparar datos de la venta para la API - FORMATO CORREGIDO
-        const nuevaVenta = {
-            fechaventa: ventaData.fecha_venta,
-            cliente: ventaData.clienteId || null, // ID del cliente o null
-            idsede: sedeId,
-            metodopago: ventaData.metodo_pago,  // CORREGIDO: usar metodo_pago del estado
-            tipoventa: ventaData.tipo_venta === 'venta directa' ? 'venta directa' : ventaData.tipo_venta, // CORREGIDO: mantener formato original
-            estadoVentaId: estadoActivoId,
-            total: total,
-            // Información adicional para el frontend
-            clienteNombre: ventaData.cliente,
-            sedeNombre: ventaData.sede,
-            productos: insumosSeleccionados.map(item => {
-                // Calcular subtotal del item incluyendo adiciones
-                const subtotalItem = item.precio * (item.cantidad || 1);
-                const costoAdiciones = (item.adiciones?.slice(2) || []).reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0);
-                const costoSabores = (item.sabores || []).reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0);
-                const subtotalTotal = subtotalItem + costoAdiciones + costoSabores;
-                
-                return {
-                    idproductogeneral: item.id,
-                    cantidad: item.cantidad || 1,
-                    preciounitario: item.precio,
-                    subtotal: subtotalTotal,
-                    iva: subtotalTotal * 0.16
-                };
-            })
-        };
+        if (ventaData.tipo_venta === 'pedido' && !ventaData.fecha_entrega) {
+            errores.fecha_entrega = 'La fecha de entrega es requerida para pedidos';
+        }
 
-        console.log('Enviando nueva venta a la API:', nuevaVenta);
-        
-        const ventaCreada = await ventaApiService.crearVenta(nuevaVenta);
-        console.log('Venta creada exitosamente:', ventaCreada);
+        if (Object.keys(errores).length > 0) {
+            setErroresValidacion(errores);
+            showNotification('Por favor corrija los errores en el formulario', 'error');
+            return;
+        }
 
-        // Agregar la nueva venta al estado local
-        setAllSales(prevSales => [ventaCreada, ...prevSales]);
+        try {
+            const sedeId = ventaData.sede === 'San Pablo' ? 1 : 2;
+            const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa || 5;
+            
+            const nuevaVenta = {
+                fechaventa: ventaData.fecha_venta,
+                cliente: ventaData.clienteId || null,
+                idsede: sedeId,
+                metodopago: ventaData.metodo_pago,
+                tipoventa: ventaData.tipo_venta === 'venta directa' ? 'venta directa' : ventaData.tipo_venta,
+                estadoVentaId: estadoActivoId,
+                total: total,
+                clienteNombre: ventaData.cliente,
+                sedeNombre: ventaData.sede,
+                productos: insumosSeleccionados.map(item => {
+                    const subtotalItem = item.precio * (item.cantidad || 1);
+                    const costoAdiciones = (item.adiciones?.slice(2) || []).reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0);
+                    const costoSabores = (item.sabores || []).reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0);
+                    const subtotalTotal = subtotalItem + costoAdiciones + costoSabores;
+                    
+                    return {
+                        idproductogeneral: item.id,
+                        cantidad: item.cantidad || 1,
+                        preciounitario: item.precio,
+                        subtotal: subtotalTotal,
+                        iva: subtotalTotal * 0.16
+                    };
+                })
+            };
 
-        showNotification('Venta creada exitosamente', 'success');
+            console.log('Enviando nueva venta a la API:', nuevaVenta);
+            
+            const ventaCreada = await ventaApiService.crearVenta(nuevaVenta);
+            console.log('Venta creada exitosamente:', ventaCreada);
 
-        // Resetear formulario
-        setMostrarAgregarVenta(false);
-        setInsumosSeleccionados([]);
-        setVentaData({
-            cod_venta: '00000000',
-            tipo_venta: '',
-            cliente: '',
-            sede: '',
-            metodo_pago: '',
-            fecha_venta: new Date().toISOString().split('T')[0],
-            fecha_entrega: '',
-            fecha_registro: '',
-            observaciones: ''
-        });
-        setErroresValidacion({});
-        
-    } catch (error) {
-        console.error('Error al crear venta:', error);
-        showNotification(error.message || 'Error al crear la venta', 'error');
-    }
-};
+            setAllSales(prevSales => [ventaCreada, ...prevSales]);
+            showNotification('Venta creada exitosamente', 'success');
+
+            // Resetear formulario
+            setMostrarAgregarVenta(false);
+            setInsumosSeleccionados([]);
+            setVentaData({
+                cod_venta: '00000000',
+                tipo_venta: '',
+                cliente: '',
+                sede: '',
+                metodo_pago: '',
+                fecha_venta: new Date().toISOString().split('T')[0],
+                fecha_entrega: '',
+                fecha_registro: '',
+                observaciones: ''
+            });
+            setErroresValidacion({});
+            
+        } catch (error) {
+            console.error('Error al crear venta:', error);
+            showNotification(error.message || 'Error al crear la venta', 'error');
+        }
+    };
 
     // Funciones para manejar cambios en el formulario
     const handleChange = (e) => {
@@ -414,7 +412,6 @@ const guardarVenta = async () => {
             [name]: value
         }));
         
-        // Limpiar error del campo modificado
         if (erroresValidacion[name]) {
             setErroresValidacion(prev => ({
                 ...prev,
@@ -526,55 +523,125 @@ const guardarVenta = async () => {
         );
     };
 
-    // Funciones para manejar abonos
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setAbonoData(prev => ({
-                ...prev,
-                comprobante_imagen: file
-            }));
+    // Funciones para manejar abonos - CORREGIDAS
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        console.log('Archivo seleccionado:', file.name, file.type, file.size);
+        
+        // Validar que sea una imagen
+        if (!file.type.startsWith('image/')) {
+            showNotification('Por favor selecciona solo archivos de imagen', 'error');
+            return;
         }
-    };
+        
+       
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('La imagen es muy grande. Máximo 5MB permitido', 'error');
+            return;
+        }
+        
+       
+        setAbonoData(prev => ({
+            ...prev,
+            comprobante_imagen: file
+        }));
+    } else {
+       
+        setAbonoData(prev => ({
+            ...prev,
+            comprobante_imagen: null
+        }));
+    }
+};
 
-    const agregarAbono = async () => {
-        const abonoParaAPI = {
-            idpedido: ventaSeleccionada.idVenta,
-            metodopago: abonoData.metodo_pago,
-            TotalPagado: parseFloat(abonoData.total_pagado),
-            fecha: abonoData.fecha,
-        };
-        try {
-            // await ventaApiService.crearAbono(abonoParaAPI);
-            showNotification('Abono agregado correctamente', 'success');
-            setMostrarModalAgregarAbono(false);
-            setAbonoData({
-                metodo_pago: '',
-                total_pagado: '',
-                fecha: new Date().toISOString().split('T')[0],
-                comprobante_imagen: null
-            });
-            await verDetalleVenta(ventaSeleccionada);
-        } catch (error) {
-            console.error('Error al agregar abono:', error);
-            showNotification(error.message || 'Error al agregar abono', 'error');
-        }
+   const agregarAbono = async () => {
+    console.log('Iniciando creación de abono:', abonoData);
+    
+    // Validaciones
+    const errores = {};
+    if (!abonoData.metodo_pago) {
+        errores.metodo_pago = 'Método de pago es requerido';
+    }
+    if (!abonoData.total_pagado || parseFloat(abonoData.total_pagado) <= 0) {
+        errores.total_pagado = 'El monto debe ser mayor a 0';
+    }
+    
+    if (Object.keys(errores).length > 0) {
+        setErroresValidacion(errores);
+        showNotification('Por favor corrija los errores en el formulario', 'error');
+        return;
+    }
+    
+    const abonoParaAPI = {
+        idpedido: ventaSeleccionada.idVenta,
+        metodopago: abonoData.metodo_pago,
+        cantidadpagar: parseFloat(abonoData.total_pagado),
+        TotalPagado: parseFloat(abonoData.total_pagado),
     };
     
+    try {
+        console.log('Creando abono con datos:', abonoParaAPI);
+        console.log('Imagen a subir:', abonoData.comprobante_imagen ? 'SÍ' : 'NO');
+        
+        const abonoCreado = await ventaApiService.crearAbono(abonoParaAPI, abonoData.comprobante_imagen);
+        
+        showNotification('Abono agregado correctamente', 'success');
+        setMostrarModalAgregarAbono(false);
+        
+        // Resetear datos del abono
+        setAbonoData({
+            metodo_pago: '',
+            total_pagado: '',
+            fecha: new Date().toISOString().split('T')[0],
+            comprobante_imagen: null
+        });
+        setErroresValidacion({});
+        
+        // Actualizar la vista de abonos refrescando los datos
+        if (ventaSeleccionada?.idVenta) {
+            const ventaActualizada = await ventaApiService.obtenerVentaPorId(ventaSeleccionada.idVenta);
+            setVentaSeleccionada(ventaActualizada);
+        }
+        
+    } catch (error) {
+        console.error('Error al agregar abono:', error);
+        showNotification(error.message || 'Error al agregar abono', 'error');
+    }
+};
+
     const verDetalleAbono = (abono) => {
+        console.log('Viendo detalle del abono:', abono);
         setAbonoSeleccionado(abono);
         setMostrarModalDetalleAbono(true);
     };
 
-    const anularAbono = async () => {
-        try {
-            showNotification('Abono anulado correctamente', 'success');
-            setMostrarModalDetalleAbono(false);
-        } catch (error) {
-            console.error('Error al anular abono:', error);
-            showNotification('Error al anular el abono', 'error');
+  const anularAbono = async (idAbono) => {
+    if (!idAbono) {
+        showNotification('ID de abono inválido', 'error');
+        return;
+    }
+
+    try {
+        console.log('Anulando abono ID:', idAbono);
+        await ventaApiService.anularAbono(idAbono);
+        
+        showNotification('Abono anulado correctamente', 'success');
+        
+        // Cerrar modal de detalle si está abierto
+        setMostrarModalDetalleAbono(false);
+        
+        // Refrescar la lista de abonos de la venta actual
+        if (ventaSeleccionada?.idVenta) {
+            await verAbonosVenta(ventaSeleccionada);
         }
-    };
+        
+    } catch (error) {
+        console.error('Error al anular abono:', error);
+        showNotification(error.message || 'Error al anular el abono', 'error');
+    }
+};
+
 
     const onBackToList = () => {
         setMostrarVerDetalle(false);
@@ -648,7 +715,7 @@ const guardarVenta = async () => {
                     abrirModal={abrirModal}
                     generarPDFVenta={generarPDFVenta}
                     setVentaSeleccionada={setVentaSeleccionada}
-                    setMostrarModalAbonos={setMostrarModalAbonos}
+                    setMostrarModalAbonos={verAbonosVenta}
                     manejarCambioEstado={manejarCambioEstado}
                     notification={notification}
                     hideNotification={hideNotification}
@@ -685,9 +752,25 @@ const guardarVenta = async () => {
                 onClose={() => {
                     setMostrarModalAgregarAbono(false);
                     setErroresValidacion({});
+                    // Resetear datos del formulario
+                    setAbonoData({
+                        metodo_pago: '',
+                        total_pagado: '',
+                        fecha: new Date().toISOString().split('T')[0],
+                        comprobante_imagen: null
+                    });
                 }}
                 abonoData={abonoData}
-                handleAbonoChange={(e) => setAbonoData({ ...abonoData, [e.target.name]: e.target.value })}
+                handleAbonoChange={(e) => {
+                    setAbonoData({ ...abonoData, [e.target.name]: e.target.value });
+                    // Limpiar error del campo modificado
+                    if (erroresValidacion[e.target.name]) {
+                        setErroresValidacion(prev => ({
+                            ...prev,
+                            [e.target.name]: ''
+                        }));
+                    }
+                }}
                 erroresValidacion={erroresValidacion}
                 handleImageUpload={handleImageUpload}
                 agregarAbono={agregarAbono}
@@ -698,7 +781,7 @@ const guardarVenta = async () => {
                 visible={mostrarModalDetalleAbono}
                 onClose={() => setMostrarModalDetalleAbono(false)}
                 abonoSeleccionado={abonoSeleccionado}
-                anularAbono={anularAbono}
+                anularAbono={() => anularAbono(abonoSeleccionado?.idAbono)}
             />
         </div>
     );

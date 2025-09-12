@@ -1,4 +1,4 @@
-// venta_services.js - CORREGIDO - Mapeo de campos
+// venta_services.js - CORREGIDO con rutas actualizadas y manejo de errores mejorado
 const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
 
 class VentaApiService {
@@ -13,36 +13,31 @@ class VentaApiService {
     }
 
     // Obtener estado según tipo de venta
-obtenerEstadoSegunTipo(tipoVenta) {
-    if (tipoVenta === 'venta directa' || tipoVenta === 'directa') {
+    obtenerEstadoSegunTipo(tipoVenta) {
+        if (tipoVenta === 'venta directa' || tipoVenta === 'directa') {
+            return 5; 
+        } else if (tipoVenta === 'pedido') {
+            return 1; 
+        }
         return 5; 
-    } else if (tipoVenta === 'pedido') {
-        return 1; 
     }
-    return 5; 
-}
 
     // FUNCIÓN PARA FORMATEAR FECHA CORRECTAMENTE
     formatearFecha(fecha) {
         try {
-            // Si ya es un objeto Date
             if (fecha instanceof Date) {
                 return fecha.toISOString();
             }
             
-            // Si es un string, intentar parsearlo
             if (typeof fecha === 'string') {
-                // Si ya está en formato ISO, devolverlo
                 if (fecha.includes('T') && fecha.includes('Z')) {
                     return fecha;
                 }
                 
-                // Si está en formato YYYY-MM-DD, agregar tiempo
                 if (fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
                     return `${fecha}T00:00:00.000Z`;
                 }
                 
-                // Intentar crear Date y convertir
                 const dateObj = new Date(fecha);
                 if (isNaN(dateObj.getTime())) {
                     throw new Error('Fecha inválida');
@@ -50,13 +45,11 @@ obtenerEstadoSegunTipo(tipoVenta) {
                 return dateObj.toISOString();
             }
             
-            // Si no es string ni Date, usar fecha actual
             console.warn('Fecha no reconocida, usando fecha actual:', fecha);
             return new Date().toISOString();
             
         } catch (error) {
             console.error('Error al formatear fecha:', error, 'Fecha original:', fecha);
-            // Fallback a fecha actual
             return new Date().toISOString();
         }
     }
@@ -79,7 +72,6 @@ obtenerEstadoSegunTipo(tipoVenta) {
     transformarVentaCompletaDesdeAPI(ventaApi) {
         if (!ventaApi) return null;
         
-        // Calcular subtotal e IVA desde el detalle
         let subtotal = 0;
         let iva = 0;
         if (ventaApi.detalleventa && ventaApi.detalleventa.length > 0) {
@@ -116,7 +108,6 @@ obtenerEstadoSegunTipo(tipoVenta) {
             precioUnitario: parseFloat(item.preciounitario || 0),
             subtotal: parseFloat(item.subtotal || 0),
             iva: parseFloat(item.iva || 0),
-            // Transformar adiciones desde detalleadiciones
             adiciones: item.detalleadiciones?.map(da => ({
                 id: da.catalogoadiciones?.idadiciones || da.idadiciones,
                 nombre: da.catalogoadiciones?.nombre || 'Adición N/A',
@@ -138,16 +129,32 @@ obtenerEstadoSegunTipo(tipoVenta) {
         }));
     }
 
-    transformarAbonosDesdeAPI(abonosApi) {
-        if (!abonosApi || !Array.isArray(abonosApi)) return [];
-        return abonosApi.map(abono => ({
-            idAbono: abono.idabono,
-            idPedido: abono.idpedido,
-            metodoPago: abono.metodopago,
-            cantidadPagar: parseFloat(abono.cantidadpagar || 0),
-            TotalPagado: parseFloat(abono.TotalPagado || 0)
-        }));
-    }
+   transformarAbonosDesdeAPI(abonosApi) {
+    if (!abonosApi || !Array.isArray(abonosApi)) return [];
+    return abonosApi.map(abono => {
+        // Usar los campos exactos que devuelve tu backend
+        const montoAbono = parseFloat(abono.monto || abono.cantidadpagar || abono.cantidadPagar || abono.totalPagado || 0);
+        
+        return {
+            id: abono.id || abono.idabono || abono.idAbono,
+            idAbono: abono.id || abono.idabono || abono.idAbono, // Para compatibilidad
+            idPedido: abono.idPedido || abono.idpedido,
+            metodoPago: abono.metodoPago || abono.metodopago,
+            metodo_pago: abono.metodoPago || abono.metodopago, // Para compatibilidad
+            monto: montoAbono,
+            cantidadpagar: montoAbono, // Para compatibilidad
+            cantidadPagar: montoAbono, // Para compatibilidad  
+            totalPagado: montoAbono,
+            TotalPagado: montoAbono, // Para compatibilidad
+            comprobante_imagen: abono.comprobante_imagen || abono.imagenes?.urlimg || null,
+            imagenes: abono.imagenes || null, // Mantener estructura original
+            fecha: abono.fecha || new Date().toISOString().split('T')[0],
+            anulado: Boolean(abono.anulado),
+            cliente: abono.cliente || 'N/A',
+            totalVenta: parseFloat(abono.totalVenta || 0)
+        };
+    });
+}
 
     // FUNCIÓN PRINCIPAL PARA OBTENER VENTAS
     async obtenerVentas() {
@@ -174,7 +181,6 @@ obtenerEstadoSegunTipo(tipoVenta) {
         } catch (error) {
             console.error('Error al obtener el listado de ventas:', error);
             
-            // Fallback: intentar con la ruta básica
             try {
                 console.log('Intentando con ruta básica...');
                 return await this.obtenerVentasBasico();
@@ -206,7 +212,6 @@ obtenerEstadoSegunTipo(tipoVenta) {
             const ventasApi = await response.json();
             console.log('Ventas básicas recibidas:', ventasApi);
             
-            // Transformar datos básicos
             return ventasApi.map(venta => ({
                 idVenta: venta.idventa,
                 fechaVenta: venta.fechaventa,
@@ -248,7 +253,6 @@ obtenerEstadoSegunTipo(tipoVenta) {
         } catch (error) {
             console.error('Error al obtener los estados de venta:', error);
             
-            // Estados por defecto en caso de error
             console.log('Usando estados por defecto...');
             return [
                 { idestadoventa: 1, nombre_estado: 'En espera' },
@@ -261,116 +265,104 @@ obtenerEstadoSegunTipo(tipoVenta) {
         }
     }
 
-async crearVenta(ventaData) {
-    try {
-        console.log('Datos originales recibidos para crear venta:', ventaData);
-        
-        // Determinar el ID del cliente
-        let clienteId = null;
-        if (ventaData.cliente && ventaData.cliente !== 'Cliente Genérico') {
-            // Si se seleccionó un cliente específico, extraer su ID
-            clienteId = parseInt(ventaData.clienteId) || null;
-        }
-        
-        // Obtener el ID de la sede
-        const sedeId = this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
-        
-        // CORREGIR EL MAPEO DE TIPO DE VENTA PARA RESPETAR LÍMITE DE CARACTERES
-        let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
-        if (tipoVenta === 'venta directa') {
-            tipoVenta = 'directa'; // Cambiar a "directa" (7 caracteres)
-        } else if (tipoVenta === 'pedido') {
-            tipoVenta = 'pedido'; // Mantener "pedido" (6 caracteres)
-        }
-        
-        // Obtener el estado según el tipo de venta (usando el valor original para la lógica)
-        const estadoId = this.obtenerEstadoSegunTipo(ventaData.tipoventa || ventaData.tipo_venta);
-        
-        // Preparar los detalles de venta
-        const detallesVenta = (ventaData.detalleventa || ventaData.productos || []).map(producto => ({
-            idproductogeneral: parseInt(producto.idproductogeneral || producto.id),
-            cantidad: parseInt(producto.cantidad || 1),
-            preciounitario: parseFloat(producto.preciounitario || producto.precio || 0),
-            subtotal: parseFloat(producto.subtotal || (producto.precio * producto.cantidad) || 0),
-            iva: parseFloat(producto.iva || ((producto.precio * producto.cantidad) * 0.16) || 0)
-        }));
+    async crearVenta(ventaData) {
+        try {
+            console.log('Datos originales recibidos para crear venta:', ventaData);
+            
+            let clienteId = null;
+            if (ventaData.cliente && ventaData.cliente !== 'Cliente Genérico') {
+                clienteId = parseInt(ventaData.clienteId) || null;
+            }
+            
+            const sedeId = this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
+            
+            let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
+            if (tipoVenta === 'venta directa') {
+                tipoVenta = 'directa';
+            } else if (tipoVenta === 'pedido') {
+                tipoVenta = 'pedido';
+            }
+            
+            const estadoId = this.obtenerEstadoSegunTipo(ventaData.tipoventa || ventaData.tipo_venta);
+            
+            const detallesVenta = (ventaData.detalleventa || ventaData.productos || []).map(producto => ({
+                idproductogeneral: parseInt(producto.idproductogeneral || producto.id),
+                cantidad: parseInt(producto.cantidad || 1),
+                preciounitario: parseFloat(producto.preciounitario || producto.precio || 0),
+                subtotal: parseFloat(producto.subtotal || (producto.precio * producto.cantidad) || 0),
+                iva: parseFloat(producto.iva || ((producto.precio * producto.cantidad) * 0.16) || 0)
+            }));
 
-        // FORMATEAR LA FECHA CORRECTAMENTE
-        const fechaFormateada = this.formatearFecha(ventaData.fechaventa || ventaData.fecha_venta);
-        console.log('Fecha original:', ventaData.fechaventa || ventaData.fecha_venta);
-        console.log('Fecha formateada:', fechaFormateada);
+            const fechaFormateada = this.formatearFecha(ventaData.fechaventa || ventaData.fecha_venta);
+            console.log('Fecha original:', ventaData.fechaventa || ventaData.fecha_venta);
+            console.log('Fecha formateada:', fechaFormateada);
 
-        // Transformar los datos al formato que espera la API - MAPEO CORREGIDO
-        const ventaParaAPI = {
-            fechaventa: fechaFormateada,
-            cliente: clienteId,
-            idsede: sedeId,
-            metodopago: ventaData.metodopago || ventaData.metodo_pago,  // CORREGIDO: mapeo correcto
-            tipoventa: tipoVenta,      // CORREGIDO: usar valor truncado
-            estadoVentaId: estadoId,
-            total: parseFloat(ventaData.total || 0),
-            detalleventa: detallesVenta
-        };
+            const ventaParaAPI = {
+                fechaventa: fechaFormateada,
+                cliente: clienteId,
+                idsede: sedeId,
+                metodopago: ventaData.metodopago || ventaData.metodo_pago,
+                tipoventa: tipoVenta,
+                estadoVentaId: estadoId,
+                total: parseFloat(ventaData.total || 0),
+                detalleventa: detallesVenta
+            };
 
-        console.log('Datos transformados para la API:', ventaParaAPI);
-        
-        // Validar que los campos obligatorios no estén null
-        if (!ventaParaAPI.metodopago) {
-            throw new Error('Método de pago es requerido');
+            console.log('Datos transformados para la API:', ventaParaAPI);
+            
+            if (!ventaParaAPI.metodopago) {
+                throw new Error('Método de pago es requerido');
+            }
+            if (!ventaParaAPI.tipoventa) {
+                throw new Error('Tipo de venta es requerido');
+            }
+            if (!ventaParaAPI.total || ventaParaAPI.total <= 0) {
+                throw new Error('Total debe ser mayor a 0');
+            }
+            if (!detallesVenta.length) {
+                throw new Error('Debe incluir al menos un producto');
+            }
+            
+            const response = await fetch(`${API_BASE_URL}/venta`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(ventaParaAPI)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error al crear venta:', errorText);
+                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+            }
+            
+            const ventaCreada = await response.json();
+            console.log('Venta creada exitosamente:', ventaCreada);
+            
+            return {
+                idVenta: ventaCreada.idventa,
+                fechaVenta: ventaCreada.fechaventa,
+                total: parseFloat(ventaCreada.total),
+                metodoPago: ventaCreada.metodopago,
+                tipoVenta: ventaCreada.tipoventa,
+                idEstadoVenta: ventaCreada.estadoVentaId || estadoId,
+                nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
+                nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
+                nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A'
+            };
+            
+        } catch (error) {
+            console.error('Error al crear la venta:', error);
+            throw new Error(`No se pudo crear la venta: ${error.message}`);
         }
-        if (!ventaParaAPI.tipoventa) {
-            throw new Error('Tipo de venta es requerido');
-        }
-        if (!ventaParaAPI.total || ventaParaAPI.total <= 0) {
-            throw new Error('Total debe ser mayor a 0');
-        }
-        if (!detallesVenta.length) {
-            throw new Error('Debe incluir al menos un producto');
-        }
-        
-        // Crear la venta
-        const response = await fetch(`${API_BASE_URL}/venta`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(ventaParaAPI)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error al crear venta:', errorText);
-            throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
-        }
-        
-        const ventaCreada = await response.json();
-        console.log('Venta creada exitosamente:', ventaCreada);
-        
-        // Retornar la venta en el formato esperado por el frontend
-        return {
-            idVenta: ventaCreada.idventa,
-            fechaVenta: ventaCreada.fechaventa,
-            total: parseFloat(ventaCreada.total),
-            metodoPago: ventaCreada.metodopago,
-            tipoVenta: ventaCreada.tipoventa,
-            idEstadoVenta: ventaCreada.estadoVentaId || estadoId,
-            nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
-            nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
-            nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A'
-        };
-        
-    } catch (error) {
-        console.error('Error al crear la venta:', error);
-        throw new Error(`No se pudo crear la venta: ${error.message}`);
     }
-}
 
-    // FUNCIÓN PARA OBTENER DETALLE DE VENTA
+    // FUNCIÓN PARA OBTENER DETALLE DE VENTA CON ABONOS - CORREGIDA
     async obtenerVentaPorId(idVenta) {
         try {
             console.log('Obteniendo detalle de venta ID:', idVenta);
             
-            // Primero intentar con el endpoint de detalles específico
             let response = await fetch(`${API_BASE_URL}/venta/${idVenta}/detalles`, {
                 method: 'GET',
                 headers: {
@@ -379,7 +371,6 @@ async crearVenta(ventaData) {
                 }
             });
             
-            // Si no funciona, intentar con el endpoint básico
             if (!response.ok) {
                 console.log('Endpoint de detalles no disponible, intentando con endpoint básico...');
                 response = await fetch(`${API_BASE_URL}/venta/${idVenta}`, {
@@ -399,6 +390,30 @@ async crearVenta(ventaData) {
             
             const ventaApi = await response.json();
             console.log('Detalle de venta recibido:', ventaApi);
+            
+            // Obtener abonos de la venta usando la ruta corregida con ID de VENTA (no pedido)
+            try {
+                const abonosResponse = await fetch(`${API_BASE_URL}/abonos/pedido/${idVenta}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (abonosResponse.ok) {
+                    const abonos = await abonosResponse.json();
+                    console.log('Abonos obtenidos:', abonos);
+                    ventaApi.abonos = abonos;
+                } else {
+                    console.warn('No se pudieron obtener los abonos');
+                    ventaApi.abonos = [];
+                }
+            } catch (abonosError) {
+                console.warn('Error al obtener abonos:', abonosError);
+                ventaApi.abonos = [];
+            }
+            
             return this.transformarVentaCompletaDesdeAPI(ventaApi);
         } catch (error) {
             console.error('Error al obtener el detalle de la venta:', error);
@@ -416,7 +431,7 @@ async crearVenta(ventaData) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ estadoVentaId: 6 }) // 6 = Anulada
+                body: JSON.stringify({ estadoVentaId: 6 })
             });
             
             if (!response.ok) {
@@ -461,27 +476,104 @@ async crearVenta(ventaData) {
         }
     }
 
-    // FUNCIÓN PARA CREAR ABONO
-    async crearAbono(abonoData) {
+    // FUNCIÓN PARA CREAR ABONO CON IMAGEN - RUTA Y LÓGICA CORREGIDAS
+    async crearAbono(abonoData, imagen = null) {
         try {
-            console.log('Creando abono:', abonoData);
-            const response = await fetch(`${API_BASE_URL}/abono`, {
+            console.log('Creando abono para venta ID:', abonoData.idpedido || abonoData.idPedido);
+            
+            // Crear FormData para enviar datos y archivo
+            const formData = new FormData();
+            
+            // CORRECIÓN IMPORTANTE: Enviar el ID de la VENTA, no del pedido
+            // El backend se encargará de crear o encontrar el pedido correspondiente
+            formData.append('idpedido', abonoData.idpedido || abonoData.idPedido);
+            formData.append('metodopago', abonoData.metodopago || abonoData.metodo_pago);
+            formData.append('cantidadpagar', abonoData.cantidadpagar || abonoData.total_pagado);
+            formData.append('TotalPagado', abonoData.TotalPagado || abonoData.total_pagado);
+            
+            // Si hay imagen, agregarla al FormData
+            if (imagen) {
+                formData.append('comprobante', imagen);
+                console.log('Imagen agregada al FormData:', imagen.name, imagen.size);
+            }
+            
+            console.log('Datos del FormData:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, typeof value === 'object' ? `Archivo: ${value.name}` : value);
+            }
+            
+            // RUTA CORREGIDA: usar /abonos en lugar de /abono
+            const response = await fetch(`${API_BASE_URL}/abonos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(abonoData)
+                body: formData // No agregar Content-Type header, fetch lo hará automáticamente
             });
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+                console.error('Error al crear abono - Status:', response.status);
+                console.error('Error al crear abono - Response:', errorText);
+                
+                let errorMessage = `Error del servidor (${response.status})`;
+                
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    if (errorJson.message) {
+                        errorMessage = errorJson.message;
+                        
+                        // Mensajes de error específicos para el usuario
+                        if (errorMessage.includes('too long for the column')) {
+                            errorMessage = 'El método de pago seleccionado es muy largo. Use: efectivo, tarjeta, transferencia u otro.';
+                        } else if (errorMessage.includes('ID de pedido es requerido')) {
+                            errorMessage = 'Error interno: ID de venta requerido';
+                        } else if (errorMessage.includes('Método de pago muy largo')) {
+                            errorMessage = 'El método de pago es muy largo (máximo 20 caracteres)';
+                        }
+                    }
+                } catch (parseError) {
+                    console.warn('No se pudo parsear el error como JSON');
+                }
+                
+                throw new Error(errorMessage);
             }
             
-            return await response.json();
+            const abonoCreado = await response.json();
+            console.log('Abono creado exitosamente:', abonoCreado);
+            return abonoCreado;
         } catch (error) {
             console.error('Error al crear abono:', error);
             throw new Error(`No se pudo crear el abono: ${error.message}`);
+        }
+    }
+
+    // FUNCIÓN PARA ANULAR ABONO - RUTA CORREGIDA
+    async anularAbono(idAbono) {
+        try {
+            console.log('Anulando abono ID:', idAbono);
+            
+            if (!idAbono || idAbono <= 0) {
+                throw new Error('ID de abono inválido');
+            }
+            
+            // RUTA CORREGIDA: usar /abonos en lugar de /abono
+            const response = await fetch(`${API_BASE_URL}/abonos/${idAbono}/anular`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error al anular abono:', errorText);
+                throw new Error(`HTTP error! Status: ${response.status}. ${errorText}`);
+            }
+            
+            const abonoAnulado = await response.json();
+            console.log('Abono anulado exitosamente:', abonoAnulado);
+            return abonoAnulado;
+        } catch (error) {
+            console.error('Error al anular abono:', error);
+            throw new Error(`No se pudo anular el abono: ${error.message}`);
         }
     }
 
@@ -490,7 +582,6 @@ async crearVenta(ventaData) {
         try {
             console.log('Testando conexión a:', API_BASE_URL);
             
-            // Intentar con estado-venta primero (más simple)
             const response = await fetch(`${API_BASE_URL}/estado-venta`, {
                 method: 'GET',
                 headers: {

@@ -1652,13 +1652,12 @@
     margin-top: 20px; /* Adds some space above the buttons, adjust as needed */
 }
 
-/* Optional: If you want to ensure they are always at the very bottom right,
-   you might need to adjust the parent container's styling as well to allow for full height */
+
 .compra-form-container {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Pushes content to top and buttons to bottom */
-    min-height: 100vh; /* Example: ensure the form container takes full viewport height */
+    justify-content: space-between; 
+    min-height: 100vh; 
 }
 .fila-admin {
   background-color: #ffebee !important;

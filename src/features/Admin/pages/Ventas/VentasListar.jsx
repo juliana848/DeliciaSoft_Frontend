@@ -130,14 +130,11 @@ export default function VentasListar({
                 >
                     ⬇️
                 </button>
-                {rowData.tipoVenta === 'pedido' && rowData.idEstadoVenta !== estadoAnuladoId && (
+               {rowData.tipoVenta === 'pedido' && rowData.idEstadoVenta !== estadoAnuladoId && (
                     <button
                         className="admin-button green"
                         title="Abonos"
-                        onClick={() => {
-                            setVentaSeleccionada(rowData);
-                            setMostrarModalAbonos(true);
-                        }}
+                        onClick={() => setMostrarModalAbonos(rowData)}  
                     >
                         💰
                     </button>

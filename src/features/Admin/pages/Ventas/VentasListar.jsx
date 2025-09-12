@@ -26,7 +26,17 @@ export default function VentasListar({
     setMostrarAgregarVenta
 }) {
 
-    // Función para obtener la clase CSS según el estado
+    // NUEVA FUNCIÓN para formatear valores a moneda
+    const formatearMoneda = (valor) => {
+        const numero = parseFloat(valor || 0);
+        return numero.toLocaleString('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+    };
+
     const getSeverityClass = (nombreEstado) => {
         switch (nombreEstado) {
             case 'Activa':
@@ -49,55 +59,66 @@ export default function VentasListar({
         }
     };
 
-    // Template para la columna de estados con dropdown
     const estadoBodyTemplate = (rowData) => {
         const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
-        const isUpdatable = rowData.idEstadoVenta !== estadoAnuladoId;
+        const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa;
+        const estadoFinalizadoId = estadosVenta.find(e => e.nombre_estado === 'Finalizado')?.idestadoventa;
+        const estadoCompletadaId = estadosVenta.find(e => e.nombre_estado === 'Completada')?.idestadoventa;
 
-        // Encontrar el estado actual
+        const isStaticState = (
+            rowData.idEstadoVenta === estadoAnuladoId ||
+            rowData.idEstadoVenta === estadoFinalizadoId ||
+            rowData.idEstadoVenta === estadoCompletadaId ||
+            (rowData.tipoVenta === 'directa' && rowData.idEstadoVenta === estadoActivoId)
+        );
+
         const estadoActual = estadosVenta.find(e => e.idestadoventa === rowData.idEstadoVenta);
         const nombreEstadoActual = estadoActual?.nombre_estado || rowData.nombreEstado;
 
-        const selectedTemplate = (option) => {
-            if (option) {
+        if (isStaticState) {
+            return (
+                <Tag
+                    value={nombreEstadoActual}
+                    className={`estado-tag ${getSeverityClass(nombreEstadoActual)}`}
+                />
+            );
+        } else {
+            const opcionesDropdown = estadosVenta.filter(estado => {
+                const nombreEstado = estado.nombre_estado;
+                return nombreEstado !== 'Activa' && nombreEstado !== 'Anulada';
+            });
+
+            const selectedTemplate = (option) => {
+                if (option) {
+                    return (
+                        <Tag 
+                            value={option.nombre_estado} 
+                            className={`estado-tag ${getSeverityClass(option.nombre_estado)}`}
+                        />
+                    );
+                }
+                return null;
+            };
+
+            const itemTemplate = (option) => {
                 return (
                     <Tag 
                         value={option.nombre_estado} 
-                        className={`estado-tag-small ${getSeverityClass(option.nombre_estado)}`}
+                        className={`estado-tag ${getSeverityClass(option.nombre_estado)}`}
                     />
                 );
-            }
-            return null;
-        };
+            };
 
-        const itemTemplate = (option) => {
-            return (
-                <Tag 
-                    value={option.nombre_estado} 
-                    className={`estado-tag-small ${getSeverityClass(option.nombre_estado)}`}
-                />
-            );
-        };
-
-        if (isUpdatable) {
             return (
                 <Dropdown
                     value={estadoActual}
-                    options={estadosVenta}
+                    options={opcionesDropdown}
                     onChange={(e) => manejarCambioEstado(rowData.idVenta, e.value.idestadoventa)}
                     optionLabel="nombre_estado"
                     valueTemplate={selectedTemplate}
                     itemTemplate={itemTemplate}
-                    className="estado-dropdown-compact"
+                    className="estado-dropdown"
                     panelClassName="estado-dropdown-panel"
-                />
-            );
-        } else {
-            // Solo mostrar el tag sin posibilidad de cambio
-            return (
-                <Tag
-                    value={nombreEstadoActual}
-                    className={`estado-tag-small ${getSeverityClass(nombreEstadoActual)}`}
                 />
             );
         }
@@ -105,6 +126,8 @@ export default function VentasListar({
 
     const actionBodyTemplate = (rowData) => {
         const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
+        const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa;
+        const isAnulable = rowData.idEstadoVenta !== estadoAnuladoId && rowData.idEstadoVenta !== estadoActivoId;
 
         return (
             <div className="action-buttons-container">
@@ -130,7 +153,7 @@ export default function VentasListar({
                 >
                     ⬇️
                 </button>
-               {rowData.tipoVenta === 'pedido' && rowData.idEstadoVenta !== estadoAnuladoId && (
+               {rowData.tipoVenta === 'pedido' && isAnulable && (
                     <button
                         className="admin-button green"
                         title="Abonos"
@@ -152,7 +175,6 @@ export default function VentasListar({
                 onClose={hideNotification}
             />
 
-            {/* Toolbar con diseño igual a Usuarios.jsx */}
             <div className="admin-toolbar">
                 <button
                     className="admin-button pink"
@@ -214,78 +236,78 @@ export default function VentasListar({
                     body={estadoBodyTemplate}
                     style={{ minWidth: '110px', maxWidth: '130px' }}
                 ></Column>
-                <Column field="total" header="Total"></Column>
+                {/* MODIFICACIÓN: Se agrega el `body` para dar formato de moneda */}
+                <Column 
+                    field="total" 
+                    header="Total"
+                    body={(rowData) => formatearMoneda(rowData.total)}
+                ></Column>
                 <Column header="Acciones" body={actionBodyTemplate}></Column>
             </DataTable>
 
             <style jsx>{`
-                /* Estilos para el dropdown de estados - compacto */
-                .estado-dropdown-compact {
+                .estado-dropdown {
                     border: none !important;
                     box-shadow: none !important;
                     background: transparent !important;
                     width: 100% !important;
-                    max-width: 120px !important;
+                    max-width: 140px !important;
+                    transition: all 0.2s ease-in-out;
+                    border-radius: 6px !important;
                 }
                 
-                .estado-dropdown-compact .p-dropdown-trigger {
-                    width: 14px !important;
-                    border: none !important;
-                    background: transparent !important;
-                    opacity: 0.6;
+                .estado-dropdown .p-dropdown-trigger {
+                    display: none !important;
                 }
                 
-                .estado-dropdown-compact .p-dropdown-trigger .p-dropdown-trigger-icon {
-                    font-size: 8px !important;
-                }
-                
-                .estado-dropdown-compact .p-dropdown-label {
+                .estado-dropdown .p-dropdown-label {
                     border: none !important;
                     padding: 0 !important;
                     background: transparent !important;
-                }
-                
-                .estado-dropdown-compact:hover {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     cursor: pointer;
                 }
                 
-                .estado-dropdown-compact:hover .p-dropdown-trigger {
-                    opacity: 1;
+                .estado-dropdown:hover {
+                    background: #e9ecef !important;
+                    cursor: pointer;
                 }
-                
-                /* Panel del dropdown */
+
                 .estado-dropdown-panel {
                     border: 1px solid #dee2e6 !important;
                     border-radius: 6px !important;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+                    background-color: transparent !important;
+                    max-height: none !important;
                 }
                 
                 .estado-dropdown-panel .p-dropdown-items .p-dropdown-item {
-                    padding: 0.4rem !important;
-                    margin: 0.05rem 0 !important;
-                    border-radius: 3px !important;
+                    padding: 0.6rem 0.8rem !important;
+                    margin: 0.2rem 0 !important;
+                    border-radius: 4px !important;
                 }
                 
                 .estado-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
-                    background-color: #f8f9fa !important;
+                    background-color: #f1f3f5 !important;
                 }
                 
-                /* Tags de estado compactos */
-                .estado-tag-small {
-                    font-size: 0.65rem !important;
-                    font-weight: 500 !important;
-                    padding: 0.15rem 0.5rem !important;
-                    border-radius: 8px !important;
-                    min-width: 60px !important;
-                    max-width: 100px !important;
+                .estado-tag {
+                    font-size: 0.75rem !important;
+                    font-weight: 600 !important;
+                    padding: 0.35rem 0.8rem !important;
+                    border-radius: 10px !important;
+                    min-width: 90px !important;
                     text-align: center !important;
                     display: inline-block !important;
                     white-space: nowrap !important;
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
+                    background-color: #f1f3f5 !important;
+                    color: black !important;
                 }
                 
-                /* Estados específicos con colores personalizados */
                 .estado-activa {
                     background-color: #10b981 !important;
                     color: white !important;
@@ -311,28 +333,12 @@ export default function VentasListar({
                     color: white !important;
                 }
                 
-                .estado-finalizado {
+                .estado-finalizado,
+                .estado-completada {
                     background-color: #8b5cf6 !important;
                     color: white !important;
                 }
                 
-                /* Estados adicionales que podrían existir */
-                .estado-pendiente {
-                    background-color: #f59e0b !important;
-                    color: white !important;
-                }
-                
-                .estado-completada {
-                    background-color: #10b981 !important;
-                    color: white !important;
-                }
-                
-                .estado-en-proceso {
-                    background-color: #3b82f6 !important;
-                    color: white !important;
-                }
-                
-                /* Fila anulada con fondo rosado */
                 .admin-table .row-anulado {
                     background-color: #fdf2f8 !important;
                 }

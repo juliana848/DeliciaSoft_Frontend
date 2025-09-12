@@ -1,4 +1,4 @@
-// VentasCrear.jsx - Actualizado para consumir APIs
+// VentasCrear.jsx - Actualizado con carga dinámica de sedes
 import React, { useEffect, useState } from 'react';
 import AgregarProductosModal from '../../components/catalogos/AgregarProductosModal';
 import AgregarAdicionesModal from '../../components/catalogos/AgregarAdicionesModal';
@@ -44,6 +44,16 @@ export default function VentasCrear({
     const [clientes, setClientes] = useState([]);
     const [loadingClientes, setLoadingClientes] = useState(true);
     const [errorClientes, setErrorClientes] = useState('');
+    
+    // Estados para sedes - NUEVOS
+    const [sedes, setSedes] = useState([]);
+    const [loadingSedes, setLoadingSedes] = useState(true);
+    const [errorSedes, setErrorSedes] = useState('');
+    
+    // Estados para el campo de cliente con búsqueda
+    const [inputCliente, setInputCliente] = useState('');
+    const [clientesFiltrados, setClientesFiltrados] = useState([]);
+    const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
     // Función para obtener la fecha de hoy en formato YYYY-MM-DD
     const getTodayDate = () => {
@@ -54,9 +64,10 @@ export default function VentasCrear({
         return `${year}-${month}-${day}`;
     };
 
-    // Cargar clientes al montar el componente
+    // Cargar clientes y sedes al montar el componente
     useEffect(() => {
         fetchClientes();
+        fetchSedes(); // NUEVA FUNCIÓN
     }, []);
 
     // Establecer la fecha de venta al día de hoy al cargar el componente
@@ -82,48 +93,171 @@ export default function VentasCrear({
             console.log('Clientes cargados:', clientesData);
             
             setClientes(clientesData);
+            setClientesFiltrados(clientesData);
         } catch (error) {
             console.error('Error al cargar clientes:', error);
             setErrorClientes('Error al cargar clientes');
             
             // Clientes de fallback
-            setClientes([
+            const fallbackClientes = [
                 {
                     idcliente: null,
+                    numeroDocumento: '',
                     nombreCompleto: 'Cliente Genérico'
                 }
-            ]);
+            ];
+            setClientes(fallbackClientes);
+            setClientesFiltrados(fallbackClientes);
         } finally {
             setLoadingClientes(false);
         }
     };
 
-    // Manejar cambio de cliente
-    const handleClienteChange = (e) => {
-        const selectedValue = e.target.value;
-        const selectedCliente = clientes.find(c => c.nombreCompleto === selectedValue);
+    // NUEVA FUNCIÓN: Cargar sedes desde la API
+    const fetchSedes = async () => {
+        try {
+            setLoadingSedes(true);
+            setErrorSedes('');
+            
+            console.log('Cargando sedes desde API...');
+            const response = await fetch('https://deliciasoft-backend.onrender.com/api/sede', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const sedesData = await response.json();
+            console.log('Sedes cargadas:', sedesData);
+            
+            // Filtrar solo las sedes activas
+            const sedesActivas = sedesData.filter(sede => sede.estado === true);
+            setSedes(sedesActivas);
+            
+        } catch (error) {
+            console.error('Error al cargar sedes:', error);
+            setErrorSedes('Error al cargar sedes');
+            
+            // Sedes de fallback
+            const fallbackSedes = [
+                { idsede: 1, nombre: 'San Pablo' },
+                { idsede: 2, nombre: 'San Benito' }
+            ];
+            setSedes(fallbackSedes);
+        } finally {
+            setLoadingSedes(false);
+        }
+    };
+
+    // Función para filtrar clientes basado en la entrada del usuario
+    const filtrarClientes = (termino) => {
+        if (!termino || termino.trim() === '') {
+            setClientesFiltrados(clientes);
+            return;
+        }
+
+        const terminoLimpio = termino.toLowerCase().trim();
         
-        // Llamar al handleChange original para actualizar ventaData.cliente
-        handleChange(e);
-        
-        // Si se necesita también almacenar el ID del cliente
-        if (selectedCliente && selectedCliente.idcliente) {
+        const filtrados = clientes.filter(cliente => {
+            const nombre = cliente.nombreCompleto?.toLowerCase() || '';
+            const documento = cliente.numeroDocumento?.toString() || '';
+            
+            return nombre.includes(terminoLimpio) || documento.includes(terminoLimpio);
+        });
+
+        setClientesFiltrados(filtrados);
+    };
+
+    // Función para manejar cambios en el input de cliente
+    const handleInputClienteChange = (e) => {
+        const valor = e.target.value;
+        setInputCliente(valor);
+        filtrarClientes(valor);
+        setMostrarSugerencias(true);
+
+        // Verificar si el valor ingresado coincide exactamente con un documento
+        const clienteEncontrado = clientes.find(cliente => 
+            cliente.numeroDocumento && 
+            cliente.numeroDocumento.toString() === valor.trim()
+        );
+
+        if (clienteEncontrado) {
+            // Auto-completar con el nombre del cliente
+            setInputCliente(clienteEncontrado.nombreCompleto);
+            seleccionarCliente(clienteEncontrado);
+            setMostrarSugerencias(false);
+        } else {
+            // Resetear la selección si no hay coincidencia exacta
+            handleChange({
+                target: {
+                    name: 'cliente',
+                    value: valor
+                }
+            });
             handleChange({
                 target: {
                     name: 'clienteId',
-                    value: selectedCliente.idcliente
+                    value: null
                 }
             });
         }
     };
 
+    // Función para seleccionar un cliente de la lista
+    const seleccionarCliente = (cliente) => {
+        const displayText = cliente.numeroDocumento 
+            ? `${cliente.nombreCompleto} -- ${cliente.numeroDocumento}`
+            : cliente.nombreCompleto;
+
+        setInputCliente(displayText);
+        setMostrarSugerencias(false);
+
+        // Actualizar los datos del formulario
+        handleChange({
+            target: {
+                name: 'cliente',
+                value: cliente.nombreCompleto
+            }
+        });
+
+        handleChange({
+            target: {
+                name: 'clienteId',
+                value: cliente.idcliente
+            }
+        });
+
+        console.log('Cliente seleccionado:', cliente);
+    };
+
+    // Función para manejar el foco del input
+    const handleInputFocus = () => {
+        setMostrarSugerencias(true);
+        if (clientesFiltrados.length === clientes.length && inputCliente === '') {
+            filtrarClientes('');
+        }
+    };
+
+    // Función para manejar cuando se pierde el foco
+    const handleInputBlur = () => {
+        // Usar setTimeout para permitir que se ejecute el onClick de las sugerencias
+        setTimeout(() => {
+            setMostrarSugerencias(false);
+        }, 200);
+    };
+
     // Calcular las fechas min y max para la fecha de entrega
     const today = new Date();
     const minDeliveryDate = new Date();
-    minDeliveryDate.setDate(today.getDate() + 15); // 15 días después de hoy
+    minDeliveryDate.setDate(today.getDate() + 15);
 
     const maxDeliveryDate = new Date();
-    maxDeliveryDate.setMonth(today.getMonth() + 2); // 2 meses después de hoy
+    maxDeliveryDate.setMonth(today.getMonth() + 2);
 
     const formatForInput = (date) => {
         const year = date.getFullYear();
@@ -144,7 +278,6 @@ export default function VentasCrear({
             console.log('Datos actuales de venta:', ventaData);
             console.log('Productos seleccionados:', insumosSeleccionados);
             
-            // Preparar los datos para el servicio de venta
             const datosVenta = {
                 fecha_venta: ventaData.fecha_venta,
                 tipo_venta: ventaData.tipo_venta,
@@ -159,7 +292,6 @@ export default function VentasCrear({
                     cantidad: producto.cantidad || 1,
                     precio: producto.precio,
                     subtotal: (producto.precio * (producto.cantidad || 1)),
-                    // Incluir adiciones, salsas y sabores si están implementados
                     adiciones: producto.adiciones || [],
                     salsas: producto.salsas || [],
                     sabores: producto.sabores || []
@@ -167,13 +299,10 @@ export default function VentasCrear({
             };
             
             console.log('Datos preparados para enviar:', datosVenta);
-            
-            // Llamar a la función original de guardar
             await guardarVenta(datosVenta);
             
         } catch (error) {
             console.error('Error al procesar la venta:', error);
-            // El manejo de errores se puede hacer en el componente padre
         }
     };
 
@@ -236,45 +365,84 @@ export default function VentasCrear({
                         </div>
                     )}
                     
+                    {/* CAMPO DE SEDE ACTUALIZADO CON CARGA DINÁMICA */}
                     <div className={`field-group ${erroresValidacion.sede ? 'has-error' : ''}`}>
                         <label>Sede <span style={{ color: 'red' }}>*</span></label>
-                        <select
-                            name="sede"
-                            value={ventaData.sede}
-                            onChange={handleChange}
-                            className={erroresValidacion.sede ? 'field-error' : ''}
-                            required
-                        >
-                            <option value="">Seleccione</option>
-                            <option value="San Pablo">San Pablo</option>
-                            <option value="San Benito">San Benito</option>
-                        </select>
+                        {loadingSedes ? (
+                            <select disabled className="field-disabled">
+                                <option>Cargando sedes...</option>
+                            </select>
+                        ) : (
+                            <select
+                                name="sede"
+                                value={ventaData.sede}
+                                onChange={handleChange}
+                                className={erroresValidacion.sede ? 'field-error' : ''}
+                                required
+                            >
+                                <option value="">Seleccione una sede</option>
+                                {sedes.map(sede => (
+                                    <option key={sede.idsede} value={sede.nombre}>
+                                        {sede.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        {errorSedes && (
+                            <span className="error-message">{errorSedes}</span>
+                        )}
                         {erroresValidacion.sede && (
                             <span className="error-message">{erroresValidacion.sede}</span>
                         )}
                     </div>
                     
-                    <div className={`field-group ${erroresValidacion.cliente ? 'has-error' : ''}`}>
+                    {/* CAMPO DE CLIENTE CON DATALIST */}
+                    <div className={`field-group ${erroresValidacion.cliente ? 'has-error' : ''}`} style={{ position: 'relative' }}>
                         <label>Cliente <span style={{ color: 'red' }}>*</span></label>
                         {loadingClientes ? (
-                            <select disabled>
-                                <option>Cargando clientes...</option>
-                            </select>
+                            <input
+                                type="text"
+                                placeholder="Cargando clientes..."
+                                disabled
+                                className="field-disabled"
+                            />
                         ) : (
-                            <select
-                                name="cliente"
-                                value={ventaData.cliente}
-                                onChange={handleClienteChange}
-                                className={erroresValidacion.cliente ? 'field-error' : ''}
-                                required
-                            >
-                                <option value="">Seleccione</option>
-                                {clientes.map((cliente, index) => (
-                                    <option key={cliente.idcliente || index} value={cliente.nombreCompleto}>
-                                        {cliente.nombreCompleto}
-                                    </option>
-                                ))}
-                            </select>
+                            <>
+                                <input
+                                    type="text"
+                                    name="cliente_search"
+                                    value={inputCliente}
+                                    onChange={handleInputClienteChange}
+                                    onFocus={handleInputFocus}
+                                    onBlur={handleInputBlur}
+                                    placeholder="Buscar por nombre o documento..."
+                                    className={erroresValidacion.cliente ? 'field-error' : ''}
+                                    required
+                                    autoComplete="off"
+                                />
+                                
+                                {/* Lista de sugerencias */}
+                                {mostrarSugerencias && clientesFiltrados.length > 0 && (
+                                    <div className="clientes-dropdown">
+                                        {clientesFiltrados.slice(0, 10).map((cliente, index) => (
+                                            <div
+                                                key={cliente.idcliente || index}
+                                                className="cliente-option"
+                                                onClick={() => seleccionarCliente(cliente)}
+                                            >
+                                                <div className="cliente-nombre">
+                                                    {cliente.nombreCompleto}
+                                                </div>
+                                                {cliente.numeroDocumento && (
+                                                    <div className="cliente-documento">
+                                                        {cliente.numeroDocumento}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
                         {errorClientes && (
                             <span className="error-message">{errorClientes}</span>
@@ -285,7 +453,7 @@ export default function VentasCrear({
                     </div>
                     
                     <div className={`field-group ${erroresValidacion.metodo_pago ? 'has-error' : ''}`}>
-                        <label>Método de Pago <span style={{ color: 'red' }}>*</span></label>
+                        <label>Metodo de Pago <span style={{ color: 'red' }}>*</span></label>
                         <select
                             name="metodo_pago"
                             value={ventaData.metodo_pago}
@@ -324,11 +492,9 @@ export default function VentasCrear({
                             <tbody>
                                 {insumosSeleccionados.map(item => (
                                     <React.Fragment key={item.id}>
-                                        {/* Fila Principal del Producto */}
                                         <tr>
                                             <td>
                                                 {item.nombre}
-                                                {/* Botón para alternar visibilidad de detalles anidados */}
                                                 <button
                                                     type="button"
                                                     className="btn-small toggle-details-btn"
@@ -500,6 +666,55 @@ export default function VentasCrear({
                     rellenosSeleccionados={insumosSeleccionados.find(item => item.id === productoEditandoId)?.sabores || []}
                 />
             )}
+
+            <style jsx>{`
+                .clientes-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: white;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                
+                .cliente-option {
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #f0f0f0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .cliente-option:hover {
+                    background-color: #f5f5f5;
+                }
+                
+                .cliente-option:last-child {
+                    border-bottom: none;
+                }
+                
+                .cliente-nombre {
+                    font-weight: 500;
+                    color: #333;
+                }
+                
+                .cliente-documento {
+                    font-size: 0.9em;
+                    color: #666;
+                    font-style: italic;
+                }
+                
+                .field-disabled {
+                    background-color: #f5f5f5;
+                    cursor: not-allowed;
+                }
+            `}</style>
         </div>
     );
 }

@@ -29,7 +29,9 @@ export default function Clientes() {
       setLoading(true);
       setError(null);
       const clientesData = await clienteApiService.obtenerClientes();
-      setClientes(clientesData);
+      // Ordenar por ID descendente para mostrar los más recientes primero
+      const clientesOrdenados = clientesData.sort((a, b) => b.idCliente - a.idCliente);
+      setClientes(clientesOrdenados);
     } catch (error) {
       console.error('Error al cargar clientes:', error);
       setError(error.message);
@@ -39,21 +41,36 @@ export default function Clientes() {
     }
   };
 
-const toggleEstado = async (cliente) => {
-  try {
-    const clienteActualizado = await clienteApiService.toggleEstadoCliente(cliente.idCliente);
+  const toggleEstado = async (cliente) => {
+    try {
+      console.log('Cliente antes del toggle:', cliente);
+      
+      const clienteActualizado = await clienteApiService.toggleEstadoCliente(cliente.idCliente);
+      console.log('Cliente actualizado desde API:', clienteActualizado);
 
-    const updated = clientes.map(c =>
-      c.idCliente === cliente.idCliente ? { ...c, estado: clienteActualizado.estado } : c
-    );
-    setClientes(updated);
+      // Actualizar el estado local inmediatamente
+      setClientes(prevClientes => {
+        const nuevosClientes = prevClientes.map(c => {
+          if (c.idCliente === cliente.idCliente) {
+            return {
+              ...c,
+              estado: clienteActualizado.estado
+            };
+          }
+          return c;
+        });
+        console.log('Estado actualizado en lista local');
+        return nuevosClientes;
+      });
 
-    showNotification(`Cliente ${clienteActualizado.estado ? 'activado' : 'desactivado'} exitosamente`);
-  } catch (error) {
-    console.error('Error al cambiar estado:', error);
-    showNotification(`Error al cambiar estado: ${error.message}`, 'error');
-  }
-};
+      const estadoTexto = clienteActualizado.estado ? 'activado' : 'desactivado';
+      showNotification(`Cliente ${estadoTexto} exitosamente`);
+      
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      showNotification(`Error al cambiar estado: ${error.message}`, 'error');
+    }
+  };
 
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
@@ -75,6 +92,7 @@ const toggleEstado = async (cliente) => {
         setClienteSeleccionado({ ...cliente, tieneVentas });
       } catch (error) {
         console.error('Error al verificar ventas:', error);
+        setClienteSeleccionado({ ...cliente, tieneVentas: false });
       }
     }
   };
@@ -91,21 +109,30 @@ const toggleEstado = async (cliente) => {
 
       if (modalTipo === 'agregar') {
         clienteResult = await clienteApiService.crearCliente(formData);
-        setClientes([...clientes, clienteResult]);
+        // Agregar el nuevo cliente al inicio de la lista
+        setClientes(prevClientes => [clienteResult, ...prevClientes]);
         showNotification('Cliente agregado exitosamente');
       } else if (modalTipo === 'editar') {
         clienteResult = await clienteApiService.actualizarCliente(clienteSeleccionado.idCliente, formData);
-        const updated = clientes.map(c =>
-          c.idCliente === clienteSeleccionado.idCliente ? clienteResult : c
+        setClientes(prevClientes =>
+          prevClientes.map(c =>
+            c.idCliente === clienteSeleccionado.idCliente ? clienteResult : c
+          )
         );
-        setClientes(updated);
         showNotification('Cliente actualizado exitosamente');
       }
 
       cerrarModal();
     } catch (error) {
       console.error('Error al guardar cliente:', error);
-      showNotification(`Error al guardar cliente: ${error.message}`, 'error');
+      let mensaje = error.message;
+      
+      // Detectar si el error es por duplicados
+      if (mensaje.includes('Ya existe un cliente') || mensaje.includes('Ya existe un usuario')) {
+        showNotification(mensaje, 'error');
+      } else {
+        showNotification(`Error al guardar cliente: ${mensaje}`, 'error');
+      }
     }
   };
 
@@ -121,13 +148,21 @@ const toggleEstado = async (cliente) => {
   const confirmarEliminar = async () => {
     try {
       await clienteApiService.eliminarCliente(clienteSeleccionado.idCliente);
-      const updated = clientes.filter(c => c.idCliente !== clienteSeleccionado.idCliente);
-      setClientes(updated);
+      setClientes(prevClientes => 
+        prevClientes.filter(c => c.idCliente !== clienteSeleccionado.idCliente)
+      );
       cerrarModal();
       showNotification('Cliente eliminado exitosamente');
     } catch (error) {
       console.error('Error al eliminar cliente:', error);
-      showNotification(`Error al eliminar cliente: ${error.message}`, 'error');
+      cerrarModal();
+      
+      // Manejar específicamente el error de ventas asociadas
+      if (error.message.includes('tiene ventas asociadas')) {
+        showNotification('No se puede eliminar el cliente porque tiene ventas asociadas', 'error');
+      } else {
+        showNotification(`Error al eliminar cliente: ${error.message}`, 'error');
+      }
     }
   };
 
@@ -135,13 +170,8 @@ const toggleEstado = async (cliente) => {
     cliente.nombre?.toLowerCase().includes(filtro.toLowerCase()) ||
     cliente.apellido?.toLowerCase().includes(filtro.toLowerCase()) ||
     cliente.correo?.toLowerCase().includes(filtro.toLowerCase()) ||
-    cliente.celular?.includes(filtro)
+    cliente.numeroDocumento?.includes(filtro)
   );
-
-  const formatearFecha = (fecha) => {
-    if (!fecha) return '';
-    return new Date(fecha).toLocaleDateString('es-ES');
-  };
 
   // Componente de carga
   if (loading) {
@@ -215,33 +245,37 @@ const toggleEstado = async (cliente) => {
           style={{ width: '3rem', textAlign: 'center' }}
         />
         <Column 
+          field="numeroDocumento" 
+          header="N° Documento" 
+          headerStyle={{ paddingLeft: '2rem' }} 
+        />
+        <Column 
           field="nombre" 
           header="Nombre" 
-          headerStyle={{ paddingLeft: '2.5rem' }} 
+          headerStyle={{ paddingLeft: '2rem' }} 
         />
         <Column 
           field="apellido" 
           header="Apellido" 
-          headerStyle={{ paddingLeft: '2.5rem' }} 
+          headerStyle={{ paddingLeft: '2rem' }} 
         />
         <Column 
           field="correo" 
           header="Correo" 
-          headerStyle={{ paddingLeft: '3rem' }} 
-        />
-        <Column 
-          field="celular" 
-          header="Celular" 
-          headerStyle={{ paddingLeft: '3rem' }} 
+          headerStyle={{ paddingLeft: '2rem' }} 
         />
         <Column
           header="Estado"
-          body={(rowData) => (
-            <InputSwitch
-              checked={rowData.estado}
-              onChange={() => toggleEstado(rowData)}
-            />
-          )}
+          body={(rowData) => {
+            return (
+              <InputSwitch
+                inputId={`switch-${rowData.idCliente}`}
+                checked={!!rowData.estado}
+                onChange={() => toggleEstado(rowData)}
+                disabled={false}
+              />
+            );
+          }}
         />
         <Column
           header="Acciones"
@@ -253,7 +287,7 @@ const toggleEstado = async (cliente) => {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                🔍
+                👁
               </button>
               <button
                 className="admin-button yellow"
@@ -303,10 +337,17 @@ const toggleEstado = async (cliente) => {
           <h2 className="modal-title">Eliminar Cliente</h2>
           <div className="modal-body">
             <p>¿Está seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
+            {clienteSeleccionado.tieneVentas && (
+              <p style={{ color: '#e53935', fontSize: '14px', marginTop: '10px' }}>
+                <strong>⚠️ Este cliente tiene ventas asociadas y no puede ser eliminado.</strong>
+              </p>
+            )}
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={manejarEliminacion}>Eliminar</button>
+            {!clienteSeleccionado.tieneVentas && (
+              <button className="modal-btn save-btn" onClick={manejarEliminacion}>Eliminar</button>
+            )}
           </div>
         </Modal>
       )}

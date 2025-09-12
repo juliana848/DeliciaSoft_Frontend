@@ -1,5 +1,6 @@
-// Pedidos.jsx - Componente Principal (Sin Historial)
-import React, { useState, useEffect } from 'react';
+// Pedidos.jsx - Componente Principal Mejorado
+import React, { useState, useEffect, useContext } from 'react';
+import { CartContext } from "../../Cartas/pages/CartContext";
 import './Pedidos.css';
 
 // Importar componentes
@@ -16,13 +17,13 @@ const Pedidos = () => {
   // Estado principal para manejar las vistas
   const [vistaActual, setVistaActual] = useState('productos');
   
-  // Estado del pedido actual
+  // Estado del pedido actual MEJORADO
   const [pedidoActual, setPedidoActual] = useState({
     productos: [],
     toppings: [],
     adiciones: [],
     salsas: [],
-    total: 0,
+    comentarios: '',
     opciones: {
       entrega: null,
       pago: null
@@ -37,6 +38,12 @@ const Pedidos = () => {
   const [adicionesSeleccionadas, setAdicionesSeleccionadas] = useState([]);
   const [salsasSeleccionadas, setSalsasSeleccionadas] = useState([]);
 
+  // Usar el contexto del carrito para mantener sincronización
+  const { 
+    productosSeleccionados: productosDelContexto,
+    limpiarProductosSeleccionados
+  } = useContext(CartContext);
+
   // Función para cambiar de vista
   const cambiarVista = (nuevaVista) => {
     setVistaActual(nuevaVista);
@@ -49,26 +56,42 @@ const Pedidos = () => {
       case 'nuevo':
         setVistaActual('productos');
         // Reiniciar el pedido cuando se va a nuevo pedido
-        setPedidoActual({
-          productos: [],
-          toppings: [],
-          adiciones: [],
-          salsas: [],
-          total: 0,
-          opciones: {
-            entrega: null,
-            pago: null
-          }
-        });
-        setToppingsSeleccionados([]);
-        setAdicionesSeleccionadas([]);
-        setSalsasSeleccionadas([]);
+        reiniciarPedido();
         break;
       case 'historial':
         setVistaActual('historial');
         break;
     }
   };
+
+  // Función para reiniciar el pedido
+  const reiniciarPedido = () => {
+    setPedidoActual({
+      productos: [],
+      toppings: [],
+      adiciones: [],
+      salsas: [],
+      comentarios: '',
+      opciones: {
+        entrega: null,
+        pago: null
+      }
+    });
+    setToppingsSeleccionados([]);
+    setAdicionesSeleccionadas([]);
+    setSalsasSeleccionadas([]);
+    limpiarProductosSeleccionados();
+  };
+
+  // Sincronizar productos del contexto con el pedido actual
+  useEffect(() => {
+    if (productosDelContexto && productosDelContexto.length > 0) {
+      setPedidoActual(prev => ({
+        ...prev,
+        productos: productosDelContexto
+      }));
+    }
+  }, [productosDelContexto]);
 
   // Función para agregar productos al pedido
   const agregarProducto = (producto) => {
@@ -115,7 +138,12 @@ const Pedidos = () => {
   };
 
   // Función para cuando se hace clic en "Siguiente" después de seleccionar productos
- const siguienteDesdeProductos = () => {
+  const siguienteDesdeProductos = () => {
+    // Actualizar productos del pedido con los del contexto
+    setPedidoActual(prev => ({
+      ...prev,
+      productos: productosDelContexto || []
+    }));
     // Ir a la vista de toppings
     setVistaActual('toppings');
   };
@@ -186,38 +214,50 @@ const Pedidos = () => {
       salsas: salsasSeleccionadas
     }));
     
-    // Ir directamente a opciones de entrega (sin resumen)
+    // Ir directamente a opciones de entrega
     setVistaActual('entrega');
   };
 
-  // Función para calcular el total
+  // Función para calcular el total MEJORADA
   const calcularTotal = () => {
     let total = 0;
     
-    // Sumar productos
-    total += pedidoActual.productos.reduce((sum, producto) => 
+    // Usar productos del estado del pedido actual o del contexto como fallback
+    const productos = pedidoActual.productos.length > 0 
+      ? pedidoActual.productos 
+      : (productosDelContexto || []);
+    
+    // Sumar productos con cantidades
+    total += productos.reduce((sum, producto) => 
       sum + (producto.precio * (producto.cantidad || 1)), 0
     );
     
     // Sumar toppings
-    total += pedidoActual.toppings.reduce((sum, topping) => sum + topping.precio, 0);
+    total += pedidoActual.toppings.reduce((sum, topping) => 
+      sum + (topping.precio || 0), 0
+    );
     
     // Sumar adiciones
-    total += pedidoActual.adiciones.reduce((sum, adicion) => sum + adicion.precio, 0);
+    total += pedidoActual.adiciones.reduce((sum, adicion) => 
+      sum + (adicion.precio || 0), 0
+    );
     
     // Sumar salsas
-    total += pedidoActual.salsas.reduce((sum, salsa) => sum + salsa.precio, 0);
+    total += pedidoActual.salsas.reduce((sum, salsa) => 
+      sum + (salsa.precio || 0), 0
+    );
     
     return total;
   };
 
-  // Actualizar el total cuando cambie el pedido
-  useEffect(() => {
+  // Función para manejar la confirmación del pedido
+  const manejarConfirmacion = (pedidoConComentarios) => {
     setPedidoActual(prev => ({
       ...prev,
-      total: calcularTotal()
+      comentarios: pedidoConComentarios.comentarios || ''
     }));
-  }, [pedidoActual.productos, pedidoActual.toppings, pedidoActual.adiciones, pedidoActual.salsas]);
+    setVistaActual('pago');
+  };
 
   // Renderizar la vista actual
   const renderizarVista = () => {
@@ -283,7 +323,7 @@ const Pedidos = () => {
           <ConfirmacionView 
             pedido={pedidoActual}
             total={calcularTotal()}
-            onSiguiente={() => cambiarVista('pago')}
+            onSiguiente={manejarConfirmacion}
             onAnterior={() => cambiarVista('entrega')}
             onEliminarProducto={eliminarProducto}
             onActualizarCantidad={actualizarCantidadProducto}
@@ -297,20 +337,7 @@ const Pedidos = () => {
             total={calcularTotal()}
             onPedidoCompletado={() => {
               // Limpiar el pedido y cambiar a historial
-              setPedidoActual({
-                productos: [],
-                toppings: [],
-                adiciones: [],
-                salsas: [],
-                total: 0,
-                opciones: {
-                  entrega: null,
-                  pago: null
-                }
-              });
-              setToppingsSeleccionados([]);
-              setAdicionesSeleccionadas([]);
-              setSalsasSeleccionadas([]);
+              reiniciarPedido();
               cambiarTab('historial');
             }}
             onAnterior={() => cambiarVista('confirmacion')}

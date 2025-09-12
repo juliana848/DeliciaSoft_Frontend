@@ -21,14 +21,40 @@ const validarContrasena = (contrasena) => {
     return errores;
 };
 
+// Función para prevenir espacios al inicio
+const preventLeadingSpaces = (value) => {
+    return value.replace(/^\s+/, '');
+};
+
+// Función para validar direcciones reales colombianas
+const validarDireccionReal = (direccion) => {
+    if (!direccion || direccion.trim().length === 0) {
+        return false;
+    }
+    
+    // Patrones para direcciones válidas en Colombia
+    const patronesDireccion = [
+        /^(cra?\.?|carrera)\s*\d+[a-z]?\s*#?\s*\d+/i,         // Carrera o Cra
+        /^(calle?|cl\.?)\s*\d+[a-z]?\s*#?\s*\d+/i,          // Calle o Cl
+        /^(kr?\.?|carrera)\s*\d+[a-z]?\s*#?\s*\d+/i,        // Kr (abreviación de carrera)
+        /^(av\.?|avenida)\s*\d+[a-z]?\s*#?\s*\d+/i,         // Avenida o Av
+        /^(diagonal|diag\.?)\s*\d+[a-z]?\s*#?\s*\d+/i,      // Diagonal
+        /^(transversal|tv\.?)\s*\d+[a-z]?\s*#?\s*\d+/i,     // Transversal
+        /^(autopista|aut\.?)\s/i,                            // Autopista
+        /^(via|vía)\s/i                                      // Vía
+    ];
+    
+    return patronesDireccion.some(patron => patron.test(direccion.trim()));
+};
+
 export default function ClienteFormModal({
     visible,
     onClose,
     modalTipo,
     clienteSeleccionado,
-    clientes, // Pass the full clients array for document number validation
-    onSave, // Callback function to handle saving
-    showNotification // Callback for showing notifications
+    clientes,
+    onSave,
+    showNotification
 }) {
     const [formData, setFormData] = useState({
         tipoDocumento: 'CC',
@@ -37,7 +63,7 @@ export default function ClienteFormModal({
         apellido: '',
         correo: '',
         contrasena: '',
-        confirmarContrasena: '', // Siempre incluido
+        confirmarContrasena: '',
         direccion: '',
         barrio: '',
         ciudad: '',
@@ -54,7 +80,8 @@ export default function ClienteFormModal({
         contrasena: '',
         confirmarContrasena: '',
         celular: '',
-        fechaNacimiento: ''
+        fechaNacimiento: '',
+        direccion: ''
     });
 
     const [mostrarContrasena, setMostrarContrasena] = useState(false);
@@ -74,7 +101,8 @@ export default function ClienteFormModal({
                 contrasena: '',
                 confirmarContrasena: '',
                 celular: '',
-                fechaNacimiento: ''
+                fechaNacimiento: '',
+                direccion: ''
             });
 
             if (modalTipo === 'agregar') {
@@ -101,7 +129,7 @@ export default function ClienteFormModal({
                     apellido: clienteSeleccionado.apellido,
                     correo: clienteSeleccionado.correo,
                     contrasena: clienteSeleccionado.contrasena,
-                    confirmarContrasena: '', // No se muestra en editar/visualizar
+                    confirmarContrasena: '',
                     direccion: clienteSeleccionado.direccion,
                     barrio: clienteSeleccionado.barrio,
                     ciudad: clienteSeleccionado.ciudad,
@@ -116,22 +144,27 @@ export default function ClienteFormModal({
     }, [visible, modalTipo, clienteSeleccionado]);
 
     const handleInputChange = (field, value) => {
-        if (isReadOnly) return; // No permitir cambios en modo visualizar
+        if (isReadOnly) return;
 
         let error = '';
         let processedValue = value;
 
+        // Prevenir espacios al inicio en todos los campos de texto
+        if (typeof value === 'string' && field !== 'contrasena' && field !== 'confirmarContrasena') {
+            processedValue = preventLeadingSpaces(value);
+        }
+
         switch (field) {
             case 'numeroDocumento':
-                if (!/^\d*$/.test(value)) {
+                if (!/^\d*$/.test(processedValue)) {
                     error = 'Solo se permiten números.';
                     processedValue = formData.numeroDocumento;
                 } else {
-                    if (!value.trim()) {
+                    if (!processedValue.trim()) {
                         error = 'El número de documento es obligatorio.';
                     } else {
                         const documentoExiste = clientes.some(c =>
-                            c.numeroDocumento === value &&
+                            c.numeroDocumento === processedValue &&
                             (modalTipo === 'agregar' || c.idCliente !== clienteSeleccionado?.idCliente)
                         );
                         if (documentoExiste) {
@@ -141,46 +174,48 @@ export default function ClienteFormModal({
                 }
                 break;
             case 'nombre':
-                if (!value.trim()) {
+                if (!processedValue.trim()) {
                     error = 'El nombre es obligatorio.';
-                } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(processedValue)) {
                     error = 'Solo se permiten letras.';
                 }
                 break;
             case 'apellido':
-                if (!value.trim()) {
+                if (!processedValue.trim()) {
                     error = 'El apellido es obligatorio.';
-                } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value)) {
+                } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(processedValue)) {
                     error = 'Solo se permiten letras.';
                 }
                 break;
             case 'correo':
-                if (!value.trim()) {
+                if (!processedValue.trim()) {
                     error = 'El correo es obligatorio.';
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(processedValue)) {
                     error = 'Formato de correo no válido.';
                 }
                 break;
             case 'celular':
-                if (!/^\d*$/.test(value)) {
+                if (!/^\d*$/.test(processedValue)) {
                     error = 'Solo se permiten números.';
                     processedValue = formData.celular;
                 } else {
-                    if (!value.trim()) {
+                    if (!processedValue.trim()) {
                         error = 'El celular es obligatorio.';
                     }
                 }
                 break;
             case 'contrasena':
-                // Validate password only if it's 'agregar' mode OR if a value is being entered in 'editar' mode.
+                // No aplicar preventLeadingSpaces a contraseñas
                 if (modalTipo === 'agregar' || (modalTipo === 'editar' && value.trim())) {
                     const erroresContrasena = validarContrasena(value);
                     if (erroresContrasena.length > 0) {
                         error = erroresContrasena[0];
                     }
                 }
+                processedValue = value; // Mantener el valor original sin modificar espacios
                 break;
             case 'confirmarContrasena':
+                processedValue = value; // Mantener el valor original sin modificar espacios
                 if (modalTipo === 'agregar') {
                     if (value.trim() && formData.contrasena !== value) {
                         error = 'Las contraseñas no coinciden.';
@@ -190,8 +225,8 @@ export default function ClienteFormModal({
                 }
                 break;
             case 'fechaNacimiento':
-                if (value) {
-                    const fechaNac = new Date(value);
+                if (processedValue) {
+                    const fechaNac = new Date(processedValue);
                     const fechaActual = new Date();
                     const edad = fechaActual.getFullYear() - fechaNac.getFullYear();
                     const mesActual = fechaActual.getMonth();
@@ -205,6 +240,13 @@ export default function ClienteFormModal({
                     if (edadFinal < 13) {
                         error = 'El cliente debe tener al menos 13 años.';
                     }
+                }
+                break;
+            case 'direccion':
+                if (!processedValue.trim()) {
+                    error = 'La dirección es obligatoria.';
+                } else if (!validarDireccionReal(processedValue)) {
+                    error = 'Ingrese una dirección válida (ej: Cra 51a #71-25, Calle 45 #23-12)';
                 }
                 break;
             default:
@@ -227,7 +269,7 @@ export default function ClienteFormModal({
     const validarFormularioCompleto = () => {
         const newErrors = {};
         let isValid = true;
-        const { numeroDocumento, nombre, apellido, correo, celular, contrasena, confirmarContrasena, fechaNacimiento } = formData;
+        const { numeroDocumento, nombre, apellido, correo, celular, contrasena, confirmarContrasena, fechaNacimiento, direccion } = formData;
 
         if (!numeroDocumento.trim()) {
             newErrors.numeroDocumento = 'El número de documento es obligatorio.';
@@ -278,7 +320,16 @@ export default function ClienteFormModal({
             isValid = false;
         }
 
-        // Password validation logic adjusted
+        // Validar dirección
+        if (!direccion.trim()) {
+            newErrors.direccion = 'La dirección es obligatoria.';
+            isValid = false;
+        } else if (!validarDireccionReal(direccion)) {
+            newErrors.direccion = 'Ingrese una dirección válida (ej: Cra 51a #71-25, Calle 45 #23-12)';
+            isValid = false;
+        }
+
+        // Password validation logic
         if (modalTipo === 'agregar') {
             if (!contrasena.trim()) {
                 newErrors.contrasena = 'La contraseña es obligatoria.';
@@ -305,8 +356,6 @@ export default function ClienteFormModal({
                     newErrors.contrasena = erroresContrasena[0];
                     isValid = false;
                 }
-            } else {
-                 newErrors.contrasena = '';
             }
         }
 
@@ -409,9 +458,9 @@ export default function ClienteFormModal({
                                     }}
                                     disabled={isReadOnly}
                                 >
-                                    <option value="CC">Cédula</option>
-                                    <option value="TI">TI</option>
-                                    <option value="CE">CE</option>
+                                    <option value="CC">Cédula de Ciudadanía</option>
+                                    <option value="TI">Tarjeta de Identidad</option>
+                                    <option value="CE">Cédula de Extranjería</option>
                                     <option value="PA">Pasaporte</option>
                                 </select>
                             </div>
@@ -642,133 +691,138 @@ export default function ClienteFormModal({
                             </div>
 
                             {/* Confirmar Contraseña field - ONLY for 'agregar' mode */}
-{modalTipo === 'agregar' && (
-    <div className="modal-field">
-        <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
-            Confirmar Contraseña: <span style={{ color: 'red' }}>*</span>
-        </label>
-        <div style={{ position: 'relative' }}>
-            <input
-                type={mostrarConfirmarContrasena ? "text" : "password"}
-                value={formData.confirmarContrasena}
-                onChange={(e) => handleInputChange('confirmarContrasena', e.target.value)}
-                className="modal-input text-sm p-1"
-                style={{
-                    width: '100%',
-                    height: '28px',
-                    fontSize: '12px',
-                    padding: '2px 25px 2px 4px',
-                    borderColor: formErrors.confirmarContrasena ? 'red' : ''
-                }}
-                placeholder="Confirme la contraseña"
-                maxLength={20}
-            />
-            <button
-                type="button"
-                onClick={() => setMostrarConfirmarContrasena(!mostrarConfirmarContrasena)}
-                style={{
-                    position: 'absolute',
-                    right: '5px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    color: '#666',
-                    padding: '0',
-                    width: '16px',
-                    height: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-                title={mostrarConfirmarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            >
-                {mostrarConfirmarContrasena ? '👁️' : '👁️‍🗨️'}
-            </button>
-        </div>
-        {formErrors.confirmarContrasena && (
-            <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.confirmarContrasena}</small>
-        )}
-    </div>
-)}
+                            {modalTipo === 'agregar' && (
+                                <div className="modal-field">
+                                    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+                                        Confirmar Contraseña: <span style={{ color: 'red' }}>*</span>
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={mostrarConfirmarContrasena ? "text" : "password"}
+                                            value={formData.confirmarContrasena}
+                                            onChange={(e) => handleInputChange('confirmarContrasena', e.target.value)}
+                                            className="modal-input text-sm p-1"
+                                            style={{
+                                                width: '100%',
+                                                height: '28px',
+                                                fontSize: '12px',
+                                                padding: '2px 25px 2px 4px',
+                                                borderColor: formErrors.confirmarContrasena ? 'red' : ''
+                                            }}
+                                            placeholder="Confirme la contraseña"
+                                            maxLength={20}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarConfirmarContrasena(!mostrarConfirmarContrasena)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '5px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                color: '#666',
+                                                padding: '0',
+                                                width: '16px',
+                                                height: '16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                            title={mostrarConfirmarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        >
+                                            {mostrarConfirmarContrasena ? '👁️' : '👁️‍🗨️'}
+                                        </button>
+                                    </div>
+                                    {formErrors.confirmarContrasena && (
+                                        <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.confirmarContrasena}</small>
+                                    )}
+                                </div>
+                            )}
 
-                          <div className="modal-field">
-    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
-        Dirección: <span style={{ color: 'red' }}>*</span>
-    </label>
-  <GoogleAddressAutocomplete
-    value={formData.direccion}
-    onChange={(value) => handleInputChange('direccion', value)}
-    placeholder="Ingrese su dirección"
-    className="modal-input text-sm p-1"
-    style={{
-        width: '100%', 
-        height: '28px', 
-        fontSize: '12px', 
-        padding: '2px 4px',
-        borderColor: formErrors.direccion ? 'red' : '',
-        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
-        color: isReadOnly ? '#666' : 'black'
-    }}
-    disabled={isReadOnly}
-    onPlaceSelect={(place) => {
-        console.log('Place selected:', place); 
-        
-        setFormData(prev => ({ 
-            ...prev, 
-            direccion: place.formatted_address || prev.direccion,
-            barrio: place.barrio || prev.barrio,
-            ciudad: place.ciudad || prev.ciudad
-        }));
-    }}
-/>
+                            <div className="modal-field">
+                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
+                                    Dirección: <span style={{ color: 'red' }}>*</span>
+                                </label>
+                                <GoogleAddressAutocomplete
+                                    value={formData.direccion}
+                                    onChange={(value) => handleInputChange('direccion', value)}
+                                    placeholder="Ej: Cra 51a #71-25, Calle 45 #23-12"
+                                    className="modal-input text-sm p-1"
+                                    style={{
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        borderColor: formErrors.direccion ? 'red' : '',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
+                                    }}
+                                    disabled={isReadOnly}
+                                    onPlaceSelect={(place) => {
+                                        console.log('Place selected:', place); 
+                                        
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            direccion: place.direccion || prev.direccion,
+                                            barrio: place.barrio || prev.barrio,
+                                            ciudad: place.ciudad || prev.ciudad
+                                        }));
 
-    {formErrors.direccion && !isReadOnly && (
-        <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.direccion}</small>
-    )}
-</div>
+                                        // Limpiar error de dirección si se selecciona una válida
+                                        if (place.direccion && validarDireccionReal(place.direccion)) {
+                                            setFormErrors(prev => ({ ...prev, direccion: '' }));
+                                        }
+                                    }}
+                                />
+                                {formErrors.direccion && !isReadOnly && (
+                                    <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.direccion}</small>
+                                )}
+                            </div>
 
-<div className="modal-field">
-    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
-    <input
-        type="text"
-        value={formData.barrio}
-        onChange={(e) => handleInputChange('barrio', e.target.value)}
-        className="modal-input text-sm p-1"
-        style={{ 
-            width: '100%', 
-            height: '28px', 
-            fontSize: '12px', 
-            padding: '2px 4px',
-            backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
-            color: isReadOnly ? '#666' : 'black'
-        }}
-        maxLength={30}
-        readOnly={isReadOnly}
-    />
-</div>
+                            <div className="modal-field">
+                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Barrio:</label>
+                                <input
+                                    type="text"
+                                    value={formData.barrio}
+                                    onChange={(e) => handleInputChange('barrio', e.target.value)}
+                                    className="modal-input text-sm p-1"
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
+                                    }}
+                                    maxLength={30}
+                                    readOnly={isReadOnly}
+                                />
+                            </div>
 
-<div className="modal-field">
-    <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
-    <input
-        type="text"
-        value={formData.ciudad}
-        onChange={(e) => handleInputChange('ciudad', e.target.value)}
-        className="modal-input text-sm p-1"
-        style={{ 
-            width: '100%', 
-            height: '28px', 
-            fontSize: '12px', 
-            padding: '2px 4px',
-            backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
-            color: isReadOnly ? '#666' : 'black'
-        }}
-        maxLength={30}
-        readOnly={isReadOnly}
-    />
-</div>
+                            <div className="modal-field">
+                                <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>Ciudad:</label>
+                                <input
+                                    type="text"
+                                    value={formData.ciudad}
+                                    onChange={(e) => handleInputChange('ciudad', e.target.value)}
+                                    className="modal-input text-sm p-1"
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '28px', 
+                                        fontSize: '12px', 
+                                        padding: '2px 4px',
+                                        backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
+                                        color: isReadOnly ? '#666' : 'black'
+                                    }}
+                                    maxLength={30}
+                                    readOnly={isReadOnly}
+                                />
+                            </div>
+
                             {(modalTipo === 'editar') && ( 
                                 <div className="modal-field">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.2rem' }}>

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'; // Import useEffect
+import React, { useState, useEffect } from 'react';
 import './OpcionesPagoView.css';
+import ventaApiService from '../../Admin/services/venta_services.js';
+import sedeApiService from '../../Admin/Services/sedes_services.js'; // Importar servicio de sedes
 
 const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada }) => {
   const [metodoPago, setMetodoPago] = useState('');
@@ -11,45 +13,134 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     return `PED-${Date.now().toString().slice(-6)}`;
   });
 
-  // Nuevo estado para la alerta personalizada
+  // Estados para alertas y procesamiento
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
-  // Estado para la alerta de subida de imagen
   const [showImageUploadAlert, setShowImageUploadAlert] = useState(false);
+  const [procesandoPedido, setProcesandoPedido] = useState(false);
 
-  // Calcular totales
-  const subtotal = total || 0;
-  const iva = Math.round(subtotal * 0.19);
-  const totalFinal = subtotal + iva;
-  const abono = Math.round(totalFinal / 2); // 50% de abono
+  // Estados para sedes
+  const [sedes, setSedes] = useState([]);
+  const [cargandoSedes, setCargandoSedes] = useState(true);
+  const [errorSedes, setErrorSedes] = useState('');
 
-  const sedes = [
-    {
-      id: 'san-benito',
-      nombre: 'San Benito',
-      direccion: 'CALLE 9 #7-34',
-      horario: '9:00 AM - 6:00 PM'
-    },
-    {
-      id: 'san-pablo',
-      nombre: 'San Pablo',
-      direccion: 'Carrera 15 #12-45',
-      horario: '10:00 AM - 7:00 PM'
+  // Cargar sedes desde la API
+  useEffect(() => {
+    const cargarSedes = async () => {
+      try {
+        setCargandoSedes(true);
+        setErrorSedes('');
+        const sedesData = await sedeApiService.obtenerSedes();
+        
+        // Transformar sedes para el formato esperado
+        const sedesTransformadas = sedesData
+          .filter(sede => sede.activo) // Solo sedes activas
+          .map(sede => ({
+            id: sede.id.toString(),
+            nombre: sede.nombre,
+            direccion: sede.Direccion || sede.direccion || 'Dirección no disponible',
+            horario: sede.horario || '9:00 AM - 6:00 PM',
+            telefono: sede.Telefono || sede.telefono
+          }));
+        
+        setSedes(sedesTransformadas);
+        
+        if (sedesTransformadas.length === 0) {
+          setErrorSedes('No hay sedes disponibles');
+          // Fallback con sedes por defecto
+          setSedes([
+            {
+              id: 'san-benito',
+              nombre: 'San Benito',
+              direccion: 'CALLE 9 #7-34',
+              horario: '9:00 AM - 6:00 PM'
+            },
+            {
+              id: 'san-pablo',
+              nombre: 'San Pablo',
+              direccion: 'Carrera 15 #12-45',
+              horario: '10:00 AM - 7:00 PM'
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error al cargar sedes:', error);
+        setErrorSedes(`Error al cargar sedes: ${error.message}`);
+        // Usar sedes por defecto en caso de error
+        setSedes([
+          {
+            id: 'san-benito',
+            nombre: 'San Benito',
+            direccion: 'CALLE 9 #7-34',
+            horario: '9:00 AM - 6:00 PM'
+          },
+          {
+            id: 'san-pablo',
+            nombre: 'San Pablo',
+            direccion: 'Carrera 15 #12-45',
+            horario: '10:00 AM - 7:00 PM'
+          }
+        ]);
+      } finally {
+        setCargandoSedes(false);
+      }
+    };
+
+    cargarSedes();
+  }, []);
+
+  // Calcular totales correctamente
+  const calcularTotales = () => {
+    let subtotalProductos = 0;
+    let subtotalExtras = 0;
+
+    // Calcular subtotal de productos
+    if (pedido?.productos) {
+      subtotalProductos = pedido.productos.reduce((sum, producto) => 
+        sum + (producto.precio * (producto.cantidad || 1)), 0
+      );
     }
-  ];
 
-  // Función para mostrar la alerta personalizada
+    // Calcular subtotal de extras (toppings, adiciones, salsas)
+    if (pedido?.toppings) {
+      subtotalExtras += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
+    }
+    if (pedido?.adiciones) {
+      subtotalExtras += pedido.adiciones.reduce((sum, adicion) => sum + (adicion.precio || 0), 0);
+    }
+    if (pedido?.salsas) {
+      subtotalExtras += pedido.salsas.reduce((sum, salsa) => sum + (salsa.precio || 0), 0);
+    }
+
+    const subtotalTotal = subtotalProductos + subtotalExtras;
+    const iva = Math.round(subtotalTotal * 0.19);
+    const totalFinal = subtotalTotal + iva;
+    const abono = Math.round(totalFinal / 2); // 50% de abono
+
+    return {
+      subtotalProductos,
+      subtotalExtras,
+      subtotalTotal,
+      iva,
+      totalFinal,
+      abono
+    };
+  };
+
+  const { subtotalProductos, subtotalExtras, subtotalTotal, iva, totalFinal, abono } = calcularTotales();
+
+  // Función para mostrar alertas
   const triggerAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
       setShowAlert({ show: false, type: '', message: '' });
-    }, 5000); // La alerta se oculta después de 5 segundos
+    }, 5000);
   };
 
   const handleMetodoPago = (metodo) => {
     setMetodoPago(metodo);
     setErrorComprobante('');
     setComprobante(null);
-    setShowImageUploadAlert(false); // Hide image upload alert when changing method
+    setShowImageUploadAlert(false);
 
     if (metodo === 'transferencia') {
       setMostrarDatosBanco(true);
@@ -62,7 +153,7 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     setErrorComprobante('');
-    setShowImageUploadAlert(false); // Hide previous image upload alert
+    setShowImageUploadAlert(false);
 
     if (file) {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -79,10 +170,10 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
       }
 
       setComprobante(file);
-      setShowImageUploadAlert(true); // Show success alert
+      setShowImageUploadAlert(true);
       setTimeout(() => {
         setShowImageUploadAlert(false);
-      }, 3000); // Hide success alert after 3 seconds
+      }, 3000);
     }
   };
 
@@ -90,68 +181,161 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     const datos = `Banco Bancolombia\nAhorro\nCuenta: 123-456-789\nCédula: 12.345.678\nNombre: Juan Pérez\nNequi: 300 123 45 67\nValor a transferir: $${abono.toLocaleString()}`;
 
     navigator.clipboard.writeText(datos).then(() => {
-      triggerAlert('success', '✅ Datos bancarios copiados al portapapeles');
+      triggerAlert('success', 'Datos bancarios copiados al portapapeles');
     });
   };
 
   const mostrarAlertaEfectivo = () => {
     const sedeInfo = sedes.find(sede => sede.id === sedeSeleccionada);
     const mensaje = `
-📋 Número de Pedido: ${numeroPedido}
-📍 Sede: ${sedeInfo.nombre}
-📍 Dirección: ${sedeInfo.direccion}
-⏰ Horario: ${sedeInfo.horario}
-💰 Valor a pagar: $${abono.toLocaleString()}
+Número de Pedido: ${numeroPedido}
+Sede: ${sedeInfo.nombre}
+Dirección: ${sedeInfo.direccion}
+Horario: ${sedeInfo.horario}
+Valor a pagar: $${abono.toLocaleString()}
 
-⚠️ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
+IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
-    triggerAlert('info', mensaje); // Use the custom alert for this
+    triggerAlert('info', mensaje);
   };
 
-  const procesarPago = () => {
+  // Transformar productos del pedido al formato esperado por la venta
+  const transformarProductosParaVenta = () => {
+    const productos = [];
+
+    // Agregar productos base
+    if (pedido?.productos) {
+      pedido.productos.forEach(producto => {
+        productos.push({
+          idproductogeneral: producto.id,
+          cantidad: producto.cantidad || 1,
+          precio: producto.precio,
+          preciounitario: producto.precio,
+          subtotal: producto.precio * (producto.cantidad || 1),
+          iva: (producto.precio * (producto.cantidad || 1)) * 0.19
+        });
+      });
+    }
+
+    return productos;
+  };
+
+  // FUNCIÓN PRINCIPAL PARA PROCESAR EL PAGO
+  const procesarPago = async () => {
     if (!metodoPago) {
-      triggerAlert('error', '❌ Por favor selecciona un método de pago.');
+      triggerAlert('error', 'Por favor selecciona un método de pago.');
       return;
     }
 
-    if (metodoPago === 'transferencia') {
-      if (!comprobante) {
-        setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
-        return;
-      }
+    if (metodoPago === 'transferencia' && !comprobante) {
+      setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
+      return;
     }
 
-    if (metodoPago === 'efectivo') {
-      if (!sedeSeleccionada) {
-        triggerAlert('error', '❌ Por favor selecciona una sede para el pago en efectivo.');
-        return;
-      }
-      mostrarAlertaEfectivo(); // This will now trigger the custom alert
+    if (metodoPago === 'efectivo' && !sedeSeleccionada) {
+      triggerAlert('error', 'Por favor selecciona una sede para el pago en efectivo.');
+      return;
     }
 
-    const datosPago = {
-      metodo: metodoPago,
-      sede: sedeSeleccionada,
-      abono: abono,
-      total: totalFinal,
-      numeroPedido: numeroPedido,
-      comprobante: comprobante // Note: In a real app, you'd upload this file to a server
-    };
+    // Mostrar loading
+    setProcesandoPedido(true);
 
-    onOpcionSeleccionada(datosPago);
-    onPedidoCompletado();
-    triggerAlert('success', '🎉 ¡Pedido completado con éxito! Revisa la información de pago.');
+    try {
+      // 1. CREAR LA VENTA
+      const sedeInfo = sedes.find(s => s.id === sedeSeleccionada) || sedes[0];
+      
+      const ventaData = {
+        fechaventa: new Date().toISOString(),
+        cliente: null, // Cliente genérico por ahora
+        clienteNombre: 'Cliente Genérico',
+        sede: sedeInfo?.id || 'san-pablo',
+        sedeNombre: sedeInfo?.nombre || 'San Pablo',
+        metodopago: metodoPago,
+        // Si es efectivo en sede = venta directa, si no = pedido
+        tipoventa: metodoPago === 'efectivo' ? 'directa' : 'pedido',
+        total: totalFinal,
+        productos: transformarProductosParaVenta()
+      };
+
+      console.log('Creando venta:', ventaData);
+      const ventaCreada = await ventaApiService.crearVenta(ventaData);
+      console.log('Venta creada:', ventaCreada);
+
+      // 2. CREAR EL ABONO
+      const abonoData = {
+        idpedido: ventaCreada.idVenta, // El backend usa esto como ID de venta
+        metodopago: metodoPago,
+        cantidadpagar: abono,
+        TotalPagado: abono
+      };
+
+      console.log('Creando abono:', abonoData);
+      const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
+      console.log('Abono creado:', abonoCreado);
+
+      // ÉXITO - Mostrar mensaje según método de pago
+      if (metodoPago === 'efectivo') {
+        mostrarAlertaEfectivo();
+        // Actualizar estado de venta a "activa" para efectivo
+        await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
+      } else if (metodoPago === 'transferencia') {
+        triggerAlert('success', 
+          `Pedido creado exitosamente!\n` +
+          `Número: ${numeroPedido}\n` +
+          `Abono registrado: $${abono.toLocaleString()}\n` +
+          `Su pedido quedará pendiente hasta verificar el comprobante.`
+        );
+        // Mantener en estado "pendiente" (1) hasta verificar comprobante
+      }
+
+      // Notificar al componente padre
+      const datosPago = {
+        metodo: metodoPago,
+        sede: sedeSeleccionada,
+        abono: abono,
+        total: totalFinal,
+        numeroPedido: numeroPedido,
+        comprobante: comprobante,
+        idVenta: ventaCreada.idVenta,
+        idAbono: abonoCreado.id
+      };
+
+      onOpcionSeleccionada(datosPago);
+      
+      // Completar pedido después de un delay para que se vea el mensaje
+      setTimeout(() => {
+        onPedidoCompletado();
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error al procesar pago:', error);
+      triggerAlert('error', 
+        `Error al crear el pedido: ${error.message}`
+      );
+    } finally {
+      setProcesandoPedido(false);
+    }
   };
 
   return (
     <div className="opciones-pago-view">
+      {/* Overlay de loading */}
+      {procesandoPedido && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>Procesando pedido...</p>
+          </div>
+        </div>
+      )}
+
       {/* Alerta personalizada */}
       {showAlert.show && (
         <div className={`custom-alert ${showAlert.type}`}>
           <span className="alert-icon">
-            {showAlert.type === 'success' && '✅'}
-            {showAlert.type === 'error' && '❌'}
-            {showAlert.type === 'info' && 'ℹ️'}
+            {showAlert.type === 'success' && '✓'}
+            {showAlert.type === 'error' && '✗'}
+            {showAlert.type === 'info' && 'i'}
           </span>
           <div className="alert-message">
             {showAlert.message.split('\n').map((line, index) => (
@@ -190,48 +374,78 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
           </div>
         </div>
 
-        {/* Resumen del pedido */}
+        {/* Resumen del pedido MEJORADO */}
         <div className="resumen-pago">
           <h3 className="resumen-title">📋 Resumen del Pedido</h3>
 
-          <div className="productos-lista">
-            {pedido.productos.map((producto, index) => (
-              <div key={index} className="producto-pago-item">
-                <span className="producto-nombre">{producto.nombre}</span>
-                <span className="producto-cantidad">x{producto.cantidad}</span>
-                <span className="producto-precio">${(producto.precio * producto.cantidad).toLocaleString()}</span>
-              </div>
-            ))}
+          {/* Productos */}
+          {pedido?.productos && pedido.productos.length > 0 && (
+            <div className="productos-lista">
+              <h4 className="subseccion-title">Productos:</h4>
+              {pedido.productos.map((producto, index) => (
+                <div key={index} className="producto-pago-item">
+                  <span className="producto-nombre">{producto.nombre}</span>
+                  <span className="producto-cantidad">x{producto.cantidad || 1}</span>
+                  <span className="producto-precio">${(producto.precio * (producto.cantidad || 1)).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-            {pedido.toppings && pedido.toppings.length > 0 && (
-              <div className="extras-section">
-                <span className="extras-title">Toppings:</span>
-                {pedido.toppings.map((topping, index) => (
-                  <div key={index} className="extra-item">
-                    <span>{topping.nombre}</span>
-                    <span>${topping.precio.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Toppings */}
+          {pedido?.toppings && pedido.toppings.length > 0 && (
+            <div className="extras-section">
+              <h4 className="subseccion-title">Toppings:</h4>
+              {pedido.toppings.map((topping, index) => (
+                <div key={index} className="extra-item">
+                  <span>{topping.nombre}</span>
+                  <span>${(topping.precio || 0).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-            {pedido.adiciones && pedido.adiciones.length > 0 && (
-              <div className="extras-section">
-                <span className="extras-title">Adiciones:</span>
-                {pedido.adiciones.map((adicion, index) => (
-                  <div key={index} className="extra-item">
-                    <span>{adicion.nombre}</span>
-                    <span>${adicion.precio.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Adiciones */}
+          {pedido?.adiciones && pedido.adiciones.length > 0 && (
+            <div className="extras-section">
+              <h4 className="subseccion-title">Adiciones:</h4>
+              {pedido.adiciones.map((adicion, index) => (
+                <div key={index} className="extra-item">
+                  <span>{adicion.nombre}</span>
+                  <span>${adicion.precio.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
+          {/* Salsas */}
+          {pedido?.salsas && pedido.salsas.length > 0 && (
+            <div className="extras-section">
+              <h4 className="subseccion-title">Salsas:</h4>
+              {pedido.salsas.map((salsa, index) => (
+                <div key={index} className="extra-item">
+                  <span>{salsa.nombre}</span>
+                  <span>${salsa.precio.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Totales detallados */}
           <div className="totales">
             <div className="total-item">
+              <span>Productos:</span>
+              <span>${subtotalProductos.toLocaleString()}</span>
+            </div>
+            {subtotalExtras > 0 && (
+              <div className="total-item">
+                <span>Extras (toppings/adiciones/salsas):</span>
+                <span>${subtotalExtras.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="total-item">
               <span>Subtotal:</span>
-              <span>${subtotal.toLocaleString()}</span>
+              <span>${subtotalTotal.toLocaleString()}</span>
             </div>
             <div className="total-item">
               <span>IVA (19%):</span>
@@ -242,7 +456,7 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
               <span>${totalFinal.toLocaleString()}</span>
             </div>
             <div className="total-item abono-destacado">
-              <span>🔸 Abono requerido (50%):</span>
+              <span>📸 Abono requerido (50%):</span>
               <span className="abono-valor">${abono.toLocaleString()}</span>
             </div>
           </div>
@@ -275,7 +489,7 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
               {mostrarDatosBanco && (
                 <div className="datos-banco">
                   <div className="banco-info">
-                    <h5>📍 Datos para transferencia:</h5>
+                    <h5>📝 Datos para transferencia:</h5>
                     <div className="dato-item">
                       <span className="dato-label">Banco:</span>
                       <span>Bancolombia</span>
@@ -368,7 +582,22 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
               {metodoPago === 'efectivo' && (
                 <div className="sedes-efectivo">
                   <h5>📍 Selecciona la sede: <span className="obligatorio">*</span></h5>
-                  {sedes.map(sede => (
+                  
+                  {cargandoSedes && (
+                    <div className="loading-sedes">
+                      <div className="loading-spinner-small"></div>
+                      <span>Cargando sedes...</span>
+                    </div>
+                  )}
+                  
+                  {errorSedes && (
+                    <div className="error-sedes">
+                      <span className="error-icon">⚠️</span>
+                      <span>{errorSedes}</span>
+                    </div>
+                  )}
+                  
+                  {!cargandoSedes && sedes.map(sede => (
                     <label key={sede.id} className={`sede-option ${sedeSeleccionada === sede.id ? 'selected' : ''}`}>
                       <input
                         type="radio"
@@ -381,6 +610,9 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
                         <span className="sede-nombre">{sede.nombre}</span>
                         <span className="sede-direccion">{sede.direccion}</span>
                         <span className="sede-horario">{sede.horario}</span>
+                        {sede.telefono && (
+                          <span className="sede-telefono">📞 {sede.telefono}</span>
+                        )}
                       </div>
                     </label>
                   ))}
@@ -405,9 +637,14 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
           <button
             className="btn-continuar"
             onClick={procesarPago}
-            disabled={!metodoPago || (metodoPago === 'efectivo' && !sedeSeleccionada) || (metodoPago === 'transferencia' && !comprobante)}
+            disabled={
+              procesandoPedido ||
+              !metodoPago || 
+              (metodoPago === 'efectivo' && !sedeSeleccionada) || 
+              (metodoPago === 'transferencia' && !comprobante)
+            }
           >
-            Completar Pedido
+            {procesandoPedido ? 'Procesando...' : 'Completar Pedido'}
             <span className="btn-icon">✓</span>
           </button>
         </div>

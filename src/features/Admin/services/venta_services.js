@@ -1,15 +1,89 @@
-// venta_services.js - CORREGIDO con rutas actualizadas y manejo de errores mejorado
+// venta_services.js - ACTUALIZADO con soporte para sedes dinámicas
 const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
 
 class VentaApiService {
+    // Cache para las sedes obtenidas de la API
+    constructor() {
+        this.sedesCache = null;
+        this.cacheExpiry = null;
+        this.CACHE_DURATION = 30 * 60 * 1000; // 30 minutos
+    }
 
-    // Obtener mapeo de sedes
-    obtenerIdSede(nombreSede) {
-        const sedes = {
-            'San Pablo': 1,
-            'San Benito': 2
-        };
-        return sedes[nombreSede] || 1;
+    // Función para obtener sedes desde la API con cache
+    async obtenerSedes() {
+        try {
+            // Verificar si el cache es válido
+            if (this.sedesCache && this.cacheExpiry && Date.now() < this.cacheExpiry) {
+                return this.sedesCache;
+            }
+
+            console.log('Obteniendo sedes desde API...');
+            const response = await fetch(`${API_BASE_URL}/sede`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const sedes = await response.json();
+            console.log('Sedes obtenidas:', sedes);
+
+            // Filtrar solo sedes activas y guardar en cache
+            const sedesActivas = sedes.filter(sede => sede.estado === true);
+            this.sedesCache = sedesActivas;
+            this.cacheExpiry = Date.now() + this.CACHE_DURATION;
+
+            return sedesActivas;
+        } catch (error) {
+            console.error('Error al obtener sedes:', error);
+            
+            // Sedes de fallback si falla la API
+            const fallbackSedes = [
+                { idsede: 1, nombre: 'San Pablo' },
+                { idsede: 2, nombre: 'San Benito' }
+            ];
+            
+            // Si no hay cache válido, usar fallback
+            if (!this.sedesCache) {
+                this.sedesCache = fallbackSedes;
+            }
+            
+            return this.sedesCache;
+        }
+    }
+
+    // Obtener ID de sede por nombre (dinámico)
+    async obtenerIdSede(nombreSede) {
+        try {
+            const sedes = await this.obtenerSedes();
+            const sede = sedes.find(s => s.nombre === nombreSede);
+            
+            if (sede) {
+                console.log(`Sede encontrada: ${nombreSede} -> ID: ${sede.idsede}`);
+                return sede.idsede;
+            }
+            
+            // Si no se encuentra, usar mapeo por defecto
+            console.warn(`Sede '${nombreSede}' no encontrada, usando mapeo por defecto`);
+            const sedesDefault = {
+                'San Pablo': 1,
+                'San Benito': 2
+            };
+            return sedesDefault[nombreSede] || 1;
+        } catch (error) {
+            console.error('Error al obtener ID de sede:', error);
+            // Fallback al mapeo hardcodeado
+            const sedesDefault = {
+                'San Pablo': 1,
+                'San Benito': 2
+            };
+            return sedesDefault[nombreSede] || 1;
+        }
     }
 
     // Obtener estado según tipo de venta
@@ -265,98 +339,106 @@ class VentaApiService {
         }
     }
 
-    async crearVenta(ventaData) {
-        try {
-            console.log('Datos originales recibidos para crear venta:', ventaData);
-            
-            let clienteId = null;
-            if (ventaData.cliente && ventaData.cliente !== 'Cliente Genérico') {
-                clienteId = parseInt(ventaData.clienteId) || null;
-            }
-            
-            const sedeId = this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
-            
-            let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
-            if (tipoVenta === 'venta directa') {
-                tipoVenta = 'directa';
-            } else if (tipoVenta === 'pedido') {
-                tipoVenta = 'pedido';
-            }
-            
-            const estadoId = this.obtenerEstadoSegunTipo(ventaData.tipoventa || ventaData.tipo_venta);
-            
-            const detallesVenta = (ventaData.detalleventa || ventaData.productos || []).map(producto => ({
-                idproductogeneral: parseInt(producto.idproductogeneral || producto.id),
-                cantidad: parseInt(producto.cantidad || 1),
-                preciounitario: parseFloat(producto.preciounitario || producto.precio || 0),
-                subtotal: parseFloat(producto.subtotal || (producto.precio * producto.cantidad) || 0),
-                iva: parseFloat(producto.iva || ((producto.precio * producto.cantidad) * 0.16) || 0)
-            }));
-
-            const fechaFormateada = this.formatearFecha(ventaData.fechaventa || ventaData.fecha_venta);
-            console.log('Fecha original:', ventaData.fechaventa || ventaData.fecha_venta);
-            console.log('Fecha formateada:', fechaFormateada);
-
-            const ventaParaAPI = {
-                fechaventa: fechaFormateada,
-                cliente: clienteId,
-                idsede: sedeId,
-                metodopago: ventaData.metodopago || ventaData.metodo_pago,
-                tipoventa: tipoVenta,
-                estadoVentaId: estadoId,
-                total: parseFloat(ventaData.total || 0),
-                detalleventa: detallesVenta
-            };
-
-            console.log('Datos transformados para la API:', ventaParaAPI);
-            
-            if (!ventaParaAPI.metodopago) {
-                throw new Error('Método de pago es requerido');
-            }
-            if (!ventaParaAPI.tipoventa) {
-                throw new Error('Tipo de venta es requerido');
-            }
-            if (!ventaParaAPI.total || ventaParaAPI.total <= 0) {
-                throw new Error('Total debe ser mayor a 0');
-            }
-            if (!detallesVenta.length) {
-                throw new Error('Debe incluir al menos un producto');
-            }
-            
-            const response = await fetch(`${API_BASE_URL}/venta`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(ventaParaAPI)
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error al crear venta:', errorText);
-                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
-            }
-            
-            const ventaCreada = await response.json();
-            console.log('Venta creada exitosamente:', ventaCreada);
-            
-            return {
-                idVenta: ventaCreada.idventa,
-                fechaVenta: ventaCreada.fechaventa,
-                total: parseFloat(ventaCreada.total),
-                metodoPago: ventaCreada.metodopago,
-                tipoVenta: ventaCreada.tipoventa,
-                idEstadoVenta: ventaCreada.estadoVentaId || estadoId,
-                nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
-                nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
-                nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A'
-            };
-            
-        } catch (error) {
-            console.error('Error al crear la venta:', error);
-            throw new Error(`No se pudo crear la venta: ${error.message}`);
+async crearVenta(ventaData) {
+    try {
+        console.log('Datos originales recibidos para crear venta:', ventaData);
+        
+        // CORRECCIÓN PRINCIPAL: Simplificar la lógica del cliente
+        let clienteId = null;
+        if (ventaData.clienteId !== null && ventaData.clienteId !== undefined) {
+            clienteId = parseInt(ventaData.clienteId);
+            console.log('Cliente ID procesado:', clienteId);
+        } else {
+            console.log('Usando cliente genérico (null)');
         }
+        
+        // Obtener ID de sede dinámicamente
+        const sedeId = await this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
+        console.log(`Sede procesada: ${ventaData.sedeNombre || ventaData.sede} -> ID: ${sedeId}`);
+        
+        let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
+        if (tipoVenta === 'venta directa') {
+            tipoVenta = 'directa';
+        } else if (tipoVenta === 'pedido') {
+            tipoVenta = 'pedido';
+        }
+        
+        const estadoId = this.obtenerEstadoSegunTipo(ventaData.tipoventa || ventaData.tipo_venta);
+        
+        const detallesVenta = (ventaData.detalleventa || ventaData.productos || []).map(producto => ({
+            idproductogeneral: parseInt(producto.idproductogeneral || producto.id),
+            cantidad: parseInt(producto.cantidad || 1),
+            preciounitario: parseFloat(producto.preciounitario || producto.precio || 0),
+            subtotal: parseFloat(producto.subtotal || (producto.precio * producto.cantidad) || 0),
+            iva: parseFloat(producto.iva || ((producto.precio * producto.cantidad) * 0.16) || 0)
+        }));
+
+        const fechaFormateada = this.formatearFecha(ventaData.fechaventa || ventaData.fecha_venta);
+        console.log('Fecha original:', ventaData.fechaventa || ventaData.fecha_venta);
+        console.log('Fecha formateada:', fechaFormateada);
+
+        const ventaParaAPI = {
+            fechaventa: fechaFormateada,
+            cliente: clienteId,
+            idsede: sedeId,
+            metodopago: ventaData.metodopago || ventaData.metodo_pago,
+            tipoventa: tipoVenta,
+            estadoVentaId: estadoId,
+            total: parseFloat(ventaData.total || 0),
+            detalleventa: detallesVenta
+        };
+
+        console.log('Datos transformados para la API:', ventaParaAPI);
+        console.log('Cliente final que se enviará:', clienteId);
+        console.log('Sede final que se enviará:', sedeId);
+        
+        if (!ventaParaAPI.metodopago) {
+            throw new Error('Método de pago es requerido');
+        }
+        if (!ventaParaAPI.tipoventa) {
+            throw new Error('Tipo de venta es requerido');
+        }
+        if (!ventaParaAPI.total || ventaParaAPI.total <= 0) {
+            throw new Error('Total debe ser mayor a 0');
+        }
+        if (!detallesVenta.length) {
+            throw new Error('Debe incluir al menos un producto');
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/venta`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ventaParaAPI)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error al crear venta:', errorText);
+            throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+        }
+        
+        const ventaCreada = await response.json();
+        console.log('Venta creada exitosamente:', ventaCreada);
+        
+        return {
+            idVenta: ventaCreada.idventa,
+            fechaVenta: ventaCreada.fechaventa,
+            total: parseFloat(ventaCreada.total),
+            metodoPago: ventaCreada.metodopago,
+            tipoVenta: ventaCreada.tipoventa,
+            idEstadoVenta: ventaCreada.estadoVentaId || estadoId,
+            nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
+            nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
+            nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A'
+        };
+        
+    } catch (error) {
+        console.error('Error al crear la venta:', error);
+        throw new Error(`No se pudo crear la venta: ${error.message}`);
     }
+}
 
     // FUNCIÓN PARA OBTENER DETALLE DE VENTA CON ABONOS - CORREGIDA
     async obtenerVentaPorId(idVenta) {
@@ -484,7 +566,7 @@ class VentaApiService {
             // Crear FormData para enviar datos y archivo
             const formData = new FormData();
             
-            // CORRECIÓN IMPORTANTE: Enviar el ID de la VENTA, no del pedido
+            // CORRECCIÓN IMPORTANTE: Enviar el ID de la VENTA, no del pedido
             // El backend se encargará de crear o encontrar el pedido correspondiente
             formData.append('idpedido', abonoData.idpedido || abonoData.idPedido);
             formData.append('metodopago', abonoData.metodopago || abonoData.metodo_pago);
@@ -610,4 +692,4 @@ class VentaApiService {
 }
 
 const ventaApiService = new VentaApiService();
-export default ventaApiService;
+export default ventaApiService

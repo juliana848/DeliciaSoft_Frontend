@@ -3,47 +3,50 @@ const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
 
 class ClienteApiService {
   // Obtener todos los clientes para el dropdown
-  async obtenerClientesParaVenta() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/clientes`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Agregar cliente genérico al inicio de la lista
-      const clientesConGenerico = [
-        {
-          idcliente: null,
-          nombre: 'Cliente',
-          apellido: 'Genérico',
-          nombreCompleto: 'Cliente Genérico'
-        },
-        ...data.map(cliente => ({
-          ...cliente,
-          nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
-        }))
-      ];
-      
-      return clientesConGenerico;
-    } catch (error) {
-      console.error('Error al obtener clientes:', error);
-      // Retornar solo cliente genérico en caso de error
-      return [{
+async obtenerClientesParaVenta() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/clientes`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Agregar cliente genérico al inicio de la lista
+    const clientesConGenerico = [
+      {
         idcliente: null,
         nombre: 'Cliente',
         apellido: 'Genérico',
+        numeroDocumento: '', // Asegurar campo documento
         nombreCompleto: 'Cliente Genérico'
-      }];
-    }
+      },
+      ...data.map(cliente => ({
+        ...cliente,
+        numeroDocumento: cliente.numerodocumento || '', // Mapear documento desde API
+        nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
+      }))
+    ];
+    
+    return clientesConGenerico;
+  } catch (error) {
+    console.error('Error al obtener clientes:', error);
+    // Retornar solo cliente genérico en caso de error
+    return [{
+      idcliente: null,
+      nombre: 'Cliente',
+      apellido: 'Genérico',
+      numeroDocumento: '',
+      nombreCompleto: 'Cliente Genérico'
+    }];
   }
+}
 
   // Obtener todos los clientes
   async obtenerClientes() {

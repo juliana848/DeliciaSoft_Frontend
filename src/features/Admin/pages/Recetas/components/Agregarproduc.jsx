@@ -137,7 +137,6 @@ export default function RecetaForm({
       precioproducto: "",
       cantidadproducto: "",
       idcategoriaproducto: "",
-      especificaciones: "",
       idimagen: "",
       idreceta: "",
     }
@@ -314,10 +313,6 @@ export default function RecetaForm({
           </div>
         )}
       </div>
-    <div className="field-group">
-      <label>Especificaciones:</label>
-      <textarea value={formData.especificaciones || ""} onChange={(e) => handleFormChange("especificaciones", e.target.value)} className="modal-input" rows="3" placeholder="Ingrese las especificaciones del producto..." maxLength={500}/>
-    </div>
     <div className="section-divider"></div>
     <button className="btn-agregar-insumos" onClick={() => setMostrarModalRecetas(true)}>
       + Agregar Receta

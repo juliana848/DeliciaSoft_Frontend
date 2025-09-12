@@ -7,8 +7,8 @@ import SearchBar from "../components/SearchBar";
 import Notification from "../components/Notification";
 import RecetaForm from "./Recetas/components/Agregarproduc";
 import "../adminStyles.css";
+import productosApiService from "../services/productos_services";
 
-// Mock data for insumos - Moved to top for better access
 const mockInsumosDisponibles = [
   {
     id: 1,
@@ -112,15 +112,6 @@ const unidadesDeMedida = [
   { id: 6, nombre: "kilogramos" },
 ];
 
-// Mock data for categorías de productos
-const categorias = [
-  { id: 301, nombre: "Fresas con crema" },
-  { id: 302, nombre: "Obleas" },
-  { id: 303, nombre: "Cupcakes" },
-  { id: 304, nombre: "Postres" },
-  { id: 305, nombre: "Pasteles" },
-  { id: 306, nombre: "Arroz con leche" },
-];
 
 // Componente modal de visualización mejorado con recetas detalladas
 const VisualizarProductoModal = ({
@@ -811,15 +802,17 @@ export default function ProductosTabla() {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [currentView, setCurrentView] = useState("list");
   const [recetaDetalleVisible, setRecetaDetalleVisible] = useState(null);
+  const [archivoImagen, setArchivoImagen] = useState(null);
+  const [previewImagen, setPreviewImagen] = useState(null);
 
   // Función corregida para obtener nombre de categoría por ID
   const getNombreCategoriaById = (idCategoria) => {
     if (!idCategoria && idCategoria !== 0) {
       return "Sin categoría";
     }
-    
+
     const id = Number(idCategoria);
-    const categoria = categorias.find(cat => cat.id === id);
+    const categoria = categorias.find((cat) => cat.id === id);
     return categoria ? categoria.nombre : "Sin categoría";
   };
 
@@ -835,131 +828,57 @@ export default function ProductosTabla() {
     }).format(precio);
 
   useEffect(() => {
-    // Mock productos actualizados con más recetas detalladas
-    const mockProductos = [
-      {
-        id: 1,
-        nombre: "Pan de Leche",
-        precio: 5000,
-        categoria: "Pasteles",
-        cantidadSanPablo: 20,
-        cantidadSanBenito: 15,
-        estado: true,
-        tieneRelaciones: true,
-        recetas: [
-          {
-            id: 1,
-            nombre: "Pan Integral Casero",
-            imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop&crop=center",
-            insumos: [
-              { id: 1, nombre: "Harina de Trigo", cantidad: 500, IdUnidadMedida: 1 },
-              { id: 2, nombre: "Azucar Blanca", cantidad: 50, IdUnidadMedida: 1 },
-              { id: 3, nombre: "Levadura Seca", cantidad: 10, IdUnidadMedida: 1 },
-              { id: 6, nombre: "Leche Entera", cantidad: 200, IdUnidadMedida: 2 },
-            ],
-            recetasAnidadas: [],
-          },
-        ],
-      },
-      {
-        id: 2,
-        nombre: "Pastel de Chocolate",
-        precio: 35000,
-        categoria: "Pasteles",
-        cantidadSanPablo: 5,
-        cantidadSanBenito: 8,
-        estado: true,
-        tieneRelaciones: true,
-        recetas: [
-          {
-            id: 2,
-            nombre: "Torta de Chocolate Fudge",
-            imagen: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop&crop=center",
-            insumos: [
-              { id: 1, nombre: "Harina de Trigo", cantidad: 300, IdUnidadMedida: 1 },
-              { id: 7, nombre: "Chocolate Semiamargo", cantidad: 200, IdUnidadMedida: 1 },
-              { id: 8, nombre: "Esencia de Vainilla", cantidad: 5, IdUnidadMedida: 4 },
-              { id: 4, nombre: "Huevos A", cantidad: 4, IdUnidadMedida: 5 },
-              { id: 5, nombre: "Mantequilla sin sal", cantidad: 150, IdUnidadMedida: 1 },
-            ],
-            recetasAnidadas: [
-              { id: 21, nombre: "Crema de Chocolate", cantidad: 1 }
-            ],
-          },
-        ],
-      },
-      {
-        id: 3,
-        nombre: "Galletas de Avena",
-        precio: 1500,
-        categoria: "Postres",
-        cantidadSanPablo: 50,
-        cantidadSanBenito: 45,
-        estado: false,
-        tieneRelaciones: false,
-        recetas: [],
-      },
-      {
-        id: 4,
-        nombre: "Cupcake de Vainilla",
-        precio: 3000,
-        categoria: "Cupcakes",
-        cantidadSanPablo: 30,
-        cantidadSanBenito: 25,
-        estado: true,
-        tieneRelaciones: true,
-        recetas: [
-          {
-            id: 3,
-            nombre: "Base de Cupcake de Vainilla",
-            imagen: "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=200&h=200&fit=crop&crop=center",
-            insumos: [
-              { id: 1, nombre: "Harina de Trigo", cantidad: 200, IdUnidadMedida: 1 },
-              { id: 2, nombre: "Azucar Blanca", cantidad: 150, IdUnidadMedida: 1 },
-              { id: 4, nombre: "Huevos A", cantidad: 2, IdUnidadMedida: 5 },
-              { id: 5, nombre: "Mantequilla sin sal", cantidad: 100, IdUnidadMedida: 1 },
-              { id: 6, nombre: "Leche Entera", cantidad: 100, IdUnidadMedida: 2 },
-              { id: 8, nombre: "Esencia de Vainilla", cantidad: 2, IdUnidadMedida: 4 },
-            ],
-            recetasAnidadas: [
-              { id: 31, nombre: "Crema de Vainilla", cantidad: 1 },
-              { id: 32, nombre: "Decoración de Fondant", cantidad: 1 }
-            ],
-          },
-        ],
-      },
-      {
-        id: 5,
-        nombre: "Cheesecake de Fresas",
-        precio: 28000,
-        categoria: "Fresas con crema",
-        cantidadSanPablo: 8,
-        cantidadSanBenito: 12,
-        estado: true,
-        tieneRelaciones: true,
-        recetas: [
-          {
-            id: 4,
-            nombre: "Cheesecake de Fresas Premium",
-            imagen: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=200&h=200&fit=crop&crop=center",
-            insumos: [
-              { id: 1, nombre: "Harina de Trigo", cantidad: 100, IdUnidadMedida: 1 },
-              { id: 2, nombre: "Azucar Blanca", cantidad: 200, IdUnidadMedida: 1 },
-              { id: 4, nombre: "Huevos A", cantidad: 3, IdUnidadMedida: 5 },
-              { id: 5, nombre: "Mantequilla sin sal", cantidad: 80, IdUnidadMedida: 1 },
-              { id: 8, nombre: "Esencia de Vainilla", cantidad: 3, IdUnidadMedida: 4 },
-            ],
-            recetasAnidadas: [
-              { id: 41, nombre: "Base de Galleta", cantidad: 1 },
-              { id: 42, nombre: "Relleno de Queso", cantidad: 1 },
-              { id: 43, nombre: "Salsa de Fresas", cantidad: 1 }
-            ],
-          },
-        ],
-      },
-    ];
-    setProductos(mockProductos);
+    const cargarProductos = async () => {
+      try {
+        const data = await productosApiService.obtenerProductos();
+        setProductos(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error cargando productos:", error);
+        setProductos([]);
+      }
+    };
+    cargarProductos();
   }, []);
+
+  const [categorias, setCategorias] = useState([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
+
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        const response = await fetch(
+          "https://deliciasoft-backend.onrender.com/api/categorias-productos"
+        );
+        if (!response.ok) {
+          throw new Error("No se pudo obtener las categorías");
+        }
+        const data = await response.json();
+        setCategorias(data);
+      } catch (error) {
+        console.error("Error al cargar las categorías:", error);
+      } finally {
+        setLoadingCategorias(false);
+      }
+    };
+
+    cargarCategorias();
+  }, []);
+
+  const handleImagenChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("El archivo no puede superar los 5MB");
+      return;
+    }
+    setArchivoImagen(file);
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onload = (e) => setPreviewImagen(e.target.result);
+    reader.readAsDataURL(file);
+  }
+};
 
   const toggleEstado = (producto) => {
     const updated = productos.map((p) =>
@@ -1011,216 +930,240 @@ export default function ProductosTabla() {
     setProductoSeleccionado(null);
   };
 
-  const handleSaveProducto = (productoData) => {
-    console.log("Datos recibidos del formulario:", productoData);
+  const handleSaveProducto = async (productoData) => {
+    try {
+      console.log("🔍 Datos recibidos en handleSave:", productoData);
 
-    if (productoData.id || productoData.Idreceta) {
-      // Lógica para editar un producto existente
-      const productId = productoData.id || productoData.Idreceta;
-      const updatedProductos = productos.map((p) =>
-        p.id === productId
-          ? {
-              ...p,
-              nombre: productoData.NombreReceta || 
-                     productoData.NombreProducto || 
-                     productoData.nombre || 
-                     p.nombre,
-              precio: productoData.Costo ? Number(productoData.Costo) : p.precio,
-              categoria: getNombreCategoriaById(productoData.IdCategoria),
-              cantidadSanPablo: productoData.CantidadSanPablo ? 
-                               Number(productoData.CantidadSanPablo) : 
-                               p.cantidadSanPablo,
-              cantidadSanBenito: productoData.CantidadSanBenito ? 
-                                Number(productoData.CantidadSanBenito) : 
-                                p.cantidadSanBenito,
-              recetas: p.recetas || []
-            }
-          : p
-      );
-      setProductos(updatedProductos);
-      showNotification("Producto actualizado exitosamente");
-    } else {
-      // Lógica para agregar un nuevo producto
-      const newId = Math.max(...productos.map(p => p.id), 0) + 1;
-      
-      const nombreCategoria = getNombreCategoriaById(productoData.IdCategoria);
-      
-      const newProducto = {
-        id: newId,
-        nombre: productoData.NombreReceta || "Producto sin nombre",
-        precio: productoData.Costo ? Number(productoData.Costo) : 0,
-        categoria: nombreCategoria,
-        cantidadSanPablo: productoData.CantidadSanPablo ? Number(productoData.CantidadSanPablo) : 0,
-        cantidadSanBenito: productoData.CantidadSanBenito ? Number(productoData.CantidadSanBenito) : 0,
-        estado: true,
-        tieneRelaciones: (productoData.insumos && productoData.insumos.length > 0) || 
-                        (productoData.recetasAnidadas && productoData.recetasAnidadas.length > 0),
-        recetas: (productoData.insumos?.length > 0 || productoData.recetasAnidadas?.length > 0) ? [{
-          id: newId,
-          nombre: productoData.NombreReceta || "Producto sin nombre",
-          insumos: productoData.insumos || [],
-          recetasAnidadas: productoData.recetasAnidadas || []
-        }] : []
+      const payload = {
+        nombreproducto:
+          productoData.nombreproducto || productoData.nombre || "",
+        precioproducto: String(
+          productoData.precioproducto || productoData.precio || "0"
+        ),
+        cantidadproducto: String(
+          productoData.cantidadproducto || productoData.cantidad || "0"
+        ),
+        estado: productoData.estado ?? true,
+        idcategoriaproducto:
+          parseInt(productoData.idcategoriaproducto) || null,
       };
-      
-      setProductos(prevProductos => {
-        const nuevosProductos = [...prevProductos, newProducto];
-        return nuevosProductos;
-      });
-      
-      showNotification(`Producto "${newProducto.nombre}" agregado exitosamente`);
+
+      if (productoData.idproductogeneral) {
+        payload.idproductogeneral = productoData.idproductogeneral;
+      }
+
+      if (productoData.especificaciones?.trim()) {
+        payload.especificaciones = productoData.especificaciones.trim();
+      }
+
+      if (payload.idproductogeneral) {
+        if (productoData.idimagen && productoData.idimagen > 0) {
+          payload.idimagen = parseInt(productoData.idimagen);
+        }
+        if (productoData.idreceta && productoData.idreceta > 0) {
+          payload.idreceta = parseInt(productoData.idreceta);
+        }
+      }
+
+      console.log("📤 Payload final:", payload);
+
+      if (!payload.nombreproducto?.trim()) {
+        throw new Error("El nombre del producto es requerido");
+      }
+
+      if (!payload.idcategoriaproducto || isNaN(payload.idcategoriaproducto)) {
+        throw new Error("Debe seleccionar una categoría válida");
+      }
+
+      const precio = parseFloat(payload.precioproducto);
+      if (isNaN(precio) || precio < 0) {
+        throw new Error("El precio debe ser un número válido mayor o igual a 0");
+      }
+
+      if (payload.idproductogeneral) {
+        await productosApiService.actualizarProducto(
+          payload.idproductogeneral,
+          payload
+        );
+        showNotification("Producto actualizado exitosamente");
+      } else {
+        await productosApiService.crearProducto(payload);
+        showNotification(
+          `Producto "${payload.nombreproducto}" agregado exitosamente`
+        );
+      }
+
+      handleCancel();
+
+      const data = await productosApiService.obtenerProductos();
+      setProductos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("❌ Error guardando producto:", error);
+
+      let mensajeError = "Error al guardar producto";
+
+      if (error.message.includes("idcategoriaproducto")) {
+        mensajeError = "Error: La categoría seleccionada no es válida";
+      } else if (error.message.includes("nombreproducto")) {
+        mensajeError = "Error: El nombre del producto es inválido o ya existe";
+      } else if (error.message.includes("precioproducto")) {
+        mensajeError = "Error: El precio debe ser un número válido";
+      } else {
+        mensajeError = error.message || mensajeError;
+      }
+
+      showNotification(mensajeError, "error");
     }
-    
-    handleCancel();
   };
 
-  const eliminarProducto = () => {
-    const updatedProductos = productos.filter(
-      (p) => p.id !== productoSeleccionado.id
-    );
-    setProductos(updatedProductos);
-    showNotification("Producto eliminado exitosamente");
-    handleCancel();
+  const fetchProductos = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const productosData = await productoApiService.obtenerProductos();
+
+      const productosMapeados = productosData.map((p) => ({
+        id: p.idproductogeneral,
+        nombre: p.nombreproducto,
+        precio: parseFloat(p.precioproducto) || 0,
+        cantidad: parseInt(p.cantidadproducto) || 0,
+        categoria: p.categoria || "Sin categoría",
+        imagen: p.imagenes?.urlimg || null, 
+        estado: p.estado,
+        idcategoriaproducto: p.idcategoriaproducto,
+        idimagen: p.idimagen,
+        idreceta: p.idreceta,
+      }));
+
+      const productosActivos = productosMapeados.filter(
+        (prod) => prod.estado === true
+      );
+      setProductos(productosActivos);
+
+      const categoriasUnicas = [
+        ...new Set(productosActivos.map((p) => p.categoria)),
+      ];
+      setCategorias(["Todos", ...categoriasUnicas]);
+    } catch (error) {
+      console.error("Error al cargar productos:", error);
+      setError("Error al cargar productos.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const crearInitialDataParaRecetaForm = (producto) => {
-    if (!producto) return {};
-
-    const insumosDeRecetas = producto.recetas.flatMap(receta =>
-      receta.insumos.map(insumo => ({
-        ...insumo,
-        IdUnidadMedida: unidadesDeMedida.find(u => u.nombre === insumo.unidad)?.id || insumo.IdUnidadMedida
-      }))
-    );
-
-    const recetasAnidadas = producto.recetas.flatMap(receta =>
-      receta.recetasAnidadas.map(recetaAnidada => ({
-        ...recetaAnidada,
-        Idreceta: recetaAnidada.id 
-      }))
-    );
-
-    const categoriaId = categorias.find(cat => cat.nombre === producto.categoria)?.id || 301;
-
-    return {
-      Idreceta: producto.id,
-      NombreReceta: producto.nombre,
-      Especificaciones: "", 
-      Costo: producto.precio,
-      IdCategoria: categoriaId,
-      CantidadSanPablo: producto.cantidadSanPablo,
-      CantidadSanBenito: producto.cantidadSanBenito,
-      insumos: insumosDeRecetas,
-      recetasAnidadas: recetasAnidadas,
-    };
+  const eliminarProducto = async () => {
+    try {
+      await productosApiService.eliminarProducto(productoSeleccionado.id);
+      showNotification("Producto eliminado exitosamente");
+      handleCancel();
+      const data = await productosApiService.obtenerProductos();
+      setProductos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error eliminando producto:", error);
+      showNotification("Error al eliminar producto", "error");
+    }
   };
 
   const renderCurrentView = () => {
     switch (currentView) {
       case "list":
         return (
-          <>
-            <div className="admin-wrapper">
-              <div className="admin-toolbar">
-                <button
-                  className="admin-button pink"
-                  onClick={handleAgregarProducto}
-                >
-                  + Agregar
-                </button>
-                <SearchBar
-                  placeholder="Buscar productos..."
-                  value={filtro}
-                  onChange={handleSearch}
-                />
-              </div>
-
-              <h2 className="admin-section-title">Gestión de productos</h2>
-
-              <DataTable
-                value={filteredProductos}
-                paginator
-                rows={5}
-                className="admin-table"
-              >
-                <Column
-                  header="N°"
-                  body={(_, { rowIndex }) => rowIndex + 1}
-                  headerStyle={{ textAlign: "right", paddingLeft: "15px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "10px" }}
-                  style={{ width: "0.5rem" }}
-                />
-                <Column
-                  field="nombre"
-                  header="Nombre"
-                  headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-                  style={{ width: "250px" }}
-                />
-                <Column
-                  field="precio"
-                  header="Precio"
-                  body={(row) => formatearPrecio(row.precio)}
-                  headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-                  style={{ width: "250px" }}
-                />
-                <Column
-                  field="categoria"
-                  header="Categoría"
-                  headerStyle={{ textAlign: "right", paddingLeft: "105px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "40px" }}
-                  style={{ width: "250px" }}
-                />
-                <Column
-                  header="Estado"
-                  body={(row) => (
-                    <InputSwitch
-                      checked={row.estado}
-                      onChange={() => toggleEstado(row)}
-                    />
-                  )}
-                  headerStyle={{ textAlign: "right", paddingLeft: "25px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-                  style={{ width: "50px" }}
-                />
-                <Column
-                  header="Acción"
-                  body={(row) => (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button
-                        className="admin-button gray"
-                        onClick={() => visualizarProducto(row)}
-                        aria-label="Ver producto"
-                        title="Ver producto"
-                      >
-                        🔍
-                      </button>
-                      <button
-                        className="admin-button yellow"
-                        onClick={() => editarProducto(row)}
-                        aria-label="Editar producto"
-                        title="Editar producto"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="admin-button red"
-                        onClick={() => confirmarEliminarProducto(row)}
-                        aria-label="Eliminar producto"
-                        title="Eliminar producto"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  )}
-                  headerStyle={{ textAlign: "right", paddingLeft: "65px" }}
-                  bodyStyle={{ textAlign: "center", paddingLeft: "20px" }}
-                  style={{ width: "250px" }}
-                />
-              </DataTable>
+          <div className="admin-wrapper">
+            <div className="admin-toolbar">
+              <button className="admin-button pink" onClick={handleAgregarProducto}>
+                + Agregar
+              </button>
+              <SearchBar placeholder="Buscar productos..." value={filtro} onChange={handleSearch}/>
             </div>
-          </>
+            <h2 className="admin-section-title">Gestión de productos</h2>
+            <DataTable
+              value={filteredProductos}
+              paginator
+              rows={5}
+              className="admin-table"
+            >
+              <Column
+                header="N°"
+                body={(_, { rowIndex }) => rowIndex + 1}
+                style={{ width: "3rem" }}
+              />
+              <Column
+                header="Imagen"
+                body={(row) =>
+                  row.imagen ? (
+                    <img
+                      src={row.imagen}
+                      alt={row.nombre}
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        objectFit: "cover",
+                        borderRadius: "6px",
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: "12px", color: "#888" }}>
+                      Sin imagen
+                    </span>
+                  )
+                }
+                style={{ width: "100px", textAlign: "center" }}
+              />
+              <Column
+                field="nombre"
+                header="Nombre"
+                style={{ width: "200px" }}
+              />
+              <Column
+                field="precio"
+                header="Precio"
+                body={(row) => formatearPrecio(row.precio)}
+                style={{ width: "150px" }}
+              />
+              <Column
+                field="categoria"
+                header="Categoría"
+                style={{ width: "150px" }}
+              />
+              <Column
+                header="Estado"
+                body={(row) => (
+                  <InputSwitch
+                    checked={row.estado}
+                    onChange={() => toggleEstado(row)}
+                  />
+                )}
+                style={{ width: "80px", textAlign: "center" }}
+              />
+              <Column
+                header="Acción"
+                body={(row) => (
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                      className="admin-button gray"
+                      onClick={() => visualizarProducto(row)}
+                    >
+                      🔍
+                    </button>
+                    <button
+                      className="admin-button yellow"
+                      onClick={() => editarProducto(row)}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="admin-button red"
+                      onClick={() => confirmarEliminarProducto(row)}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+              />
+            </DataTable>
+          </div>
         );
 
       case "add":
@@ -1232,8 +1175,6 @@ export default function ProductosTabla() {
                 onCancel={handleCancel}
                 initialData={null}
                 isEditing={false}
-                mockInsumosDisponibles={mockInsumosDisponibles}
-                unidadesDeMedida={unidadesDeMedida}
                 categoriasProductos={categorias}
               />
             </div>
@@ -1247,10 +1188,8 @@ export default function ProductosTabla() {
               <RecetaForm
                 onSave={handleSaveProducto}
                 onCancel={handleCancel}
-                initialData={crearInitialDataParaRecetaForm(productoSeleccionado)}
+                initialData={productoSeleccionado}
                 isEditing={true}
-                mockInsumosDisponibles={mockInsumosDisponibles}
-                unidadesDeMedida={unidadesDeMedida}
                 categoriasProductos={categorias}
               />
             </div>
@@ -1265,7 +1204,6 @@ export default function ProductosTabla() {
             producto={productoSeleccionado}
             onToggleDetalle={toggleDetalleReceta}
             detalleVisible={recetaDetalleVisible}
-            unidadesDeMedida={unidadesDeMedida}
           />
         );
 

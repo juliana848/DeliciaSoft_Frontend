@@ -98,6 +98,9 @@ async obtenerClientesParaVenta() {
   // Crear nuevo cliente
   async crearCliente(clienteData) {
     try {
+      // Validar duplicados antes de crear
+      await this.validarDuplicados(clienteData, null);
+
       const clienteAPI = this.transformarClienteParaAPI(clienteData);
       
       const response = await fetch(`${API_BASE_URL}/clientes`, {
@@ -124,6 +127,9 @@ async obtenerClientesParaVenta() {
   // Actualizar cliente
   async actualizarCliente(id, clienteData) {
     try {
+      // Validar duplicados antes de actualizar
+      await this.validarDuplicados(clienteData, id);
+
       const clienteAPI = this.transformarClienteParaAPI(clienteData);
       
       const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
@@ -150,6 +156,12 @@ async obtenerClientesParaVenta() {
   // Eliminar cliente
   async eliminarCliente(id) {
     try {
+      // Verificar primero si tiene ventas asociadas
+      const tieneVentas = await this.clienteTieneVentas(id);
+      if (tieneVentas) {
+        throw new Error('No se puede eliminar el cliente porque tiene ventas asociadas');
+      }
+
       const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
         method: 'DELETE',
         headers: {
@@ -184,7 +196,17 @@ async obtenerClientesParaVenta() {
         throw new Error(errorData.message || 'Error al cambiar estado');
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('Respuesta completa de la API:', data);
+      
+      // El backend devuelve { message, cliente }, necesitamos el cliente
+      const clienteActualizado = data.cliente || data;
+      
+      // Después del toggle, obtener el cliente actualizado directamente
+      const clienteCompleto = await this.obtenerClientePorId(id);
+      console.log('Cliente obtenido después del toggle:', clienteCompleto);
+      
+      return clienteCompleto;
     } catch (error) {
       console.error('Error al cambiar estado del cliente:', error);
       throw error;
@@ -210,6 +232,75 @@ async obtenerClientesParaVenta() {
     } catch (error) {
       console.error('Error al verificar ventas del cliente:', error);
       return false;
+    }
+  }
+
+  // Validar duplicados con usuarios
+  async validarDuplicados(clienteData, clienteIdExcluido = null) {
+    try {
+      // Verificar duplicados con otros clientes
+      const clientes = await this.obtenerClientes();
+      const clienteDuplicado = clientes.find(c => 
+        (c.numeroDocumento === clienteData.numeroDocumento || c.correo === clienteData.correo) &&
+        c.idCliente !== clienteIdExcluido
+      );
+
+      if (clienteDuplicado) {
+        if (clienteDuplicado.numeroDocumento === clienteData.numeroDocumento) {
+          throw new Error('Ya existe un cliente con este número de documento');
+        }
+        if (clienteDuplicado.correo === clienteData.correo) {
+          throw new Error('Ya existe un cliente con este correo electrónico');
+        }
+      }
+
+      // Verificar duplicados con usuarios
+      const usuarios = await this.obtenerUsuarios();
+      const usuarioDuplicado = usuarios.find(u => 
+        u.documento === clienteData.numeroDocumento || u.correo === clienteData.correo
+      );
+
+      if (usuarioDuplicado) {
+        if (usuarioDuplicado.documento === clienteData.numeroDocumento) {
+          throw new Error('Ya existe un usuario con este número de documento');
+        }
+        if (usuarioDuplicado.correo === clienteData.correo) {
+          throw new Error('Ya existe un usuario con este correo electrónico');
+        }
+      }
+
+    } catch (error) {
+      if (error.message.includes('Ya existe')) {
+        throw error;
+      }
+      console.warn('No se pudo validar duplicados con usuarios:', error);
+      // Continuar sin validación de usuarios si la API no está disponible
+    }
+  }
+
+  // Obtener usuarios para validación de duplicados
+  async obtenerUsuarios() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarios`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.map(usuario => ({
+        id: usuario.idusuario,
+        documento: usuario.documento?.toString(),
+        correo: usuario.correo
+      }));
+    } catch (error) {
+      console.error('Error al obtener usuarios para validación:', error);
+      throw error;
     }
   }
 

@@ -1,106 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { InputSwitch } from "primereact/inputswitch";
-import Modal from "../components/modal";
-import SearchBar from "../components/SearchBar";
-import Notification from "../components/Notification";
-import RecetaForm from "./Recetas/components/Agregarproduc";
-import "../adminStyles.css";
-import productosApiService from "../services/productos_services";
-
-const mockInsumosDisponibles = [
-  {
-    id: 1,
-    nombre: "Harina de Trigo",
-    categoria: "Harinas",
-    IdUnidadMedida: 1,
-    precio: 15.75,
-    imagen:
-      "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 2,
-    nombre: "Azucar Blanca",
-    categoria: "Endulzantes",
-    IdUnidadMedida: 1,
-    precio: 12.5,
-    imagen:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuGrIouJPuNNVZvvsEjT5hjhfeA-6IasCyVw&sr",
-  },
-  {
-    id: 3,
-    nombre: "Levadura Seca",
-    categoria: "Fermentos",
-    IdUnidadMedida: 2,
-    precio: 8.25,
-    imagen:
-      "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 4,
-    nombre: "Huevos A",
-    categoria: "Lácteos",
-    IdUnidadMedida: 5,
-    precio: 18.9,
-    imagen:
-      "https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 5,
-    nombre: "Mantequilla sin sal",
-    categoria: "Lacteos",
-    IdUnidadMedida: 2,
-    precio: 22.4,
-    imagen:
-      "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 6,
-    nombre: "Leche Entera",
-    categoria: "Lacteos",
-    IdUnidadMedida: 3,
-    precio: 25.5,
-    imagen:
-      "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 7,
-    nombre: "Chocolate Semiamargo",
-    categoria: "Saborizantes",
-    IdUnidadMedida: 2,
-    precio: 35.75,
-    imagen:
-      "https://images.unsplash.com/photo-1511381939415-e44015466834?w=200&h=200&fit=crop&crop=center",
-  },
-  {
-    id: 8,
-    nombre: "Esencia de Vainilla",
-    categoria: "Saborizantes",
-    IdUnidadMedida: 4,
-    precio: 12.8,
-    imagen:
-      "https://sip.pochteca.net/media/blog/f/r/fragancia-de-vainilla-aroma-de-mexico-para-el-mundo.jpg",
-  },
-  {
-    id: 9,
-    nombre: "Sal Refinada",
-    categoria: "Condimentos",
-    IdUnidadMedida: 2,
-    precio: 4.5,
-    imagen:
-      "https://pinero.storage.googleapis.com/wp-content/uploads/2024/02/01165014/4-17.jpg",
-  },
-  {
-    id: 10,
-    nombre: "Aceite Vegetal",
-    categoria: "Grasas",
-    IdUnidadMedida: 3,
-    precio: 18.25,
-    imagen:
-      "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=200&h=200&fit=crop&crop=center",
-  },
-];
+import React, { useState } from "react";
+import "../../../adminStyles.css";
 
 // Mock data for unidades de medida
 const unidadesDeMedida = [
@@ -112,16 +11,9 @@ const unidadesDeMedida = [
   { id: 6, nombre: "kilogramos" },
 ];
 
+export default function ProductosView({ producto, onClose }) {
+  const [detalleVisible, setDetalleVisible] = useState(null);
 
-// Componente modal de visualización mejorado con recetas detalladas
-const VisualizarProductoModal = ({
-  visible,
-  onClose,
-  producto,
-  onToggleDetalle,
-  detalleVisible,
-  unidadesDeMedida,
-}) => {
   const formatearPrecio = (precio) =>
     new Intl.NumberFormat("es-CO", {
       style: "currency",
@@ -135,7 +27,11 @@ const VisualizarProductoModal = ({
     return unidad ? unidad.nombre : "unidad";
   };
 
-  if (!visible || !producto) return null;
+  const toggleDetalleReceta = (id) => {
+    setDetalleVisible(detalleVisible === id ? null : id);
+  };
+
+  if (!producto) return null;
 
   return (
     <div
@@ -323,10 +219,41 @@ const VisualizarProductoModal = ({
                     textAlign: "center",
                   }}
                 >
-                  {producto.estado ? "✅ Activo" : "❌ Inactivo"}
+                  {producto.estado ? "✅ Activo" : "⛔ Inactivo"}
                 </div>
               </div>
             </div>
+
+            {/* Imagen del producto */}
+            {producto.imagen && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#34495e",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  🖼️ Imagen del Producto
+                </label>
+                <div style={{ textAlign: "center" }}>
+                  <img
+                    src={producto.imagen}
+                    alt={producto.nombre}
+                    style={{
+                      maxWidth: "300px",
+                      maxHeight: "300px",
+                      objectFit: "cover",
+                      borderRadius: "12px",
+                      border: "3px solid #e9ecef",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Inventario */}
             <div
@@ -351,7 +278,7 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  🏢 Cantidad en San Pablo
+                  📦 Cantidad Disponible
                 </label>
                 <div
                   style={{
@@ -365,11 +292,44 @@ const VisualizarProductoModal = ({
                     textAlign: "center",
                   }}
                 >
-                  {producto.cantidadSanPablo || 0} unidades
+                  {producto.cantidad || 0} unidades
                 </div>
               </div>
 
-              <div>
+              {producto.cantidadSanBenito !== undefined && (
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.9rem",
+                      fontWeight: "600",
+                      color: "#34495e",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    🏪 Cantidad en San Benito
+                  </label>
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "white",
+                      border: "2px solid #6c757d",
+                      borderRadius: "8px",
+                      fontSize: "1.1rem",
+                      color: "#495057",
+                      fontWeight: "600",
+                      textAlign: "center",
+                    }}
+                  >
+                    {producto.cantidadSanBenito || 0} unidades
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Especificaciones */}
+            {producto.especificaciones && (
+              <div style={{ marginBottom: "2rem" }}>
                 <label
                   style={{
                     display: "block",
@@ -379,26 +339,25 @@ const VisualizarProductoModal = ({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  🏪 Cantidad en San Benito
+                  📋 Especificaciones
                 </label>
                 <div
                   style={{
-                    padding: "0.75rem",
-                    backgroundColor: "white",
-                    border: "2px solid #6c757d",
+                    padding: "1rem",
+                    backgroundColor: "#e8f4f8",
+                    border: "2px solid #17a2b8",
                     borderRadius: "8px",
-                    fontSize: "1.1rem",
-                    color: "#495057",
-                    fontWeight: "600",
-                    textAlign: "center",
+                    fontSize: "1rem",
+                    color: "#2c3e50",
+                    lineHeight: "1.5",
                   }}
                 >
-                  {producto.cantidadSanBenito || 0} unidades
+                  {producto.especificaciones}
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Sección de Recetas Mejorada */}
+            {/* Sección de Recetas */}
             <div style={{ marginBottom: "2rem" }}>
               <div
                 style={{
@@ -446,9 +405,9 @@ const VisualizarProductoModal = ({
                         transition: "box-shadow 0.3s ease",
                       }}
                     >
-                      {/* Header de la receta mejorado */}
+                      {/* Header de la receta */}
                       <div
-                        onClick={() => onToggleDetalle(receta.id)}
+                        onClick={() => toggleDetalleReceta(receta.id)}
                         style={{
                           padding: "1.5rem",
                           backgroundColor: index % 2 === 0 ? "#f1f8e9" : "#fff3e0",
@@ -561,7 +520,7 @@ const VisualizarProductoModal = ({
                         </div>
                       </div>
 
-                      {/* Detalles de la receta (colapsable) mejorado */}
+                      {/* Detalles de la receta (colapsable) */}
                       {detalleVisible === receta.id && (
                         <div 
                           style={{ 
@@ -577,7 +536,7 @@ const VisualizarProductoModal = ({
                               gap: "2rem",
                             }}
                           >
-                            {/* Insumos mejorado */}
+                            {/* Insumos */}
                             <div>
                               <h5
                                 style={{
@@ -654,7 +613,7 @@ const VisualizarProductoModal = ({
                               </div>
                             </div>
 
-                            {/* Recetas anidadas mejorado */}
+                            {/* Recetas anidadas */}
                             <div>
                               <h5
                                 style={{
@@ -787,459 +746,6 @@ const VisualizarProductoModal = ({
           }
         `}
       </style>
-    </div>
-  );
-};
-
-export default function ProductosTabla() {
-  const [productos, setProductos] = useState([]);
-  const [filtro, setFiltro] = useState("");
-  const [notification, setNotification] = useState({
-    visible: false,
-    mensaje: "",
-    tipo: "success",
-  });
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [currentView, setCurrentView] = useState("list");
-  const [recetaDetalleVisible, setRecetaDetalleVisible] = useState(null);
-  const [archivoImagen, setArchivoImagen] = useState(null);
-  const [previewImagen, setPreviewImagen] = useState(null);
-
-  // Función corregida para obtener nombre de categoría por ID
-  const getNombreCategoriaById = (idCategoria) => {
-    if (!idCategoria && idCategoria !== 0) {
-      return "Sin categoría";
-    }
-
-    const id = Number(idCategoria);
-    const categoria = categorias.find((cat) => cat.id === id);
-    return categoria ? categoria.nombre : "Sin categoría";
-  };
-
-  const toggleDetalleReceta = (id) => {
-    setRecetaDetalleVisible(recetaDetalleVisible === id ? null : id);
-  };
-
-  const formatearPrecio = (precio) =>
-    new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(precio);
-
-  useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        const data = await productosApiService.obtenerProductos();
-        setProductos(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Error cargando productos:", error);
-        setProductos([]);
-      }
-    };
-    cargarProductos();
-  }, []);
-
-  const [categorias, setCategorias] = useState([]);
-  const [loadingCategorias, setLoadingCategorias] = useState(true);
-
-  useEffect(() => {
-    const cargarCategorias = async () => {
-      try {
-        const response = await fetch(
-          "https://deliciasoft-backend.onrender.com/api/categorias-productos"
-        );
-        if (!response.ok) {
-          throw new Error("No se pudo obtener las categorías");
-        }
-        const data = await response.json();
-        setCategorias(data);
-      } catch (error) {
-        console.error("Error al cargar las categorías:", error);
-      } finally {
-        setLoadingCategorias(false);
-      }
-    };
-
-    cargarCategorias();
-  }, []);
-
-  const handleImagenChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    if (file.size > 5 * 1024 * 1024) {
-      alert("El archivo no puede superar los 5MB");
-      return;
-    }
-    setArchivoImagen(file);
-
-    // Crear preview
-    const reader = new FileReader();
-    reader.onload = (e) => setPreviewImagen(e.target.result);
-    reader.readAsDataURL(file);
-  }
-};
-
-  const toggleEstado = (producto) => {
-    const updated = productos.map((p) =>
-      p.id === producto.id ? { ...p, estado: !p.estado } : p
-    );
-    setProductos(updated);
-    showNotification(
-      `Producto ${producto.estado ? "inactivado" : "activado"} exitosamente`
-    );
-  };
-
-  const showNotification = (mensaje, tipo = "success") => {
-    setNotification({ visible: true, mensaje, tipo });
-  };
-
-  const hideNotification = () => {
-    setNotification({ visible: false, mensaje: "", tipo: "success" });
-  };
-
-  const handleSearch = (query) => {
-    setFiltro(query);
-  };
-
-  const filteredProductos = productos.filter((producto) =>
-    producto.nombre.toLowerCase().includes(filtro.toLowerCase())
-  );
-
-  const handleAgregarProducto = () => {
-    setCurrentView("add");
-  };
-
-  const editarProducto = (producto) => {
-    setProductoSeleccionado(producto);
-    setCurrentView("edit");
-  };
-
-  const visualizarProducto = (producto) => {
-    setProductoSeleccionado(producto);
-    setCurrentView("visualize");
-  };
-
-  const confirmarEliminarProducto = (producto) => {
-    setProductoSeleccionado(producto);
-    setCurrentView("delete");
-  };
-
-  const handleCancel = () => {
-    setCurrentView("list");
-    setProductoSeleccionado(null);
-  };
-
-  const handleSaveProducto = async (productoData) => {
-    try {
-      console.log("🔍 Datos recibidos en handleSave:", productoData);
-
-      const payload = {
-        nombreproducto:
-          productoData.nombreproducto || productoData.nombre || "",
-        precioproducto: String(
-          productoData.precioproducto || productoData.precio || "0"
-        ),
-        cantidadproducto: String(
-          productoData.cantidadproducto || productoData.cantidad || "0"
-        ),
-        estado: productoData.estado ?? true,
-        idcategoriaproducto:
-          parseInt(productoData.idcategoriaproducto) || null,
-      };
-
-      if (productoData.idproductogeneral) {
-        payload.idproductogeneral = productoData.idproductogeneral;
-      }
-
-      if (productoData.especificaciones?.trim()) {
-        payload.especificaciones = productoData.especificaciones.trim();
-      }
-
-      if (payload.idproductogeneral) {
-        if (productoData.idimagen && productoData.idimagen > 0) {
-          payload.idimagen = parseInt(productoData.idimagen);
-        }
-        if (productoData.idreceta && productoData.idreceta > 0) {
-          payload.idreceta = parseInt(productoData.idreceta);
-        }
-      }
-
-      console.log("📤 Payload final:", payload);
-
-      if (!payload.nombreproducto?.trim()) {
-        throw new Error("El nombre del producto es requerido");
-      }
-
-      if (!payload.idcategoriaproducto || isNaN(payload.idcategoriaproducto)) {
-        throw new Error("Debe seleccionar una categoría válida");
-      }
-
-      const precio = parseFloat(payload.precioproducto);
-      if (isNaN(precio) || precio < 0) {
-        throw new Error("El precio debe ser un número válido mayor o igual a 0");
-      }
-
-      if (payload.idproductogeneral) {
-        await productosApiService.actualizarProducto(
-          payload.idproductogeneral,
-          payload
-        );
-        showNotification("Producto actualizado exitosamente");
-      } else {
-        await productosApiService.crearProducto(payload);
-        showNotification(
-          `Producto "${payload.nombreproducto}" agregado exitosamente`
-        );
-      }
-
-      handleCancel();
-
-      const data = await productosApiService.obtenerProductos();
-      setProductos(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("❌ Error guardando producto:", error);
-
-      let mensajeError = "Error al guardar producto";
-
-      if (error.message.includes("idcategoriaproducto")) {
-        mensajeError = "Error: La categoría seleccionada no es válida";
-      } else if (error.message.includes("nombreproducto")) {
-        mensajeError = "Error: El nombre del producto es inválido o ya existe";
-      } else if (error.message.includes("precioproducto")) {
-        mensajeError = "Error: El precio debe ser un número válido";
-      } else {
-        mensajeError = error.message || mensajeError;
-      }
-
-      showNotification(mensajeError, "error");
-    }
-  };
-
-  const fetchProductos = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const productosData = await productoApiService.obtenerProductos();
-
-      const productosMapeados = productosData.map((p) => ({
-        id: p.idproductogeneral,
-        nombre: p.nombreproducto,
-        precio: parseFloat(p.precioproducto) || 0,
-        cantidad: parseInt(p.cantidadproducto) || 0,
-        categoria: p.categoria || "Sin categoría",
-        imagen: p.imagenes?.urlimg || null, 
-        estado: p.estado,
-        idcategoriaproducto: p.idcategoriaproducto,
-        idimagen: p.idimagen,
-        idreceta: p.idreceta,
-      }));
-
-      const productosActivos = productosMapeados.filter(
-        (prod) => prod.estado === true
-      );
-      setProductos(productosActivos);
-
-      const categoriasUnicas = [
-        ...new Set(productosActivos.map((p) => p.categoria)),
-      ];
-      setCategorias(["Todos", ...categoriasUnicas]);
-    } catch (error) {
-      console.error("Error al cargar productos:", error);
-      setError("Error al cargar productos.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const eliminarProducto = async () => {
-    try {
-      await productosApiService.eliminarProducto(productoSeleccionado.id);
-      showNotification("Producto eliminado exitosamente");
-      handleCancel();
-      const data = await productosApiService.obtenerProductos();
-      setProductos(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error eliminando producto:", error);
-      showNotification("Error al eliminar producto", "error");
-    }
-  };
-
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case "list":
-        return (
-          <div className="admin-wrapper">
-            <div className="admin-toolbar">
-              <button className="admin-button pink" onClick={handleAgregarProducto}>
-                + Agregar
-              </button>
-              <SearchBar placeholder="Buscar productos..." value={filtro} onChange={handleSearch}/>
-            </div>
-            <h2 className="admin-section-title">Gestión de productos</h2>
-            <DataTable
-              value={filteredProductos}
-              paginator
-              rows={5}
-              className="admin-table"
-            >
-              <Column
-                header="N°"
-                body={(_, { rowIndex }) => rowIndex + 1}
-                style={{ width: "3rem" }}
-              />
-              <Column
-                header="Imagen"
-                body={(row) =>
-                  row.imagen ? (
-                    <img
-                      src={row.imagen}
-                      alt={row.nombre}
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: "12px", color: "#888" }}>
-                      Sin imagen
-                    </span>
-                  )
-                }
-                style={{ width: "100px", textAlign: "center" }}
-              />
-              <Column
-                field="nombre"
-                header="Nombre"
-                style={{ width: "200px" }}
-              />
-              <Column
-                field="precio"
-                header="Precio"
-                body={(row) => formatearPrecio(row.precio)}
-                style={{ width: "150px" }}
-              />
-              <Column
-                field="categoria"
-                header="Categoría"
-                style={{ width: "150px" }}
-              />
-              <Column
-                header="Estado"
-                body={(row) => (
-                  <InputSwitch
-                    checked={row.estado}
-                    onChange={() => toggleEstado(row)}
-                  />
-                )}
-                style={{ width: "80px", textAlign: "center" }}
-              />
-              <Column
-                header="Acción"
-                body={(row) => (
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button
-                      className="admin-button gray"
-                      onClick={() => visualizarProducto(row)}
-                    >
-                      🔍
-                    </button>
-                    <button
-                      className="admin-button yellow"
-                      onClick={() => editarProducto(row)}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="admin-button red"
-                      onClick={() => confirmarEliminarProducto(row)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                )}
-              />
-            </DataTable>
-          </div>
-        );
-
-      case "add":
-        return (
-          <div className="modal-overlay-fixed">
-            <div className="modal-content-fixed">
-              <RecetaForm
-                onSave={handleSaveProducto}
-                onCancel={handleCancel}
-                initialData={null}
-                isEditing={false}
-                categoriasProductos={categorias}
-              />
-            </div>
-          </div>
-        );
-
-      case "edit":
-        return (
-          <div className="modal-overlay-fixed">
-            <div className="modal-content-fixed">
-              <RecetaForm
-                onSave={handleSaveProducto}
-                onCancel={handleCancel}
-                initialData={productoSeleccionado}
-                isEditing={true}
-                categoriasProductos={categorias}
-              />
-            </div>
-          </div>
-        );
-
-      case "visualize":
-        return (
-          <VisualizarProductoModal
-            visible={true}
-            onClose={handleCancel}
-            producto={productoSeleccionado}
-            onToggleDetalle={toggleDetalleReceta}
-            detalleVisible={recetaDetalleVisible}
-          />
-        );
-
-      case "delete":
-        return (
-          <Modal visible={true} onClose={handleCancel}>
-            <h2>Confirmar Eliminación</h2>
-            <p>
-              ¿Estás seguro de eliminar el producto{" "}
-              <strong>{productoSeleccionado?.nombre}</strong>?
-            </p>
-            <div className="modal-footer">
-              <button className="modal-btn cancel-btn" onClick={handleCancel}>
-                Cancelar
-              </button>
-              <button className="modal-btn save-btn" onClick={eliminarProducto}>
-                Eliminar
-              </button>
-            </div>
-          </Modal>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="admin-wrapper">
-      <Notification
-        visible={notification.visible}
-        mensaje={notification.mensaje}
-        tipo={notification.tipo}
-        onClose={hideNotification}
-      />
-      {renderCurrentView()}
     </div>
   );
 }

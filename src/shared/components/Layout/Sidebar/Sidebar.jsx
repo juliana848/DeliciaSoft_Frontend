@@ -112,7 +112,7 @@ const Sidebar = ({ userRole = 'admin' }) => {
         },
         { 
           title: 'Productos', 
-          path: '/admin/pages/productos', 
+          path: '/admin/pages/Productos',
           icon: 'bi bi-star-fill',
           permission: 'Productos'
         },

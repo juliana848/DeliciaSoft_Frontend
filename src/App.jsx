@@ -33,7 +33,7 @@ import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
 import ProveedorTable from './features/Admin/pages/Compras/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
-import Productos from './features/Admin/pages/Productos.jsx';
+import Productos from './features/Admin/pages/Productos/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas/Recetas.jsx';
 import SedesTable from './features/Admin/pages/Sede.jsx';

@@ -17,72 +17,49 @@ function Cartas() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Mapeo de categorías a imágenes (mantén tus imágenes actuales)
-  const imagenesCategoria = {
-    "fresas con crema": "/imagenes/Cartas/fresacrema.jpeg",
-    "obleas": "/imagenes/Cartas/obleass.jpeg",
-    "mini donas": "/imagenes/Cartas/miniDona.jpeg",
-    "cupcakes": "/imagenes/Cartas/cup.jpeg",
-    "arroz con leche": "/imagenes/Cartas/arrozConLeche.jpg",
-    "sandwches": "/imagenes/Cartas/sandwches.jpeg",
-    "postres": "/imagenes/Cartas/postres.jpeg",
-    "chocolates": "/imagenes/Cartas/chocolates.jpeg",
-    "bebida": "/imagenes/Cartas/bebida.jpeg" // Agrega imagen para bebidas si tienes
-  };
-
-  // Mapeo de precios por categoría (mantén tus precios actuales)
-  const preciosCategoria = {
-    "fresas con crema": "$7,000",
-    "obleas": "$3,000",
-    "mini donas": "$6,000",
-    "cupcakes": "$3,000",
-    "arroz con leche": "$10,000",
-    "sandwches": "$16,500",
-    "postres": "$8,000",
-    "chocolates": "$1,500",
-    "bebida": "$2,500" // Precio para bebidas
-  };
+  // Imagen por defecto para casos sin imagen
+  const imagenPorDefecto = "/imagenes/Cartas/default.jpeg";
 
   // Función para obtener las categorías desde la API
   const fetchCategorias = async () => {
     try {
       setLoading(true);
-      const response = await fetch("https://deliciasoft-backend.onrender.com/api/categoria-productos");
+      const response = await fetch("https://deliciasoft-backend.onrender.com/api/categorias-productos");
       
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
       
       const data = await response.json();
+      console.log("Datos recibidos de la API:", data);
       
       // Filtrar solo categorías activas y transformar para el componente
       const categoriasActivas = data
         .filter(categoria => categoria.estado)
-        .map(categoria => ({
-          id: categoria.idcategoriaproducto,
-          nombre: categoria.nombrecategoria,
-          descripcion: categoria.descripcion,
-          precio: preciosCategoria[categoria.nombrecategoria.toLowerCase()] || "$0",
-          imagen: imagenesCategoria[categoria.nombrecategoria.toLowerCase()] || "/imagenes/Cartas/default.jpeg"
-        }));
+        .map(categoria => {
+          // Obtener la imagen desde la API o usar imagen por defecto
+          const imagenUrl = categoria.imagenes && categoria.imagenes.urlimg 
+            ? categoria.imagenes.urlimg 
+            : imagenPorDefecto;
+
+          return {
+            id: categoria.idcategoriaproducto,
+            nombre: categoria.nombrecategoria,
+            descripcion: categoria.descripcion,
+            imagen: imagenUrl,
+            idimagencat: categoria.idimagencat,
+            precio: 0 // Temporal hasta arreglar ProductosDestacados
+          };
+        });
 
       setCategorias(categoriasActivas);
       setError(null);
     } catch (err) {
       console.error("Error al cargar categorías:", err);
-      setError("Error al cargar los productos. Mostrando productos por defecto.");
+      setError("Error al cargar los productos. Por favor, intenta nuevamente.");
       
-      // Fallback a datos estáticos en caso de error
-      setCategorias([
-        { id: 2, nombre: "FRESAS CON CREMA", precio: "$7,000", imagen: "/imagenes/Cartas/fresacrema.jpeg" },
-        { id: 3, nombre: "OBLEA", precio: "$3,000", imagen: "/imagenes/Cartas/obleass.jpeg" },
-        { id: 4, nombre: "Mini Donas", precio: "$6,000", imagen: "/imagenes/Cartas/miniDona.jpeg" },
-        { id: 5, nombre: "Cupcakes", precio: "$3,000", imagen: "/imagenes/Cartas/cup.jpeg" },
-        { id: 6, nombre: "Arroz con Leche", precio: "$10,000", imagen: "/imagenes/Cartas/arrozConLeche.jpg" },
-        { id: 7, nombre: "Sandwiches", precio: "$16,500", imagen: "/imagenes/Cartas/sandwches.jpeg" },
-        { id: 8, nombre: "Postres", precio: "$8,000", imagen: "/imagenes/Cartas/postres.jpeg" },
-        { id: 9, nombre: "chocolates", precio: "$1,500", imagen: "/imagenes/Cartas/chocolates.jpeg" },
-      ]);
+      // En caso de error, mostrar array vacío
+      setCategorias([]);
     } finally {
       setLoading(false);
     }

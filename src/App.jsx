@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import './App.css';
 
 // Importar páginas públicas
-import Inicio from './features/Home/pages/Inicio';
+import Inicio from './features/Home/Inicio';
 import Conocenos from './features/Conocenos/pages/Conocenos';
 import Contactenos from './features/Contactenos/pages/Contactenos';
 import Cartas from './features/Cartas/pages/Cartas';

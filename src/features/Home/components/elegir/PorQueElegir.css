@@ -1,0 +1,233 @@
+.porque-elegir {
+  padding: 2.5rem 0;
+  background: linear-gradient(135deg, #f5f3ff 0%, #fff 50%, #fef7ff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.porque-elegir::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.porque-elegir::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 20, 147, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  color: #2C3E50;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #FF1493, #FFCC00);
+  border-radius: 2px;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-top: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.razones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 5rem;
+}
+
+.razon-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.8s ease-out;
+  animation-fill-mode: both;
+}
+
+.razon-card:nth-child(1) { animation-delay: 0.1s; }
+.razon-card:nth-child(2) { animation-delay: 0.2s; }
+.razon-card:nth-child(3) { animation-delay: 0.3s; }
+.razon-card:nth-child(4) { animation-delay: 0.4s; }
+.razon-card:nth-child(5) { animation-delay: 0.5s; }
+.razon-card:nth-child(6) { animation-delay: 0.6s; }
+
+.razon-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.razon-card:hover .razon-glow {
+  opacity: 1;
+  transform: scale(1.5);
+}
+
+.razon-header {
+  position: relative;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.razon-icono {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #FF1493, #FF69B4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+  box-shadow: 0 8px 25px rgba(255, 20, 147, 0.3);
+  position: relative;
+  z-index: 0.1;
+}
+
+.icono {
+  font-size: 2rem;
+  animation: pulse 2s infinite;
+}
+
+.razon-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(255, 20, 147, 0.2) 0%, rgba(255, 20, 147, 0.1) 40%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.razon-content h3.razon-titulo {
+  font-size: 1.4rem;
+  color: #2C3E50;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.razon-descripcion {
+  color: #666;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .porque-elegir {
+    padding: 3rem 0;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .razones-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .razon-card {
+    padding: 1.5rem;
+  }
+  
+  .razon-icono {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .icono {
+    font-size: 1.5rem;
+  }
+  
+  .razon-glow {
+    width: 90px;
+    height: 90px;
+  }
+}

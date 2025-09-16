@@ -7,11 +7,12 @@ import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import AgregarInsumosModal from '../../components/AgregarInsumosModal';
+import PDFPreview from '../PDFPreview'; // Importamos el componente PDFPreview
 import { generarPDFCompra, configurarEmpresa } from '../pdf';
 import { XCircle } from 'lucide-react';
 import compraApiService from '../../services/compras_services';
 import proveedorApiService from '../../services/proveedor_services';
-import insumoApiService from '../../services/insumos'; // AGREGADO: Import para actualizar stock
+import insumoApiService from '../../services/insumos';
 
 export default function ComprasTable() {
     const [compras, setCompras] = useState([]);
@@ -27,6 +28,10 @@ export default function ComprasTable() {
     const [proveedores, setProveedores] = useState([]);
     const [cargando, setCargando] = useState(false);
     const [proveedorId, setProveedorId] = useState("");
+
+    // Estados para PDFPreview
+    const [pdfPreviewVisible, setPdfPreviewVisible] = useState(false);
+    const [compraPdf, setCompraPdf] = useState(null);
 
     // Estados para el modal de proveedores
     const [modalProveedorVisible, setModalProveedorVisible] = useState(false);
@@ -423,16 +428,14 @@ export default function ComprasTable() {
         }
     };
 
-    const generarPDF = async (compra) => {
+    // Nueva función para abrir preview de PDF
+    const abrirPDFPreview = async (compra) => {
         try {
+            setCargando(true);
             const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
 
             if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
-                setNotification({
-                    visible: true,
-                    mensaje: 'No se puede generar PDF: La compra no tiene insumos registrados',
-                    tipo: 'error'
-                });
+                showNotification('No se puede generar PDF: La compra no tiene insumos registrados', 'error');
                 return;
             }
 
@@ -446,26 +449,44 @@ export default function ComprasTable() {
                     nombre: detalle.insumo?.nombre || 'N/A',
                     cantidad: detalle.cantidad,
                     precio: detalle.precioUnitario,
-                    unidad: detalle.insumo?.unidad || 'N/A'
+                    precioUnitario: detalle.precioUnitario,
+                    unidad_medida: detalle.insumo?.unidad || 'N/A'
                 }))
             };
 
-            await generarPDFCompra(datosCompra);
-
-            setNotification({
-                visible: true,
-                mensaje: 'PDF generado exitosamente',
-                tipo: 'success'
-            });
+            setCompraPdf(datosCompra);
+            setPdfPreviewVisible(true);
 
         } catch (error) {
-            console.error('Error al generar PDF:', error);
-            setNotification({
-                visible: true,
-                mensaje: 'Error al generar el PDF: ' + error.message,
-                tipo: 'error'
-            });
+            console.error('Error al preparar PDF:', error);
+            showNotification('Error al preparar la previsualización: ' + error.message, 'error');
+        } finally {
+            setCargando(false);
         }
+    };
+
+    // Función para cerrar preview de PDF
+    const cerrarPDFPreview = () => {
+        setPdfPreviewVisible(false);
+        setCompraPdf(null);
+    };
+
+    // Función para descargar PDF desde el preview
+    const descargarPDFDesdePreview = async () => {
+        try {
+            if (compraPdf) {
+                await generarPDFCompra(compraPdf);
+                showNotification('PDF descargado exitosamente', 'success');
+            }
+        } catch (error) {
+            console.error('Error al descargar PDF:', error);
+            showNotification('Error al descargar el PDF: ' + error.message, 'error');
+        }
+    };
+
+    // Función original de generar PDF (ahora redirige a preview)
+    const generarPDF = async (compra) => {
+        await abrirPDFPreview(compra);
     };
 
     // Cargar datos iniciales
@@ -543,7 +564,8 @@ export default function ComprasTable() {
             await compraApiService.cambiarEstadoCompra(compraSeleccionada.id, false);
             await cargarCompras();
             cerrarModal();
-            showNotification("Compra anulada exitosamente");
+            
+            showNotification("Compra anulada exitosamente. Para verla, cambie a 'Ver Anuladas'.");
         } catch (error) {
             console.error("Error al anular compra:", error);
             setNotification({
@@ -556,7 +578,6 @@ export default function ComprasTable() {
         }
     };
 
-    // NUEVA FUNCIÓN: Actualizar stock de insumos
     const actualizarStockInsumos = async (insumosComprados) => {
         try {
             console.log('=== ACTUALIZANDO STOCK DE INSUMOS ===');
@@ -577,7 +598,7 @@ export default function ComprasTable() {
                     const nuevoStock = (insumoActual.cantidad || 0) + (insumo.cantidad || 0);
                     console.log(`  - Nuevo stock: ${nuevoStock}`);
 
-                    // Preparar datos para actualización (usando la estructura correcta para la API)
+                    // Preparar datos para actualización
                     const datosActualizacion = {
                         nombreInsumo: insumoActual.nombreInsumo,
                         idCategoriaInsumos: insumoActual.idCategoriaInsumos,
@@ -613,7 +634,6 @@ export default function ComprasTable() {
                         exito: false
                     });
 
-                    // No lanzar el error para que continúe con los demás insumos
                     showNotification(
                         `Advertencia: No se pudo actualizar el stock de "${insumo.nombre}": ${error.message}`,
                         'warning'
@@ -786,7 +806,7 @@ export default function ComprasTable() {
         });
     };
 
-    // Aplicar filtros
+    // Aplicar filtros - LÓGICA CORREGIDA
     const comprasFiltradas = filtrarCompras(compras, filtro).filter(c =>
         mostrarAnuladas ? !c.estado : c.estado
     );
@@ -870,7 +890,6 @@ export default function ComprasTable() {
         return true;
     };
 
-    // FUNCIÓN MODIFICADA: Guardar compra con actualización de stock
     const guardarCompra = async () => {
         try {
             if (!compraData.idProveedor || insumosSeleccionados.length === 0) {
@@ -931,6 +950,14 @@ export default function ComprasTable() {
     return (
         <div className="admin-wrapper">
             <Notification visible={notification.visible} mensaje={notification.mensaje} tipo={notification.tipo} onClose={hideNotification} />
+
+            {/* Modal de previsualización de PDF */}
+            <PDFPreview 
+                visible={pdfPreviewVisible}
+                onClose={cerrarPDFPreview}
+                compraData={compraPdf}
+                onDownload={descargarPDFDesdePreview}
+            />
 
             {cargando && (
                 <div style={{ 
@@ -1002,12 +1029,39 @@ export default function ComprasTable() {
                         className="admin-table"
                         paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
                         rowClassName={rowData => !rowData.estado ? 'fila-anulada' : ''}
+                        tableStyle={{ 
+                            tableLayout: 'fixed',
+                            width: '100%'
+                        }}
                     >
-                        <Column header="N°" body={(r, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
+                        <Column 
+                            header="N°" 
+                            body={(r, { rowIndex }) => rowIndex + 1} 
+                            style={{ 
+                                width: '60px', 
+                                textAlign: 'center',
+                                padding: '8px 4px'
+                            }} 
+                            headerStyle={{
+                                width: '60px',
+                                textAlign: 'center',
+                                padding: '8px 4px'
+                            }}
+                        />
                         <Column 
                             field="proveedor" 
                             header="Proveedor" 
                             body={rowData => rowData.proveedor?.nombre || 'N/A'}
+                            style={{ 
+                                width: '25%',
+                                textAlign: 'left',
+                                padding: '8px'
+                            }}
+                            headerStyle={{
+                                width: '25%',
+                                textAlign: 'left',
+                                padding: '8px'
+                            }}
                         />
                         <Column 
                             field="fechaCompra" 
@@ -1019,18 +1073,38 @@ export default function ComprasTable() {
                                     return rowData.fechaCompra || 'N/A';
                                 }
                             }}
+                            style={{ 
+                                width: '20%',
+                                textAlign: 'center',
+                                padding: '8px'
+                            }}
+                            headerStyle={{
+                                width: '20%',
+                                textAlign: 'center',
+                                padding: '8px'
+                            }}
                         />
                         <Column
                             field="total"
                             header="Total"
                             body={(rowData) => formatoCOP(rowData.total)}
+                            style={{ 
+                                width: '20%',
+                                textAlign: 'right',
+                                padding: '8px'
+                            }}
+                            headerStyle={{
+                                width: '20%',
+                                textAlign: 'right',
+                                padding: '8px'
+                            }}
                         />
                         <Column
                             header="Acción"
                             body={rowData => {
                                 if (!rowData.estado) return <span style={{ color: 'gray' }}>Anulada</span>;
                                 return (
-                                    <>
+                                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                                         <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)} disabled={cargando}>👁</button>
                                         <button
                                             className="admin-button red"
@@ -1046,10 +1120,20 @@ export default function ComprasTable() {
                                             onClick={() => generarPDF(rowData)}
                                             disabled={cargando}
                                         >
-                                            <i className="fas fa-download" style={{ marginRight: '5px' }}></i>
+                                            📄
                                         </button>
-                                    </>
+                                    </div>
                                 );
+                            }}
+                            style={{ 
+                                width: '15%',
+                                textAlign: 'center',
+                                padding: '8px'
+                            }}
+                            headerStyle={{
+                                width: '15%',
+                                textAlign: 'center',
+                                padding: '8px'
                             }}
                         />
                     </DataTable>
@@ -1178,19 +1262,19 @@ export default function ComprasTable() {
                         <table className="compra-detalle-table">
                             <thead className="p-datatable-thead">
                                 <tr>
-                                    <th>Nombre Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Unidad_Medida</th>
-                                    <th>Precio unitario</th>
-                                    <th>Subtotal</th> 
-                                    {modalTipo !== 'ver' && <th>Acción</th>}
+                                    <th style={{ width: '30%', textAlign: 'left', padding: '12px 8px' }}>Nombre Producto</th>
+                                    <th style={{ width: '15%', textAlign: 'center', padding: '12px 8px' }}>Cantidad</th>
+                                    <th style={{ width: '15%', textAlign: 'center', padding: '12px 8px' }}>Unidad Medida</th>
+                                    <th style={{ width: '20%', textAlign: 'right', padding: '12px 8px' }}>Precio unitario</th>
+                                    <th style={{ width: '15%', textAlign: 'right', padding: '12px 8px' }}>Subtotal</th> 
+                                    {modalTipo !== 'ver' && <th style={{ width: '5%', textAlign: 'center', padding: '12px 8px' }}>Acción</th>}
                                 </tr>
                             </thead>
                             <tbody className="p-datatable">
                                 {insumosSeleccionados.map((item) => (
                                     <tr key={item.id}>
-                                        <td>{item.nombre}</td>
-                                        <td>
+                                        <td style={{ padding: '8px', textAlign: 'left' }}>{item.nombre}</td>
+                                        <td style={{ padding: '8px', textAlign: 'center' }}>
                                             {modalTipo === 'ver' ? 
                                                 (
                                                     item.cantidad
@@ -1203,16 +1287,17 @@ export default function ComprasTable() {
                                                             handleCantidadChange(item.id, parseInt(e.target.value))
                                                         }
                                                         disabled={cargando}
+                                                        style={{ width: '80px', textAlign: 'center' }}
                                                     />
                                                 )}
                                         </td>
-                                        <td>{item.unidad}</td>
-                                        <td>{formatoCOP(item.precio || item.precioUnitario || 0)}</td>
-                                        <td>
+                                        <td style={{ padding: '8px', textAlign: 'center' }}>{item.unidad}</td>
+                                        <td style={{ padding: '8px', textAlign: 'right' }}>{formatoCOP(item.precio || item.precioUnitario || 0)}</td>
+                                        <td style={{ padding: '8px', textAlign: 'right' }}>
                                             {formatoCOP((item.cantidad || 0) * (item.precio || item.precioUnitario || 0))}
                                         </td>
                                         {modalTipo !== 'ver' && (
-                                            <td>
+                                            <td style={{ padding: '8px', textAlign: 'center' }}>
                                                 <button
                                                     className="btn-eliminar"
                                                     onClick={() => removeInsumo(item.id)}
@@ -1455,6 +1540,49 @@ export default function ComprasTable() {
                 .fila-anulada {
                     background-color: #ffebee !important;
                     opacity: 0.7;
+                }
+                
+                /* Estilos mejorados para la alineación de tabla */
+                .admin-table .p-datatable-header-cell {
+                    text-align: center;
+                    vertical-align: middle;
+                    padding: 12px 8px;
+                    font-weight: 600;
+                    background-color: #f8f9fa;
+                    border-bottom: 2px solid #dee2e6;
+                }
+                
+                .admin-table .p-datatable-tbody > tr > td {
+                    vertical-align: middle;
+                    padding: 8px;
+                    border-bottom: 1px solid #dee2e6;
+                }
+                
+                .compra-detalle-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 10px;
+                    font-size: 14px;
+                }
+                
+                .compra-detalle-table th {
+                    background-color: #f8f9fa;
+                    font-weight: 600;
+                    border: 1px solid #dee2e6;
+                    white-space: nowrap;
+                }
+                
+                .compra-detalle-table td {
+                    border: 1px solid #dee2e6;
+                    vertical-align: middle;
+                }
+                
+                .compra-detalle-table tbody tr:nth-child(even) {
+                    background-color: #f8f9fa;
+                }
+                
+                .compra-detalle-table tbody tr:hover {
+                    background-color: #e9ecef;
                 }
             `}</style>
         </div>

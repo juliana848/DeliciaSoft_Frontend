@@ -40,7 +40,139 @@ class ProductoApiService {
     return response.json();
   }
 
-  // ========== MÉTODOS DE PRODUCTOS ==========
+  // ========== NUEVA FUNCIÓN: PRODUCTOS MÁS VENDIDOS ==========
+  async obtenerProductosMasVendidos(limit = 6) {
+    try {
+      console.log(`Obteniendo los ${limit} productos más vendidos...`);
+      
+      const response = await fetch(`${BASE_URL}/mas-vendidos?limit=${limit}`, {
+        method: "GET",
+        headers: this.baseHeaders,
+      });
+      
+      console.log('Response status:', response.status);
+      
+      const data = await this.handleResponse(response);
+      console.log('Productos más vendidos recibidos:', data);
+      
+      // Transformar los productos
+      const productosDestacados = data.productos.map(producto => 
+        this.transformarProductoDestacadoDesdeAPI(producto)
+      );
+      
+      console.log('Productos destacados transformados:', productosDestacados);
+      return productosDestacados;
+      
+    } catch (error) {
+      console.error('Error al obtener productos más vendidos:', error);
+      
+      // Fallback: obtener productos normales si falla
+      console.log('Fallback: obteniendo productos normales...');
+      try {
+        const productosNormales = await this.obtenerProductos();
+        return productosNormales.slice(0, limit).map(producto => ({
+          ...producto,
+          totalVendido: 0,
+          vecesVendido: 0,
+          esDestacado: true
+        }));
+      } catch (fallbackError) {
+        console.error('Error en fallback:', fallbackError);
+        throw new Error(`No se pudieron obtener productos destacados: ${error.message}`);
+      }
+    }
+  }
+
+  // ========== NUEVA FUNCIÓN: ESTADÍSTICAS DE VENTAS ==========
+  async obtenerEstadisticasVentas(fechaInicio = null, fechaFin = null) {
+    try {
+      console.log('Obteniendo estadísticas de ventas...');
+      
+      let url = `${BASE_URL}/estadisticas-ventas`;
+      const params = new URLSearchParams();
+      
+      if (fechaInicio) params.append('fechaInicio', fechaInicio);
+      if (fechaFin) params.append('fechaFin', fechaFin);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.baseHeaders,
+      });
+      
+      const data = await this.handleResponse(response);
+      console.log('Estadísticas obtenidas:', data);
+      return data;
+      
+    } catch (error) {
+      console.error('Error al obtener estadísticas:', error);
+      
+      // Estadísticas de fallback
+      return {
+        resumen: {
+          totalProductosVendidos: 0,
+          totalTransacciones: 0,
+          fechaConsulta: 'Sin datos'
+        },
+        topVentasCantidad: [],
+        topVentasIngresos: []
+      };
+    }
+  }
+
+  // ========== FUNCIÓN DE TRANSFORMACIÓN PARA PRODUCTOS DESTACADOS ==========
+  transformarProductoDestacadoDesdeAPI(producto) {
+    if (!producto) return null;
+    
+    console.log('Transformando producto destacado desde API:', producto);
+    
+    // Múltiples formas de obtener la URL de la imagen
+    let urlimagen = null;
+    
+    if (producto.imagenes?.urlimg) {
+      urlimagen = producto.imagenes.urlimg;
+    } else if (producto.imagen?.urlimg) {
+      urlimagen = producto.imagen.urlimg;
+    } else if (producto.urlimagen) {
+      urlimagen = producto.urlimagen;
+    }
+    
+    const productoDestacado = {
+      id: producto.idproductogeneral || producto.id,
+      idproductogeneral: producto.idproductogeneral,
+      nombre: producto.nombreproducto || producto.nombre,
+      nombreproducto: producto.nombreproducto,
+      precio: parseFloat(producto.precioproducto || producto.precio || 0),
+      precioproducto: producto.precioproducto,
+      cantidad: parseFloat(producto.cantidadproducto || producto.cantidad || 0),
+      cantidadproducto: producto.cantidadproducto,
+      categoria: producto.categoria || producto.categoriaproducto?.nombrecategoria || 'Sin categoría',
+      idcategoria: producto.idcategoriaproducto || producto.idcategoria,
+      idcategoriaproducto: producto.idcategoriaproducto,
+      estado: Boolean(producto.estado),
+      descripcion: producto.especificaciones || producto.descripcion || producto.especificacionesreceta || "",
+      urlimagen: urlimagen,
+      
+      // Datos específicos de destacados
+      totalVendido: producto.totalVendido || 0,
+      vecesVendido: producto.vecesVendido || 0,
+      esDestacado: producto.esDestacado || true,
+      
+      // Datos adicionales
+      idimagen: producto.idimagen,
+      idreceta: producto.idreceta,
+      nombrereceta: producto.nombrereceta || producto.receta?.nombrereceta || null,
+      especificacionesreceta: producto.especificacionesreceta || producto.receta?.especificaciones || null
+    };
+    
+    console.log('Producto destacado transformado:', productoDestacado);
+    return productoDestacado;
+  }
+
+  // ========== MÉTODOS EXISTENTES (mantener todos) ==========
 
   async obtenerProductos() {
     try {
@@ -82,7 +214,6 @@ class ProductoApiService {
     }
   }
 
-  // MÉTODO CORREGIDO - Subir imagen usando el endpoint correcto de imágenes
   async subirImagen(archivo) {
     try {
       console.log('=== INICIO SUBIDA DE IMAGEN ===');
@@ -93,13 +224,12 @@ class ProductoApiService {
         lastModified: new Date(archivo.lastModified).toISOString()
       });
       
-      // Validaciones previas
       const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!tiposPermitidos.includes(archivo.type)) {
         throw new Error(`Tipo de archivo no permitido: ${archivo.type}. Solo se aceptan: JPG, JPEG, PNG, GIF, WebP`);
       }
 
-      const maxSize = 10 * 1024 * 1024; // 10MB para productos
+      const maxSize = 10 * 1024 * 1024;
       if (archivo.size > maxSize) {
         throw new Error(`Archivo demasiado grande: ${(archivo.size / 1024 / 1024).toFixed(2)}MB. Máximo: 10MB`);
       }
@@ -108,18 +238,16 @@ class ProductoApiService {
         throw new Error('El archivo está vacío');
       }
 
-      // Usar el endpoint específico de imágenes para productos
       const formData = new FormData();
-      formData.append('imagen', archivo); // Campo 'imagen' como en el backend
+      formData.append('imagen', archivo);
       
       console.log('FormData preparado con campo "imagen"');
       
       const IMAGEN_UPLOAD_URL = `${IMAGENES_URL}/upload`;
       console.log('URL de subida:', IMAGEN_UPLOAD_URL);
 
-      // Realizar request con timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
       const response = await fetch(IMAGEN_UPLOAD_URL, {
         method: "POST",
@@ -165,7 +293,6 @@ class ProductoApiService {
       const data = await response.json();
       console.log('Imagen subida exitosamente:', data);
       
-      // Verificar que la respuesta contenga la imagen
       if (!data.imagen || !data.imagen.urlimg) {
         throw new Error('Respuesta del servidor no contiene la información de la imagen');
       }
@@ -193,20 +320,16 @@ class ProductoApiService {
     }
   }
 
-  // MÉTODO CORREGIDO - Crear producto
   async crearProducto(productoData) {
     try {
       console.log('Datos recibidos en crearProducto:', JSON.stringify(productoData, null, 2));
       
-      // 1. Transformar datos para la API
       const productoAPI = this.transformarProductoParaAPI(productoData);
       console.log('Datos transformados para API:', JSON.stringify(productoAPI, null, 2));
       
-      // 2. Validar datos
       this.validarDatosProducto(productoAPI);
       console.log('Validación pasada correctamente');
 
-      // 3. Enviar request
       console.log('Enviando request a:', BASE_URL);
       const response = await fetch(BASE_URL, {
         method: "POST",
@@ -216,11 +339,9 @@ class ProductoApiService {
 
       console.log('Response status:', response.status);
 
-      // 4. Manejar respuesta
       const data = await this.handleResponse(response);
       console.log('Response data:', JSON.stringify(data, null, 2));
       
-      // Retornar el producto creado
       return this.transformarProductoDesdeAPI(data.producto || data);
     } catch (error) {
       console.error('Error completo en crearProducto:', error);
@@ -276,7 +397,6 @@ class ProductoApiService {
         const data = await this.handleResponse(response);
         return this.transformarProductoDesdeAPI(data.producto || data);
       } else {
-        // Fallback al método manual
         const productoActual = await this.obtenerProductoPorId(id);
         const datosActualizados = {
           ...this.transformarProductoParaAPI(productoActual),
@@ -297,8 +417,6 @@ class ProductoApiService {
       throw error;
     }
   }
-
-  // ========== MÉTODOS DE IMÁGENES ==========
 
   async obtenerImagenes() {
     try {
@@ -328,8 +446,6 @@ class ProductoApiService {
       throw error;
     }
   }
-
-  // ========== VALIDACIONES ==========
 
   validarDatosProducto(producto) {
     const errores = [];
@@ -379,8 +495,6 @@ class ProductoApiService {
     console.log('Validación exitosa');
   }
 
-  // ========== TRANSFORMACIONES DE DATOS - CORREGIDAS ==========
-
   transformarProductoParaAPI(producto) {
     console.log('Transformando producto:', producto);
     
@@ -426,13 +540,11 @@ class ProductoApiService {
     return transformed;
   }
 
-  // TRANSFORMACIÓN CORREGIDA - Para asegurar que las imágenes se muestren
   transformarProductoDesdeAPI(producto) {
     if (!producto) return null;
     
     console.log('Transformando producto desde API:', producto);
     
-    // Múltiples formas de obtener la URL de la imagen
     let urlimagen = null;
     
     if (producto.imagenes?.urlimg) {
@@ -460,7 +572,7 @@ class ProductoApiService {
       estado: Boolean(producto.estado),
       descripcion: producto.especificaciones || producto.descripcion || "",
       idimagen: producto.idimagen,
-      urlimagen: urlimagen, // ✅ CORREGIDO: Asegurar que la URL se asigne correctamente
+      urlimagen: urlimagen,
       idreceta: producto.idreceta,
       nombrereceta: producto.nombrereceta || producto.receta?.nombrereceta || null,
       especificacionesreceta: producto.especificacionesreceta || producto.receta?.especificaciones || null,
@@ -481,8 +593,6 @@ class ProductoApiService {
     }
     return productos.map((producto) => this.transformarProductoDesdeAPI(producto));
   }
-
-  // ========== MÉTODOS AUXILIARES ==========
 
   async crearProductoMinimo(nombre, precio, categoria, cantidad = 0, imagen = null, receta = null) {
     const datosMinimos = {
@@ -511,8 +621,6 @@ class ProductoApiService {
       minimumFractionDigits: 0,
     }).format(precio || 0);
   }
-
-  // ========== MÉTODOS DE TESTING Y DEBUG ==========
 
   async testConnection() {
     try {
@@ -562,8 +670,6 @@ class ProductoApiService {
     }
   }
 
-  // ========== MÉTODOS DE ESTADÍSTICAS ==========
-
   async obtenerEstadisticas() {
     try {
       const response = await fetch(`${BASE_URL}/estadisticas`, {
@@ -594,6 +700,5 @@ class ProductoApiService {
   }
 }
 
-// Exportar una instancia del servicio
 const productoApiService = new ProductoApiService();
 export default productoApiService;

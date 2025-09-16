@@ -1,0 +1,184 @@
+.hero-section {
+  position: relative;
+  min-height: 70vh;
+  background: linear-gradient(rgba(255, 192, 203, 0.6), rgba(255, 192, 203, 0.3)),
+              url('hero-bakery.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-content {
+  max-width: 1800px;
+  width: 100%;
+  padding: 0 3rem;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 100px;
+}
+
+.hero-text {
+  max-width: 60%;
+  animation: slideInLeft 1s ease-out;
+  text-align: left;
+  padding-right: 2rem;
+  padding-left: 80px;
+}
+
+.hero-brand {
+  font-size: 2.2rem;
+  color: #FF1493;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-title {
+  font-size: 4.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.2rem;
+  color: #2C3E50;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hero-highlight {
+  color: #FF1493;
+  position: relative;
+}
+
+.hero-description {
+  font-size: 1.2rem;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  max-width: 100%;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  min-width: 130px;
+  text-align: center;
+}
+
+/* Ambos botones con estilos distintos como en la imagen */
+.btn-primary {
+  background: #FF1493;
+  color: white;
+}
+
+.btn-secondary {
+  background: white;
+  color: #FF1493;
+  border: 2px solid #FF1493;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 20, 147, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 20, 147, 0.3);
+  color: #FF1493;
+  text-decoration: none;
+  background: #f8f9fa;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 60vh;
+    background-attachment: scroll;
+  }
+  
+  .hero-content {
+    padding: 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+  
+  .hero-text {
+    max-width: 90%;
+    padding-right: 1rem;
+  }
+  
+  .hero-title {
+    font-size: 2.8rem;
+  }
+  
+  .hero-brand {
+    font-size: 1.6rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+    max-width: 100%;
+  }
+  
+  .hero-buttons {
+    gap: 0.8rem;
+  }
+  
+  .btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-description br {
+    display: none;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  
+  .btn {
+    width: auto;
+    min-width: 140px;
+  }
+}

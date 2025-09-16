@@ -18,10 +18,45 @@ const EMPRESA_CONFIG = {
     usarLogoPersonalizado: true, 
     logoURL: '/imagenes/logo-delicias-darsy.png', 
     logoFormato: 'PNG',
-    logoAncho: 38,     
-    logoAlto: 30,       
-    logoFooterSize: 12 
+    logoAncho: 35,     // Aumentado de 38 a 45
+    logoAlto: 25,      // Aumentado de 30 a 36
+    logoFooterSize: 15 // Aumentado de 12 a 15
 };
+
+/**
+ * Obtiene la fecha y hora local del servidor
+ */
+const obtenerFechaHoraServidor = () => {
+    const ahora = new Date();
+    const opciones = {
+        timeZone: 'America/Bogota', // Zona horaria de Colombia
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    };
+    
+    const fecha = ahora.toLocaleDateString('es-CO', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    
+    const hora = ahora.toLocaleTimeString('es-CO', {
+        timeZone: 'America/Bogota',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    
+    return { fecha, hora };
+};
+
 /**
  * @param {jsPDF} doc
  * @param {number} x 
@@ -32,6 +67,17 @@ const crearLogo = (doc, x, y, size = 20) => {
     
     if (EMPRESA_CONFIG.usarLogoPersonalizado && EMPRESA_CONFIG.logoURL) {
         try {
+            // Crear fondo blanco circular para el logo
+            doc.setFillColor(...COLORES.blanco);
+            const radioFondo = (size / 2) + 3; // Un poco más grande que el logo
+            doc.circle(x, y, radioFondo, 'F');
+            
+            // Borde sutil para el fondo
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.5);
+            doc.circle(x, y, radioFondo, 'S');
+            
+            // Agregar el logo
             doc.addImage(
                 EMPRESA_CONFIG.logoURL,          
                 EMPRESA_CONFIG.logoFormato,      
@@ -61,6 +107,11 @@ const crearLogo = (doc, x, y, size = 20) => {
  * @param {number} size 
  */
 const crearLogoGenerado = (doc, x, y, size) => {
+    // Fondo blanco circular
+    doc.setFillColor(...COLORES.blanco);
+    const radioFondo = (size / 2) + 3;
+    doc.circle(x, y, radioFondo, 'F');
+    
     // Círculo exterior rosa
     doc.setFillColor(...COLORES.rosaPrincipal);
     doc.circle(x, y, size, 'F');
@@ -73,19 +124,19 @@ const crearLogoGenerado = (doc, x, y, size) => {
     doc.setFontSize(size * 0.8);
     doc.setTextColor(...COLORES.blanco);
     doc.setFont('helvetica', 'bold');
-    doc.text(EMPRESA_CONFIG.iniciales, x - 4, y + 3);
+    doc.text('DD', x - 4, y + 3);
 };
 
 const crearHeader = (doc) => {
-    const altoFucsia = 40;  // altura real del header fucsia
+    const altoFucsia = 40;
     const altoRosaClaro = 10;
 
     // Fondo fucsia
     doc.setFillColor(...COLORES.rosaPrincipal);
     doc.rect(0, 0, 210, altoFucsia, 'F');
 
-    // Logo → dentro del fucsia, sin cortarse
-    crearLogo(doc, 160, 20, EMPRESA_CONFIG.logoAncho);  // Y=5 para que no quede tan pegado arriba
+    // Logo con fondo blanco - más grande
+    crearLogo(doc, 160, 20, EMPRESA_CONFIG.logoAncho);
 
     // Texto dentro del fucsia
     doc.setFontSize(18);
@@ -100,16 +151,15 @@ const crearHeader = (doc) => {
     doc.setFont('helvetica', 'normal');
     doc.text(EMPRESA_CONFIG.subtitulo, 20, 33);
 
-    // Franja rosa claro → justo debajo del fucsia
+    // Franja rosa claro
     doc.setFillColor(...COLORES.rosaClaro);
     doc.rect(0, altoFucsia, 210, altoRosaClaro, 'F');
 
-    // Línea decorativa amarilla debajo de todo el encabezado
+    // Línea decorativa amarilla
     doc.setDrawColor(...COLORES.amarillo);
     doc.setLineWidth(2);
     doc.line(20, altoFucsia + altoRosaClaro + 5, 190, altoFucsia + altoRosaClaro + 5);
 };
-
 
 /**
  * Crea la sección de información de la compra
@@ -121,7 +171,7 @@ const crearInfoCompra = (doc, compra) => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
 
-    // Caja de información - AJUSTADA PARA HEADER MÁS ALTO
+    // Caja de información
     doc.setFillColor(...COLORES.amarilloClaro);
     doc.rect(20, 60, 170, 25, 'F'); 
     
@@ -129,14 +179,14 @@ const crearInfoCompra = (doc, compra) => {
     doc.setLineWidth(0.5);
     doc.rect(20, 60, 170, 25);
 
-    // Información del proveedor y fecha - AJUSTADA
+    // Información del proveedor y fecha
     doc.setFont('helvetica', 'bold');
     doc.text('PROVEEDOR:', 25, 70);
     doc.setFont('helvetica', 'normal');
     doc.text(compra.proveedor || 'N/A', 65, 70);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('FECHA DE COMPRA:', 25, 77);
+    doc.text('FECHA DE COMPRA:  ', 25, 77);
     doc.setFont('helvetica', 'normal');
     doc.text(compra.fecha_compra || compra.fecha || 'N/A', 75, 77);
 
@@ -146,55 +196,63 @@ const crearInfoCompra = (doc, compra) => {
     doc.setFont('helvetica', 'normal');
     doc.text(compra.id ? compra.id.toString() : 'N/A', 165, 70);
 
-    // Fecha de registro
+    // Fecha de registro con hora del servidor
+    const { fecha, hora } = obtenerFechaHoraServidor();
     doc.setFont('helvetica', 'bold');
-    doc.text('FECHA REGISTRO:', 130, 77);
+    doc.text('FECHA REGISTRO:  ', 130, 77);
     doc.setFont('helvetica', 'normal');
-    doc.text(compra.fecha_registro || new Date().toLocaleDateString('es-ES'), 165, 77);
+    doc.text(compra.fecha_registro || fecha, 165, 77);
 };
 
 /**
- * Crea la tabla de insumos
+ * Crea la tabla de insumos con el diseño solicitado
  * @param {jsPDF} doc 
  * @param {Array} insumos 
  */
 const crearTablaInsumos = (doc, insumos) => {
     
     autoTable(doc, {
-        head: [['NOMBRE DEL INSUMO', 'CANTIDAD', 'PRECIO UNITARIO', 'SUBTOTAL']],
+        head: [['Nombre Producto', 'Cantidad', 'Unidad Medida', 'Precio unitario', 'Subtotal']],
         body: insumos.map(insumo => [
             insumo.nombre || 'N/A',
             insumo.cantidad || 0,
-            `${(insumo.precio || 0).toFixed(2)}`,
-            `${((insumo.cantidad || 0) * (insumo.precio || 0)).toFixed(2)}`
+            insumo.unidad_medida || 'Unidad',
+            `$${(insumo.precio || 0).toFixed(2)}`,
+            `$${((insumo.cantidad || 0) * (insumo.precio || 0)).toFixed(2)}`,
+            'Ver'
         ]),
         startY: 95, 
         styles: {
-            fillColor: COLORES.amarilloClaro,
+            fillColor: COLORES.blanco,
             textColor: COLORES.grisTexto,
-            fontSize: 10,
-            cellPadding: 5,
+            fontSize: 9,
+            cellPadding: 4,
             lineWidth: 0.1,
-            lineColor: COLORES.amarillo
+            lineColor: [220, 220, 220],
+            halign: 'center'
         },
         headStyles: {
-            fillColor: COLORES.rosaPrincipal,
-            textColor: COLORES.blanco,
-            fontSize: 11,
+            fillColor: [240, 240, 240], // Gris claro como en la imagen
+            textColor: [80, 80, 80],
+            fontSize: 10,
             fontStyle: 'bold',
             halign: 'center',
             valign: 'middle'
         },
         alternateRowStyles: {
-            fillColor: COLORES.blanco
+            fillColor: [248, 248, 248] // Alternancia muy sutil
         },
         columnStyles: {
-            0: { halign: 'left' },
-            1: { halign: 'center' },
-            2: { halign: 'right' },
-            3: { halign: 'right', fontStyle: 'bold' }
-        }
-    });
+            0: { halign: 'left', cellWidth: 42 },      // Nombre Producto
+            1: { halign: 'center', cellWidth: 25 },    // Cantidad  
+            2: { halign: 'center', cellWidth: 40 },    // Unidad Medida
+            3: { halign: 'right', cellWidth: 25 },     // Precio unitario
+            4: { halign: 'right', cellWidth: 45, fontStyle: 'bold' }, // Subtotal
+        },
+        // tableLineColor: [220, 220, 220],
+        // tableLineWidth: 0.1,
+        // margin: { left: 20, right: 20 }
+    }); 
 };
 
 /**
@@ -253,8 +311,12 @@ const crearFooter = (doc) => {
     doc.setTextColor(...COLORES.grisTexto);
     doc.setFont('helvetica', 'normal');
     doc.text('Documento generado automáticamente - Delicias Darsy', 20, pageHeight - 10);
-    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')} - ${new Date().toLocaleTimeString('es-ES')}`, 20, pageHeight - 5);
+    
+    // Usar fecha y hora del servidor con formato organizado
+    const { fecha, hora } = obtenerFechaHoraServidor();
+    doc.text(`Fecha: ${fecha} - ${hora}`, 20, pageHeight - 5);
 
+    // Logo más pequeño y proporcional en el footer con fondo blanco
     crearLogo(doc, 180, pageHeight - 10, EMPRESA_CONFIG.logoFooterSize);
 };
 
@@ -312,8 +374,8 @@ export const generarPDFCompra = (compra) => {
         crearFooter(doc);
 
         // Generar nombre del archivo
-        const fechaActual = new Date().toISOString().split('T')[0];
-        const nombreArchivo = `compra-${compraCompleta.id}-${fechaActual}.pdf`;
+        const { fecha } = obtenerFechaHoraServidor();
+        const nombreArchivo = `compra-${compraCompleta.id}-${fecha.replace(/\//g, '-')}.pdf`;
 
         // Guardar el PDF
         doc.save(nombreArchivo);
@@ -338,12 +400,16 @@ export const configurarEmpresa = (config) => {
  * @param {number} ancho 
  * @param {number} alto 
  */
-export const configurarLogo = (logoURL, formato = 'PNG', ancho = 15, alto = 15) => {
+export const configurarLogo = (logoURL, formato = 'PNG', ancho = 12, alto = 12) => {
     EMPRESA_CONFIG.usarLogoPersonalizado = true;
     EMPRESA_CONFIG.logoURL = logoURL;
     EMPRESA_CONFIG.logoFormato = formato;
     EMPRESA_CONFIG.logoAncho = ancho;
     EMPRESA_CONFIG.logoAlto = alto;
+
+
 };
+
+
 
 export default generarPDFCompra;

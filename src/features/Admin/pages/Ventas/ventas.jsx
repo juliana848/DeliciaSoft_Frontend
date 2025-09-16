@@ -127,34 +127,6 @@ const [ventaData, setVentaData] = useState({
         }
     };
 
-    // Datos mock para desarrollo/fallback
-    const cargarVentasMock = () => {
-        const ventasMock = [
-            {
-                idVenta: 1,
-                fechaVenta: '2024-12-15',
-                total: 50000,
-                metodoPago: 'efectivo',
-                tipoVenta: 'directa',
-                idEstadoVenta: 1,
-                nombreEstado: 'Activa',
-                nombreCliente: 'Juan Pérez',
-                nombreSede: 'San Pablo'
-            },
-            {
-                idVenta: 2,
-                fechaVenta: '2024-12-14',
-                total: 75000,
-                metodoPago: 'transferencia',
-                tipoVenta: 'pedido',
-                idEstadoVenta: 2,
-                nombreEstado: 'Pendiente',
-                nombreCliente: 'María González',
-                nombreSede: 'San Benito'
-            }
-        ];
-        setAllSales(ventasMock);
-    };
 
     // Cargar datos al montar el componente
     useEffect(() => {

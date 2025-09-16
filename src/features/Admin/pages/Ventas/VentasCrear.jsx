@@ -612,10 +612,6 @@ export default function VentasCrear({
                         <span>${subtotal.toLocaleString('es-CO')}</span>
                     </div>
                     <div className="total-item">
-                        <span>IVA (16%):</span>
-                        <span>${iva.toLocaleString('es-CO')}</span>
-                    </div>
-                    <div className="total-item">
                         <span>Total:</span>
                         <span>${total.toLocaleString('es-CO')}</span>
                     </div>

@@ -32,7 +32,7 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     const obtenerFechaHoraServidor = () => {
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-CO', {
-            timeZone: 'America/Bogota',
+            // timeZone: 'America/Bogota',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
@@ -40,9 +40,9 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         
         const hora = ahora.toLocaleTimeString('es-CO', {
             timeZone: 'America/Bogota',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
+            // hour: '2-digit',
+            // minute: '2-digit',
+            // second: '2-digit',
             hour12: false
         });
         
@@ -241,7 +241,7 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.text('Documento generado automáticamente - Delicias Darsy', 20, pageHeight - 10);
         
         const { fecha, hora } = obtenerFechaHoraServidor();
-        doc.text(`Fecha: ${fecha} - ${hora}`, 20, pageHeight - 5);
+        doc.text(`Fecha: ${fecha} - `, 20, pageHeight - 5);
 
         crearLogo(doc, 180, pageHeight - 10, EMPRESA_CONFIG.logoFooterSize);
     };

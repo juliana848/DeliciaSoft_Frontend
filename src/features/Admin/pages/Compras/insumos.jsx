@@ -13,9 +13,9 @@ import categoriaInsumoApiService from '../../services/categoriainsumos';
 export default function InsumosTable() {
   const unidadesPorProducto = {
     'Harina': ['Kilogramos', 'Gramos', 'libra', 'Bolsa', 'Paquete'],
-    'AzÃºcar': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
-    'Huevos': ['unid', 'docena', 'cartÃ³n'],
-    'Leche': ['litros', 'mililitros', 'galÃ³n', 'bolsa', 'cartÃ³n'],
+    'Azúcar': ['Kilogramos', 'Gramos', 'libra', 'bolsa'],
+    'Huevos': ['unid', 'docena', 'cartón'],
+    'Leche': ['litros', 'mililitros', 'galón', 'bolsa', 'cartón'],
     'Sal': ['Kilogramos', 'Gramos', 'paquete'],
     'Mantequilla': ['Gramos', 'Kilogramos', 'barra', 'paquete'],
     'Aceite': ['litros', 'mililitros', 'botella'],
@@ -24,26 +24,7 @@ export default function InsumosTable() {
     'Tomate': ['Kilogramos', 'Gramos', 'unida', 'caja']
   };
 
-  const unidadesToIds = {
-    'Kilogramos': 1,        
-    'Gramos': 2,         
-    'litros': 3,         
-    'mililitros': 4,        
-    'unida': 5,      
-    'libras': 6,      
-    'oz': 7,      
-    'cuch': 8,      
-    'bolsa': null,
-    'paquete': null,
-    'docena': null,
-    'cartÃ³n': null,
-    'galÃ³n': null,
-    'barra': null,
-    'botella': null,
-    'caja': null
-  };
-
-  // Estados
+  // Estados principales
   const [insumos, setInsumos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [unidades, setUnidades] = useState([]);
@@ -54,6 +35,8 @@ export default function InsumosTable() {
   const [showStockInfo, setShowStockInfo] = useState(false);
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modal, setModal] = useState({ visible: false, tipo: '', insumo: null });
+  
+  // Estados para formulario principal de insumos
   const [form, setForm] = useState({ 
     nombreInsumo: '', 
     idCategoriaInsumos: '', 
@@ -85,18 +68,30 @@ export default function InsumosTable() {
     descripcion: ''
   });
 
+  // Estados para el modal de catálogo
+  const [modalCatalogoVisible, setModalCatalogoVisible] = useState(false);
+  const [tipoCatalogo, setTipoCatalogo] = useState('');
+  const [formCatalogo, setFormCatalogo] = useState({
+    nombre: '',
+    precioadicion: 0,
+    estado: true
+  });
+  const [erroresCatalogo, setErroresCatalogo] = useState({
+    nombre: '',
+    precioadicion: ''
+  });
+
+  // Estados para el selector de tipo de catálogo
+  const [modalSelectorVisible, setModalSelectorVisible] = useState(false);
+  const [insumoParaCatalogo, setInsumoParaCatalogo] = useState(null);
+
   // Effect para cargar datos iniciales
   useEffect(() => {
     const cargarDatos = async () => {
       console.log('Iniciando carga de datos del componente...');
       
-      // Cargar categorÃ­as primero
       await cargarCategorias();
-      
-      // Cargar unidades de medida desde API
       await cargarUnidades();
-      
-      // Luego cargar insumos
       await cargarInsumos();
       
       console.log('Carga de datos completada');
@@ -105,7 +100,7 @@ export default function InsumosTable() {
     cargarDatos();
   }, []);
 
-  // FunciÃ³n para cargar unidades
+  // Función para cargar unidades
   const cargarUnidades = async () => {
     try {
       setLoadingUnidades(true);
@@ -132,81 +127,56 @@ export default function InsumosTable() {
     }
   };
 
-  // FunciÃ³n para cargar categorÃ­as
+  // Función para cargar categorías
   const cargarCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('Iniciando carga de categorÃ­as...');
+      console.log('Iniciando carga de categorías...');
       
       const categoriasAPI = await categoriaInsumoApiService.obtenerCategorias();
-      console.log('CategorÃ­as recibidas de la API:', categoriasAPI);
+      console.log('Categorías recibidas de la API:', categoriasAPI);
       
       const categoriasActivas = categoriasAPI.filter(cat => cat.estado === true);
-      console.log('CategorÃ­as activas filtradas:', categoriasActivas);
+      console.log('Categorías activas filtradas:', categoriasActivas);
       
       if (categoriasActivas.length === 0) {
-        console.warn('No se encontraron categorÃ­as activas');
-        showNotification('No se encontraron categorÃ­as activas', 'warning');
+        console.warn('No se encontraron categorías activas');
+        showNotification('No se encontraron categorías activas', 'warning');
       }
       
       setCategorias(categoriasActivas);
     } catch (error) {
-      console.error('Error al cargar categorÃ­as:', error);
-      showNotification('Error al cargar las categorÃ­as: ' + error.message, 'error');
+      console.error('Error al cargar categorías:', error);
+      showNotification('Error al cargar las categorías: ' + error.message, 'error');
       setCategorias([]);
     } finally {
       setLoadingCategorias(false);
     }
   };
 
-  // FunciÃ³n corregida para cargar insumos
+  // Función para cargar insumos
   const cargarInsumos = async () => {
     try {
       setLoading(true);
       console.log('Cargando insumos...');
-      console.log('Estado actual - CategorÃ­as:', categorias.length, 'Unidades:', unidades.length);
       
       const insumosAPI = await insumoApiService.obtenerInsumos();
       console.log('Insumos recibidos:', insumosAPI);
-      console.log('Estructura del primer insumo:', insumosAPI[0]);
       
-      // Verificar si tenemos las categorÃ­as y unidades cargadas
-      if (categorias.length === 0) {
-        console.warn('No hay categorÃ­as disponibles para mapear');
-      }
-      if (unidades.length === 0) {
-        console.warn('No hay unidades disponibles para mapear');
-      }
-      
-      // Transformar insumos
       const insumosTransformados = insumosAPI.map(insumo => {
-        console.log(`Procesando insumo ID ${insumo.id}:`, {
-          nombreInsumo: insumo.nombreInsumo,
-          idCategoriaInsumos: insumo.idCategoriaInsumos,
-          idUnidadMedida: insumo.idUnidadMedida,
-          nombreCategoria: insumo.nombreCategoria,
-          nombreUnidadMedida: insumo.nombreUnidadMedida
-        });
-
-        // Primero intentar usar el nombre que viene de la API
         let categoria = insumo.nombreCategoria;
-        
-        // Si no viene el nombre, buscarlo en el estado de categorÃ­as
         if (!categoria) {
           const categoriaEncontrada = categorias.find(cat => cat.id === parseInt(insumo.idCategoriaInsumos));
-          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'CategorÃ­a desconocida';
-          console.log(`CategorÃ­a buscada para ID ${insumo.idCategoriaInsumos}:`, categoriaEncontrada);
+          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'Categoría desconocida';
         }
 
-        // Lo mismo para unidades
         let unidad = insumo.nombreUnidadMedida;
         if (!unidad) {
           const unidadEncontrada = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(insumo.idUnidadMedida));
           unidad = unidadEncontrada ? unidadEncontrada.unidadmedida : 'unid';
-          console.log(`Unidad buscada para ID ${insumo.idUnidadMedida}:`, unidadEncontrada);
         }
 
-        const resultado = {
+        return {
           id: insumo.id,
           nombre: insumo.nombreInsumo,
           categoria,
@@ -216,9 +186,6 @@ export default function InsumosTable() {
           stockMinimo: 5,
           _originalData: insumo
         };
-
-        console.log('Insumo transformado:', resultado);
-        return resultado;
       });
       
       setInsumos(insumosTransformados);
@@ -234,12 +201,11 @@ export default function InsumosTable() {
   // Funciones auxiliares
   const getCategoriaName = (id) => {
     const categoria = categorias.find(cat => cat.id === parseInt(id));
-    return categoria ? categoria.nombreCategoria : 'Sin categorÃ­a';
+    return categoria ? categoria.nombreCategoria : 'Sin categoría';
   };
 
   const getUnidadName = (id) => {
     const unidad = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(id));
-    console.log(`Buscando unidad con ID ${id}:`, unidad);
     return unidad ? unidad.unidadmedida : 'unid';
   };
 
@@ -250,7 +216,6 @@ export default function InsumosTable() {
 
   const getUnidadId = (nombre) => {
     const unidad = unidades.find(uni => uni.unidadmedida === nombre);
-    console.log(`Buscando ID de unidad para "${nombre}":`, unidad);
     return unidad ? unidad.idunidadmedida : null;
   };
 
@@ -266,7 +231,27 @@ export default function InsumosTable() {
     return unidades;
   };
 
-  // Funciones de notificaciÃ³n
+  // Función para determinar si una categoría es especial (requiere catálogo)
+  const esCategoriaEspecial = (categoriaId) => {
+    const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
+    const nombreCategoria = categoria?.nombreCategoria?.toLowerCase();
+    
+    return ['rellenos', 'sabores', 'adiciones', 'toppings', 'relleno', 'sabor', 'adicion'].includes(nombreCategoria);
+  };
+
+  // Función para obtener el tipo de catálogo según la categoría
+  const getTipoCatalogo = (categoriaId) => {
+    const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
+    const nombreCategoria = categoria?.nombreCategoria?.toLowerCase();
+    
+    if (nombreCategoria.includes('relleno')) return 'relleno';
+    if (nombreCategoria.includes('sabor')) return 'sabor';
+    if (nombreCategoria.includes('adicion') || nombreCategoria.includes('topping')) return 'adicion';
+    
+    return null;
+  };
+
+  // Funciones de notificación
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
   };
@@ -279,7 +264,7 @@ export default function InsumosTable() {
     setShowStockInfo(!showStockInfo);
   };
 
-  // FunciÃ³n para cambiar estado
+  // Función para cambiar estado
   const toggleEstado = async (id) => {
     try {
       const insumo = insumos.find(i => i.id === id);
@@ -295,7 +280,7 @@ export default function InsumosTable() {
     }
   };
 
-  // Funciones del modal
+  // Funciones del modal principal
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
     if (tipo === 'editar' && insumo) {
@@ -441,6 +426,123 @@ export default function InsumosTable() {
     }
   };
 
+  // Funciones para el modal de catálogo
+  const abrirModalSelectorCatalogo = (insumo) => {
+    setInsumoParaCatalogo(insumo);
+    setModalSelectorVisible(true);
+  };
+
+  const cerrarModalSelector = () => {
+    setModalSelectorVisible(false);
+    setInsumoParaCatalogo(null);
+  };
+
+  const seleccionarTipoCatalogo = (tipo) => {
+    setTipoCatalogo(tipo);
+    setModalSelectorVisible(false);
+    setModalCatalogoVisible(true);
+    setFormCatalogo({
+      nombre: '',
+      precioadicion: 0,
+      estado: true
+    });
+    setErroresCatalogo({
+      nombre: '',
+      precioadicion: ''
+    });
+  };
+
+  const cerrarModalCatalogo = () => {
+    setModalCatalogoVisible(false);
+    setTipoCatalogo('');
+    setInsumoParaCatalogo(null);
+    setFormCatalogo({
+      nombre: '',
+      precioadicion: 0,
+      estado: true
+    });
+    setErroresCatalogo({
+      nombre: '',
+      precioadicion: ''
+    });
+  };
+
+  const handleChangeCatalogoForm = (e) => {
+    const { name, value } = e.target;
+    setFormCatalogo(prev => ({
+      ...prev,
+      [name]: name === 'precioadicion' ? parseFloat(value) || 0 : value
+    }));
+
+    const error = validateCatalogoField(name, value);
+    setErroresCatalogo(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const validateCatalogoField = (name, value) => {
+    let error = '';
+
+    switch (name) {
+      case 'nombre':
+        if (!value.trim()) {
+          error = 'El nombre es obligatorio';
+        } else if (value.trim().length < 2) {
+          error = 'El nombre debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 20) {
+          error = 'El nombre no puede superar los 20 caracteres';
+        }
+        break;
+      
+      case 'precioadicion':
+        if (!value.toString().trim()) {
+          error = 'El precio es obligatorio';
+        } else if (isNaN(value) || Number(value) < 0) {
+          error = 'El precio debe ser un número mayor o igual a 0';
+        } else if (Number(value) > 100000) {
+          error = 'El precio no puede ser mayor a 100,000';
+        }
+        break;
+    }
+
+    return error;
+  };
+
+  const guardarCatalogo = async () => {
+    const erroresValidacion = {
+      nombre: validateCatalogoField('nombre', formCatalogo.nombre),
+      precioadicion: validateCatalogoField('precioadicion', formCatalogo.precioadicion)
+    };
+
+    setErroresCatalogo(erroresValidacion);
+
+    const hasErrors = Object.values(erroresValidacion).some(error => error !== '');
+    
+    if (hasErrors) {
+      showNotification('Por favor corrige los errores en el formulario', 'error');
+      return;
+    }
+
+    try {
+      const datosCatalogo = {
+        nombre: formCatalogo.nombre.trim(),
+        precioadicion: formCatalogo.precioadicion,
+        idinsumos: insumoParaCatalogo.id,
+        estado: formCatalogo.estado
+      };
+
+      // Llamar al servicio según el tipo de catálogo
+      await insumoApiService.crearCatalogo(tipoCatalogo, datosCatalogo);
+      
+      cerrarModalCatalogo();
+      showNotification(`Catálogo de ${tipoCatalogo} creado exitosamente`);
+    } catch (error) {
+      console.error('Error al crear catálogo:', error);
+      showNotification('Error al crear el catálogo: ' + error.message, 'error');
+    }
+  };
+
   // Manejo de cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -453,7 +555,6 @@ export default function InsumosTable() {
       
       if (!unidadValida && unidadesDisponibles.length > 0) {
         newForm.idUnidadMedida = unidadesDisponibles[0].idunidadmedida;
-        console.log(`Unidad cambiada automÃ¡ticamente a: ${unidadesDisponibles[0].unidadmedida}`);
       }
     }
 
@@ -466,7 +567,7 @@ export default function InsumosTable() {
     }));
   };
 
-  // ValidaciÃ³n de campos
+  // Validación de campos
   const validateField = (name, value) => {
     let error = null;
     
@@ -479,7 +580,7 @@ export default function InsumosTable() {
       
       case 'idCategoriaInsumos':
         if (!value) {
-          error = 'La categorÃ­a es obligatoria';
+          error = 'La categoría es obligatoria';
         }
         break;
       
@@ -493,7 +594,7 @@ export default function InsumosTable() {
         if (!value.toString().trim()) {
           error = 'La cantidad es obligatoria';
         } else if (isNaN(value) || Number(value) <= 0) {
-          error = 'La cantidad debe ser un nÃºmero mayor a 0';
+          error = 'La cantidad debe ser un número mayor a 0';
         } else if (Number(value) > 10000) {
           error = 'La cantidad no puede ser mayor a 10,000';
         }
@@ -501,11 +602,11 @@ export default function InsumosTable() {
 
       case 'stockMinimo':
         if (!value.toString().trim()) {
-          error = 'El stock mÃ­nimo es obligatorio';
+          error = 'El stock mínimo es obligatorio';
         } else if (isNaN(value) || Number(value) < 0) {
-          error = 'El stock mÃ­nimo debe ser un nÃºmero mayor o igual a 0';
+          error = 'El stock mínimo debe ser un número mayor o igual a 0';
         } else if (Number(value) > 1000) {
-          error = 'El stock mÃ­nimo no puede ser mayor a 1,000';
+          error = 'El stock mínimo no puede ser mayor a 1,000';
         }
         break;
     }
@@ -513,7 +614,7 @@ export default function InsumosTable() {
     return error;
   };
 
-  // FunciÃ³n para convertir archivo a Base64
+  // Función para convertir archivo a Base64
   const convertirABase64 = (file, callback) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -521,7 +622,7 @@ export default function InsumosTable() {
     reader.onerror = (error) => console.error('Error al leer archivo:', error);
   };
 
-  // ValidaciÃ³n completa del formulario
+  // Validación completa del formulario
   const validarFormulario = () => {
     const erroresValidacion = {
       nombreInsumo: validateField('nombreInsumo', form.nombreInsumo),
@@ -543,54 +644,27 @@ export default function InsumosTable() {
     return true;
   };
 
-  // FunciÃ³n para guardar insumo
+  // Función para guardar insumo - FIX DEL BUG DE IMAGEN
   const guardar = async () => {
     if (!validarFormulario()) return;
 
     try {
       console.log('=== GUARDANDO INSUMO ===');
-      console.log('Datos del formulario:', JSON.stringify(form, null, 2));
       
-      if (!form.nombreInsumo.trim()) {
-        showNotification('El nombre del insumo es requerido', 'error');
-        return;
-      }
-      
-      if (!form.idCategoriaInsumos) {
-        showNotification('La categorÃ­a es requerida', 'error');
-        return;
-      }
-      
-      if (!form.idUnidadMedida) {
-        showNotification('La unidad de medida es requerida', 'error');
-        return;
-      }
-
       const datosAPI = {
         nombreInsumo: form.nombreInsumo.trim(),
         idCategoriaInsumos: parseInt(form.idCategoriaInsumos),
         idUnidadMedida: parseInt(form.idUnidadMedida),
         cantidad: form.cantidad ? parseFloat(form.cantidad) : 0,
-        estado: form.estado,
-        idImagen: form.idImagen || null
+        estado: form.estado
       };
 
-      console.log('Datos preparados para API:', JSON.stringify(datosAPI, null, 2));
+      // Solo incluir imagen si existe y no está vacía
+      if (form.idImagen && form.idImagen.toString().trim() !== '') {
+        datosAPI.idImagen = form.idImagen;
+      }
 
-      const categoriaExiste = categorias.find(c => c.id === datosAPI.idCategoriaInsumos);
-      const unidadExiste = unidades.find(u => u.idunidadmedida === datosAPI.idUnidadMedida);
-      
-      console.log('VerificaciÃ³n de foreign keys:');
-      console.log('  - CategorÃ­a encontrada:', categoriaExiste);
-      console.log('  - Unidad encontrada:', unidadExiste);
-      
-      if (!categoriaExiste) {
-        throw new Error(`La categorÃ­a con ID ${datosAPI.idCategoriaInsumos} no existe`);
-      }
-      
-      if (!unidadExiste) {
-        throw new Error(`La unidad de medida con ID ${datosAPI.idUnidadMedida} no existe`);
-      }
+      console.log('Datos preparados para API:', JSON.stringify(datosAPI, null, 2));
 
       if (modal.tipo === 'agregar') {
         console.log('Creando nuevo insumo...');
@@ -604,18 +678,15 @@ export default function InsumosTable() {
 
       await cargarInsumos();
       cerrarModal();
-      console.log('Guardado exitoso');
     } catch (error) {
       console.error('Error al guardar:', error);
       
       let mensajeError = 'Error al guardar el insumo';
       
       if (error.status === 500) {
-        mensajeError = 'Error interno del servidor. Verifica que todos los datos sean vÃ¡lidos.';
+        mensajeError = 'Error interno del servidor. Verifica que todos los datos sean válidos.';
       } else if (error.status === 400) {
-        mensajeError = 'Datos invÃ¡lidos. ' + (error.message || '');
-      } else if (error.message && error.message.includes('foreign key')) {
-        mensajeError = 'Error de clave forÃ¡nea: Verifica que la categorÃ­a y unidad de medida existan.';
+        mensajeError = 'Datos inválidos. ' + (error.message || '');
       } else if (error.message) {
         mensajeError = error.message;
       }
@@ -624,7 +695,7 @@ export default function InsumosTable() {
     }
   };
 
-  // FunciÃ³n para eliminar insumo
+  // Función para eliminar insumo
   const eliminar = async () => {
     try {
       await insumoApiService.eliminarInsumo(modal.insumo.id);
@@ -642,14 +713,20 @@ export default function InsumosTable() {
     if (!filtro.trim()) return true;
     
     const filtroLower = filtro.toLowerCase();
+    
+    const toSafeString = (value) => {
+      if (value === null || value === undefined) return '';
+      return String(value).toLowerCase();
+    };
+    
     return (
-      insumo.nombre.toLowerCase().includes(filtroLower) ||
-      insumo.categoria.toLowerCase().includes(filtroLower) ||
-      insumo.unidad.toLowerCase().includes(filtroLower) ||
-      insumo.cantidad.toString().toLowerCase().includes(filtroLower) ||
-      insumo.stockMinimo.toString().toLowerCase().includes(filtroLower) ||
-      (insumo.estado ? 'activo' : 'inactivo').includes(filtroLower) ||
-      `${insumo.cantidad} ${insumo.unidad}`.toLowerCase().includes(filtroLower)
+      toSafeString(insumo.nombre).includes(filtroLower) ||
+      toSafeString(insumo.categoria).includes(filtroLower) ||
+      toSafeString(insumo.unidad).includes(filtroLower) ||
+      toSafeString(insumo.cantidad).includes(filtroLower) ||
+      toSafeString(insumo.stockMinimo).includes(filtroLower) ||
+      toSafeString(insumo.estado ? 'activo' : 'inactivo').includes(filtroLower) ||
+      toSafeString(`${insumo.cantidad} ${insumo.unidad}`).includes(filtroLower)
     );
   });
 
@@ -813,7 +890,7 @@ export default function InsumosTable() {
         <Column
           header="Acción"
           body={(rowData) => (
-            <>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
               <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)}>👁</button>
               <button
                 className={`admin-button yellow ${!rowData.estado ? 'disabled' : ''}`}
@@ -835,7 +912,44 @@ export default function InsumosTable() {
                   cursor: !rowData.estado ? 'not-allowed' : 'pointer'
                 }}
               >🗑️</button>
-            </>
+              {/* BOTÓN CATÁLOGO MEJORADO */}
+              {rowData.estado && esCategoriaEspecial(rowData._originalData?.idCategoriaInsumos) && (
+                <button
+                  className="catalog-button"
+                  title="Agregar Catálogo"
+                  onClick={() => abrirModalSelectorCatalogo(rowData)}
+                  style={{
+                    backgroundColor: '#6c5ce7',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(108, 92, 231, 0.3)',
+                    minHeight: '32px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#5f3dc4';
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 8px rgba(108, 92, 231, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#6c5ce7';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 2px 4px rgba(108, 92, 231, 0.3)';
+                  }}
+                >
+                  <span style={{ fontSize: '14px' }}>📋</span>
+                  <span>Catálogo</span>
+                </button>
+              )}
+            </div>
           )}
         />
       </DataTable>
@@ -998,15 +1112,6 @@ export default function InsumosTable() {
                   </div>
                   
                   {errors.idCategoriaInsumos && <span className="error-message">{errors.idCategoriaInsumos}</span>}
-                  
-                  {process.env.NODE_ENV === 'development' && (
-                    <small style={{ color: '#666', fontSize: '12px' }}>
-                      Debug: {categorias.length} categorías cargadas
-                      {categorias.length > 0 && (
-                        <span> - IDs: [{categorias.map(c => c.id).join(', ')}]</span>
-                      )}
-                    </small>
-                  )}
                 </label>
 
                 <label>
@@ -1022,7 +1127,6 @@ export default function InsumosTable() {
                   />
                   {errors.cantidad && <span className="error-message">{errors.cantidad}</span>}
                 </label>
-
 
                 <label>
                   Unidad*
@@ -1054,16 +1158,6 @@ export default function InsumosTable() {
                     )}
                   </select>
                   {errors.idUnidadMedida && <span className="error-message">{errors.idUnidadMedida}</span>}
-                  
-
-                  {process.env.NODE_ENV === 'development' && (
-                    <small style={{ color: '#666', fontSize: '12px' }}>
-                      Debug: {unidades.length} unidades cargadas
-                      {form.nombreInsumo && (
-                        <span> - Disponibles para {form.nombreInsumo}: {getUnidadesDisponibles(form.nombreInsumo).length}</span>
-                      )}
-                    </small>
-                  )}
                 </label>
 
                 <label style={{ gridColumn: '1 / -1' }}>
@@ -1197,6 +1291,448 @@ export default function InsumosTable() {
               type="button"
             >
               Guardar
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal selector de tipo de catálogo - DISEÑO MEJORADO */}
+      {modalSelectorVisible && (
+        <Modal visible={modalSelectorVisible} onClose={cerrarModalSelector}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '30px',
+            margin: '-20px -20px 20px -20px',
+            borderRadius: '12px 12px 0 0',
+            textAlign: 'center',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '15px',
+              fontSize: '24px',
+              cursor: 'pointer',
+              opacity: '0.8',
+              transition: 'opacity 0.2s'
+            }} 
+            onClick={cerrarModalSelector}
+            onMouseEnter={(e) => e.target.style.opacity = '1'}
+            onMouseLeave={(e) => e.target.style.opacity = '0.8'}>
+              ×
+            </div>
+            
+            <div style={{ fontSize: '48px', marginBottom: '15px' }}>🎯</div>
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '600' }}>
+              Seleccionar Tipo de Catálogo
+            </h2>
+            <p style={{ margin: 0, opacity: '0.9', fontSize: '16px' }}>
+              ¿Qué tipo de catálogo deseas crear para <strong>{insumoParaCatalogo?.nombre}</strong>?
+            </p>
+          </div>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '20px',
+            padding: '20px 0'
+          }}>
+            <div 
+              className="catalog-option"
+              onClick={() => seleccionarTipoCatalogo('adicion')}
+              style={{
+                background: 'linear-gradient(145deg, #ff6b6b, #ee5a52)',
+                color: 'white',
+                padding: '30px 20px',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                textAlign: 'center',
+                border: 'none',
+                boxShadow: '0 8px 25px rgba(255, 107, 107, 0.3)',
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-5px)';
+                e.target.style.boxShadow = '0 12px 35px rgba(255, 107, 107, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 8px 25px rgba(255, 107, 107, 0.3)';
+              }}
+            >
+              <div style={{ fontSize: '40px', marginBottom: '15px' }}>🧁</div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600' }}>Adiciones</h3>
+              <p style={{ margin: 0, fontSize: '14px', opacity: '0.9' }}>
+                Ingredientes extra para personalizar
+              </p>
+            </div>
+            
+            <div 
+              className="catalog-option"
+              onClick={() => seleccionarTipoCatalogo('relleno')}
+              style={{
+                background: 'linear-gradient(145deg, #4ecdc4, #44a08d)',
+                color: 'white',
+                padding: '30px 20px',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                textAlign: 'center',
+                border: 'none',
+                boxShadow: '0 8px 25px rgba(78, 205, 196, 0.3)',
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-5px)';
+                e.target.style.boxShadow = '0 12px 35px rgba(78, 205, 196, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 8px 25px rgba(78, 205, 196, 0.3)';
+              }}
+            >
+              <div style={{ fontSize: '40px', marginBottom: '15px' }}>🥧</div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600' }}>Rellenos</h3>
+              <p style={{ margin: 0, fontSize: '14px', opacity: '0.9' }}>
+                Rellenos cremosos y deliciosos
+              </p>
+            </div>
+            
+            <div 
+              className="catalog-option"
+              onClick={() => seleccionarTipoCatalogo('sabor')}
+              style={{
+                background: 'linear-gradient(145deg, #a8edea, #fed6e3)',
+                color: '#333',
+                padding: '30px 20px',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                textAlign: 'center',
+                border: 'none',
+                boxShadow: '0 8px 25px rgba(168, 237, 234, 0.4)',
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-5px)';
+                e.target.style.boxShadow = '0 12px 35px rgba(168, 237, 234, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 8px 25px rgba(168, 237, 234, 0.4)';
+              }}
+            >
+              <div style={{ fontSize: '40px', marginBottom: '15px' }}>🍰</div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: '600' }}>Sabores</h3>
+              <p style={{ margin: 0, fontSize: '14px', opacity: '0.8' }}>
+                Sabores únicos y especiales
+              </p>
+            </div>
+          </div>
+          
+          <div style={{ 
+            textAlign: 'center', 
+            paddingTop: '20px',
+            borderTop: '1px solid #eee',
+            marginTop: '20px'
+          }}>
+            <button 
+              onClick={cerrarModalSelector}
+              style={{
+                background: '#f8f9fa',
+                color: '#6c757d',
+                border: '2px solid #dee2e6',
+                borderRadius: '8px',
+                padding: '10px 30px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#e9ecef';
+                e.target.style.borderColor = '#adb5bd';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#f8f9fa';
+                e.target.style.borderColor = '#dee2e6';
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal para agregar catálogo específico - DISEÑO MEJORADO */}
+      {modalCatalogoVisible && (
+        <Modal visible={modalCatalogoVisible} onClose={cerrarModalCatalogo}>
+          <div style={{
+            background: tipoCatalogo === 'adicion' 
+              ? 'linear-gradient(135deg, #ff6b6b, #ee5a52)' 
+              : tipoCatalogo === 'relleno'
+              ? 'linear-gradient(135deg, #4ecdc4, #44a08d)'
+              : 'linear-gradient(135deg, #a8edea, #fed6e3)',
+            color: tipoCatalogo === 'sabor' ? '#333' : 'white',
+            padding: '30px',
+            margin: '-20px -20px 20px -20px',
+            borderRadius: '12px 12px 0 0',
+            textAlign: 'center',
+            position: 'relative'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '15px',
+              fontSize: '24px',
+              cursor: 'pointer',
+              opacity: '0.8',
+              transition: 'opacity 0.2s'
+            }} 
+            onClick={cerrarModalCatalogo}
+            onMouseEnter={(e) => e.target.style.opacity = '1'}
+            onMouseLeave={(e) => e.target.style.opacity = '0.8'}>
+              ×
+            </div>
+            
+            <div style={{ fontSize: '48px', marginBottom: '15px' }}>
+              {tipoCatalogo === 'adicion' ? '🧁' : tipoCatalogo === 'relleno' ? '🥧' : '🍰'}
+            </div>
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '600' }}>
+              Crear {tipoCatalogo === 'adicion' ? 'Adición' : tipoCatalogo === 'relleno' ? 'Relleno' : 'Sabor'}
+            </h2>
+            <p style={{ margin: 0, opacity: '0.9', fontSize: '16px' }}>
+              <strong>Insumo:</strong> {insumoParaCatalogo?.nombre} • <strong>Categoría:</strong> {insumoParaCatalogo?.categoria}
+            </p>
+          </div>
+          
+          <div style={{ padding: '20px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '600',
+                  color: '#333',
+                  fontSize: '14px'
+                }}>
+                  Nombre del {tipoCatalogo === 'adicion' ? 'Adición' : tipoCatalogo === 'relleno' ? 'Relleno' : 'Sabor'}*
+                </label>
+                <input
+                  name="nombre"
+                  value={formCatalogo.nombre}
+                  onChange={handleChangeCatalogoForm}
+                  className={`modal-input ${erroresCatalogo.nombre ? 'input-invalid' : formCatalogo.nombre ? 'input-valid' : ''}`}
+                  placeholder={`Ej: ${tipoCatalogo === 'adicion' ? 'Chispas de chocolate' : tipoCatalogo === 'relleno' ? 'Crema de vainilla' : 'Chocolate'}`}
+                  maxLength={20}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '2px solid #e1e5e9',
+                    fontSize: '16px',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: '#fff'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = tipoCatalogo === 'adicion' 
+                      ? '#ff6b6b' 
+                      : tipoCatalogo === 'relleno' 
+                      ? '#4ecdc4' 
+                      : '#a8edea';
+                    e.target.style.boxShadow = `0 0 0 3px ${tipoCatalogo === 'adicion' 
+                      ? 'rgba(255, 107, 107, 0.1)' 
+                      : tipoCatalogo === 'relleno' 
+                      ? 'rgba(78, 205, 196, 0.1)' 
+                      : 'rgba(168, 237, 234, 0.1)'}`;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e1e5e9';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                {erroresCatalogo.nombre && (
+                  <div style={{ 
+                    color: '#dc3545', 
+                    fontSize: '12px', 
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>⚠</span> {erroresCatalogo.nombre}
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '600',
+                  color: '#333',
+                  fontSize: '14px'
+                }}>
+                  Precio de Adición*
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{
+                    position: 'absolute',
+                    left: '16px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#6c757d',
+                    fontSize: '16px',
+                    fontWeight: '500'
+                  }}>$</span>
+                  <input
+                    type="number"
+                    name="precioadicion"
+                    value={formCatalogo.precioadicion}
+                    onChange={handleChangeCatalogoForm}
+                    className={`modal-input ${erroresCatalogo.precioadicion ? 'input-invalid' : 'input-valid'}`}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px 12px 35px',
+                      borderRadius: '8px',
+                      border: '2px solid #e1e5e9',
+                      fontSize: '16px',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: '#fff'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = tipoCatalogo === 'adicion' 
+                        ? '#ff6b6b' 
+                        : tipoCatalogo === 'relleno' 
+                        ? '#4ecdc4' 
+                        : '#a8edea';
+                      e.target.style.boxShadow = `0 0 0 3px ${tipoCatalogo === 'adicion' 
+                        ? 'rgba(255, 107, 107, 0.1)' 
+                        : tipoCatalogo === 'relleno' 
+                        ? 'rgba(78, 205, 196, 0.1)' 
+                        : 'rgba(168, 237, 234, 0.1)'}`;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e1e5e9';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+                {erroresCatalogo.precioadicion && (
+                  <div style={{ 
+                    color: '#dc3545', 
+                    fontSize: '12px', 
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>⚠</span> {erroresCatalogo.precioadicion}
+                  </div>
+                )}
+                <small style={{ 
+                  color: '#6c757d', 
+                  fontSize: '12px',
+                  display: 'block',
+                  marginTop: '6px'
+                }}>
+                  💡 Costo adicional cuando se use este {tipoCatalogo}
+                </small>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <span style={{ fontWeight: '600', color: '#495057' }}>Estado:</span>
+                <InputSwitch
+                  checked={formCatalogo.estado}
+                  onChange={(e) => setFormCatalogo(prev => ({ ...prev, estado: e.value }))}
+                  style={{ transform: 'scale(1.1)' }}
+                />
+                <span style={{ 
+                  color: formCatalogo.estado ? '#28a745' : '#dc3545',
+                  fontWeight: '600',
+                  fontSize: '14px'
+                }}>
+                  {formCatalogo.estado ? '✅ Activo' : '❌ Inactivo'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            justifyContent: 'flex-end',
+            paddingTop: '20px',
+            borderTop: '1px solid #e9ecef',
+            marginTop: '20px'
+          }}>
+            <button 
+              onClick={cerrarModalCatalogo}
+              style={{
+                background: '#f8f9fa',
+                color: '#6c757d',
+                border: '2px solid #dee2e6',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#e9ecef';
+                e.target.style.borderColor = '#adb5bd';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#f8f9fa';
+                e.target.style.borderColor = '#dee2e6';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={guardarCatalogo}
+              style={{
+                background: tipoCatalogo === 'adicion' 
+                  ? 'linear-gradient(135deg, #ff6b6b, #ee5a52)' 
+                  : tipoCatalogo === 'relleno'
+                  ? 'linear-gradient(135deg, #4ecdc4, #44a08d)'
+                  : 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              }}
+            >
+              ✨ Crear {tipoCatalogo === 'adicion' ? 'Adición' : tipoCatalogo === 'relleno' ? 'Relleno' : 'Sabor'}
             </button>
           </div>
         </Modal>

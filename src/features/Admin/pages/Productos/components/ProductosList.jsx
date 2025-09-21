@@ -28,7 +28,6 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     try {
       setLoading(true);
       const data = await productosApiService.obtenerProductos();
-      console.log('Productos cargados en lista:', data); // Debug
       setProductos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error cargando productos:", error);
@@ -81,22 +80,12 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     producto.nombre?.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  // CORREGIDO: Componente de imagen mejorado
+  // Render de imagen
   const ImagenProducto = ({ producto }) => {
-    // Múltiples formas de obtener la URL de la imagen
-    const urlImagen = producto.urlimagen || 
-                      producto.imagenes?.urlimg || 
-                      producto.imagen?.urlimg ||
-                      producto.imagen;
-
-    console.log('Datos de imagen para producto:', {
-      id: producto.id,
-      nombre: producto.nombre,
-      urlimagen: producto.urlimagen,
-      imagenes: producto.imagenes,
-      imagen: producto.imagen,
-      urlFinal: urlImagen
-    });
+    const urlImagen = producto.urlimagen ||
+      producto.imagenes?.urlimg ||
+      producto.imagen?.urlimg ||
+      producto.imagen;
 
     if (urlImagen) {
       return (
@@ -108,40 +97,34 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
             height: "50px",
             objectFit: "cover",
             borderRadius: "6px",
-            border: "1px solid #ddd"
+            border: "1px solid #ddd",
           }}
           onError={(e) => {
-            console.error('Error cargando imagen:', urlImagen);
             e.target.style.display = 'none';
-            e.target.nextElementSibling.style.display = 'block';
-          }}
-          onLoad={() => {
-            console.log('✅ Imagen cargada exitosamente:', urlImagen);
           }}
         />
       );
     }
 
     return (
-      <div style={{ 
-        width: "50px", 
-        height: "50px", 
-        display: "flex", 
-        alignItems: "center", 
+      <div style={{
+        width: "50px",
+        height: "50px",
+        display: "flex",
+        alignItems: "center",
         justifyContent: "center",
         backgroundColor: "#f8f9fa",
         border: "1px dashed #ddd",
         borderRadius: "6px",
         fontSize: "10px",
         color: "#666",
-        textAlign: "center"
+        textAlign: "center",
       }}>
         Sin imagen
       </div>
     );
   };
 
-  // Exponer refresh al padre mediante el ref
   useImperativeHandle(ref, () => ({
     refreshProductos: cargarProductos,
   }));
@@ -184,43 +167,63 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
         rows={5}
         className="admin-table"
         emptyMessage="No se encontraron productos"
+        tableStyle={{ minWidth: '50rem' }}
       >
         <Column
           header="N°"
           body={(_, { rowIndex }) => rowIndex + 1}
-          style={{ width: "3rem" }}
+          style={{ width: '3rem' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '25px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '3px' }}
         />
 
-        {/* CORREGIDO: Columna de imagen usando el componente mejorado */}
         <Column
           header="Imagen"
           body={(row) => <ImagenProducto producto={row} />}
-          style={{ width: "100px", textAlign: "center" }}
+          style={{ width: "100px" }}
+          headerStyle={{ textAlign: 'center', paddingLeft: '10px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '10px' }}
         />
 
-        <Column field="nombre" header="Nombre" style={{ width: "200px" }} />
+        <Column
+          field="nombre"
+          header="Nombre"
+          style={{ width: '200px' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
+        />
 
         <Column
           field="precio"
           header="Precio"
           body={(row) => formatearPrecio(row.precio)}
-          style={{ width: "150px" }}
+          style={{ width: '150px' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
-        <Column field="categoria" header="Categoría" style={{ width: "150px" }} />
+        <Column
+          field="categoria"
+          header="Categoría"
+          style={{ width: '150px' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
+        />
 
         <Column
           header="Estado"
           body={(row) => (
             <InputSwitch checked={row.estado} onChange={() => toggleEstado(row)} />
           )}
-          style={{ width: "80px", textAlign: "center" }}
+          style={{ width: '80px' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
         <Column
           header="Acción"
           body={(row) => (
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
               <button
                 className="admin-button gray"
                 onClick={() => onView(row)}
@@ -244,9 +247,11 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
               </button>
             </div>
           )}
+          style={{ width: '180px' }}
+          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
+          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
       </DataTable>
-
     </div>
   );
 });

@@ -2,19 +2,21 @@ import React, { useState, useEffect } from "react";
 import SeleccionarRecetaModal from "./components_recetas/SeleccionarRecetaModal";
 import productoApiService from "../../../services/productos_services";
 import "../../../adminStyles.css";
+import Notification from "../../../components/Notification";
+import "./css/productos.css";
 
 export default function ProductosEdit({ producto, onSave, onCancel }) {
   const [formData, setFormData] = useState({
-    nombreproducto: producto?.nombre || "",
-    precioproducto: producto?.precio || "",
-    cantidadproducto: producto?.cantidad || "",
+    nombreproducto: producto?.nombreproducto || "",
+    precioproducto: producto?.precioproducto || "",
+    cantidadproducto: producto?.cantidadproducto || "",
     idcategoriaproducto: producto?.idcategoriaproducto || "",
     estado: producto?.estado ?? true,
     idreceta: producto?.idreceta || null,
     recetaSeleccionada: null,
     imagenArchivo: null,
-    imagenPreview: producto?.imagen || null,
-    idimagen: producto?.idimagen || null
+    imagenPreview: producto?.urlimagen || producto?.imagenes?.urlimg || null,
+    idimagen: producto?.idimagen || null,
   });
 
   const [categorias, setCategorias] = useState([]);
@@ -24,206 +26,151 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
   const [erroresValidacion, setErroresValidacion] = useState({});
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
+  // Notificaciones
+  const [notification, setNotification] = useState({
+    visible: false,
+    mensaje: "",
+    tipo: "success",
+  });
+  const showNotification = (mensaje, tipo = "success") =>
+    setNotification({ visible: true, mensaje, tipo });
+  const hideNotification = () =>
+    setNotification({ visible: false, mensaje: "", tipo: "success" });
+
   useEffect(() => {
     const cargarCategorias = async () => {
       try {
         const response = await fetch(
           "https://deliciasoft-backend.onrender.com/api/categorias-productos"
         );
-        if (!response.ok) {
-          throw new Error("No se pudo obtener las categorías");
-        }
+        if (!response.ok) throw new Error("No se pudo obtener las categorías");
         const data = await response.json();
-        console.log('Categorías cargadas:', data);
         setCategorias(data);
       } catch (error) {
-        console.error("Error al cargar las categorías:", error);
-        const categoriasFallback = [
+        showNotification(
+          "Error al cargar categorías: " + error.message,
+          "error"
+        );
+        setCategorias([
           { idcategoriaproducto: 1, nombrecategoria: "Bebidas" },
           { idcategoriaproducto: 2, nombrecategoria: "Postres" },
           { idcategoriaproducto: 3, nombrecategoria: "Panadería" },
-          { idcategoriaproducto: 4, nombrecategoria: "Repostería" }
-        ];
-        setCategorias(categoriasFallback);
+          { idcategoriaproducto: 4, nombrecategoria: "Repostería" },
+        ]);
       } finally {
         setLoadingCategorias(false);
       }
     };
-
     cargarCategorias();
   }, []);
 
-  // Cargar información de la receta si existe
   useEffect(() => {
-    const cargarReceta = async () => {
-      if (producto?.idreceta) {
-        try {
-          // Aquí deberías llamar a tu servicio para obtener los detalles de la receta
-          // const receta = await recetaApiService.obtenerReceta(producto.idreceta);
-          // Por ahora, simulamos la estructura:
-          const recetaSimulada = {
-            idreceta: producto.idreceta,
-            nombrereceta: "Receta del producto", // Esto debería venir del backend
-            especificaciones: "Especificaciones de la receta"
-          };
-          
-          setFormData(prev => ({
-            ...prev,
-            recetaSeleccionada: recetaSimulada
-          }));
-        } catch (error) {
-          console.error("Error al cargar la receta:", error);
-        }
-      }
-    };
-
-    cargarReceta();
+    if (producto?.idreceta) {
+      const recetaSimulada = {
+        idreceta: producto.idreceta,
+        nombrereceta: "Receta del producto",
+        especificaciones: "Especificaciones de la receta",
+      };
+      setFormData((prev) => ({ ...prev, recetaSeleccionada: recetaSimulada }));
+    }
+    if (producto) {
+      setFormData((prev) => ({
+        ...prev,
+        imagenPreview: producto.urlimagen || producto.imagenes?.urlimg || null,
+        idimagen: producto.idimagen || null,
+      }));
+    }
   }, [producto]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
-    
     if (erroresValidacion[name]) {
-      setErroresValidacion(prev => ({
-        ...prev,
-        [name]: ""
-      }));
+      setErroresValidacion((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleImagenChange = (e) => {
     const archivo = e.target.files[0];
-    
     if (archivo) {
-      const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      const tiposPermitidos = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       if (!tiposPermitidos.includes(archivo.type)) {
-        alert('Tipo de archivo no permitido. Solo se aceptan: JPG, JPEG, PNG, GIF, WebP');
-        e.target.value = '';
+        showNotification("Tipo de archivo no permitido", "error");
         return;
       }
-
-      const maxSize = 5 * 1024 * 1024;
-      if (archivo.size > maxSize) {
-        alert('El archivo es demasiado grande. Tamaño máximo: 5MB');
-        e.target.value = '';
+      if (archivo.size > 5 * 1024 * 1024) {
+        showNotification("El archivo es demasiado grande (máx 5MB)", "error");
         return;
       }
-
       const reader = new FileReader();
       reader.onload = (e) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           imagenArchivo: archivo,
-          imagenPreview: e.target.result
+          imagenPreview: e.target.result,
         }));
       };
       reader.readAsDataURL(archivo);
-
-      if (erroresValidacion.imagen) {
-        setErroresValidacion(prev => ({
-          ...prev,
-          imagen: ""
-        }));
-      }
     }
   };
 
   const removerImagen = () => {
-    setFormData(prev => ({
-      ...prev,
-      imagenArchivo: null,
-      imagenPreview: null
-    }));
-    const fileInput = document.getElementById('imagen-upload');
-    if (fileInput) fileInput.value = '';
+    setFormData((prev) => ({ ...prev, imagenArchivo: null, imagenPreview: null }));
+    const fileInput = document.getElementById("imagen-upload");
+    if (fileInput) fileInput.value = "";
   };
 
   const handleSeleccionarReceta = (receta) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       idreceta: receta.idreceta,
-      recetaSeleccionada: {
-        ...receta,
-        cantidadInsumos: receta.cantidadInsumos || receta.insumos?.length || 0
-      }
+      recetaSeleccionada: receta,
     }));
     setMostrarModalReceta(false);
   };
 
   const removerReceta = () => {
-    setFormData(prev => ({
-      ...prev,
-      idreceta: null,
-      recetaSeleccionada: null
-    }));
+    setFormData((prev) => ({ ...prev, idreceta: null, recetaSeleccionada: null }));
   };
 
   const validateForm = () => {
     const errores = {};
-
-    if (!formData.nombreproducto.trim()) {
-      errores.nombreproducto = "El nombre del producto es requerido";
-    }
-
-    if (!formData.idcategoriaproducto) {
+    if (!formData.nombreproducto.trim())
+      errores.nombreproducto = "El nombre es requerido";
+    if (!formData.idcategoriaproducto)
       errores.idcategoriaproducto = "Debe seleccionar una categoría";
-    }
-
-    const precio = parseFloat(formData.precioproducto);
-    if (!formData.precioproducto || isNaN(precio) || precio < 0) {
-      errores.precioproducto = "El precio debe ser un número válido mayor o igual a 0";
-    }
-
-    const cantidad = parseFloat(formData.cantidadproducto);
-    if (!formData.cantidadproducto || isNaN(cantidad) || cantidad < 0) {
-      errores.cantidadproducto = "La cantidad debe ser un número válido mayor o igual a 0";
-    }
-
+    if (!formData.precioproducto || isNaN(formData.precioproducto))
+      errores.precioproducto = "El precio debe ser válido";
+    if (!formData.cantidadproducto || isNaN(formData.cantidadproducto))
+      errores.cantidadproducto = "La cantidad debe ser válida";
     setErroresValidacion(errores);
     return Object.keys(errores).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
 
     setLoading(true);
     let idImagenSubida = formData.idimagen;
-    
     try {
-      // Si hay una nueva imagen, subirla
       if (formData.imagenArchivo) {
-        console.log('Subiendo nueva imagen...');
         setSubiendoImagen(true);
-        
-        try {
-          const resultadoImagen = await productoApiService.subirImagen(formData.imagenArchivo);
-          idImagenSubida = resultadoImagen.idimagen;
-          console.log('Nueva imagen subida exitosamente, ID:', idImagenSubida);
-        } catch (errorImagen) {
-          console.error('Error al subir imagen:', errorImagen);
-          
-          let mensajeError = 'Error al subir la imagen: ';
-          if (errorImagen.message.includes('Failed to fetch')) {
-            mensajeError += 'No se pudo conectar con el servidor.';
-          } else if (errorImagen.message.includes('timeout')) {
-            mensajeError += 'La subida tardó demasiado tiempo.';
-          } else {
-            mensajeError += errorImagen.message;
-          }
-          
-          alert(mensajeError);
-          return;
-        } finally {
-          setSubiendoImagen(false);
-        }
+        const resultadoImagen = await productoApiService.subirImagen(
+          formData.imagenArchivo
+        );
+        idImagenSubida = resultadoImagen.idimagen;
+        setSubiendoImagen(false);
       }
-
       const payload = {
         idproductogeneral: producto.id,
         nombreproducto: formData.nombreproducto.trim(),
@@ -232,29 +179,14 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
         estado: formData.estado,
         idcategoriaproducto: parseInt(formData.idcategoriaproducto),
         idimagen: idImagenSubida,
-        idreceta: formData.idreceta
+        idreceta: formData.idreceta,
       };
-
-      console.log('Datos del producto a actualizar:', payload);
-      
       await productoApiService.actualizarProducto(producto.id, payload);
-      
-      console.log('Producto actualizado exitosamente');
-      alert("Producto actualizado exitosamente");
-      
-      if (onSave) {
-        onSave();
-      }
-      
-    } catch (error) {
-      console.error("Error actualizando producto:", error);
-      
-      let mensajeError = "Error al actualizar producto";
-      if (error.message) {
-        mensajeError = error.message;
-      }
-      
-      alert(mensajeError);
+      showNotification("Producto actualizado exitosamente", "success");
+      if (onSave) onSave();
+    } catch (err) {
+      console.error("Error actualizando:", err);
+      showNotification("Error al actualizar producto: " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -262,179 +194,205 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
 
   if (!producto) {
     return (
-      <div className="compra-form-container">
-        <div style={{ textAlign: "center", padding: "2rem" }}>
-          No se pudo cargar la información del producto
-        </div>
-      </div>
+      <div className="compra-form-container">No se pudo cargar el producto</div>
     );
   }
 
   return (
     <div className="compra-form-container">
-      <h1>Editar Producto</h1>
+      <Notification
+        visible={notification.visible}
+        mensaje={notification.mensaje}
+        tipo={notification.tipo}
+        onClose={hideNotification}
+      />
 
+      <h1>Editar Producto</h1>
       <form onSubmit={handleSubmit}>
         <div className="compra-fields-grid">
-          {/* Nombre del Producto */}
-          <div className={`field-group ${erroresValidacion.nombreproducto ? 'has-error' : ''}`}>
-            <label>Nombre del Producto <span className="required">*</span></label>
+          {/* Nombre */}
+          <div
+            className={`field-group ${
+              erroresValidacion.nombreproducto ? "has-error" : ""
+            }`}
+          >
+            <label>
+              Nombre <span style={{ color: "red" }}>*</span>
+            </label>
             <input
               type="text"
               name="nombreproducto"
               value={formData.nombreproducto}
               onChange={handleInputChange}
-              className={erroresValidacion.nombreproducto ? 'field-error' : ''}
-              placeholder="Ingrese el nombre del producto"
-              required
+              className={
+                erroresValidacion.nombreproducto ? "field-error" : ""
+              }
             />
             {erroresValidacion.nombreproducto && (
-              <span className="error-message">{erroresValidacion.nombreproducto}</span>
+              <span className="error-message">
+                {erroresValidacion.nombreproducto}
+              </span>
             )}
           </div>
 
           {/* Precio */}
-          <div className={`field-group ${erroresValidacion.precioproducto ? 'has-error' : ''}`}>
-            <label>Precio <span className="required">*</span></label>
+          <div
+            className={`field-group ${
+              erroresValidacion.precioproducto ? "has-error" : ""
+            }`}
+          >
+            <label>
+              Precio <span style={{ color: "red" }}>*</span>
+            </label>
             <input
               type="number"
               name="precioproducto"
               value={formData.precioproducto}
               onChange={handleInputChange}
-              className={erroresValidacion.precioproducto ? 'field-error' : ''}
+              className={
+                erroresValidacion.precioproducto ? "field-error" : ""
+              }
               min="0"
               step="0.01"
-              placeholder="0.00"
-              required
             />
             {erroresValidacion.precioproducto && (
-              <span className="error-message">{erroresValidacion.precioproducto}</span>
+              <span className="error-message">
+                {erroresValidacion.precioproducto}
+              </span>
             )}
           </div>
 
           {/* Cantidad */}
-          <div className={`field-group ${erroresValidacion.cantidadproducto ? 'has-error' : ''}`}>
-            <label>Cantidad <span className="required">*</span></label>
+          <div
+            className={`field-group ${
+              erroresValidacion.cantidadproducto ? "has-error" : ""
+            }`}
+          >
+            <label>
+              Cantidad <span style={{ color: "red" }}>*</span>
+            </label>
             <input
               type="number"
               name="cantidadproducto"
               value={formData.cantidadproducto}
               onChange={handleInputChange}
-              className={erroresValidacion.cantidadproducto ? 'field-error' : ''}
+              className={
+                erroresValidacion.cantidadproducto ? "field-error" : ""
+              }
               min="0"
-              step="0.01"
-              placeholder="0"
-              required
+              step="1"
             />
             {erroresValidacion.cantidadproducto && (
-              <span className="error-message">{erroresValidacion.cantidadproducto}</span>
+              <span className="error-message">
+                {erroresValidacion.cantidadproducto}
+              </span>
             )}
           </div>
 
           {/* Categoría */}
-          <div className={`field-group ${erroresValidacion.idcategoriaproducto ? 'has-error' : ''}`}>
-            <label>Categoría <span className="required">*</span></label>
+          <div
+            className={`field-group ${
+              erroresValidacion.idcategoriaproducto ? "has-error" : ""
+            }`}
+          >
+            <label>
+              Categoría <span style={{ color: "red" }}>*</span>
+            </label>
             {loadingCategorias ? (
               <select disabled className="field-disabled">
-                <option>Cargando categorías...</option>
+                <option>Cargando...</option>
               </select>
             ) : (
               <select
                 name="idcategoriaproducto"
                 value={formData.idcategoriaproducto}
                 onChange={handleInputChange}
-                className={erroresValidacion.idcategoriaproducto ? 'field-error' : ''}
-                required
+                className={
+                  erroresValidacion.idcategoriaproducto ? "field-error" : ""
+                }
               >
-                <option value="">Seleccionar categoría</option>
-                {categorias.map((categoria) => (
-                  <option 
-                    key={categoria.idcategoriaproducto} 
-                    value={categoria.idcategoriaproducto}
+                <option value="">Seleccione una categoría</option>
+                {categorias.map((cat) => (
+                  <option
+                    key={cat.idcategoriaproducto}
+                    value={cat.idcategoriaproducto}
                   >
-                    {categoria.nombrecategoria || categoria.nombre}
+                    {cat.nombrecategoria || cat.nombre}
                   </option>
                 ))}
               </select>
             )}
             {erroresValidacion.idcategoriaproducto && (
-              <span className="error-message">{erroresValidacion.idcategoriaproducto}</span>
+              <span className="error-message">
+                {erroresValidacion.idcategoriaproducto}
+              </span>
             )}
           </div>
 
-          {/* Imagen del Producto - CAMPO PEQUEÑO */}
+          {/* Estado (ahora dentro de la grilla) */}
           <div className="field-group">
-            <label>Imagen del Producto</label>
-            <div className="imagen-upload-small">
-              {formData.imagenPreview ? (
-                <div className="imagen-preview-container">
-                  <img 
-                    src={formData.imagenPreview} 
-                    alt="Preview" 
-                    className="imagen-preview-small"
-                  />
-                  <div className="imagen-info-small">
-                    <span className="imagen-nombre">
-                      {formData.imagenArchivo?.name || "Imagen actual"}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-eliminar-imagen"
-                      onClick={removerImagen}
-                      title="Eliminar imagen"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="sin-imagen-container">
-                  <span className="sin-imagen-text">Sin imagen</span>
-                </div>
-              )}
-              <div className="upload-button-container">
-                <input
-                  id="imagen-upload"
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                  onChange={handleImagenChange}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="imagen-upload" className="btn-upload-imagen">
-                  {subiendoImagen ? "..." : (formData.imagenPreview ? "Cambiar" : "Subir")}
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Estado del Producto */}
-          <div className="field-group">
-            <label>
-              <input
-                type="checkbox"
-                name="estado"
-                checked={formData.estado}
-                onChange={handleInputChange}
-                style={{ marginRight: "0.5rem" }}
-              />
-              Producto Activo
-            </label>
+            <label>Estado</label>
+            <select
+              name="estado"
+              value={formData.estado ? "activo" : "inactivo"}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  estado: e.target.value === "activo",
+                }))
+              }
+              className="field-input"
+            >
+              <option value="activo">Activo ✅</option>
+              <option value="inactivo">Inactivo ⛔</option>
+            </select>
           </div>
         </div>
 
         <div className="section-divider"></div>
 
-        {/* Sección de Receta */}
+        {/* Imagen */}
         <div className="detalle-section">
-          <h2>Receta del Producto:</h2>
-          
+          <h2>Imagen del Producto:</h2>
+          {formData.imagenPreview ? (
+            <div>
+              <img
+                src={formData.imagenPreview}
+                alt="Preview"
+                style={{ width: 80, borderRadius: 6 }}
+              />
+              <button
+                type="button"
+                className="btn-eliminar"
+                onClick={removerImagen}
+              >
+                Eliminar
+              </button>
+            </div>
+          ) : (
+            <p>No hay imagen</p>
+          )}
+          <input
+            id="imagen-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleImagenChange}
+            style={{ display: "none" }}
+          />
+          <label htmlFor="imagen-upload" className="btn-agregar-insumos">
+            {formData.imagenPreview ? "Cambiar" : "Subir"}
+          </label>
+        </div>
+
+        <div className="section-divider"></div>
+
+        {/* Receta */}
+        <div className="detalle-section">
+          <h2>Receta:</h2>
           {formData.recetaSeleccionada ? (
-            <div className="receta-seleccionada">
-              <div className="receta-info">
-                <h4>{formData.recetaSeleccionada.nombrereceta}</h4>
-                <p>{formData.recetaSeleccionada.especificaciones}</p>
-                <small>ID Receta: {formData.recetaSeleccionada.idreceta}</small>
-              </div>
+            <div>
+              <h4>{formData.recetaSeleccionada.nombrereceta}</h4>
+              <p>{formData.recetaSeleccionada.especificaciones}</p>
               <button
                 type="button"
                 className="btn-eliminar"
@@ -444,11 +402,8 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
               </button>
             </div>
           ) : (
-            <div className="sin-receta">
-              <p>No hay receta asignada a este producto</p>
-            </div>
+            <p>No hay receta asignada</p>
           )}
-
           <button
             type="button"
             className="btn-agregar-insumos"
@@ -467,125 +422,22 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
           >
             Cancelar
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="modal-btn save-btn"
             disabled={loading || subiendoImagen}
           >
-            {loading ? "Actualizando..." : subiendoImagen ? "Subiendo imagen..." : "Actualizar"}
+            {loading ? "Actualizando..." : "Actualizar"}
           </button>
         </div>
       </form>
 
-      {/* Modal de Recetas */}
       {mostrarModalReceta && (
         <SeleccionarRecetaModal
           onClose={() => setMostrarModalReceta(false)}
           onSeleccionar={handleSeleccionarReceta}
         />
       )}
-
-      {/* Estilos adicionales solo para la sección de imagen pequeña */}
-      <style jsx>{`
-        .imagen-upload-small {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem;
-          border: 2px dashed #e9ecef;
-          border-radius: 8px;
-          background-color: #f8f9fa;
-          min-height: 60px;
-        }
-
-        .imagen-preview-container {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .imagen-preview-small {
-          width: 50px;
-          height: 50px;
-          object-fit: cover;
-          border-radius: 6px;
-          border: 2px solid #28a745;
-        }
-
-        .imagen-info-small {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          max-width: 120px;
-        }
-
-        .imagen-nombre {
-          font-size: 0.75rem;
-          color: #666;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .btn-eliminar-imagen {
-          background-color: #e74c3c;
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 18px;
-          height: 18px;
-          cursor: pointer;
-          font-size: 0.7rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          align-self: flex-start;
-        }
-
-        .btn-eliminar-imagen:hover {
-          background-color: #c0392b;
-        }
-
-        .sin-imagen-container {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .sin-imagen-text {
-          color: #666;
-          font-style: italic;
-          font-size: 0.85rem;
-        }
-
-        .upload-button-container {
-          display: flex;
-          align-items: center;
-        }
-
-        .btn-upload-imagen {
-          background: linear-gradient(135deg, #17a2b8, #20c997);
-          color: white;
-          border: none;
-          padding: 0.4rem 0.8rem;
-          border-radius: 6px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
-          display: inline-block;
-          min-width: 60px;
-          text-align: center;
-        }
-
-        .btn-upload-imagen:hover {
-          background: linear-gradient(135deg, #138496, #1e7e34);
-          transform: translateY(-1px);
-          box-shadow: 0 3px 8px rgba(23, 162, 184, 0.4);
-        }
-      `}</style>
     </div>
   );
 }

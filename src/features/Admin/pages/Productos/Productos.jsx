@@ -154,42 +154,6 @@ export default function ProductosMain() {
         onClose={hideNotification}
       />
 
-      {/* Breadcrumb o indicador de navegación */}
-      {currentView !== "list" && (
-        <div
-          style={{
-            padding: "1rem 2rem",
-            backgroundColor: "#f8f9fa",
-            borderBottom: "1px solid #dee2e6",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            fontSize: "0.9rem",
-            color: "#6c757d",
-          }}
-        >
-          <button
-            onClick={handleBackToList}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#007bff",
-              cursor: "pointer",
-              textDecoration: "underline",
-              fontSize: "0.9rem",
-              padding: 0,
-            }}
-          >
-            Productos
-          </button>
-          <span>/</span>
-          <span style={{ color: "#495057", fontWeight: "500" }}>
-            {currentView === "add" && "Agregar Producto"}
-            {currentView === "edit" && "Editar Producto"}
-            {currentView === "view" && "Ver Detalles"}
-          </span>
-        </div>
-      )}
 
       {/* Contenido principal */}
       {renderCurrentView()}

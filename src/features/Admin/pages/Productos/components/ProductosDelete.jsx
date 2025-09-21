@@ -34,24 +34,33 @@ export default function ProductosDelete({ show, producto, onConfirm, onCancel })
       
     } catch (error) {
       console.error("Error eliminando producto:", error);
-      
+
       let mensajeError = "Error al eliminar producto";
-      
+
+      // Detectar uso específico según mensaje de error del backend/BD
       if (error.message.includes("foreign key")) {
-        mensajeError = "No se puede eliminar: el producto está siendo utilizado en otras partes del sistema";
+        if (error.message.includes("detalleventas") || error.message.includes("ventas")) {
+          mensajeError = "No se puede eliminar: el producto está siendo utilizado en Ventas.";
+        } else if (error.message.includes("produccion")) {
+          mensajeError = "No se puede eliminar: el producto está siendo utilizado en Producción.";
+        } else if (error.message.includes("recetas") || error.message.includes("receta")) {
+          mensajeError = "No se puede eliminar: el producto está siendo utilizado en Recetas.";
+        } else {
+          mensajeError = "No se puede eliminar: el producto está siendo utilizado en otras partes del sistema.";
+        }
       } else if (error.message.includes("not found")) {
         mensajeError = "El producto no existe o ya fue eliminado";
       } else {
         mensajeError = error.message || mensajeError;
       }
-      
+
       showNotification(mensajeError, "error");
     } finally {
       setLoading(false);
     }
   };
 
-    // No renderizar nada si show es false o no hay producto
+  // No renderizar nada si show es false o no hay producto
   if (!show || !producto) return null;
 
   return (
@@ -142,7 +151,7 @@ export default function ProductosDelete({ show, producto, onConfirm, onCancel })
                 lineHeight: "1.5"
               }}
             >
-              ¿Está seguro de que desea eliminar el producto <strong>{producto.nombre}</strong>?
+              ¿Está seguro de que desea eliminar el producto <strong>{producto.nombre || producto.nombreproducto}</strong>?
             </p>
             
             <p 

@@ -132,7 +132,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
         const productoTransformado = {
           id: producto.id,
           nombre: producto.nombre,
-          imagen: producto.imagen || 'https://via.placeholder.com/300x200?text=Producto',
+          imagen: producto.urlimagen || 'https://via.placeholder.com/300x200?text=Producto',
           precio: producto.precio,
           descripcion: producto.descripcion || 'Descripción no disponible',
           categoria: categoriaId,

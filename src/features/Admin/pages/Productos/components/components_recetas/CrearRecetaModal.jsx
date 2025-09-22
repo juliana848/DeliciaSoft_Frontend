@@ -275,7 +275,7 @@ export default function CrearRecetaModal({ onClose, onGuardar }) {
                   value={formData.especificaciones}
                   onChange={handleInputChange}
                   rows="3"
-                  maxLength="80"
+                  maxLength="400"
                   style={{
                     width: "100%",
                     padding: "0.75rem",

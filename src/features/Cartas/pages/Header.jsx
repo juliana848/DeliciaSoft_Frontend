@@ -1,44 +1,40 @@
 import React, { useState, useEffect } from "react";
 
 function Header() {
-  // Array de imágenes que se van a rotar
-  const images = [
-    "/imagenes/Cartas/donas.png",
-    "/imagenes/Cartas/arrozConLeche.jpg",
-    "/imagenes/Cartas/obleas.jpeg",
-    "/imagenes/Cartas/sandwches.jpeg",
-    "/imagenes/Cartas/Logo.jpeg"
-  ];
-
+  const [images, setImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Cambiar imagen automáticamente cada 3 segundos
+  // Traer imágenes desde la API
   useEffect(() => {
+    fetch("https://deliciasoft-backend.onrender.com/api/imagenes")
+      .then((res) => res.json())
+      .then((data) => {
+        let arr = [];
+        if (Array.isArray(data)) {
+          arr = data.map((item) => item.urlimg);
+        } else if (data.urlimg) {
+          arr = [data.urlimg];
+        } else if (data.imagenes) {
+          arr = data.imagenes.map((item) => item.urlimg);
+        }
+        setImages(arr);
+      })
+      .catch((err) => console.error("Error cargando imágenes", err));
+  }, []);
+
+  // Rotar imágenes cada 3s
+  useEffect(() => {
+    if (images.length === 0) return;
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      setCurrentImageIndex((prev) =>
+        prev === images.length - 1 ? 0 : prev + 1
       );
     }, 3000);
-
     return () => clearInterval(interval);
-  }, [images.length]);
-
-  // Función para manejar el clic del botón
-  const handleVerPedidos = () => {
-    // Aquí puedes agregar la navegación a la sección de pedidos
-    // Por ejemplo, usando React Router: navigate('/pedidos')
-    // O scroll a una sección: document.getElementById('pedidos').scrollIntoView()
-    console.log("Navegando a pedidos...");
-    
-    // Ejemplo de scroll suave a una sección
-    const pedidosSection = document.getElementById('pedidos');
-    if (pedidosSection) {
-      pedidosSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  }, [images]);
 
   return (
-    <div className="header bg-gradient-to-r from-pink-200 via-pink-300 to-yellow-200 relative overflow-hidden min-h-[300px] flex items-center justify-center">
+    <div className="header bg-gradient-to-r from-pink-200 via-pink-300 to-yellow-200 relative overflow-hidden min-h-[500px] flex items-center justify-center">
       {/* Elementos decorativos de fondo */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-10 left-10 w-16 h-16 bg-pink-400 rounded-full animate-bounce"></div>
@@ -52,112 +48,77 @@ function Header() {
         <svg width="100%" height="100%" viewBox="0 0 100 100">
           <defs>
             <pattern id="dots" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-              <circle cx="5" cy="5" r="1" fill="white"/>
+              <circle cx="5" cy="5" r="1" fill="white" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#dots)"/>
+          <rect width="100%" height="100%" fill="url(#dots)" />
         </svg>
       </div>
 
       <div className="container mx-auto px-3 flex flex-col lg:flex-row items-center justify-between relative z-10">
         {/* Sección de imágenes */}
-        <div className="flex-1 relative mb-8 lg:mb-0">
-          <div className="relative">
-            {/* Imagen principal que cambia automáticamente */}
-            <div className="relative group">
-              <div className="bg-white rounded-2xl p-4 shadow-xl">
-                <img 
-                  src={images[currentImageIndex]} 
-                  alt="Productos artesanales" 
-                  className="w-full h-64 object-contain rounded-xl transform group-hover:scale-105 transition-all duration-500" 
+        <div className="flex-1 relative mb-6 lg:mb-0">
+          <div className="relative group">
+            {/* Card + imagen */}
+            <div className="bg-white rounded-3xl p-3 shadow-xl">
+              {images.length > 0 && (
+                <img
+                  src={images[currentImageIndex]}
+                  alt="Productos artesanales"
+                  className="w-full h-80 object-cover rounded-3xl transform group-hover:scale-105 transition-all duration-500"
                 />
-                
-                {/* Indicador de transición */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                  {images.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        index === currentImageIndex 
-                          ? 'bg-pink-500 w-6' 
-                          : 'bg-pink-200'
-                      }`}
-                    />
-                  ))}
-                </div>
+              )}
+
+              {/* Indicadores */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                {images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentImageIndex
+                        ? "bg-pink-500 w-6"
+                        : "bg-pink-200"
+                    }`}
+                  />
+                ))}
               </div>
-              {/* Brillo decorativo */}
-              <div className="absolute top-2 right-2 w-6 h-6 bg-yellow-300 rounded-full opacity-80 animate-ping"></div>
             </div>
 
-            {/* Elementos flotantes alrededor de la imagen */}
-            <div className="absolute -top-6 -left-6 bg-white rounded-full p-3 shadow-lg animate-bounce">
-              <span className="text-2xl">🍩</span>
+            {/* Elementos flotantes alrededor */}
+            <div className="absolute -top-6 -left-6 bg-white rounded-full p-2 shadow-lg animate-bounce">
+              <span className="text-xl">🍩</span>
             </div>
-            <div className="absolute -bottom-4 -right-4 bg-white rounded-full p-3 shadow-lg animate-bounce delay-300">
-              <span className="text-2xl">🧁</span>
+            <div className="absolute -bottom-4 -right-4 bg-white rounded-full p-2 shadow-lg animate-bounce delay-300">
+              <span className="text-xl">🧁</span>
             </div>
-            <div className="absolute top-1/2 -left-8 bg-white rounded-full p-2 shadow-lg animate-pulse">
-              <span className="text-xl">🍰</span>
+            <div className="absolute top-1/2 -left-8 bg-white rounded-full p-1 shadow-lg animate-pulse">
+              <span className="text-lg">🍰</span>
             </div>
           </div>
         </div>
 
         {/* Sección de texto */}
         <div className="flex-1 text-center lg:text-left lg:pl-12">
-          {/* Título principal */}
           <div className="mb-4">
             <h1 className="text-4xl lg:text-5xl font-bold text-black drop-shadow-lg">
-              <span className="text-black">
-                En Delicias
-              </span>
+              <span className="text-black">En Delicias Darsy</span>
             </h1>
-
-            <h1 className="text-4xl lg:text-5xl font-bold text-black drop-shadow-lg">
-              <span className="text-black">
-                Darsy
-              </span>
-            </h1>
-
-            {/* Línea decorativa */}
             <div className="w-20 h-1 bg-gradient-to-r from-pink-400 to-yellow-400 mx-auto lg:mx-0 mt-3 rounded-full"></div>
           </div>
 
           {/* Descripción */}
           <div className="mb-4">
             <p className="text-lg lg:text-xl text-white drop-shadow-md mb-3 font-medium">
-              Descubre sabores únicos que 
-              <span className="text-yellow-200 font-bold"> endulzan </span>
-              cada momento.
+              Descubre sabores únicos que{" "}
+              <span className="text-yellow-200 font-bold">endulzan</span> cada
+              momento.
             </p>
-            
-            {/* Frase especial con diseño destacado */}
+
             <div className="bg-white bg-opacity-90 rounded-full px-4 py-2 inline-block shadow-lg transform hover:scale-105 transition-transform duration-300">
               <p className="text-base text-pink-600 font-bold">
                 ✨ "Hechos con mucho amor" ✨
               </p>
             </div>
-          </div>
-
-          {/* Botón Ver Pedidos */}
-          <div className="text-center">
-            <button 
-              onClick={handleVerPedidos}
-              className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 hover:shadow-3xl group"
-            >
-              <div className="flex items-center justify-center">
-                <span className="text-xl mr-3 group-hover:animate-bounce">🛍️</span>
-                <span className="text-xl">Ver Pedidos</span>
-              </div>
-              <div className="text-sm opacity-90 mt-1">
-                Explora nuestros deliciosos productos
-              </div>
-            </button>
-            
-            {/* Información adicional */}
-            <p className="text-sm text-white drop-shadow-md mt-3 opacity-90">
-              📞 Contacto: 321 309 85 04
-            </p>
           </div>
         </div>
       </div>

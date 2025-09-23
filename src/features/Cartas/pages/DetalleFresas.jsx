@@ -1,149 +1,210 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "./CartContext";
-
-
-const mockData = {
-  "fresas-con-crema": [
-    {
-      id: 1,
-      nombre: "Fresas con Crema Familiar 24onz",
-      precio: 20000,
-      imagen: "/imagenes/Cartas/fresacrema.jpeg",
-      descripcion: "También tenemos esta presentación con duraznos y cerezas, con la opción de topping extras y nutella"
-    },
-    {
-      id: 2,
-      nombre: "Fresas con Crema 9ONZ",
-      precio: 7000,
-      imagen: "https://www.infobae.com/resizer/v2/TWP6YXWPVZGMHH7TUIIOGCR5PU.jpg?auth=ac927b5faa2fbe6639269c737930268c421259a43d38b78625ed281d236535ff&smart=true&width=350&height=197&quality=85",
-      descripcion: "Versión pequeña ideal para niños o antojos rápidos",
-    },
-    {
-      id: 3,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://www.sorpresasatiempo.com/cdn/shop/files/Disenosintitulo-2024-01-06T104345.478_1_grande.webp?v=1736623191",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 4,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/a6/d5/81/a6d5813748907d362277809df993acf3.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 5,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/2b/ee/73/2bee735752d18e7fa3fbcdd706bf3ce3.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 6,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/9b/0a/9f/9b0a9f7853b3742fc71f2becae3e77b2.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 7,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/b2/2f/23/b22f231315abb506e4dc9185492f3d22.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 8,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/ed/d0/93/edd093fdaf9c48f93cac42a7b81b64c7.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 9,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/2f/0a/eb/2f0aebd781732335030a8d061fa252db.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-    {
-      id: 10,
-      nombre: "Fresas con Crema 12onz",
-      precio: 12000,
-      imagen: "https://i.pinimg.com/736x/e7/17/c5/e717c520d1bc0008ad63cd0618918d40.jpg",
-      descripcion: "3 toppings para endulzar el día, con opción de añadir nutella",
-    },
-  ],
-};
 
 const ProductoDetalle = () => {
   const navigate = useNavigate();
   const { agregarProducto } = useContext(CartContext);
-  const productos = mockData["fresas-con-crema"];
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  return (
-    <div className="producto-detalle-container">
-      <h2 className="detalle-titulo">FRESAS CON CREMA</h2>
+  useEffect(() => {
+    const fetchProductos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      <div className="productos-detalle">
-        {productos.map((producto) => (
-          <div className="producto-card" key={producto.id}>
-            <img src={producto.imagen} alt={producto.nombre} className="producto-img" />
-            <div className="producto-info">
-              <h3>{producto.nombre}</h3>
-              <p className="precio-extra">${producto.precio}</p>
-              {producto.descripcion && <p className="descripcion">{producto.descripcion}</p>}
-              <button
-                onClick={() => {
-                  agregarProducto({ ...producto, cantidad: 1 });
-                  navigate("/pedidos");
-                }}
-                style={{
-                  marginTop: "10px",
-                  backgroundColor: "#ff0080",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
-                  transition: "background-color 0.3s",
-                }}
-                onMouseOver={(e) => (e.target.style.backgroundColor = "#e60073")}
-                onMouseOut={(e) => (e.target.style.backgroundColor = "#ff0080")}
-              >
-                Agregar a mi pedido 🍓
-              </button>
+        const res = await fetch("https://deliciasoft-backend.onrender.com/api/productogeneral", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
 
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        console.log("Datos obtenidos:", json);
+
+        // Adaptar si la API devuelve una categoría en vez de productos
+        const productosArray = Array.isArray(json)
+          ? json.filter(
+              (producto) =>
+                producto.categoria === "Fresas Con Crema" ||
+                producto.categoriaproducto?.nombrecategoria === "Fresas Con Crema"
+            )
+          : [
+              {
+                idproductogeneral: json.idcategoriaproducto,
+                nombreproducto: json.nombrecategoria,
+                precioproducto: 0, // Valor por defecto
+                categoria: json.nombrecategoria,
+                urlimagen: json.imagenes?.urlimg,
+                // Se elimina el campo de receta para no mostrarlo
+              }
+            ];
+
+        setProductos(productosArray);
+
+      } catch (err) {
+        console.error("Error al cargar productos:", err);
+        setError(`Error: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductos();
+  }, []);
+
+  const handleAgregarProducto = (producto) => {
+    const productoParaCarrito = {
+      id: producto.idproductogeneral,
+      nombre: producto.nombreproducto,
+      precio: parseInt(producto.precioproducto) || 0,
+      categoria: producto.categoria || producto.categoriaproducto?.nombrecategoria,
+      imagen: producto.urlimagen || producto.imagenes?.urlimg,
+      cantidad: 1
+    };
+
+    agregarProducto(productoParaCarrito);
+    navigate("/pedidos");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-pink-800 mb-2">
+              Fresas con Crema 🍓
+            </h1>
+            <p className="text-gray-600">Selecciona tu presentación favorita</p>
+          </div>
+          <div className="flex flex-col justify-center items-center h-64 bg-white rounded-2xl shadow-lg">
+            <div className="text-6xl mb-4">🍰</div>
+            <h3 className="text-xl font-semibold text-pink-800 mb-2">Cargando productos deliciosos...</h3>
+            <p className="text-gray-600 text-center max-w-md">Estamos preparando nuestros mejores productos para ti. ¡Un momento por favor!</p>
+            <div className="mt-4 flex space-x-2">
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
+    );
+  }
 
-      <div className="nota-clientes">
-        <p>🎉 ¡Gracias por preferirnos! Todos nuestros productos son preparados con ingredientes frescos y mucho amor. 💖</p>
-        <p>Además ofrecemos fresas con crema con durazno, cereza, y mango, con adiciones 💖</p>
-        <p>"Y recuerda no dejes para mañana lo que te puedes comer hoy" 💖</p>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-pink-800 mb-2">
+              Nuestros Productos 🍰
+            </h1>
+            <p className="text-gray-600">Selecciona tu favorito</p>
+          </div>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
       </div>
+    );
+  }
 
-      <div style={{ textAlign: "center", marginTop: "30px" }}>
-        <button
-          onClick={() => navigate("/Cartas")}
-          style={{
-            backgroundColor: "#ff0080",
-            color: "#fff",
-            border: "none",
-            padding: "12px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          ⬅ Volver a la carta
-        </button>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-start mb-6">
+          <button
+            onClick={() => navigate('/cartas')}
+            className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+          >
+            <span>←</span>
+            <span>Volver</span>
+          </button>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-pink-800 mb-2">
+            Nuestros Productos 🍰
+          </h1>
+          <p className="text-gray-600">
+            Selecciona tu favorito
+          </p>
+        </div>
+
+        {productos.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">No hay productos disponibles</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {productos.map((producto) => (
+              <div
+                key={producto.idproductogeneral}
+                className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <div className="relative h-64 bg-gray-200 overflow-hidden">
+                  {producto.urlimagen ? (
+                    <img
+                      src={producto.urlimagen}
+                      alt={producto.nombreproducto}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-pink-200">
+                      <span className="text-4xl">🍰</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {producto.nombreproducto}
+                    </h3>
+
+                    <p className="text-2xl font-bold text-pink-600 mb-2">
+                      ${parseInt(producto.precioproducto).toLocaleString()}
+                    </p>
+
+                    {producto.categoria && (
+                      <span className="inline-block bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full mb-4">
+                        {producto.categoria}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleAgregarProducto(producto)}
+                    className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                  >
+                    <span>🛒</span>
+                    <span>Añadir al Pedido</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-8 text-center text-gray-600">
+          <p>Total de productos: {productos.length}</p>
+        </div>
       </div>
     </div>
   );

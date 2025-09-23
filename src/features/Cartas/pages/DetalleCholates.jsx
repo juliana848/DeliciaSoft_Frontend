@@ -34,8 +34,8 @@ const ProductoDetalle = () => {
         const productosArray = Array.isArray(json)
           ? json.filter(
               (producto) =>
-                producto.categoria === "Obleas" ||
-                producto.categoriaproducto?.nombrecategoria === "Obleas"
+                producto.categoria === "chocolates" ||
+                producto.categoriaproducto?.nombrecategoria === "chocolates"
             )
           : [
               {

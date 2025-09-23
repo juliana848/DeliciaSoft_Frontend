@@ -1,154 +1,213 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "./CartContext"; 
+import { CartContext } from "./CartContext";
 
-const mockData = [
-  {
-    id: 1,
-    nombre: "Mini Donas de Chocolate",
-    precio: 6000,
-    imagen: "/imagenes/Cartas/miniDona.jpeg",
-    descripcion: "Deliciosas mini donas cubiertas de chocolate y chispas dulces.",
-  },
-  {
-    id: 2,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/29/c2/12/29c2122482d9b91c90abe2ab8644e352.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 3,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/6d/5a/1a/6d5a1acc1a060c965cf1e7749dd311f7.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 4,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/f7/39/87/f73987f65d24e179e87044b381aa99c0.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 5,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/cc/e4/fd/cce4fd02fd6466a5bf3bc0931d9b32f7.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 6,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/74/11/e2/7411e2fb688b33ecc9c00ad951d3d994.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 7,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/ef/ce/6b/efce6bb956e49d6cc0e1fcc3a15c57c9.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 8,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/7b/95/a9/7b95a9138f59be7650595e7b554840a4.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 9,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/40/79/da/4079da1e5d0ace0aeb41b1344037f427.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-  {
-    id: 10,
-    nombre: "Mini Donas Surtidas",
-    precio: 6500,
-    imagen: "https://i.pinimg.com/736x/4f/f7/db/4ff7dbfb2da849b2af3979f47585b8ee.jpg",
-    descripcion: "Paquete de mini donas de sabores variados: fresa, vainilla y chocolate.",
-  },
-];
-
-const DetalleMiniDonas = () => {
+const ProductoDetalle = () => {
   const navigate = useNavigate();
-  const { agregarProducto } = useContext(CartContext); // ✅ Integración con el carrito
+  const { agregarProducto } = useContext(CartContext);
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  return (
-    <div className="producto-detalle-container">
-      <h2 className="detalle-titulo">MINI DONAS</h2>
+  useEffect(() => {
+    const fetchProductos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      <div className="productos-detalle">
-        {mockData.map((producto) => (
-          <div className="producto-card" key={producto.id}>
-            <img
-              src={producto.imagen}
-              alt={producto.nombre}
-              className="producto-img"
-            />
-            <div className="producto-info">
-              <h3>{producto.nombre}</h3>
-              <p className="precio-extra">${producto.precio}</p>
-              {producto.descripcion && (
-                <p className="descripcion">{producto.descripcion}</p>
-              )}
-              <button
-                onClick={() => {
-                  agregarProducto({ ...producto, cantidad: 1 });
-                  navigate("/pedidos");
-                }}
-                style={{
-                  marginTop: "10px",
-                  backgroundColor: "#ff0080",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
-                  transition: "background-color 0.3s",
-                }}
-                onMouseOver={(e) => (e.target.style.backgroundColor = "#e60073")}
-                onMouseOut={(e) => (e.target.style.backgroundColor = "#ff0080")}
-              >
-                Agregar a mi pedido 🍩
-              </button>
+        const res = await fetch("https://deliciasoft-backend.onrender.com/api/productogeneral", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        console.log("Datos obtenidos:", json);
+
+        // Adaptar si la API devuelve una categoría en vez de productos
+        const productosArray = Array.isArray(json)
+          ? json.filter(
+              (producto) =>
+                producto.categoria === "Mini Donas" ||
+                producto.categoriaproducto?.nombrecategoria === "Mini Donas"
+            )
+          : [
+              {
+                idproductogeneral: json.idcategoriaproducto,
+                nombreproducto: json.nombrecategoria,
+                precioproducto: 0, // Valor por defecto
+                categoria: json.nombrecategoria,
+                urlimagen: json.imagenes?.urlimg,
+                // Se elimina el campo de receta para no mostrarlo
+              }
+            ];
+
+        setProductos(productosArray);
+
+      } catch (err) {
+        console.error("Error al cargar productos:", err);
+        setError(`Error: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductos();
+  }, []);
+
+  const handleAgregarProducto = (producto) => {
+    const productoParaCarrito = {
+      id: producto.idproductogeneral,
+      nombre: producto.nombreproducto,
+      precio: parseInt(producto.precioproducto) || 0,
+      categoria: producto.categoria || producto.categoriaproducto?.nombrecategoria,
+      imagen: producto.urlimagen || producto.imagenes?.urlimg,
+      cantidad: 1
+    };
+
+    agregarProducto(productoParaCarrito);
+    navigate("/pedidos");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-pink-800 mb-2">
+              Fresas con Crema 🍓
+            </h1>
+            <p className="text-gray-600">Selecciona tu presentación favorita</p>
+          </div>
+          <div className="flex flex-col justify-center items-center h-64 bg-white rounded-2xl shadow-lg">
+            <div className="text-6xl mb-4">🍰</div>
+            <h3 className="text-xl font-semibold text-pink-800 mb-2">Cargando productos deliciosos...</h3>
+            <p className="text-gray-600 text-center max-w-md">Estamos preparando nuestros mejores productos para ti. ¡Un momento por favor!</p>
+            <div className="mt-4 flex space-x-2">
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
+    );
+  }
 
-      <div className="nota-clientes">
-        <p>🎉 ¡Gracias por preferirnos! Todos nuestros productos son preparados con ingredientes frescos y mucho amor. 💖</p>
-        <p>También puedes pedir mini donas personalizadas para tus eventos. 🎈</p>
-        <p>"Y recuerda, no dejes para mañana lo que te puedes comer hoy" 💖</p>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-pink-800 mb-2">
+              Nuestros Productos 🍰
+            </h1>
+            <p className="text-gray-600">Selecciona tu favorito</p>
+          </div>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
       </div>
+    );
+  }
 
-      <div style={{ textAlign: "center", marginTop: "30px" }}>
-        <button
-          onClick={() => navigate("/Cartas")}
-          style={{
-            backgroundColor: "#ff0080",
-            color: "#fff",
-            border: "none",
-            padding: "12px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          ⬅ Volver a la carta
-        </button>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-start mb-6">
+          <button
+            onClick={() => navigate('/cartas')}
+            className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold py-2 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+          >
+            <span>←</span>
+            <span>Volver</span>
+          </button>
+        </div>
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-pink-800 mb-2">
+            Nuestros Productos 🍰
+          </h1>
+          <p className="text-gray-600">
+            Selecciona tu favorito
+          </p>
+        </div>
+
+        {productos.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">No hay productos disponibles</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {productos.map((producto) => (
+              <div
+                key={producto.idproductogeneral}
+                className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <div className="relative h-64 bg-gray-200 overflow-hidden">
+                  {producto.urlimagen ? (
+                    <img
+                      src={producto.urlimagen}
+                      alt={producto.nombreproducto}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-pink-200">
+                      <span className="text-4xl">🍰</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {producto.nombreproducto}
+                    </h3>
+
+                    <p className="text-2xl font-bold text-pink-600 mb-2">
+                      ${parseInt(producto.precioproducto).toLocaleString()}
+                    </p>
+
+                    {producto.categoria && (
+                      <span className="inline-block bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full mb-4">
+                        {producto.categoria}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleAgregarProducto(producto)}
+                    className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                  >
+                    <span>🛒</span>
+                    <span>Añadir al Pedido</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-8 text-center text-gray-600">
+          <p>Total de productos: {productos.length}</p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default DetalleMiniDonas;
-
+export default ProductoDetalle;

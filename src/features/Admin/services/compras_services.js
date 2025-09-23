@@ -102,65 +102,49 @@ class CompraApiService {
     }
   }
 
-  // Agregar este método en tu clase CompraApiService (después del método eliminarCompra)
-
-// Método para cambiar estado de compra (anular/activar)
-async cambiarEstadoCompra(id, estado) {
-  try {
-    // Primero intentamos con el endpoint específico de anular si existe
-    const response = await fetch(`${BASE_URL}/${id}/anular`, {
-      method: "PATCH",
-      headers: this.baseHeaders,
-      body: JSON.stringify({ estado: estado }),
-    });
-    
-    if (!response.ok) {
-      // Si no existe el endpoint /anular, usamos el endpoint principal con PUT
-      const putResponse = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT", 
-        headers: this.baseHeaders,
-        body: JSON.stringify({ estado: estado }),
-      });
+  // MÉTODO CORREGIDO PARA ANULAR/ACTIVAR COMPRAS
+  async cambiarEstadoCompra(id, estado) {
+    try {
+      console.log(`=== Cambiando estado de compra ${id} a ${estado} ===`);
       
-      const data = await this.handleResponse(putResponse);
-      return this.transformarCompraDesdeAPI(data);
-    }
-    
-    const data = await this.handleResponse(response);
-    return this.transformarCompraDesdeAPI(data);
-  } catch (error) {
-    console.error('Error en cambiarEstadoCompra:', error);
-    throw error;
-  }
-}
+      // Primero obtenemos la compra actual
+      const compraActual = await this.obtenerCompraPorId(id);
+      console.log('Compra actual:', compraActual);
+      
+      // Creamos el objeto de actualización con todos los campos necesarios
+      const datosActualizacion = {
+        idproveedor: compraActual.idProveedor,
+        fecharegistro: compraActual.fechaRegistro,
+        fechacompra: compraActual.fechaCompra,
+        subtotal: compraActual.subtotal,
+        iva: compraActual.iva,
+        total: compraActual.total,
+        observaciones: compraActual.observaciones || '',
+        estado: estado, // Este es el campo que cambiamos
+        detallecompra: compraActual.detalles ? compraActual.detalles.map(d => this.transformarDetalleCompraParaAPI(d)) : []
+      };
 
-  // // Método para cambiar estado de compra (anular/activar)
-  // async cambiarEstadoCompra(id, estado) {
-  //   try {
-  //     const response = await fetch(`${BASE_URL}/${id}/estado`, {
-  //       method: "PATCH",
-  //       headers: this.baseHeaders,
-  //       body: JSON.stringify({ estado: estado }),
-  //     });
-  //     const data = await this.handleResponse(response);
-  //     return this.transformarCompraDesdeAPI(data);
-  //   } catch (error) {
-  //     console.error('Error en cambiarEstadoCompra:', error);
-  //     // Si el endpoint no existe, intentar con PUT
-  //     try {
-  //       const putResponse = await fetch(`${BASE_URL}/${id}`, {
-  //         method: "PUT",
-  //         headers: this.baseHeaders,
-  //         body: JSON.stringify({ estado: estado }),
-  //       });
-  //       const putData = await this.handleResponse(putResponse);
-  //       return this.transformarCompraDesdeAPI(putData);
-  //     } catch (putError) {
-  //       console.error('Error en PUT cambiarEstadoCompra:', putError);
-  //       throw new Error('No se pudo cambiar el estado de la compra');
-  //     }
-  //   }
-  // }
+      console.log('Datos para actualización:', datosActualizacion);
+
+      const response = await fetch(`${BASE_URL}/${id}`, {
+        method: "PUT",
+        headers: this.baseHeaders,
+        body: JSON.stringify(datosActualizacion),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cambiar estado: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Respuesta de cambio de estado:', data);
+      
+      return this.transformarCompraDesdeAPI(data);
+    } catch (error) {
+      console.error('Error en cambiarEstadoCompra:', error);
+      throw new Error(`No se pudo ${estado ? 'reactivar' : 'anular'} la compra: ${error.message}`);
+    }
+  }
 
   // Métodos para DETALLES DE COMPRA
   async obtenerDetallesCompra(idCompra) {
@@ -281,7 +265,6 @@ async cambiarEstadoCompra(id, estado) {
               proveedor.nombre || 
               proveedor.nombreCategoria || 
               proveedor.nombre_proveedor 
-              // 'Proveedor desconocido'
     };
   }
 

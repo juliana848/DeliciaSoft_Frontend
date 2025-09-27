@@ -1,5 +1,5 @@
 // services/emailService.js
-const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
+const API_BASE_URL = 'https://deliciasoft-backend-i6g9.onrender.com/api';
 
 class EmailService {
   // Generar código de 6 dígitos

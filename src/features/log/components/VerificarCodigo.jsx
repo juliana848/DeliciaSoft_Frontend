@@ -1,4 +1,3 @@
-// VerificarCodigo.jsx - Versión mejorada y compacta
 import React, { useState, useEffect } from 'react';
 import { Shield, CheckCircle, ArrowRight, RotateCcw, LogIn } from 'lucide-react';
 
@@ -8,16 +7,10 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
   const [isLoading, setIsLoading] = useState(false);
   const [intentos, setIntentos] = useState(0);
 
-  // DETECTAR CONTEXTO: Determinar si es login o recuperación
   const isLogin = esParaLogin || correoEmail !== null;
-  
-  // Recuperar el correo según el contexto
   const correo = correoEmail || sessionStorage.getItem('tempEmailRecovery') || 'tu@email.com';
-  
-  // Verificar si viene desde contacto
   const vieneDesdeContacto = localStorage.getItem('redirectAfterLogin') === '/contactenos';
 
-  // Agregar clase al body para ocultar el toggle
   useEffect(() => {
     document.body.classList.add('hide-toggle');
     return () => {
@@ -25,7 +18,6 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
     };
   }, []);
 
-  // Auto-focus en el primer input al montar el componente
   useEffect(() => {
     document.getElementById('code-0')?.focus();
   }, []);
@@ -38,14 +30,12 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
   };
 
   const handleCodeChange = (index, value) => {
-    // Solo permitir números
     if (value && !/^[0-9]$/.test(value)) return;
     
     const newCodigo = [...codigo];
     newCodigo[index] = value;
     setCodigo(newCodigo);
 
-    // Auto-focus al siguiente input si se ingresó un dígito
     if (value && index < 5) {
       const nextInput = document.getElementById(`code-${index + 1}`);
       nextInput?.focus();
@@ -55,11 +45,9 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
   const handleKeyDown = (index, e) => {
     if (e.key === 'Backspace') {
       if (!codigo[index] && index > 0) {
-        // Si el campo está vacío y presiona backspace, ir al anterior
         const prevInput = document.getElementById(`code-${index - 1}`);
         prevInput?.focus();
       } else {
-        // Limpiar el campo actual
         const newCodigo = [...codigo];
         newCodigo[index] = '';
         setCodigo(newCodigo);
@@ -94,34 +82,44 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
       return;
     }
 
+    console.log('🔐 Código ingresado:', codigoCompleto);
+    console.log('🔑 Código esperado:', codigoCorrecto);
+
     setIsLoading(true);
     setIntentos(prev => prev + 1);
 
-    // Simular una pequeña validación
+    // VALIDACIÓN DIRECTA - Solo verificar contra el código del servidor
     setTimeout(() => {
-      if (codigoCompleto === String(codigoCorrecto)) {
-        if (isLogin) {
-          if (vieneDesdeContacto) {
-            showCustomAlert('success', 'Código verificado. Redirigiendo al formulario de contacto...');
-          } else {
-            showCustomAlert('success', 'Código verificado. Iniciando sesión...');
-          }
+      if (isLogin) {
+        // Para login: enviar directamente el código ingresado al servidor
+        // El servidor hará la validación final
+        if (vieneDesdeContacto) {
+          showCustomAlert('success', 'Verificando código...');
         } else {
-          showCustomAlert('success', 'Código verificado correctamente');
+          showCustomAlert('success', 'Verificando código e iniciando sesión...');
         }
         
         setTimeout(() => {
-          onCodigoValido();
-        }, 1500);
+          onCodigoValido(codigoCompleto);
+        }, 800);
+        
       } else {
-        showCustomAlert('error', 'Código incorrecto. Inténtalo nuevamente.');
-        setCodigo(['', '', '', '', '', '']);
-        setTimeout(() => {
-          document.getElementById('code-0')?.focus();
-        }, 100);
+        // Para recuperación de contraseña: validar localmente
+        if (codigoCompleto === String(codigoCorrecto)) {
+          showCustomAlert('success', 'Código verificado correctamente');
+          setTimeout(() => {
+            onCodigoValido();
+          }, 1000);
+        } else {
+          showCustomAlert('error', 'Código incorrecto. Inténtalo nuevamente.');
+          setCodigo(['', '', '', '', '', '']);
+          setTimeout(() => {
+            document.getElementById('code-0')?.focus();
+          }, 100);
+        }
       }
       setIsLoading(false);
-    }, 800);
+    }, 600);
   };
 
   const reenviarCodigo = () => {
@@ -139,7 +137,6 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
 
   const codigoCompleto = codigo.join('').length === 6;
 
-  // TEXTOS DINÁMICOS según contexto
   const getTitulo = () => {
     if (isLogin) {
       return vieneDesdeContacto ? 'Verificar para Contacto' : 'Verificar Acceso';
@@ -168,13 +165,11 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
     return isLogin ? <LogIn size={24} /> : <Shield size={24} />;
   };
 
-  // SOLO mostrar progreso si NO es login (es decir, solo para recuperación de contraseña)
   const getProgreso = () => {
     if (isLogin) {
-      return null; // NO mostrar pasos para login
+      return null;
     }
 
-    // Solo mostrar para recuperación de contraseña
     return (
       <div className="progress-indicator" style={{ marginBottom: '1.2rem' }}>
         <div className="step completed">
@@ -199,9 +194,9 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
 
   const getBotonColor = () => {
     if (isLogin && vieneDesdeContacto) {
-      return '#fbbf24'; // Amarillo para contacto
+      return '#fbbf24';
     }
-    return '#e91e63'; // Rosa por defecto
+    return '#e91e63';
   };
 
   return (
@@ -213,10 +208,8 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
       )}
 
       <div className="recovery-modal" style={{ maxWidth: '480px', padding: '1.8rem 1.5rem' }}>
-        {/* Indicador de progreso SOLO para recuperación de contraseña */}
         {getProgreso()}
 
-        {/* Mensaje especial si viene desde contacto */}
         {vieneDesdeContacto && (
           <div style={{
             background: 'linear-gradient(135deg, #fef3c7, #fcd34d)',
@@ -325,20 +318,11 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                 gap: '8px',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(233, 30, 99, 0.1)';
-                e.target.style.borderColor = '#e91e63';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(233, 30, 99, 0.05)';
-                e.target.style.borderColor = 'rgba(233, 30, 99, 0.2)';
-              }}
             >
               <RotateCcw size={14} />
               Reenviar código
             </button>
 
-            {/* Información de ayuda compacta */}
             <div style={{
               background: 'rgba(233, 30, 99, 0.05)',
               border: '1px solid rgba(233, 30, 99, 0.1)',
@@ -355,13 +339,13 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
               </div>
             </div>
 
-            {/* Contador de intentos */}
             {intentos > 0 && (
               <div style={{
                 textAlign: 'center',
                 marginTop: '1rem',
-                color: '#9aa0a6',
-                fontSize: '13px'
+                color: intentos >= 3 ? '#ef4444' : '#9aa0a6',
+                fontSize: '13px',
+                fontWeight: intentos >= 3 ? '600' : 'normal'
               }}>
                 Intentos: {intentos}/3
               </div>
@@ -369,6 +353,263 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .recovery-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 20px;
+        }
+
+        .recovery-modal {
+          background: white;
+          border-radius: 20px;
+          width: 100%;
+          position: relative;
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+          animation: modalSlideIn 0.4s ease-out;
+          overflow-y: auto;
+        }
+
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .progress-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+        }
+
+        .step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .step-circle {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 14px;
+          background: #f1f3f4;
+          color: #9aa0a6;
+          border: 2px solid #f1f3f4;
+        }
+
+        .step.active .step-circle {
+          background: #e91e63;
+          color: white;
+          border-color: #e91e63;
+        }
+
+        .step.completed .step-circle {
+          background: #10b981;
+          color: white;
+          border-color: #10b981;
+        }
+
+        .step span {
+          font-size: 12px;
+          color: #9aa0a6;
+          font-weight: 500;
+          text-align: center;
+        }
+
+        .step.active span {
+          color: #e91e63;
+          font-weight: 600;
+        }
+
+        .step.completed span {
+          color: #10b981;
+          font-weight: 600;
+        }
+
+        .step-line {
+          width: 40px;
+          height: 2px;
+          background: #f1f3f4;
+          margin: 0 5px;
+          margin-top: -20px;
+        }
+
+        .step-line.completed {
+          background: #10b981;
+        }
+
+        .icon-container {
+          background: linear-gradient(135deg, #e91e63, #ad1457);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          margin: 0 auto;
+          box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3);
+        }
+
+        .code-input-container {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .code-digit-input {
+          text-align: center;
+          font-size: 18px;
+          font-weight: 700;
+          border: 2px solid;
+          border-radius: 12px;
+          transition: all 0.3s ease;
+          outline: none;
+        }
+
+        .code-digit-input:focus {
+          border-color: #e91e63 !important;
+          box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+          transform: scale(1.05);
+        }
+
+        .custom-alert {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 2000;
+          padding: 1rem 1.5rem;
+          border-radius: 15px;
+          color: white;
+          font-weight: 600;
+          font-size: 0.9rem;
+          min-width: 300px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          animation: slideInRight 0.5s ease-out;
+        }
+
+        .alert-success {
+          background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .alert-error {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .btn-primary {
+          background: #e91e63 !important;
+          border: none !important;
+          border-radius: 12px !important;
+          color: white !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          gap: 8px !important;
+          transition: all 0.3s ease !important;
+          font-weight: 600 !important;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4) !important;
+        }
+
+        .btn-secondary {
+          background: white !important;
+          border: 2px solid #f1f3f4 !important;
+          border-radius: 12px !important;
+          color: #5f6368 !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          transition: all 0.3s ease !important;
+          font-weight: 600 !important;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+          border-color: #e91e63 !important;
+          color: #e91e63 !important;
+          background: rgba(233, 30, 99, 0.05) !important;
+        }
+
+        .btn-primary:disabled, .btn-secondary:disabled {
+          opacity: 0.6 !important;
+          cursor: not-allowed !important;
+          transform: none !important;
+        }
+
+        .spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top: 2px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+          .recovery-modal {
+            margin: 1rem !important;
+            padding: 1.5rem 1rem !important;
+            max-height: 90vh !important;
+          }
+
+          .code-input-container {
+            gap: 4px !important;
+          }
+
+          .code-digit-input {
+            width: 38px !important;
+            height: 46px !important;
+            font-size: 16px !important;
+          }
+
+          .custom-alert {
+            right: 10px !important;
+            left: 10px !important;
+            min-width: auto !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -5,16 +5,16 @@ function Footer() {
   const [logoUrl, setLogoUrl] = useState(null);
 
   // Cargar logo con id 3 desde la API
-  useEffect(() => {
-    fetch("https://deliciasoft-backend.onrender.com/api/imagenes")
-      .then((res) => res.json())
-      .then((data) => {
-        // Busca el item con idimagen 3
-        const logoItem = data.find((item) => item.idimagen === 3);
-        if (logoItem) setLogoUrl(logoItem.urlimg);
-      })
-      .catch((err) => console.error("Error cargando logo:", err));
-  }, []);
+  // useEffect(() => {
+  //   fetch("https://deliciasoft-backend.onrender.com/api/imagenes")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       // Busca el item con idimagen 3
+  //       const logoItem = data.find((item) => item.idimagen === 3);
+  //       if (logoItem) setLogoUrl(logoItem.urlimg);
+  //     })
+  //     .catch((err) => console.error("Error cargando logo:", err));
+  // }, []);
 
   return (
     <footer className="relative bg-gradient-to-r from-pink-100 via-pink-200 to-yellow-100 overflow-hidden">

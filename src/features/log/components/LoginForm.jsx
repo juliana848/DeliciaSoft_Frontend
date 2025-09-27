@@ -9,12 +9,8 @@ const LoginForm = () => {
   const [mostrarModalCorreo, setMostrarModalCorreo] = useState(false);
   const [mostrarModalCodigo, setMostrarModalCodigo] = useState(false);
   const [mostrarModalCambio, setMostrarModalCambio] = useState(false);
-  
-  // Estado para la validación de login - CORREGIDO
   const [mostrarModalValidacionLogin, setMostrarModalValidacionLogin] = useState(false);
-  const [codigoValidacionLogin, setCodigoValidacionLogin] = useState(null);
   const [datosLoginPendiente, setDatosLoginPendiente] = useState(null);
-  
   const [codigoGenerado, setCodigoGenerado] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +41,6 @@ const LoginForm = () => {
     setMostrarModalCambio(false);
     setMostrarModalValidacionLogin(false);
     setDatosLoginPendiente(null);
-    setCodigoValidacionLogin(null);
   };
 
   const manejarCodigoValido = () => {
@@ -58,10 +53,14 @@ const LoginForm = () => {
     cerrarModales();
   };
 
-  // Función para manejar redirección después del login exitoso
   const handleLoginSuccess = (userData, userType) => {
+    console.log('Iniciando proceso de login exitoso...');
+    console.log('Datos del usuario:', userData);
+    console.log('Tipo de usuario:', userType);
+
     const redirectPath = localStorage.getItem('redirectAfterLogin');
     
+    // Guardar tokens y datos de usuario
     localStorage.setItem('authToken', 'jwt-token-' + Date.now());
     localStorage.setItem('userRole', userType);
     localStorage.setItem('userEmail', datosLoginPendiente.email);
@@ -75,13 +74,12 @@ const LoginForm = () => {
       telefono: userData.telefono || userData.celular || userData.phone || ''
     };
     
-    console.log('Guardando datos de usuario para contacto:', userForContact);
     localStorage.setItem('user', JSON.stringify(userForContact));
     
     if (redirectPath === '/contactenos') {
       localStorage.removeItem('redirectAfterLogin');
       sessionStorage.setItem('fromLogin', 'true');
-      showCustomAlert('success', `¡Bienvenido ${userData.nombre}! Te hemos redirigido al formulario de contacto ✅`);
+      showCustomAlert('success', `Bienvenido ${userData.nombre}! Te redirigimos al formulario de contacto`);
       
       setTimeout(() => {
         navigate('/contactenos');
@@ -92,7 +90,7 @@ const LoginForm = () => {
     if (redirectPath) {
       localStorage.removeItem('redirectAfterLogin');
       sessionStorage.setItem('fromLogin', 'true');
-      showCustomAlert('success', 'Inicio de sesión exitoso ✅');
+      showCustomAlert('success', 'Inicio de sesión exitoso');
       
       setTimeout(() => {
         navigate(redirectPath);
@@ -100,12 +98,14 @@ const LoginForm = () => {
       return;
     }
     
-    showCustomAlert('success', 'Inicio de sesión exitoso ✅');
+    showCustomAlert('success', 'Inicio de sesión exitoso');
     
     setTimeout(() => {
       if (userType === 'admin') {
+        console.log('Redirigiendo al dashboard de admin...');
         navigate('/admin/pages/Dashboard');
       } else {
+        console.log('Redirigiendo según productos temporales...');
         const productosTemporales = localStorage.getItem('productosTemporales');
         if (productosTemporales) {
           navigate('/pedidos');
@@ -116,24 +116,33 @@ const LoginForm = () => {
     }, 1500);
   };
 
-  // CORREGIDO: Función para completar el login después de validar código
-  const completarLogin = async () => {
+  const completarLogin = async (codigoIngresado) => {
     if (!datosLoginPendiente) {
       console.error('No hay datos de login pendientes');
       showCustomAlert('error', 'Error: No hay datos de login');
       return;
     }
 
+    console.log('Enviando código al servidor para validación:', codigoIngresado);
+    console.log('Email:', datosLoginPendiente.email);
+
     setIsLoading(true);
     try {
-      console.log('Completando login con:', datosLoginPendiente);
-      const result = await authService.loginConValidacion(datosLoginPendiente.email, datosLoginPendiente.password);
+      const result = await authService.loginConValidacion(
+        datosLoginPendiente.email, 
+        datosLoginPendiente.password, 
+        codigoIngresado
+      );
+
+      console.log('Respuesta del servidor:', result);
 
       if (result.success) {
         setMostrarModalValidacionLogin(false);
+        console.log('Login exitoso, procesando redirección...');
         handleLoginSuccess(result.user, result.userType);
       } else {
-        showCustomAlert('error', result.message || 'Error al iniciar sesión');
+        console.error('Error en login:', result.message);
+        showCustomAlert('error', result.message || 'Código incorrecto. Verifica tu email.');
       }
     } catch (error) {
       console.error('Error en completarLogin:', error);
@@ -150,12 +159,10 @@ const LoginForm = () => {
     });
   };
 
-  // CORREGIDO: Función principal de submit
   const manejarSubmit = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
 
-    // Validaciones básicas
     if (!email.trim() || !password.trim()) {
       showCustomAlert('error', 'Por favor, completa todos los campos.');
       return;
@@ -179,27 +186,23 @@ const LoginForm = () => {
       
       const redirectPath = localStorage.getItem('redirectAfterLogin');
       if (redirectPath === '/contactenos') {
-        showCustomAlert('success', 'Código de validación enviado. Una vez verificado, te redirigiremos al formulario de contacto ✅');
+        showCustomAlert('success', 'Código de validación enviado. Una vez verificado, te redirigiremos al formulario de contacto');
       }
 
-      // Enviar código de validación
-      const validacionResult = await authService.enviarCodigoValidacionLogin(email);
+      const validacionResult = await authService.enviarCodigoValidacionLoginConDeteccion(email);
+      
       console.log('Resultado envío código:', validacionResult);
 
       if (validacionResult.success) {
-        // IMPORTANTE: Guardar los datos ANTES de mostrar el modal
         setDatosLoginPendiente({ email, password });
-        setCodigoValidacionLogin(validacionResult.codigo);
         
         if (!redirectPath || redirectPath !== '/contactenos') {
-          showCustomAlert('success', 'Código de validación enviado a tu correo ✅');
+          showCustomAlert('success', 'Código de validación enviado a tu correo');
         }
         
-        console.log('Mostrando modal de validación con código:', validacionResult.codigo);
-        console.log('Datos guardados:', { email, password });
-        
-        // Mostrar modal de validación
+        console.log('Mostrando modal de validación...');
         setMostrarModalValidacionLogin(true);
+        
       } else {
         showCustomAlert('error', validacionResult.message || 'Error al enviar código de validación');
       }
@@ -214,7 +217,6 @@ const LoginForm = () => {
 
   return (
     <div className="form-container sign-in">
-      {/* Alerta personalizada */}
       {showAlert.show && (
         <div
           style={{
@@ -240,7 +242,6 @@ const LoginForm = () => {
         </div>
       )}
 
-      {/* Mostrar información si viene desde contacto */}
       {localStorage.getItem('redirectAfterLogin') === '/contactenos' && (
         <div style={{
           background: 'linear-gradient(135deg, #fef3c7, #fcd34d)',
@@ -318,10 +319,10 @@ const LoginForm = () => {
         )}
       </form>
 
-      {/* CORREGIDO: Modal validación de login usando el componente correcto */}
-      {mostrarModalValidacionLogin && codigoValidacionLogin && datosLoginPendiente && (
+      {/* Modal validación de login - Solo envía el código al servidor */}
+      {mostrarModalValidacionLogin && datosLoginPendiente && (
         <ModalIngresarCodigo
-          codigoCorrecto={codigoValidacionLogin}
+          codigoCorrecto="000000" // No importa, el servidor valida
           onClose={cerrarModales}
           onCodigoValido={completarLogin}
           correoEmail={datosLoginPendiente.email}

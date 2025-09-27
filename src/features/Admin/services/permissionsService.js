@@ -5,17 +5,17 @@ class PermissionsService {
   constructor() {
     this.userPermissions = [];
     this.permissionsCache = new Map();
-    this.cacheExpiry = 5 * 60 * 1000; // 5 minutos
+    this.cacheExpiry = 5 * 60 * 1000; 
   }
 
-  // Obtener permisos del usuario actual
+
   async getUserPermissions(forceRefresh = false) {
     try {
       const userData = localStorage.getItem('userData');
       
       if (!userData) {
         console.warn('No se encontraron datos de usuario');
-        return ['Dashboard']; // Permiso mínimo
+        return ['Dashboard']; 
       }
 
       const user = JSON.parse(userData);
@@ -26,7 +26,6 @@ class PermissionsService {
         return ['Dashboard'];
       }
 
-      // Verificar cache
       const cacheKey = `permissions_${rolId}`;
       const cached = this.permissionsCache.get(cacheKey);
       
@@ -36,10 +35,8 @@ class PermissionsService {
         return cached.permissions;
       }
 
-      // Obtener permisos desde la API
       const permissions = await this.fetchPermissionsFromAPI(rolId);
       
-      // Guardar en cache
       this.permissionsCache.set(cacheKey, {
         permissions,
         timestamp: Date.now()
@@ -54,23 +51,19 @@ class PermissionsService {
     }
   }
 
-  // Obtener permisos desde la API
   async fetchPermissionsFromAPI(rolId) {
     try {
-      // Método 1: Obtener el rol completo con permisos
       const rolResponse = await fetch(`${API_BASE_URL}/rol/${rolId}`);
       
       if (rolResponse.ok) {
         const rolData = await rolResponse.json();
         
         if (rolData.permisos && Array.isArray(rolData.permisos)) {
-          // Obtener todos los permisos para mapear IDs a nombres
           const allPermissionsResponse = await fetch(`${API_BASE_URL}/permisos`);
           
           if (allPermissionsResponse.ok) {
             const allPermissions = await allPermissionsResponse.json();
             
-            // Mapear los IDs de permisos a nombres
             const permissionNames = rolData.permisos
               .map(permisoId => {
                 const permiso = allPermissions.find(p => p.idpermiso === permisoId);
@@ -86,7 +79,6 @@ class PermissionsService {
         }
       }
 
-      // Método 2: Endpoint directo de permisos del rol
       const permisosResponse = await fetch(`${API_BASE_URL}/rol/${rolId}/permisos`);
       
       if (permisosResponse.ok) {
@@ -99,7 +91,6 @@ class PermissionsService {
         }
       }
 
-      // Fallback: permisos mínimos
       console.warn('No se pudieron obtener permisos, usando permisos mínimos');
       return ['Dashboard'];
 
@@ -109,47 +100,39 @@ class PermissionsService {
     }
   }
 
-  // Verificar si el usuario tiene un permiso específico
   hasPermission(permission) {
-    if (!permission) return true; // Si no requiere permiso específico
+    if (!permission) return true; 
     
     return this.userPermissions.includes(permission);
   }
 
-  // Verificar múltiples permisos (OR - al menos uno)
   hasAnyPermission(permissions) {
     if (!permissions || permissions.length === 0) return true;
     
     return permissions.some(permission => this.hasPermission(permission));
   }
 
-  // Verificar múltiples permisos (AND - todos)
   hasAllPermissions(permissions) {
     if (!permissions || permissions.length === 0) return true;
     
     return permissions.every(permission => this.hasPermission(permission));
   }
 
-  // Filtrar elementos de menú basado en permisos
   filterMenuItems(menuItems) {
     return menuItems.filter(item => {
-      // Verificar permiso del item principal
       if (item.permission && !this.hasPermission(item.permission)) {
         return false;
       }
 
-      // Si tiene submenú, filtrar subitems
       if (item.hasSubmenu && item.submenu) {
         const filteredSubmenu = item.submenu.filter(subItem => {
           return !subItem.permission || this.hasPermission(subItem.permission);
         });
 
-        // Solo mostrar si tiene al menos un subitem accesible
         if (filteredSubmenu.length === 0) {
           return false;
         }
 
-        // Crear una copia con el submenú filtrado
         item.submenu = filteredSubmenu;
       }
 
@@ -157,19 +140,18 @@ class PermissionsService {
     });
   }
 
-  // Verificar acceso a una ruta
   canAccessRoute(route) {
     const routePermissions = this.getRoutePermissions();
     const requiredPermission = routePermissions[route];
     
     if (!requiredPermission) {
-      return true; // Si no requiere permiso específico
+      return true; 
     }
 
     return this.hasPermission(requiredPermission);
   }
 
-  // Mapeo de rutas a permisos
+
   getRoutePermissions() {
     return {
       '/admin/pages/Dashboard': 'Dashboard',
@@ -189,28 +171,28 @@ class PermissionsService {
     };
   }
 
-  // Limpiar cache de permisos
+
   clearCache() {
     this.permissionsCache.clear();
     this.userPermissions = [];
   }
 
-  // Obtener permisos actuales sin hacer llamada a la API
+
   getCurrentPermissions() {
     return [...this.userPermissions];
   }
 
-  // Verificar si los permisos están cargados
+
   arePermissionsLoaded() {
     return this.userPermissions.length > 0;
   }
 
-  // Refrescar permisos del usuario
+
   async refreshPermissions() {
     return await this.getUserPermissions(true);
   }
 
-  // Obtener información de permiso por nombre
+
   getPermissionInfo(permissionName) {
     const permissionInfo = {
       'Dashboard': {
@@ -286,25 +268,8 @@ class PermissionsService {
       module: 'Desconocido'
     };
   }
-
-  // Debug: Mostrar información de permisos
-  debugPermissions() {
-    console.group('🔐 Debug de Permisos');
-    console.log('Permisos actuales:', this.userPermissions);
-    console.log('Cache de permisos:', this.permissionsCache);
-    console.log('Permisos cargados:', this.arePermissionsLoaded());
-    
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      const user = JSON.parse(userData);
-      console.log('Datos del usuario:', user);
-      console.log('ID del rol:', user.idrol || user.rol_id);
-    }
-    console.groupEnd();
-  }
 }
 
-// Crear instancia singleton
 const permissionsService = new PermissionsService();
 
 export default permissionsService;

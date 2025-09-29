@@ -315,32 +315,25 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     };
 
     // Función para descargar el PDF
-    const handleDownload = () => {
-        if (onDownload) {
-            onDownload();
-        } else {
-            try {
-                const doc = new jsPDF();
-                crearHeader(doc);
-                crearInfoCompra(doc, compraData);
-                crearTablaInsumos(doc, compraData.insumos);
-                
-                const total = calcularTotal(compraData.insumos);
-                const finalY = doc.previousAutoTable ? doc.previousAutoTable.finalY : 150;
-                const totalY = crearTotal(doc, total, finalY);
-                
-                crearObservaciones(doc, compraData.observaciones, totalY);
-                crearFooter(doc);
-
-                const { fecha } = obtenerFechaHoraServidor();
-                const nombreArchivo = `compra-${compraData.id}-${fecha.replace(/\//g, '-')}.pdf`;
-                doc.save(nombreArchivo);
-            } catch (error) {
-                console.error('Error al descargar PDF:', error);
-            }
+const handleDownload = async () => {
+    try {
+        setLoading(true);
+        setError(null);
+        if (!compraData || !compraData.insumos || compraData.insumos.length === 0) {
+            throw new Error('No hay insumos para generar el PDF');
         }
-    };
-
+        const doc = await generarPDFPreview(compraData);
+        const { fecha } = obtenerFechaHoraServidor();
+        const nombreArchivo = `compra-${compraData.id || Date.now()}-${fecha.replace(/\//g, '-')}.pdf`;
+        doc.save(nombreArchivo);
+        if (onDownload) onDownload();  // Notify parent after PDF is saved
+    } catch (error) {
+        console.error('Error al descargar PDF:', error);
+        setError('Error al descargar el PDF');
+    } finally {
+        setLoading(false);
+    }
+};
     // Generar PDF cuando se abre el modal
     useEffect(() => {
         if (visible && compraData) {

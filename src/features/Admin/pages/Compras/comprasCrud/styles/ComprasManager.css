@@ -1,0 +1,280 @@
+/* ComprasManager.css - ARCHIVO NUEVO */
+.compras-manager {
+    padding: 20px;
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+/* Header Section */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-btn {
+    padding: 10px 18px;
+    border: 2px solid #e5e7eb;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+    color: #6b7280;
+    position: relative;
+}
+
+.nav-btn:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+    color: #1e40af;
+    transform: translateY(-1px);
+}
+
+.nav-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-add {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #db2777, #be185d);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(236, 72, 153, 0.4);
+}
+
+.search-input {
+    padding: 10px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    min-width: 250px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Vista Indicator */
+.vista-indicator {
+    margin-bottom: 20px;
+}
+
+.vista-indicator h2 {
+    color: #1f2937;
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.count-badge {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    color: #374151;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-left: 12px;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
+}
+
+/* Table Container */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.compras-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.compras-table th {
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    padding: 18px 15px;
+    text-align: left;
+    font-weight: 700;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compras-table td {
+    padding: 16px 15px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    color: #4b5563;
+    transition: all 0.2s ease;
+}
+
+/* Filas de la tabla */
+.active-row {
+    background: white;
+}
+
+.active-row:hover {
+    background: #f8fafc;
+    transform: scale(1.001);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.inactive-row {
+    background: #fef7f7;
+    color: #6b7280;
+}
+
+.inactive-row:hover {
+    background: #fef2f2;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    border: 1px solid #f87171;
+}
+
+/* Empty Message */
+.empty-message {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+    font-style: italic;
+    font-size: 16px;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
+    animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .compras-manager {
+        padding: 15px;
+    }
+    
+    .header-section {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .nav-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .search-input {
+        min-width: 200px;
+    }
+    
+    .compras-table {
+        font-size: 12px;
+    }
+    
+    .compras-table th,
+    .compras-table td {
+        padding: 12px 8px;
+    }
+    
+    .vista-indicator h2 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-buttons {
+        flex-direction: column;
+    }
+    
+    .nav-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .compras-table th,
+    .compras-table td {
+        padding: 10px 6px;
+    }
+}

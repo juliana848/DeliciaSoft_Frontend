@@ -1,5 +1,4 @@
-// Versión que replica exactamente lo que funciona en Postman
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/proveedor";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/proveedor";
 
 class ProveedorApiService {
   constructor() {
@@ -8,82 +7,109 @@ class ProveedorApiService {
     };
   }
 
-  // Crear proveedor
   async crearProveedor(proveedorData) {
-    const payload = this.crearPayloadPostman(proveedorData);
+    console.log('📤 Enviando datos para crear proveedor:', proveedorData);
+    
     const response = await fetch(BASE_URL, {
       method: 'POST',
       headers: this.baseHeaders,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(proveedorData),
     });
-    if (!response.ok) throw new Error(await response.text());
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en la respuesta del servidor:', errorText);
+      throw new Error(errorText);
+    }
+    
     const data = await response.json();
+    console.log('✅ Proveedor creado exitosamente:', data);
     return this.transformarProveedorDesdeAPI(data);
   }
 
-  crearPayloadPostman(proveedorData) {
-    return {
-      tipodocumento: proveedorData.tipodocumento || "DNI",
-      documento: parseInt(proveedorData.documento),
-      nombreempresa: proveedorData.nombreempresa || null,
-      nombreproveedor: proveedorData.nombreproveedor || null,
-      contacto: parseInt(proveedorData.contacto),
-      correo: proveedorData.correo,
-      direccion: proveedorData.direccion,
-      estado: proveedorData.estado,
-      TipoProveedor: proveedorData.TipoProveedor || "Natural"
-    };
-  }
-
-  // 🔄 Actualizar proveedor
   async actualizarProveedor(id, proveedorData) {
-    const payload = this.crearPayloadPostman(proveedorData);
+    console.log('📤 Enviando datos para actualizar proveedor:', { id, proveedorData });
+    
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'PUT',
       headers: this.baseHeaders,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(proveedorData),
     });
-    if (!response.ok) throw new Error(await response.text());
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error al actualizar proveedor:', errorText);
+      throw new Error(errorText);
+    }
+    
     const data = await response.json();
+    console.log('✅ Proveedor actualizado exitosamente:', data);
     return this.transformarProveedorDesdeAPI(data);
   }
 
-  // 🗑️ Eliminar proveedor
   async eliminarProveedor(id) {
+    console.log('🗑️ Eliminando proveedor con ID:', id);
+    
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'DELETE',
       headers: this.baseHeaders,
     });
-    if (!response.ok) throw new Error(await response.text());
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error al eliminar proveedor:', errorText);
+      throw new Error(errorText);
+    }
+    
+    console.log('✅ Proveedor eliminado exitosamente');
     return true;
   }
 
-  // ✅ Cambiar solo el estado
   async cambiarEstadoProveedor(id, nuevoEstado) {
+    console.log('🔄 Cambiando estado del proveedor:', { id, nuevoEstado });
+    
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'PUT',
       headers: this.baseHeaders,
       body: JSON.stringify({ estado: nuevoEstado }),
     });
-    if (!response.ok) throw new Error(await response.text());
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error al cambiar estado:', errorText);
+      throw new Error(errorText);
+    }
+    
     const data = await response.json();
+    console.log('✅ Estado cambiado exitosamente:', data);
     return this.transformarProveedorDesdeAPI(data);
   }
 
   async obtenerProveedores() {
+    console.log('📋 Obteniendo lista de proveedores...');
+    
     const response = await fetch(BASE_URL, {
       method: 'GET',
       headers: this.baseHeaders,
     });
-    if (!response.ok) throw new Error(await response.text());
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error al obtener proveedores:', errorText);
+      throw new Error(errorText);
+    }
+    
     const data = await response.json();
+    console.log('✅ Proveedores obtenidos:', data);
     return this.transformarProveedoresDesdeAPI(data);
   }
 
   transformarProveedorDesdeAPI(proveedor) {
     if (!proveedor) return null;
+    
     const tipoProveedor = proveedor.TipoProveedor || 'Natural';
     const esJuridico = tipoProveedor === 'Jurídico';
+    
     return {
       idProveedor: proveedor.idproveedor,
       tipo: tipoProveedor,
@@ -102,12 +128,16 @@ class ProveedorApiService {
   }
 
   transformarProveedoresDesdeAPI(proveedores) {
-    return Array.isArray(proveedores) 
-      ? proveedores.map(p => this.transformarProveedorDesdeAPI(p)).filter(p => p !== null)
-      : [];
+    if (!Array.isArray(proveedores)) {
+      console.warn('⚠️ Los datos recibidos no son un array:', proveedores);
+      return [];
+    }
+    
+    return proveedores
+      .map(p => this.transformarProveedorDesdeAPI(p))
+      .filter(p => p !== null);
   }
 }
 
 const proveedorApiService = new ProveedorApiService();
 export default proveedorApiService;
-  

@@ -1,11 +1,11 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/insumos";
-const CATEGORIAS_URL = "https://deliciasoft-backend.onrender.com/api/categoria-insumos";
-const UNIDADES_URL = "https://deliciasoft-backend.onrender.com/api/unidadmedida";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/insumos";
+const CATEGORIAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/categoria-insumos";
+const UNIDADES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/unidadmedida";
 
 // URLs para los catálogos
-const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend.onrender.com/api/catalogo-adiciones";
-const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend.onrender.com/api/catalogo-relleno";
-const CATALOGO_SABORES_URL = "https://deliciasoft-backend.onrender.com/api/catalogo-sabor";
+const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones";
+const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno";
+const CATALOGO_SABORES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor";
 
 class InsumoApiService {
   constructor() {
@@ -466,12 +466,25 @@ class InsumoApiService {
 
   async actualizarInsumo(id, insumoData) {
     try {
-      console.log('Actualizando insumo ID:', id);
-      
-      const insumoAPI = this.transformarInsumoParaAPI(insumoData);
-      
+      console.log("=== DEBUG ACTUALIZACIÓN ===");
+      console.log("ID del insumo:", id);
+      console.log("Datos recibidos del frontend:", JSON.stringify(insumoData, null, 2));
+
+      // Mantener todo igual, pero con la cantidad nueva
+      const insumoAPI = this.transformarInsumoParaAPI({
+        ...insumoData,
+        cantidad: Number(insumoData.cantidad) || 0,
+      });
+
+      console.log("Datos después de transformación:", JSON.stringify(insumoAPI, null, 2));
+      console.log("Precio en datos transformados:", insumoAPI.precio);
+      console.log("Stock mínimo en datos transformados:", insumoAPI.stockminimo);
+
       await this.verificarIDsValidos(insumoAPI);
       this.validarDatosInsumo(insumoAPI);
+
+      console.log("Enviando PUT request a:", `${BASE_URL}/${id}`);
+      console.log("Body del request:", JSON.stringify(insumoAPI, null, 2));
 
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
@@ -479,13 +492,67 @@ class InsumoApiService {
         body: JSON.stringify(insumoAPI),
       });
 
-      const data = await this.handleResponse(response);
-      console.log('Insumo actualizado exitosamente');
-      return this.transformarInsumoDesdeAPI(data);
+      console.log("Response status:", response.status);
+      const responseText = await response.text();
+      console.log("Response raw text:", responseText);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
+      }
+
+      const data = JSON.parse(responseText);
+      console.log("Respuesta del servidor:", JSON.stringify(data, null, 2));
+      console.log("Precio en respuesta:", data.precio);
+
+      const resultado = this.transformarInsumoDesdeAPI(data);
+      console.log("Resultado final transformado:", JSON.stringify(resultado, null, 2));
+
+      return resultado;
     } catch (error) {
       console.error(`Error al actualizar insumo ${id}:`, error);
       throw error;
     }
+  }
+
+  transformarInsumoParaAPI(insumo) {
+    console.log("TRANSFORMANDO INSUMO PARA API");
+    console.log("Datos originales:", JSON.stringify(insumo, null, 2));
+
+    const transformed = {
+      idinsumo: insumo.id || insumo.idinsumo || insumo.idInsumo, // Aseguramos ID
+      nombreinsumo: insumo.nombreInsumo ? String(insumo.nombreInsumo).trim() : "",
+      idcategoriainsumos: insumo.idCategoriaInsumos ? parseInt(insumo.idCategoriaInsumos) : null,
+      idunidadmedida: insumo.idUnidadMedida ? parseInt(insumo.idUnidadMedida) : null,
+      cantidad:
+        insumo.cantidad !== undefined && insumo.cantidad !== null && insumo.cantidad !== ""
+          ? parseFloat(insumo.cantidad)
+          : 0,
+      // PRECIO - Con múltiples variantes de nombre
+      precio: 
+        insumo.precio !== undefined && insumo.precio !== null && insumo.precio !== ""
+        ? parseFloat(insumo.precio)
+        : 0, 
+      // STOCK MÍNIMO - Manejar tanto stockMinimo como stockminimo
+      stockminimo: 
+        (insumo.stockMinimo !== undefined && insumo.stockMinimo !== null && insumo.stockMinimo !== "")
+          ? parseInt(insumo.stockMinimo)
+          : (insumo.stockminimo !== undefined && insumo.stockminimo !== null && insumo.stockminimo !== "")
+          ? parseInt(insumo.stockminimo)
+          : 5,
+      estado: insumo.estado !== undefined ? Boolean(insumo.estado) : true,
+    };
+
+    // Mantener la imagen si existe
+    if (insumo.idImagen && String(insumo.idImagen).trim() !== "") {
+      transformed.idimagen = String(insumo.idImagen).trim();
+      console.log("Imagen incluida en datos API, longitud:", transformed.idimagen.length);
+    } else {
+      console.log("Sin imagen proporcionada");
+    }
+
+    console.log("Datos transformados:", JSON.stringify(transformed, null, 2));
+
+    return transformed;
   }
 
   async eliminarInsumo(id) {
@@ -561,35 +628,31 @@ class InsumoApiService {
       }
     }
 
+    // VALIDAR PRECIO - MEJORADO
+    console.log('Validando precio:', insumo.precio);
+    if (insumo.precio !== undefined && insumo.precio !== null && insumo.precio !== "") {
+      const precio = parseFloat(insumo.precio);
+      console.log('Precio parseado:', precio);
+      if (isNaN(precio) || precio < 0) {
+        errores.push(`El precio debe ser un número válido mayor o igual a 0 (recibido: ${insumo.precio})`);
+      }
+    }
+
+    // VALIDAR STOCK MÍNIMO - MEJORADO
+    console.log('Validando stock mínimo:', insumo.stockminimo);
+    if (insumo.stockminimo !== undefined && insumo.stockminimo !== null && insumo.stockminimo !== "") {
+      const stockMinimo = parseInt(insumo.stockminimo);
+      console.log('Stock mínimo parseado:', stockMinimo);
+      if (isNaN(stockMinimo) || stockMinimo < 0) {
+        errores.push(`El stock mínimo debe ser un número entero mayor o igual a 0 (recibido: ${insumo.stockminimo})`);
+      }
+    }
+
     console.log('Errores de validación encontrados:', errores);
 
     if (errores.length > 0) {
       throw new Error("Datos inválidos: " + errores.join("; "));
     }
-  }
-
-  transformarInsumoParaAPI(insumo) {
-    console.log('TRANSFORMANDO INSUMO PARA API');
-    console.log('Datos originales:', JSON.stringify(insumo, null, 2));
-    
-    const transformed = {
-      nombreinsumo: insumo.nombreInsumo ? String(insumo.nombreInsumo).trim() : '',
-      idcategoriainsumos: insumo.idCategoriaInsumos ? parseInt(insumo.idCategoriaInsumos) : null,
-      idunidadmedida: insumo.idUnidadMedida ? parseInt(insumo.idUnidadMedida) : null,
-      cantidad: insumo.cantidad !== undefined && insumo.cantidad !== null && insumo.cantidad !== '' ? parseFloat(insumo.cantidad) : 0,
-      estado: insumo.estado !== undefined ? Boolean(insumo.estado) : true,
-    };
-
-    if (insumo.idImagen && String(insumo.idImagen).trim() !== '') {
-      transformed.idimagen = String(insumo.idImagen).trim();
-      console.log('Imagen incluida en datos API, longitud:', transformed.idimagen.length);
-    } else {
-      console.log('Sin imagen proporcionada');
-    }
-
-    console.log('Datos transformados:', JSON.stringify(transformed, null, 2));
-    
-    return transformed;
   }
 
   transformarInsumoDesdeAPI(insumo) {
@@ -601,6 +664,9 @@ class InsumoApiService {
       idCategoriaInsumos: insumo.idcategoriainsumos,
       idUnidadMedida: insumo.idunidadmedida,
       cantidad: insumo.cantidad,
+      // 🔹 INCLUIR PRECIO Y STOCK MÍNIMO
+      precio: insumo.precio,
+      stockMinimo: insumo.stockminimo || insumo.stockMinimo || 5,
       estado: insumo.estado,
       idImagen: insumo.idimagen,
       nombreUnidadMedida: insumo.unidadmedida 
@@ -642,6 +708,8 @@ class InsumoApiService {
         idCategoriaInsumos: categorias[0].id || categorias[0].idcategoriainsumos, 
         idUnidadMedida: unidades[0].idunidadmedida, 
         cantidad: 10,
+        precio: 25.50,
+        stockMinimo: 5,
         estado: true
       };
       

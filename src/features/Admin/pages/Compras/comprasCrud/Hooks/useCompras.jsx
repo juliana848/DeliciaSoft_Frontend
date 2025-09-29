@@ -1,0 +1,181 @@
+import { useState } from 'react';
+import compraApiService from '../../../../services/compras_services';
+
+export const useCompras = () => {
+    const [compras, setCompras] = useState([]);
+
+    const cargarCompras = async () => {
+        try {
+            console.log('=== CARGANDO COMPRAS ===');
+            const comprasAPI = await compraApiService.obtenerCompras();
+            console.log('Compras obtenidas de la API:', comprasAPI);
+            
+            setCompras(comprasAPI);
+        } catch (error) {
+            console.error('Error al cargar compras:', error);
+            throw new Error('Error al cargar las compras: ' + error.message);
+        }
+    };
+
+    function transformarInsumoDesdeAPI(apiInsumo) {
+        return {
+            idinsumo: apiInsumo.idinsumo,
+            nombreinsumo: apiInsumo.nombreinsumo,
+            idcategoriainsumos: apiInsumo.idcategoriainsumos,
+            idunidadmedida: apiInsumo.idunidadmedida,
+            idimagen: apiInsumo.idimagen,
+            estado: apiInsumo.estado,
+            cantidad: (apiInsumo.cantidad !== null && apiInsumo.cantidad !== undefined && apiInsumo.cantidad !== "")
+                ? parseFloat(apiInsumo.cantidad)
+                : 0,
+            precio: apiInsumo.precio,
+        };
+    }
+
+    const actualizarStockInsumos = async (detalles) => {
+        try {
+            // 1. Traer todos los insumos de la BD
+            const resInsumos = await fetch("https://deliciasoft-backend.onrender.com/api/insumos");
+            const listaInsumosRaw = await resInsumos.json();
+            const listaInsumos = listaInsumosRaw.map(transformarInsumoDesdeAPI);
+
+            // 2. Diccionario con stock actual
+            const stockActual = {};
+            listaInsumos.forEach((i) => {
+                stockActual[i.idinsumo] = i.cantidad;
+            });
+
+            // 3. Diccionario con cantidades a sumar
+            const stockCompra = {};
+            detalles.forEach((d) => {
+                stockCompra[d.idinsumo] = (stockCompra[d.idinsumo] || 0) + parseFloat(d.cantidad);
+            });
+
+            // 4. Actualizar cada insumo
+            for (const id of Object.keys(stockCompra)) {
+                const res = await fetch(`https://deliciasoft-backend.onrender.com/api/Insumos/${id}`);
+                const insumoRaw = await res.json();
+
+                console.log("📋 Insumo crudo desde API:", insumoRaw);
+
+                const insumoActual = transformarInsumoDesdeAPI(insumoRaw);
+                console.log("📦 Insumo normalizado:", insumoActual);
+
+                const cantidadActual = insumoActual.cantidad;
+                const cantidadNueva = Number((cantidadActual + stockCompra[id]).toFixed(2));
+
+                console.log(`🔄 Actualizando insumo ${id}: ${cantidadActual} + ${stockCompra[id]} = ${cantidadNueva}`);
+
+                // ✅ payload con número real
+                const payload = {
+                    idinsumo: insumoActual.idinsumo,
+                    nombreinsumo: insumoActual.nombreinsumo,
+                    idcategoriainsumos: insumoActual.idcategoriainsumos,
+                    idunidadmedida: insumoActual.idunidadmedida,
+                    idimagen: insumoActual.idimagen,
+                    estado: insumoActual.estado,
+                    cantidad: cantidadNueva,
+                };
+
+                await fetch(`https://deliciasoft-backend.onrender.com/api/Insumos/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+
+                console.log(`✅ Insumo ${id} actualizado con cantidad ${cantidadNueva}`);
+            }
+
+        } catch (error) {
+            console.error("❌ Error actualizando stock de insumos:", error);
+            throw error;
+        }
+    };
+
+    const guardarCompra = async (compraData, insumosSeleccionados) => {
+        try {
+            if (!compraData.idProveedor || insumosSeleccionados.length === 0) {
+                throw new Error("Debe seleccionar un proveedor y agregar al menos un insumo");
+            }
+
+            // Calcular subtotal, IVA y total
+            const subtotal = insumosSeleccionados.reduce(
+                (acc, item) => acc + (item.cantidad || 0) * (item.precioUnitario || item.precio || 0),
+                0
+            );
+            const iva = subtotal * 0.19;
+            const total = subtotal + iva;
+
+            // ✅ Armar detalles
+            const detalles = insumosSeleccionados.map(item => ({
+                idinsumo: item.idinsumo ?? item.id,
+                cantidad: Number(item.cantidad) || 0,
+                precioUnitario: item.precioUnitario || item.precio,
+                subtotalProducto: (Number(item.cantidad) || 0) * (item.precioUnitario || item.precio || 0)
+            }));
+
+            const nuevaCompraData = {
+                idProveedor: compraData.idProveedor,
+                fechaCompra: compraData.fechaCompra,
+                fechaRegistro: compraData.fechaRegistro,
+                observaciones: compraData.observaciones,
+                detalles,
+                subtotal,
+                iva,
+                total,
+            };
+
+            console.log("📦 Guardando compra con datos:", nuevaCompraData);
+
+            // 1. Crear la compra
+            const compraCreada = await compraApiService.crearCompra(nuevaCompraData);
+            console.log("✅ Compra creada exitosamente:", compraCreada);
+
+            // 2. Actualizar stock con función separada
+            await actualizarStockInsumos(detalles);
+
+            return compraCreada;
+        } catch (error) {
+            console.error("❌ Error al guardar la compra:", error);
+            throw error;
+        }
+    };
+
+    const anularCompra = async (compraId) => {
+        try {
+            await compraApiService.cambiarEstadoCompra(compraId, false);
+        } catch (error) {
+            console.error("❌ Error al anular compra:", error);
+            throw error;
+        }
+    };
+
+    const reactivarCompra = async (compra) => {
+        try {
+            // 🟢 Sumar stock (convertir detalles a positivos)
+            if (compra.detalles && compra.detalles.length > 0) {
+                const detallesPositivos = compra.detalles.map((d) => ({
+                    idinsumo: d.idinsumo,
+                    cantidad: Math.abs(d.cantidad), // siempre positivo
+                }));
+                await actualizarStockInsumos(detallesPositivos);
+            }
+
+            // Cambiar estado en backend
+            const resultado = await compraApiService.cambiarEstadoCompra(compra.id, true);
+
+            return resultado;
+        } catch (error) {
+            console.error("Error al reactivar compra:", error);
+            throw error;
+        }
+    };
+
+    return {
+        compras,
+        cargarCompras,
+        guardarCompra,
+        anularCompra,
+        reactivarCompra
+    };
+};

@@ -23,20 +23,23 @@ import DetalleChocolates from "./features/Cartas/pages/detallesChocolates";
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 
 // Importar páginas de Admin
-import CategoriaInsumo from './features/Admin/pages/Compras/CategoriaInsumo.jsx';
-import ComprasTable from './features/Admin/pages/Compras/Compras.jsx';
-import InsumosTable from './features/Admin/pages/Compras/insumos.jsx';
+import ComprasTable from "./features/Admin/pages/Compras/comprasCrud/ComprasTabla.jsx";
+// import ComprasTable from './features/Admin/pages/Compras/Compras.jsx';
+// import ComprasTable from './features/Admin/pages/Compras/ComprasTable.jsx';
+import CategoriaTableDemo from './features/Admin/pages/Compras/CategoriaInsumo.jsx'
+import TablaInsumos from "./features/Admin/pages/Compras/insumos/TablaInsumos.jsx";
 import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
 import Roles from './features/Admin/pages/Roles/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
-import ProveedorTable from './features/Admin/pages/Compras/proveedores.jsx';
+import ProveedoresTable from './features/Admin/pages/Compras/proveedores/ProveedoresTable.jsx';
+// import ProveedorTable from './features/Admin/pages/Compras/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas/Recetas.jsx';
-import SedesTable from './features/Admin/pages/Sede.jsx';
+import SedesPage from './features/Admin/pages/Compras/sedes/sede.jsx';
 
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
@@ -77,20 +80,20 @@ function AppContent() {
         <Layout userRole={userRole} showSidebar={true}>
           <Routes>
             {/* Rutas de Admin */}
-            <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaInsumo />} />
-            <Route path="/admin/pages/insumos" element={<InsumosTable />} />
+            <Route path="/admin/pages/CategoriaInsumo" element={<CategoriaTableDemo />} />
+            <Route path="/admin/pages/insumos" element={<TablaInsumos />} />
             <Route path="/admin/pages/compras" element={<ComprasTable />} />
             <Route path="/admin/pages/usuarios" element={<Usuarios />} />
             <Route path="/admin/pages/Roles" element={<Roles />} />
             <Route path="/admin/pages/Clientes" element={<Clientes />} />
-            <Route path="/admin/pages/proveedores" element={<ProveedorTable />} />
+            <Route path="/admin/pages/proveedores" element={<ProveedoresTable />} />
             <Route path="/admin/pages/Ventas" element={<Ventas />} />
             <Route path="/admin/pages/Dashboard" element={<Dashboard/>} />
             <Route path="/admin/pages/CategoriaProductos" element={<CategoriaProductos />} />
             <Route path="/admin/pages/Productos" element={<Productos />} />
             <Route path="/admin/pages/Produccion" element={<Produccion />} />
             <Route path="/admin/pages/Recetas" element={<RecetasTabla />} />
-            <Route path="/admin/pages/Sede" element={<SedesTable />} />
+            <Route path="/admin/pages/Sede" element={<SedesPage />} />
           </Routes>
         </Layout>
       ) : (

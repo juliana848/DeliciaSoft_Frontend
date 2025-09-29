@@ -8,60 +8,10 @@ import SearchBar from "../components/SearchBar";
 import Notification from "../components/Notification";
 import sedeApiService from "../services/sedes_services";
 
-// Componente para el selector de direcciones con Google Places
-const GooglePlacesAutocomplete = ({ value, onChange, placeholder, className, required }) => {
-  const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-
-  useEffect(() => {
-    if (!window.google || !window.google.maps || !inputRef.current) {
-      return;
-    }
-
-    // Configurar Google Places Autocomplete
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(
-      inputRef.current,
-      {
-        types: ['address'], // Solo direcciones
-        componentRestrictions: { country: 'co' }, // Restringir a Colombia
-        fields: ['formatted_address', 'geometry', 'name', 'place_id']
-      }
-    );
-
-    // Listener para cuando se selecciona un lugar
-    const listener = autocompleteRef.current.addListener('place_changed', () => {
-      const place = autocompleteRef.current.getPlace();
-      if (place && place.formatted_address) {
-        onChange(place.formatted_address);
-      }
-    });
-
-    return () => {
-      if (window.google && window.google.maps && listener) {
-        window.google.maps.event.removeListener(listener);
-      }
-    };
-  }, [onChange]);
-
-  return (
-    <input
-      ref={inputRef}
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={className}
-      autoComplete="off"
-      required={required}
-    />
-  );
-};
-
 export default function SedesTable() {
   const [sedes, setSedes] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
   const [notification, setNotification] = useState({
     visible: false,
     mensaje: "",
@@ -78,38 +28,10 @@ export default function SedesTable() {
     activo: true,
     imagen: null,
     imagenPreview: null,
-    imagenUrl: null, // Para almacenar la URL de la imagen guardada
+    imagenUrl: null,
   });
 
   const fileInputRef = useRef(null);
-
-  // Cargar Google Maps API
-  useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        setGoogleMapsLoaded(true);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&libraries=places&language=es&region=CO`;
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        setGoogleMapsLoaded(true);
-      };
-      
-      script.onerror = () => {
-        console.error('Error cargando Google Maps API');
-        showNotification('Error al cargar el servicio de direcciones', 'error');
-      };
-      
-      document.head.appendChild(script);
-    };
-
-    loadGoogleMaps();
-  }, []);
 
   useEffect(() => {
     cargarSedes();
@@ -266,7 +188,7 @@ export default function SedesTable() {
       ...prev,
       imagen: null,
       imagenPreview: null,
-      imagenUrl: modalTipo === "editar" ? null : prev.imagenUrl // Mantener URL original si es edición
+      imagenUrl: modalTipo === "editar" ? null : prev.imagenUrl
     }));
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -358,20 +280,27 @@ export default function SedesTable() {
         formDataToSend.append('imagen', formData.imagen);
       }
 
+      let resultado;
       if (modalTipo === "agregar") {
-        const nuevaSede = await sedeApiService.crearSede(formDataToSend);
-        setSedes([...sedes, nuevaSede]);
+        resultado = await sedeApiService.crearSede(formDataToSend);
+        setSedes([...sedes, resultado]);
         showNotification("Sede agregada exitosamente");
       } else if (modalTipo === "editar") {
-        const sedeActualizada = await sedeApiService.actualizarSede(
+        resultado = await sedeApiService.actualizarSede(
           sedeSeleccionada.id,
           formDataToSend
         );
         const sedesActualizadas = sedes.map((s) =>
-          s.id === sedeSeleccionada.id ? sedeActualizada : s
+          s.id === sedeSeleccionada.id ? resultado : s
         );
         setSedes(sedesActualizadas);
         showNotification("Sede actualizada exitosamente");
+      }
+
+      // Debug: Verificar que la URL de la imagen se esté recibiendo correctamente
+      console.log('Respuesta del servidor:', resultado);
+      if (resultado.imagenUrl) {
+        console.log('URL de imagen recibida:', resultado.imagenUrl);
       }
 
       cerrarModal();
@@ -531,31 +460,23 @@ export default function SedesTable() {
                   <label className="modal-label">
                     Dirección: <span style={{ color: 'red' }}>*</span>
                   </label>
-                  {googleMapsLoaded ? (
-                    <>
-                      <GooglePlacesAutocomplete
-                        value={formData.Direccion}
-                        onChange={(value) => handleInputChange("Direccion", value)}
-                        placeholder="Escriba para buscar dirección..."
-                        className="modal-input"
-                        required
-                      />
-                      <small style={{ color: '#666', fontSize: '12px' }}>
-                        Escriba para ver sugerencias de Google Maps
-                      </small>
-                    </>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData.Direccion}
-                      onChange={(e) =>
-                        handleInputChange("Direccion", e.target.value)
-                      }
-                      className="modal-input"
-                      placeholder="Cargando servicio de direcciones..."
-                      disabled
-                    />
-                  )}
+                  <textarea
+                    value={formData.Direccion}
+                    onChange={(e) =>
+                      handleInputChange("Direccion", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese la dirección completa de la sede"
+                    required
+                    style={{ 
+                      minHeight: '60px', 
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                  <small style={{ color: '#666', fontSize: '12px' }}>
+                    Mínimo 10 caracteres
+                  </small>
                 </div>
                 <div className="modal-field">
                   <label className="modal-label">
@@ -633,30 +554,23 @@ export default function SedesTable() {
                   <label className="modal-label">
                     Dirección: <span style={{ color: 'red' }}>*</span>
                   </label>
-                  {googleMapsLoaded ? (
-                    <>
-                      <GooglePlacesAutocomplete
-                        value={formData.Direccion}
-                        onChange={(value) => handleInputChange("Direccion", value)}
-                        placeholder="Escriba para buscar dirección..."
-                        className="modal-input"
-                        required
-                      />
-                      <small style={{ color: '#666', fontSize: '12px' }}>
-                        Escriba para ver sugerencias de Google Maps
-                      </small>
-                    </>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData.Direccion}
-                      onChange={(e) =>
-                        handleInputChange("Direccion", e.target.value)
-                      }
-                      className="modal-input"
-                      placeholder="Cargando servicio de direcciones..."
-                    />
-                  )}
+                  <textarea
+                    value={formData.Direccion}
+                    onChange={(e) =>
+                      handleInputChange("Direccion", e.target.value)
+                    }
+                    className="modal-input"
+                    placeholder="Ingrese la dirección completa de la sede"
+                    required
+                    style={{ 
+                      minHeight: '60px', 
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                  <small style={{ color: '#666', fontSize: '12px' }}>
+                    Mínimo 10 caracteres
+                  </small>
                 </div>
                 <div className="modal-field">
                   <label className="modal-label">
@@ -759,6 +673,7 @@ export default function SedesTable() {
                     }}
                   />
                 </div>
+                {/* Mejor manejo de la imagen en visualización */}
                 {sedeSeleccionada?.imagenUrl && (
                   <div className="modal-field" style={{ gridColumn: 'span 2' }}>
                     <label className="modal-label">Imagen:</label>
@@ -777,13 +692,35 @@ export default function SedesTable() {
                         }}
                         onLoad={(e) => {
                           e.target.style.opacity = '1';
+                          console.log('Imagen cargada correctamente:', sedeSeleccionada.imagenUrl);
                         }}
                         onError={(e) => {
+                          console.error('Error al cargar imagen:', sedeSeleccionada.imagenUrl);
                           e.target.style.display = 'none';
                           const container = e.target.parentElement;
-                          container.innerHTML = '<p style="color: #666; font-style: italic;">No se pudo cargar la imagen</p>';
+                          container.innerHTML = '<p style="color: #ef4444; font-style: italic; padding: 20px; border: 1px dashed #ef4444; border-radius: 8px;">No se pudo cargar la imagen</p>';
                         }}
                       />
+                    </div>
+                    {/* Debug info - remover en producción */}
+                    <div style={{ marginTop: '10px', fontSize: '12px', color: '#666', textAlign: 'left' }}>
+                      <strong>URL de imagen:</strong> {sedeSeleccionada.imagenUrl}
+                    </div>
+                  </div>
+                )}
+                {!sedeSeleccionada?.imagenUrl && (
+                  <div className="modal-field" style={{ gridColumn: 'span 2' }}>
+                    <label className="modal-label">Imagen:</label>
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '20px', 
+                      textAlign: 'center',
+                      border: '1px dashed #ddd',
+                      borderRadius: '8px',
+                      backgroundColor: '#f9fafb',
+                      color: '#666'
+                    }}>
+                      No hay imagen disponible
                     </div>
                   </div>
                 )}

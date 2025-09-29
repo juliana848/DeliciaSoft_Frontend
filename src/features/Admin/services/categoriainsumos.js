@@ -1,4 +1,4 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/categoria-insumos";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/categoria-insumos";
 
 class CategoriaInsumoApiService {
   constructor() {

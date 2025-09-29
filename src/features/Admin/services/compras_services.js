@@ -1,4 +1,4 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/compra";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/compra";
 
 class CompraApiService {
   constructor() {
@@ -19,16 +19,85 @@ class CompraApiService {
     return response.json();
   }
 
-  // Métodos para COMPRAS
+  // MÉTODO PARA CAMBIAR ESTADO - USANDO ENDPOINTS ESPECÍFICOS DEL BACKEND
+  async cambiarEstadoCompra(id, nuevoEstado) {
+    try {
+      console.log(`=== INICIANDO CAMBIO DE ESTADO ===`);
+      console.log('ID de compra:', id);
+      console.log('Nuevo estado:', nuevoEstado);
+      
+      // Determinar endpoint según el estado deseado
+      const endpoint = nuevoEstado ? 'activar' : 'anular';
+      const url = `${BASE_URL}/${id}/${endpoint}`;
+      
+      console.log('URL del endpoint:', url);
+
+      // Realizar petición al backend
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: this.baseHeaders,
+      });
+
+      console.log('Status respuesta:', response.status);
+      console.log('StatusText:', response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error del servidor:', errorText);
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+
+      const resultado = await response.json();
+      console.log('Respuesta del servidor:', resultado);
+
+      // El backend devuelve { message: "...", compra: {...} }
+      const compraActualizada = resultado.compra || resultado;
+      
+      if (!compraActualizada) {
+        console.error('No se recibió compra actualizada');
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      // Verificar que el estado cambió correctamente
+      console.log('Estado recibido:', compraActualizada.estado);
+      if (compraActualizada.estado !== nuevoEstado) {
+        console.warn(`ADVERTENCIA: Estado esperado ${nuevoEstado}, recibido ${compraActualizada.estado}`);
+      } else {
+        console.log(`ÉXITO: Estado cambiado a ${compraActualizada.estado}`);
+      }
+
+      // Transformar y retornar
+      const resultado_transformado = this.transformarCompraDesdeAPI(compraActualizada);
+      console.log('Compra transformada final:', resultado_transformado);
+      
+      return resultado_transformado;
+
+    } catch (error) {
+      console.error('ERROR EN cambiarEstadoCompra:', error);
+      throw new Error(`No se pudo ${nuevoEstado ? 'reactivar' : 'anular'} la compra: ${error.message}`);
+    }
+  }
+
+  // OBTENER TODAS LAS COMPRAS
   async obtenerCompras() {
     try {
+      console.log('Obteniendo compras desde:', BASE_URL);
       const response = await fetch(`${BASE_URL}`, {
         method: "GET",
         headers: this.baseHeaders,
       });
       const data = await this.handleResponse(response);
-      console.log('Datos crudos de la API:', data);
-      return this.transformarComprasDesdeAPI(data);
+      console.log('Datos crudos de la API:', data.length, 'compras');
+      
+      const comprasTransformadas = this.transformarComprasDesdeAPI(data);
+      console.log('Compras transformadas:', comprasTransformadas.length);
+      
+      // Debug de estados
+      const activas = comprasTransformadas.filter(c => c.estado === true);
+      const anuladas = comprasTransformadas.filter(c => c.estado === false);
+      console.log('Estados después de transformar: Activas:', activas.length, 'Anuladas:', anuladas.length);
+      
+      return comprasTransformadas;
     } catch (error) {
       console.error('Error en obtenerCompras:', error);
       throw error;
@@ -37,12 +106,14 @@ class CompraApiService {
 
   async obtenerCompraPorId(id) {
     try {
+      console.log('Obteniendo compra por ID:', id);
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "GET",
         headers: this.baseHeaders,
       });
       if (response.status === 404) throw new Error("Compra no encontrada");
       const data = await this.handleResponse(response);
+      console.log('Compra obtenida:', data);
       return this.transformarCompraDesdeAPI(data);
     } catch (error) {
       console.error('Error en obtenerCompraPorId:', error);
@@ -102,99 +173,6 @@ class CompraApiService {
     }
   }
 
-  // MÉTODO CORREGIDO PARA ANULAR/ACTIVAR COMPRAS
-  async cambiarEstadoCompra(id, estado) {
-    try {
-      console.log(`=== Cambiando estado de compra ${id} a ${estado} ===`);
-      
-      // Primero obtenemos la compra actual
-      const compraActual = await this.obtenerCompraPorId(id);
-      console.log('Compra actual:', compraActual);
-      
-      // Creamos el objeto de actualización con todos los campos necesarios
-      const datosActualizacion = {
-        idproveedor: compraActual.idProveedor,
-        fecharegistro: compraActual.fechaRegistro,
-        fechacompra: compraActual.fechaCompra,
-        subtotal: compraActual.subtotal,
-        iva: compraActual.iva,
-        total: compraActual.total,
-        observaciones: compraActual.observaciones || '',
-        estado: estado, // Este es el campo que cambiamos
-        detallecompra: compraActual.detalles ? compraActual.detalles.map(d => this.transformarDetalleCompraParaAPI(d)) : []
-      };
-
-      console.log('Datos para actualización:', datosActualizacion);
-
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT",
-        headers: this.baseHeaders,
-        body: JSON.stringify(datosActualizacion),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al cambiar estado: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await this.handleResponse(response);
-      console.log('Respuesta de cambio de estado:', data);
-      
-      return this.transformarCompraDesdeAPI(data);
-    } catch (error) {
-      console.error('Error en cambiarEstadoCompra:', error);
-      throw new Error(`No se pudo ${estado ? 'reactivar' : 'anular'} la compra: ${error.message}`);
-    }
-  }
-
-  // Métodos para DETALLES DE COMPRA
-  async obtenerDetallesCompra(idCompra) {
-    try {
-      const response = await fetch(`${BASE_URL}/${idCompra}/detalles`, {
-        method: "GET",
-        headers: this.baseHeaders,
-      });
-      const data = await this.handleResponse(response);
-      return this.transformarDetallesCompraDesdeAPI(data);
-    } catch (error) {
-      console.error('Error en obtenerDetallesCompra:', error);
-      throw error;
-    }
-  }
-
-  // Métodos de utilidad para reportes
-  async obtenerComprasPorRangoFechas(fechaInicio, fechaFin) {
-    try {
-      const params = new URLSearchParams({
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin
-      });
-      
-      const response = await fetch(`${BASE_URL}/reporte?${params}`, {
-        method: "GET",
-        headers: this.baseHeaders,
-      });
-      const data = await this.handleResponse(response);
-      return this.transformarComprasDesdeAPI(data);
-    } catch (error) {
-      console.error('Error en obtenerComprasPorRangoFechas:', error);
-      throw error;
-    }
-  }
-
-  async obtenerComprasPorProveedor(idProveedor) {
-    try {
-      const response = await fetch(`${BASE_URL}/proveedor/${idProveedor}`, {
-        method: "GET",
-        headers: this.baseHeaders,
-      });
-      const data = await this.handleResponse(response);
-      return this.transformarComprasDesdeAPI(data);
-    } catch (error) {
-      console.error('Error en obtenerComprasPorProveedor:', error);
-      throw error;
-    }
-  }
-
   // Validaciones
   validarDatosCompra(compra) {
     const errores = [];
@@ -209,19 +187,7 @@ class CompraApiService {
     }
   }
 
-  validarDatosDetalleCompra(detalle) {
-    const errores = [];
-    
-    if (!detalle.idinsumos) errores.push("El insumo es requerido");
-    if (!detalle.cantidad || detalle.cantidad <= 0) errores.push("La cantidad debe ser mayor a 0");
-    if (!detalle.preciounitario || detalle.preciounitario <= 0) errores.push("El precio unitario debe ser mayor a 0");
-
-    if (errores.length > 0) {
-      throw new Error("Datos inválidos: " + errores.join(", "));
-    }
-  }
-
-  // Transformaciones COMPRA - CORREGIDAS
+  // TRANSFORMACIONES - MEJORADAS
   transformarCompraParaAPI(compra) {
     return {
       idproveedor: compra.idProveedor,
@@ -239,21 +205,29 @@ class CompraApiService {
   transformarCompraDesdeAPI(compra) {
     if (!compra) return null;
     
-    console.log('Transformando compra:', compra);
+    // TRANSFORMACIÓN MEJORADA CON LOGS
+    console.log('Transformando compra:', compra.idcompra, 'Estado original:', compra.estado, typeof compra.estado);
     
-    return {
+    const resultado = {
       id: compra.idcompra || compra.id,
+      idcompra: compra.idcompra || compra.id,
       idProveedor: compra.idproveedor || compra.idProveedor,
       fechaRegistro: compra.fecharegistro || compra.fechaRegistro,
       fechaCompra: compra.fechacompra || compra.fechaCompra,
+      fechacompra: compra.fechacompra || compra.fechaCompra,
       subtotal: parseFloat(compra.subtotal) || 0,
       iva: parseFloat(compra.iva) || 0,
       total: parseFloat(compra.total) || 0,
-      estado: compra.estado !== undefined ? compra.estado : true,
+      // IMPORTANTE: Asegurar que estado sea booleano
+      estado: Boolean(compra.estado),
       observaciones: compra.observaciones || '',
+      nombreProveedor: compra.nombreProveedor || compra.proveedor?.nombreproveedor || compra.proveedor?.nombreempresa,
       proveedor: this.transformarProveedorDesdeAPI(compra.proveedor || compra.Proveedor),
       detalles: this.transformarDetallesCompraDesdeAPI(compra.detallecompra || compra.detalles || compra.DetalleCompras || [])
     };
+    
+    console.log('Estado transformado final:', resultado.estado, typeof resultado.estado);
+    return resultado;
   }
 
   transformarProveedorDesdeAPI(proveedor) {
@@ -261,10 +235,14 @@ class CompraApiService {
     
     return {
       id: proveedor.idproveedor || proveedor.id,
+      idproveedor: proveedor.idproveedor || proveedor.id,
       nombre: proveedor.nombreproveedor || 
               proveedor.nombre || 
+              proveedor.nombreempresa ||
               proveedor.nombreCategoria || 
-              proveedor.nombre_proveedor 
+              proveedor.nombre_proveedor,
+      nombreproveedor: proveedor.nombreproveedor || proveedor.nombre,
+      nombreempresa: proveedor.nombreempresa
     };
   }
 
@@ -279,19 +257,20 @@ class CompraApiService {
   // Transformaciones DETALLE COMPRA
   transformarDetalleCompraParaAPI(detalle) {
     return {
-      idinsumos: detalle.idInsumo,
-      cantidad: parseFloat(detalle.cantidad) || 0,
-      preciounitario: parseFloat(detalle.precioUnitario) || 0,
-      subtotalproducto: parseFloat(detalle.subtotalProducto) || 0
+      idinsumos: detalle.idinsumos ?? detalle.idinsumo ?? detalle.idInsumo ?? detalle.id,
+      cantidad: detalle.cantidad,
+      preciounitario: detalle.preciounitario ?? detalle.precioUnitario,
+      subtotalproducto: detalle.subtotalproducto ?? detalle.subtotalProducto
     };
   }
 
   transformarDetalleCompraDesdeAPI(detalle) {
     if (!detalle) return null;
+
     return {
       id: detalle.iddetallecompra || detalle.id,
       idCompra: detalle.idcompra || detalle.idCompra,
-      idInsumo: detalle.idinsumos || detalle.idInsumo,
+      idInsumo: detalle.idinsumos || detalle.idInsumo || null,
       cantidad: parseFloat(detalle.cantidad) || 0,
       precioUnitario: parseFloat(detalle.preciounitario || detalle.precioUnitario) || 0,
       subtotalProducto: parseFloat(detalle.subtotalproducto || detalle.subtotalProducto) || 0,
@@ -306,26 +285,6 @@ class CompraApiService {
   transformarDetallesCompraDesdeAPI(detalles) {
     if (!Array.isArray(detalles)) return [];
     return detalles.map((d) => this.transformarDetalleCompraDesdeAPI(d));
-  }
-
-  // Métodos de cálculo
-  calcularSubtotalDetalle(cantidad, precioUnitario) {
-    return parseFloat(cantidad) * parseFloat(precioUnitario);
-  }
-
-  calcularTotalesCompra(detalles, porcentajeIva = 19) {
-    const subtotal = detalles.reduce((sum, detalle) => {
-      return sum + (parseFloat(detalle.subtotalProducto) || 0);
-    }, 0);
-    
-    const iva = (subtotal * porcentajeIva) / 100;
-    const total = subtotal + iva;
-
-    return {
-      subtotal: parseFloat(subtotal.toFixed(2)),
-      iva: parseFloat(iva.toFixed(2)),
-      total: parseFloat(total.toFixed(2))
-    };
   }
 }
 

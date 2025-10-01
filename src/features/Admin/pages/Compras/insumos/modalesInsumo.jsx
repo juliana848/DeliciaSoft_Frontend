@@ -189,34 +189,76 @@ export default function ModalInsumo({
     }
   };
 
-  const eliminar = async () => {
-    try {
-      const insumoId = modal.insumo.id || modal.insumo.idinsumo;
-      await insumoApiService.eliminarInsumo(insumoId);
-      showNotification("Insumo eliminado exitosamente");
-      await cargarInsumos();
-      cerrar();
-    } catch (error) {
-      console.error("Error al eliminar:", error);
+  // const eliminar = async () => {
+  //   try {
+  //     const insumoId = modal.insumo.id || modal.insumo.idinsumo;
+  //     await insumoApiService.eliminarInsumo(insumoId);
+  //     showNotification("Insumo eliminado exitosamente");
+  //     await cargarInsumos();
+  //     cerrar();
+  //   } catch (error) {
+  //     console.error("Error al eliminar:", error);
       
-      // Mensajes más claros según el tipo de error
-      let mensajeError = "Error al eliminar el insumo";
+  //     // Mensajes más claros según el tipo de error
+  //     let mensajeError = "Error al eliminar el insumo";
       
-      if (error.message?.includes("asociado") || 
-          error.message?.includes("referencia") || 
-          error.message?.includes("constraint") ||
-          error.message?.includes("foreign key") ||
-          error.status === 409) {
-        mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
-      } else if (error.status === 404) {
-        mensajeError = "El insumo no existe o ya fue eliminado";
-      } else if (error.message) {
-        mensajeError = error.message;
-      }
+  //     if (error.message?.includes("asociado") || 
+  //         error.message?.includes("referencia") || 
+  //         error.message?.includes("constraint") ||
+  //         error.message?.includes("foreign key") ||
+  //         error.status === 409) {
+  //       mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
+  //     } else if (error.status === 404) {
+  //       mensajeError = "El insumo no existe o ya fue eliminado";
+  //     } else if (error.message) {
+  //       mensajeError = error.message;
+  //     }
       
-      showNotification(mensajeError, "error");
+  //     showNotification(mensajeError, "error");
+  //   }
+  // };
+  // Reemplaza la función eliminar en modalesInsumo.jsx
+
+const eliminar = async () => {
+  try {
+    // Validar que el insumo no tenga stock disponible
+    const cantidadActual = parseFloat(modal.insumo.cantidad) || 0;
+    
+    if (cantidadActual > 0) {
+      showNotification(
+        `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. ` +
+        `Para eliminarlo, primero debe reducir el stock a 0.`,
+        "error"
+      );
+      return;
     }
-  };
+
+    const insumoId = modal.insumo.id || modal.insumo.idinsumo;
+    await insumoApiService.eliminarInsumo(insumoId);
+    showNotification("Insumo eliminado exitosamente");
+    await cargarInsumos();
+    cerrar();
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    
+    // Mensajes más claros según el tipo de error
+    let mensajeError = "Error al eliminar el insumo";
+    
+    if (error.message?.includes("asociado") || 
+        error.message?.includes("referencia") || 
+        error.message?.includes("constraint") ||
+        error.message?.includes("foreign key") ||
+        error.status === 409) {
+      mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
+    } else if (error.status === 404) {
+      mensajeError = "El insumo no existe o ya fue eliminado";
+    } else if (error.message) {
+      mensajeError = error.message;
+    }
+    
+    showNotification(mensajeError, "error");
+  }
+};
 
   return (
     <Modal visible={modal.visible} onClose={cerrar}>

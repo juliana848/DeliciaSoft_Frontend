@@ -3,10 +3,10 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
 import "../adminStyles.css";
-import Modal from "../components/modal";
-import SearchBar from "../components/SearchBar";
-import Notification from "../components/Notification";
-import sedeApiService from "../services/sedes_services";
+import Modal from "../../components/modal";
+import SearchBar from "../../components/SearchBar";
+import Notification from "../../components/Notification";
+import sedeApiService from "../../Services/sedes_services";
 
 export default function SedesTable() {
   const [sedes, setSedes] = useState([]);

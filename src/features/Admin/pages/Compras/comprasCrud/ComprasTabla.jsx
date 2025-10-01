@@ -27,7 +27,7 @@ export default function ComprasTable() {
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
     const [cargando, setCargando] = useState(false);
-    const [mensajeCarga, setMensajeCarga] = useState('Cargando...'); // ✅ NUEVO
+    const [mensajeCarga, setMensajeCarga] = useState('Cargando...');
 
     // Estados para PDFPreview
     const [pdfPreviewVisible, setPdfPreviewVisible] = useState(false);
@@ -88,7 +88,7 @@ export default function ComprasTable() {
 
     useEffect(() => {
         const cargarInsumos = async () => {
-            setMensajeCarga('Cargando insumos...'); // ✅ NUEVO
+            setMensajeCarga('Cargando insumos...');
             setCargando(true);
             try {
                 const resp = await fetch("https://deliciasoft-backend-i6g9.onrender.com/api/insumos");
@@ -106,7 +106,7 @@ export default function ComprasTable() {
     // Cargar datos iniciales
     useEffect(() => {
         const cargarDatos = async () => {
-            setMensajeCarga('Cargando datos...'); // ✅ NUEVO
+            setMensajeCarga('Cargando datos...');
             setCargando(true);
             try {
                 await Promise.all([
@@ -138,7 +138,7 @@ export default function ComprasTable() {
 
     const abrirPDFPreview = async (compra) => {
         try {
-            setMensajeCarga('Preparando PDF...'); // ✅ NUEVO
+            setMensajeCarga('Preparando PDF...');
             setCargando(true);
             const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
 
@@ -167,7 +167,7 @@ export default function ComprasTable() {
 
         } catch (error) {
             console.error('Error al preparar PDF:', error);
-            showNotification('Error al preparar la previsualización: ' + error.message, 'error');
+            showNotification('Error al preparar la visualización: ' + error.message, 'error');
         } finally {
             setCargando(false);
         }
@@ -209,6 +209,8 @@ export default function ComprasTable() {
             observaciones: "",
         });
         setInsumosSeleccionados([]);
+        setCompraSeleccionada(null);
+        setModalTipo(null);
         setErrores({
             proveedor: "",
             fecha_compra: "",
@@ -223,7 +225,7 @@ export default function ComprasTable() {
                 return;
             }
 
-            setMensajeCarga('Anulando compra...'); // ✅ NUEVO
+            setMensajeCarga('Anulando compra...');
             setCargando(true);
             await anularCompraHook(compraSeleccionada.id);
             showNotification("Compra anulada correctamente", "success");
@@ -239,7 +241,7 @@ export default function ComprasTable() {
 
     const reactivarCompra = async (compra) => {
         try {
-            setMensajeCarga('Reactivando compra...'); // ✅ NUEVO
+            setMensajeCarga('Reactivando compra...');
             setCargando(true);
             await reactivarCompraHook(compra);
             await cargarCompras();
@@ -255,14 +257,13 @@ export default function ComprasTable() {
     const abrirModal = async (tipo, compra = null) => {
         console.log("abrirModal llamado con:", tipo, compra);
         setModalTipo(tipo);
-        setCompraSeleccionada(compra);
 
         if (tipo === "ver" && compra) {
             try {
-                setMensajeCarga('Cargando detalles de compra...'); // ✅ NUEVO
+                setMensajeCarga('Cargando detalles de compra...');
                 setCargando(true);
 
-                const compraId = compra.id || compra.idcompra || compra.idCompra || compra.id_compra || compra.compraId;
+                const compraId = compra.id || compra.idcompra || compra.idCompra;
 
                 if (!compraId) {
                     console.error("No se pudo determinar el ID de la compra:", compra);
@@ -270,32 +271,29 @@ export default function ComprasTable() {
                     return;
                 }
 
-                console.log("ID detectado:", compraId);
+                console.log("Cargando compra con ID:", compraId);
 
+                // Obtener la compra completa desde el API
                 const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
-                console.log("Compra obtenida:", datosCompra);
+                console.log("Compra completa obtenida:", datosCompra);
 
-                setCompraData({
-                    proveedor: datosCompra.proveedor?.nombre || "N/A",
-                    idProveedor: datosCompra.idProveedor || null,
-                    fechaCompra: datosCompra.fechaCompra ? String(datosCompra.fechaCompra).slice(0, 10) : "",
-                    fechaRegistro: datosCompra.fechaRegistro ? String(datosCompra.fechaRegistro).slice(0, 10) : "",
-                    observaciones: datosCompra.observaciones || "",
-                });
+                // Guardar la compra completa
+                setCompraSeleccionada(datosCompra);
 
+                // Formatear los insumos para el formulario
                 const detalles = datosCompra.detalles || [];
-                console.log("Detalles encontrados:", detalles);
-
                 const insumosFormateados = detalles.map((detalle) => ({
-                    id: detalle.insumo?.id || detalle.idInsumo,
+                    id: detalle.idInsumo || detalle.id,
                     nombre: detalle.insumo?.nombre || "N/A",
                     cantidad: Number(detalle.cantidad) || 0,
                     precioUnitario: Number(detalle.precioUnitario) || 0,
+                    precio: Number(detalle.precioUnitario) || 0,
                     unidad: detalle.insumo?.unidad || "N/A",
                 }));
 
                 setInsumosSeleccionados(insumosFormateados);
                 setMostrarAgregarCompra(true);
+                
             } catch (error) {
                 console.error("Error al cargar compra:", error);
                 showNotification("Error al cargar la compra: " + error.message, "error");
@@ -310,11 +308,12 @@ export default function ComprasTable() {
                 fechaRegistro: new Date().toISOString().split("T")[0],
                 observaciones: "",
             });
+            setCompraSeleccionada(null);
             setInsumosSeleccionados([]);
             setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
             setMostrarAgregarCompra(true);
         } else if (tipo === "anular" && compra) {
-            const compraId = compra.id || compra.idcompra || compra.idCompra || compra.id_compra || compra.compraId;
+            const compraId = compra.id || compra.idcompra || compra.idCompra;
 
             if (!compraId) {
                 console.error("No se pudo determinar el ID de la compra:", compra);
@@ -375,7 +374,7 @@ export default function ComprasTable() {
 
     const guardarCompra = async (compraData, insumosSeleccionados) => {
         try {
-            setMensajeCarga('Guardando compra...'); // ✅ NUEVO
+            setMensajeCarga('Guardando compra...');
             setCargando(true);
             await guardarCompraHook(compraData, insumosSeleccionados);
             showNotification("Compra guardada correctamente y stock actualizado");
@@ -391,7 +390,7 @@ export default function ComprasTable() {
 
     const guardarProveedor = async (proveedorData) => {
         try {
-            setMensajeCarga('Guardando proveedor...'); // ✅ NUEVO
+            setMensajeCarga('Guardando proveedor...');
             setCargando(true);
             const nuevoProveedor = await guardarProveedorHook(proveedorData);
             
@@ -443,7 +442,6 @@ export default function ComprasTable() {
                 modalSize="large"
             />
 
-            {/* ✅ REEMPLAZAR EL LOADING BÁSICO CON EL NUEVO COMPONENTE */}
             {cargando && (
                 <LoadingSpinner mensaje={mensajeCarga} fullScreen={true} />
             )}
@@ -594,7 +592,7 @@ export default function ComprasTable() {
                 </>
             ) : (
                 <CompraForm
-                    compraData={compraData}
+                    compraData={modalTipo === 'ver' ? compraSeleccionada : compraData}
                     setCompraData={setCompraData}
                     insumosSeleccionados={insumosSeleccionados}
                     setInsumosSeleccionados={setInsumosSeleccionados}

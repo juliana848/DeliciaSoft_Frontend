@@ -1,5 +1,5 @@
 import React from 'react';
-
+import './modalstyle.css'
 const ProveedorViewer = ({ proveedor, onClose }) => {
   if (!proveedor) return null;
 

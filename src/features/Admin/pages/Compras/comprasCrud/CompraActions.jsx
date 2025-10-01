@@ -24,7 +24,7 @@ export default function CompraActions({
                 >
                     👁️
                 </button>
-                <button
+                {/* <button
                     className="admin-button green"
                     title="Reactivar"
                     onClick={() => {
@@ -45,7 +45,7 @@ export default function CompraActions({
                     disabled={cargando}
                 >
                     📄
-                </button>
+                </button> */}
             </div>
         );
     }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
 import { useProveedorForm } from '../hooks/useProveedorForm';
+import './modalstyle.css'
 
 const ProveedorForm = ({ tipo, proveedor, proveedores, onSave, onCancel, loading }) => {
   const {

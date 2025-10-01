@@ -139,12 +139,26 @@ export default function ComprasManager() {
     };
 
     // Función para ver detalles
-    const verCompra = (compra) => {
-        console.log('👁️ Abriendo modal para ver compra:', compra);
-        setCompraSeleccionada(compra);
+const verCompra = async (compra) => {
+    try {
+        setCargando(true);
+        console.log('Cargando compra completa para ID:', compra.id || compra.idcompra);
+        
+        // Obtener la compra completa con sus detalles
+        const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id || compra.idcompra);
+        
+        console.log('Compra completa obtenida:', compraCompleta);
+        
+        setCompraSeleccionada(compraCompleta);
         setModalTipo('ver');
         setMostrarModal(true);
-    };
+    } catch (error) {
+        console.error('Error al cargar compra:', error);
+        alert('Error al cargar los detalles de la compra');
+    } finally {
+        setCargando(false);
+    }
+};
 
     // Función para generar PDF
     const generarPDF = async (compra) => {
@@ -365,15 +379,28 @@ export default function ComprasManager() {
             </div>
 
             {/* Modal */}
-            {mostrarModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <CompraForm
-                            modalTipo={modalTipo}
-                            compraData={compraSeleccionada}
-                            onCancelar={() => setMostrarModal(false)}
-                        />
-                    </div>
+            {/* Modal para ver/editar/crear compras */}
+{mostrarModal && (
+    <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <CompraForm
+                modalTipo={modalTipo}
+                compraData={compraSeleccionada}
+                insumosSeleccionados={compraSeleccionada?.detalles || []}
+                setInsumosSeleccionados={() => {}} // Función vacía para modo ver
+                proveedores={[]} // Array vacío o carga los proveedores si los necesitas
+                errores={{}}
+                setErrores={() => {}}
+                cargando={false}
+                onGuardar={() => {}}
+                onCancelar={() => setMostrarModal(false)}
+                onAbrirModalProveedor={() => {}}
+                buscarProveedor=""
+                setBuscarProveedor={() => {}}
+                mostrarModalInsumos={false}
+                setMostrarModalInsumos={() => {}}
+            />
+        </div>
                 </div>
             )}
         </div>

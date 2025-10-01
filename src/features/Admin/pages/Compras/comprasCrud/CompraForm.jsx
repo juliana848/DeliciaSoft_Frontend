@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AgregarInsumosModal from '../../../components/AgregarInsumosModal';
+import ProveedorAutocomplete from './ProveedorAutocomplete';
 import './styles/CompraForm.css';
 
 export default function CompraForm({
@@ -20,7 +21,7 @@ export default function CompraForm({
     mostrarModalInsumos,
     setMostrarModalInsumos
 }) {
-    // NUEVO: Estado local para manejar los datos cuando se pasa una compra existente
+    // Estado local para manejar los datos cuando se pasa una compra existente
     const [datosLocales, setDatosLocales] = useState({
         idProveedor: '',
         proveedor: '',
@@ -30,39 +31,85 @@ export default function CompraForm({
     
     const [insumosLocales, setInsumosLocales] = useState([]);
 
-    // NUEVO: Efecto para cargar datos cuando se pasa una compra existente
+    // Efecto para cargar datos cuando se pasa una compra existente
     useEffect(() => {
+        console.log('=== CARGANDO DATOS EN COMPRAFORM ===');
+        console.log('modalTipo:', modalTipo);
+        console.log('compraData COMPLETO:', JSON.stringify(compraData, null, 2));
+        console.log('compraData.detallecompra:', compraData?.detallecompra);
+        console.log('compraData.detalles:', compraData?.detalles);
+        console.log('compraData.proveedor:', compraData?.proveedor);
+        console.log('compraData.nombreProveedor:', compraData?.nombreProveedor);
+        
         if (compraData && modalTipo === 'ver') {
             // Cargar datos de la compra
+            const proveedor = compraData.proveedor?.nombreproveedor || 
+                            compraData.proveedor?.nombreempresa || 
+                            compraData.proveedor?.nombre ||
+                            compraData.nombreProveedor || '';
+            
+            const fechaCompra = compraData.fechacompra || compraData.fechaCompra;
+            const fechaRegistro = compraData.fecharegistro || compraData.fechaRegistro;
+            
+            console.log('Proveedor encontrado:', proveedor);
+            console.log('Fecha compra:', fechaCompra);
+            
             setDatosLocales({
                 idProveedor: compraData.idproveedor || compraData.idProveedor,
-                proveedor: compraData.proveedor?.nombreproveedor || 
-                          compraData.proveedor?.nombreempresa || 
-                          compraData.proveedor?.nombre || '',
-                fechaCompra: compraData.fechacompra ? 
-                    new Date(compraData.fechacompra).toISOString().split('T')[0] : '',
-                fechaRegistro: compraData.fecharegistro ? 
-                    new Date(compraData.fecharegistro).toISOString().split('T')[0] : ''
+                proveedor: proveedor,
+                fechaCompra: fechaCompra ? new Date(fechaCompra).toISOString().split('T')[0] : '',
+                fechaRegistro: fechaRegistro ? new Date(fechaRegistro).toISOString().split('T')[0] : ''
             });
 
             // Cargar detalles de la compra (insumos)
-            if (compraData.detallecompra && compraData.detallecompra.length > 0) {
-                const insumosFormateados = compraData.detallecompra.map(detalle => ({
-                    id: detalle.idinsumos,
-                    nombre: detalle.nombreInsumo || `Insumo ${detalle.idinsumos}`,
-                    cantidad: parseInt(detalle.cantidad),
-                    precio: parseFloat(detalle.preciounitario),
-                    precioUnitario: parseFloat(detalle.preciounitario),
-                    unidad: detalle.unidadMedida || 'Unidad'
-                }));
+            let detalles = [];
+            
+            // Intentar obtener detalles de diferentes propiedades
+            if (compraData.detallecompra && Array.isArray(compraData.detallecompra)) {
+                detalles = compraData.detallecompra;
+                console.log('Detalles desde detallecompra:', detalles);
+            } else if (compraData.detalles && Array.isArray(compraData.detalles)) {
+                detalles = compraData.detalles;
+                console.log('Detalles desde detalles:', detalles);
+            }
+
+            if (detalles.length > 0) {
+                const insumosFormateados = detalles.map(detalle => {
+                    console.log('Procesando detalle:', detalle);
+                    
+                    return {
+                        id: detalle.idinsumos || detalle.idInsumo || detalle.id,
+                        nombre: detalle.nombreInsumo || 
+                               detalle.insumos?.nombreinsumo || 
+                               detalle.insumo?.nombre ||
+                               `Insumo ${detalle.idinsumos || detalle.idInsumo}`,
+                        cantidad: parseInt(detalle.cantidad) || 0,
+                        precio: parseFloat(detalle.preciounitario || detalle.precioUnitario) || 0,
+                        precioUnitario: parseFloat(detalle.preciounitario || detalle.precioUnitario) || 0,
+                        unidad: detalle.unidadMedida || 
+                               detalle.insumos?.unidadmedida?.unidadmedida ||
+                               detalle.insumo?.unidad || 
+                               'Unidad'
+                    };
+                });
+                
+                console.log('Insumos formateados:', insumosFormateados);
                 setInsumosLocales(insumosFormateados);
+            } else {
+                console.warn('No se encontraron detalles en la compra');
             }
         }
     }, [compraData, modalTipo]);
 
     // Usar datos locales o props según el caso
-    const datosAUsar = (modalTipo === 'ver' && compraData) ? datosLocales : compraData;
-    const insumosAUsar = (modalTipo === 'ver' && compraData) ? insumosLocales : insumosSeleccionados;
+    const datosAUsar = (modalTipo === 'ver' && compraData) ? datosLocales : (compraData || {
+        idProveedor: '',
+        proveedor: '',
+        fechaCompra: '',
+        fechaRegistro: new Date().toISOString().split('T')[0]
+    });
+    
+    const insumosAUsar = (modalTipo === 'ver' && compraData) ? insumosLocales : (insumosSeleccionados || []);
 
     const formatoCOP = (valor) => {
         return new Intl.NumberFormat('es-CO', {
@@ -129,7 +176,6 @@ export default function CompraForm({
             ...nuevosInsumosNormalizados.filter(n => !insumosSeleccionados.some(i => i.id === n.id))
         ];
         
-        console.log('Insumos agregados normalizados:', nuevosInsumosNormalizados);
         setInsumosSeleccionados(nuevosInsumos);
         setErrores(prev => ({ ...prev, insumos: validarInsumos(nuevosInsumos) }));
     };
@@ -171,18 +217,18 @@ export default function CompraForm({
     const iva = subtotal * 0.19; 
     const total = subtotal + iva;
 
-    // NUEVO: Función para obtener el título según el estado
+    // Función para obtener el título según el estado
     const obtenerTitulo = () => {
         if (modalTipo === 'ver') {
             const estado = compraData?.estado !== false ? 'Activa' : 'Anulada';
-            return `Compra ${estado} - #${compraData?.idcompra || compraData?.idCompra || ''}`;
+            return `Compra ${estado} - #${compraData?.idcompra || compraData?.id || ''}`;
         }
         return modalTipo === 'crear' ? 'Nueva Compra' : 'Editar Compra';
     };
 
     return (
         <div className="compra-form-container">
-            {/* NUEVO: Header con estado de la compra */}
+            {/* Header con estado de la compra */}
             {modalTipo === 'ver' && compraData && (
                 <div className={`compra-status-header ${compraData.estado === false ? 'anulada' : 'activa'}`}>
                     <h1 className="compra-title">{obtenerTitulo()}</h1>
@@ -213,59 +259,42 @@ export default function CompraForm({
                     <div className="field-group">
                         <label className="field-label">Proveedor *</label>
                         <div className="provider-input-group">
-                            <input
-                                type="text"
-                                list="proveedores-list"
-                                placeholder="Buscar o seleccionar proveedor..."
-                                value={modalTipo === 'ver' ? datosAUsar.proveedor : buscarProveedor}
-                                onChange={(e) => {
+                            <ProveedorAutocomplete
+                                proveedores={proveedores}
+                                value={modalTipo === 'ver' ? datosAUsar.proveedor : (buscarProveedor || '')}
+                                onChange={(valor) => {
+                                    if (modalTipo !== 'ver' && setBuscarProveedor) {
+                                        setBuscarProveedor(valor);
+                                    }
+                                }}
+                                onSelect={(proveedor) => {
                                     if (modalTipo !== 'ver') {
-                                        setBuscarProveedor(e.target.value);
-                                        const proveedorEncontrado = proveedores.find(p => {
-                                            const nombre = p.nombre || p.nombreProveedor || p.nombreempresa || '';
-                                            return nombre.toLowerCase() === e.target.value.toLowerCase();
-                                        });
-                                        if (proveedorEncontrado) {
-                                            setCompraData(prev => ({
-                                                ...prev,
-                                                idProveedor: proveedorEncontrado.idProveedor,
-                                                proveedor: proveedorEncontrado.nombre || proveedorEncontrado.nombreProveedor || proveedorEncontrado.nombreempresa
-                                            }));
-                                            setErrores(prev => ({ ...prev, proveedor: '' }));
-                                        } else {
-                                            setCompraData(prev => ({
-                                                ...prev,
-                                                idProveedor: null,
-                                                proveedor: ''
-                                            }));
+                                        setCompraData(prev => ({
+                                            ...prev,
+                                            idProveedor: proveedor.idProveedor,
+                                            proveedor: proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa
+                                        }));
+                                        setErrores(prev => ({ ...prev, proveedor: '' }));
+                                        if (setBuscarProveedor) {
+                                            setBuscarProveedor(proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa);
                                         }
                                     }
                                 }}
-                                className={`form-input ${errores?.proveedor ? 'error' : ''}`}
                                 disabled={modalTipo === 'ver' || cargando}
+                                error={!!errores?.proveedor}
+                                placeholder="Buscar por nombre o documento..."
                             />
                             
                             {modalTipo !== 'ver' && (
-                                <>
-                                    <datalist id="proveedores-list">
-                                        {proveedores?.map(proveedor => (
-                                            <option 
-                                                key={proveedor.idProveedor} 
-                                                value={proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa}
-                                            />
-                                        ))}
-                                    </datalist>
-                                    
-                                    <button
-                                        type="button"
-                                        onClick={onAbrirModalProveedor}
-                                        className="add-provider-btn"
-                                        title="Agregar nuevo proveedor"
-                                        disabled={cargando}
-                                    >
-                                        +
-                                    </button>
-                                </>
+                                <button
+                                    type="button"
+                                    onClick={onAbrirModalProveedor}
+                                    className="add-provider-btn"
+                                    title="Agregar nuevo proveedor"
+                                    disabled={cargando}
+                                >
+                                    +
+                                </button>
                             )}
                         </div>
 
@@ -343,48 +372,56 @@ export default function CompraForm({
                             </tr>
                         </thead>
                         <tbody>
-                            {insumosAUsar.map((item) => (
-                                <tr key={item.id} className="product-row">
-                                    <td className="product-name">{item.nombre}</td>
-                                    <td className="quantity-cell">
-                                        {modalTipo === 'ver' ? 
-                                            <span className="quantity-display">{item.cantidad}</span> : (
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.cantidad}
-                                                    onChange={(e) =>
-                                                        handleCantidadChange(item.id, parseInt(e.target.value))
-                                                    }
-                                                    disabled={cargando}
-                                                    className="quantity-input"
-                                                />
-                                            )}
+                            {insumosAUsar.length === 0 ? (
+                                <tr>
+                                    <td colSpan={modalTipo === 'ver' ? 5 : 6} style={{textAlign: 'center', padding: '20px'}}>
+                                        No hay productos en esta compra
                                     </td>
-                                    <td className="unit-cell">{item.unidad}</td>
-                                    <td className="price-cell">{formatoCOP(item.precio || item.precioUnitario || 0)}</td>
-                                    <td className="subtotal-cell">
-                                        {formatoCOP((item.cantidad || 0) * (item.precio || item.precioUnitario || 0))}
-                                    </td>
-                                    {modalTipo !== 'ver' && (
-                                        <td className="action-cell">
-                                            <button
-                                                className="delete-btn"
-                                                onClick={() => removeInsumo(item.id)}
-                                                disabled={cargando}
-                                                title="Eliminar producto"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    )}
                                 </tr>
-                            ))}
+                            ) : (
+                                insumosAUsar.map((item) => (
+                                    <tr key={item.id} className="product-row">
+                                        <td className="product-name">{item.nombre}</td>
+                                        <td className="quantity-cell">
+                                            {modalTipo === 'ver' ? 
+                                                <span className="quantity-display">{item.cantidad}</span> : (
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.cantidad}
+                                                        onChange={(e) =>
+                                                            handleCantidadChange(item.id, parseInt(e.target.value))
+                                                        }
+                                                        disabled={cargando}
+                                                        className="quantity-input"
+                                                    />
+                                                )}
+                                        </td>
+                                        <td className="unit-cell">{item.unidad}</td>
+                                        <td className="price-cell">{formatoCOP(item.precio || item.precioUnitario || 0)}</td>
+                                        <td className="subtotal-cell">
+                                            {formatoCOP((item.cantidad || 0) * (item.precio || item.precioUnitario || 0))}
+                                        </td>
+                                        {modalTipo !== 'ver' && (
+                                            <td className="action-cell">
+                                                <button
+                                                    className="delete-btn"
+                                                    onClick={() => removeInsumo(item.id)}
+                                                    disabled={cargando}
+                                                    title="Eliminar producto"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
 
-                {modalTipo !== 'ver' && (
+                {modalTipo !== 'ver' && setMostrarModalInsumos && (
                     <button 
                         className="add-products-btn"
                         onClick={() => setMostrarModalInsumos(true)}
@@ -400,7 +437,7 @@ export default function CompraForm({
             <div className="totals-section">
                 <div className="totals-grid">
                     <div className="total-card subtotal-card">
-                        <div className="card-icon">💰</div>
+                        <div className="card-icon" style={{color: '#f10079ff', fontSize: '2rem'}}>💰</div>
                         <div className="card-content">
                             <div className="card-label">Subtotal</div>
                             <div className="card-value">{formatoCOP(subtotal)}</div>
@@ -408,7 +445,7 @@ export default function CompraForm({
                     </div>
                     
                     <div className="total-card iva-card">
-                        <div className="card-icon">📊</div>
+                        <div className="card-icon" style={{color: '#ff0080ff', fontSize: '2rem'}}>📊</div>
                         <div className="card-content">
                             <div className="card-label">IVA (19%)</div>
                             <div className="card-value">{formatoCOP(iva)}</div>
@@ -416,7 +453,7 @@ export default function CompraForm({
                     </div>
                     
                     <div className="total-card total-card-main">
-                        <div className="card-icon">💎</div>
+                        <div className="card-icon" style={{color: '#f7007cff', fontSize: '2rem'}}>💎</div>
                         <div className="card-content">
                             <div className="card-label">Total</div>
                             <div className="card-value total-value">{formatoCOP(total)}</div>
@@ -434,20 +471,20 @@ export default function CompraForm({
                 >
                     {modalTipo === 'ver' ? 'Cerrar' : 'Cancelar'}
                 </button>
-                {modalTipo !== 'ver' && (
+                {modalTipo !== 'ver' && onGuardar && (
                     <button 
                         className="btn btn-save"
                         onClick={handleGuardar}
                         disabled={cargando}
                     >
-                        <span className="btn-icon">💾</span>
-                        Guardar Compra
+                        <span className="btn-icon"></span>
+                        Guardar 
                     </button>
                 )}
             </div>
             
             {/* Modal de insumos */}
-            {mostrarModalInsumos && modalTipo !== 'ver' && (
+            {mostrarModalInsumos && modalTipo !== 'ver' && setMostrarModalInsumos && (
                 <AgregarInsumosModal
                     onClose={() => setMostrarModalInsumos(false)}
                     onAgregar={agregarInsumos}

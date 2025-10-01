@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Modal from '../../../components/modal';
+import './styles/proveedorModal.css'
+import DireccionAutocomplete from './DireccionAutocomplete';
 
 export default function ProveedorModal({ visible, onClose, onGuardar, proveedores, loading }) {
     const [tipoProveedor, setTipoProveedor] = useState('Natural');
@@ -264,21 +266,19 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
         if (!validarCamposProveedor()) return;
 
         const proveedorData = {
-            tipo: tipoProveedor,
-            tipoDocumento,
+            TipoProveedor: tipoProveedor,
+            tipodocumento: tipoDocumento,
             documento: documentoONit,
-            extra: documentoONit,
             contacto: contacto,
             correo,
             direccion,
             estado: estadoProveedor,
             ...(tipoProveedor === 'Natural' ? {
-                nombre: nombre,
-                nombreProveedor: nombre
+                nombreproveedor: nombre,
+                nombreempresa: null
             } : {
-                nombreEmpresa,
-                nombreContacto,
-                nombre: nombreEmpresa
+                nombreempresa: nombreEmpresa,
+                nombreproveedor: nombreContacto
             })
         };
 
@@ -309,7 +309,8 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
         <Modal visible={visible} onClose={handleClose} className="modal-wide">
             <h2 className="modal-title">Agregar Proveedor</h2>
             <div className="modal-body">
-                <div className="modal-form-grid-wide">
+                <div className="modal-form-grid-two-columns">
+                    {/* Primera fila */}
                     <label>Tipo de Proveedor*
                         <select
                             value={tipoProveedor}
@@ -344,6 +345,7 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
                         </select>
                     </label>
 
+                    {/* Segunda fila */}
                     <label>{tipoProveedor === 'Natural' ? 'Número de Documento*' : (tipoDocumento === 'RUT' ? 'RUT*' : 'NIT*')}
                         <input
                             type="text"
@@ -385,20 +387,23 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
                                 />
                                 {errorsProveedor.nombreEmpresa && <span className="error-message">{errorsProveedor.nombreEmpresa}</span>}
                             </label>
-
-                            <label>Nombre del Contacto*
-                                <input
-                                    type="text"
-                                    value={nombreContacto}
-                                    onChange={(e) => handleProveedorFieldChange('nombreContacto', e.target.value)}
-                                    onBlur={(e) => handleProveedorFieldBlur('nombreContacto', e.target.value)}
-                                    className={`modal-input ${errorsProveedor.nombreContacto ? 'error' : ''}`}
-                                    placeholder="Ingrese el nombre del contacto"
-                                    disabled={loading}
-                                />
-                                {errorsProveedor.nombreContacto && <span className="error-message">{errorsProveedor.nombreContacto}</span>}
-                            </label>
                         </>
+                    )}
+
+                    {/* Tercera fila (solo para jurídico) */}
+                    {tipoProveedor === 'Jurídico' && (
+                        <label>Nombre del Contacto*
+                            <input
+                                type="text"
+                                value={nombreContacto}
+                                onChange={(e) => handleProveedorFieldChange('nombreContacto', e.target.value)}
+                                onBlur={(e) => handleProveedorFieldBlur('nombreContacto', e.target.value)}
+                                className={`modal-input ${errorsProveedor.nombreContacto ? 'error' : ''}`}
+                                placeholder="Ingrese el nombre del contacto"
+                                disabled={loading}
+                            />
+                            {errorsProveedor.nombreContacto && <span className="error-message">{errorsProveedor.nombreContacto}</span>}
+                        </label>
                     )}
 
                     <label>Teléfono*
@@ -415,6 +420,7 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
                         {errorsProveedor.contacto && <span className="error-message">{errorsProveedor.contacto}</span>}
                     </label>
 
+                    {/* Cuarta fila */}
                     <label>Correo Electrónico*
                         <input
                             type="email"
@@ -460,4 +466,5 @@ export default function ProveedorModal({ visible, onClose, onGuardar, proveedore
                 </button>
             </div>
         </Modal>
-    )}
+    );
+}

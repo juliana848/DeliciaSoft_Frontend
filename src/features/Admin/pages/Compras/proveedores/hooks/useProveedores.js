@@ -28,27 +28,29 @@ export const useProveedores = () => {
     }
   };
 
-  const toggleEstado = async (proveedor) => {
-    setLoading(true);
-    try {
-      console.log('🔄 Cambiando estado de proveedor:', proveedor);
-      
-      const idProveedor = proveedor.idProveedor || proveedor.idproveedor;
-      
-      await proveedorApiService.cambiarEstadoProveedor(idProveedor, !proveedor.estado);
-      
-      const updated = proveedores.map(p =>
-        (p.idProveedor === idProveedor || p.idproveedor === idProveedor) ? { ...p, estado: !p.estado } : p
-      );
-      setProveedores(updated);
-      showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      showNotification('Error al cambiar el estado del proveedor', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+const toggleEstado = async (proveedor) => {
+  setLoading(true);
+  try {
+    console.log('🔄 Cambiando estado de proveedor:', proveedor);
+    
+    const idProveedor = proveedor.idProveedor || proveedor.idproveedor;
+    
+    await proveedorApiService.cambiarEstadoProveedor(idProveedor, !proveedor.estado);
+    
+    const updated = proveedores.map(p =>
+      (p.idProveedor === idProveedor || p.idproveedor === idProveedor) ? { ...p, estado: !p.estado } : p
+    );
+    setProveedores(updated);
+    showNotification(`Proveedor ${proveedor.estado ? 'desactivado' : 'activado'} exitosamente`);
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    // 🆕 Captura el mensaje específico del backend
+    const mensaje = error.response?.data?.message || error.message || 'Error al cambiar el estado del proveedor';
+    showNotification(mensaje, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return {
     proveedores,

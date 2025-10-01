@@ -1,5 +1,6 @@
 import React from "react";
 import Modal from "../../../components/modal";
+import '../../Compras/comprasCrud/styles/ProveedorAutocomplete.css'
 
 export default function ModalGenerico({ visible = false, titulo = "Mensaje", mensaje = "", cerrar, onConfirmar }) {
   return (

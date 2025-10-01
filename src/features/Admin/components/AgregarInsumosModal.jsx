@@ -121,24 +121,27 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         console.log('💰 ¿Los datos incluyen precios?', tienePrecio);
         
         // Transformar datos de la API al formato esperado
+// Transformar datos de la API al formato esperado
         const insumosTransformados = insumosActivos.map(insumo => {
-          // **PRIORIZAR PRECIO DE LA BASE DE DATOS**
+          // **OBTENER PRECIO REAL DE LA BASE DE DATOS**
           let precio = 0;
           let esPrecioReal = false;
           
-          // Verificar si existe precio en la BD y es válido
-          if (insumo.precio !== undefined && insumo.precio !== null) {
-            const precioNumerico = parseFloat(insumo.precio);
+          // Intentar obtener el precio de diferentes posibles campos
+          const precioRaw = insumo.precio || insumo.preciounitario || insumo.precioUnitario || insumo.precio_unitario;
+          
+          if (precioRaw !== undefined && precioRaw !== null) {
+            const precioNumerico = parseFloat(precioRaw);
             if (!isNaN(precioNumerico) && precioNumerico > 0) {
               precio = precioNumerico;
               esPrecioReal = true;
+              console.log(`✅ Precio encontrado para ${insumo.nombreinsumo}: $${precio}`);
             }
           }
           
-          // Si no hay precio real válido, permitir que sea 0 para que se pueda editar
-          if (precio === 0) {
-            precio = 0; // Dejarlo en 0 para que se pueda editar
-            esPrecioReal = false;
+          // Si no hay precio, dejar en 0 para que se pueda configurar
+          if (!esPrecioReal) {
+            console.log(`⚠️ Sin precio para ${insumo.nombreinsumo}, debe configurarse manualmente`);
           }
           
           const insumoTransformado = {

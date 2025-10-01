@@ -570,29 +570,56 @@ class InsumoApiService {
     }
   }
 
-  async cambiarEstadoInsumo(id, nuevoEstado) {
-    try {
-      const insumoActual = await this.obtenerInsumoPorId(id);
-      const datosActualizados = {
-        ...this.transformarInsumoParaAPI(insumoActual),
-        estado: nuevoEstado,
-      };
+async cambiarEstadoInsumo(id, nuevoEstado) {
+  try {
+    console.log(`Cambiando estado del insumo ${id} a:`, nuevoEstado);
+    
+    // Obtener insumo actual desde el backend
+    const response = await fetch(`${BASE_URL}/${id}`, {
+      method: "GET",
+      headers: this.baseHeaders,
+    });
 
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT",
-        headers: this.baseHeaders,
-        body: JSON.stringify(datosActualizados),
-      });
-
-      const data = await this.handleResponse(response);
-      console.log('Estado cambiado exitosamente');
-      return this.transformarInsumoDesdeAPI(data);
-    } catch (error) {
-      console.error(`Error al cambiar estado del insumo ${id}:`, error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`No se pudo obtener el insumo: ${response.status}`);
     }
-  }
 
+    const insumoActual = await response.json();
+    console.log('Insumo actual obtenido:', insumoActual);
+
+    // Enviar actualización solo con los campos necesarios
+    const datosActualizados = {
+      nombreinsumo: insumoActual.nombreinsumo,
+      idcategoriainsumos: insumoActual.idcategoriainsumos,
+      idunidadmedida: insumoActual.idunidadmedida,
+      estado: nuevoEstado,
+      cantidad: parseFloat(insumoActual.cantidad || 0),
+      precio: parseFloat(insumoActual.precio || 0),
+      stockminimo: parseInt(insumoActual.stockminimo || 5)
+    };
+
+    console.log('Enviando actualización:', datosActualizados);
+
+    const updateResponse = await fetch(`${BASE_URL}/${id}`, {
+      method: "PUT",
+      headers: this.baseHeaders,
+      body: JSON.stringify(datosActualizados),
+    });
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      console.error('Error del servidor:', errorText);
+      throw new Error(`Error al cambiar estado: ${updateResponse.status}`);
+    }
+
+    const data = await updateResponse.json();
+    console.log('Estado cambiado exitosamente:', data);
+    return this.transformarInsumoDesdeAPI(data);
+  } catch (error) {
+    console.error(`Error al cambiar estado del insumo ${id}:`, error);
+    throw error;
+  }
+}
   validarDatosInsumo(insumo) {
     const errores = [];
     

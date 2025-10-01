@@ -1,0 +1,43 @@
+/* Grid para formularios anchos - 2 columnas */
+.modal-form-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.modal-form-grid-wide label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.modal-form-grid-wide .modal-input {
+  margin-top: 5px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-form-grid-wide .modal-input.error {
+  border-color: #f44336;
+}
+
+.modal-form-grid-wide .error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: normal;
+}
+
+/* Responsive - una columna en pantallas pequeñas */
+@media (max-width: 768px) {
+  .modal-form-grid-wide {
+    grid-template-columns: 1fr;
+  }
+}

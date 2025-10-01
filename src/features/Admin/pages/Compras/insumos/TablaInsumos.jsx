@@ -8,7 +8,7 @@ import SearchBar from "../../../components/SearchBar";
 import Notification from "../../../components/Notification";
 import ModalGenerico from "./modalgenerico";
 import ModalInsumo from "./modalesInsumo";
-import ModalCategoria from "./modalCategoria";
+import AgregarCategoria from "./agregarCategoria";
 import ModalCatalogo from "./modalCatalogo";
 import SelectorCatalogo from "./modalSelector";
 import IndicadorStock from "./insicadorStock";
@@ -31,7 +31,7 @@ export default function TablaInsumos() {
 
   // Estados para modales
   const [modal, setModal] = useState({ visible: false, tipo: "", insumo: null });
-  const [modalCategoria, setModalCategoria] = useState(false);
+  const [modalAgregarCategoria, setModalAgregarCategoria] = useState(false);
   const [modalCatalogo, setModalCatalogo] = useState(false);
   const [modalSelector, setModalSelector] = useState(false);
   const [showStockInfo, setShowStockInfo] = useState(false);
@@ -67,28 +67,26 @@ export default function TablaInsumos() {
 
   const hideNotification = () => setNotification({ visible: false });
 
-  // 🔧 FIX: Función para cambiar estado corregida
+  // Función para cambiar estado corregida
   const toggleEstado = async (id) => {
     try {
-      // Buscar por id o idinsumo según la estructura de datos
-      const insumo = insumos.find((i) => i.id === id || i.idinsumo === id);
+      const insumo = insumos.find((i) => (i.id || i.idinsumo) === id);
       if (!insumo) {
         console.error('Insumo no encontrado:', id);
+        showNotification("Insumo no encontrado", "error");
         return;
       }
 
       const nuevoEstado = !insumo.estado;
+      console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
       
-      // Usar el id correcto para la API
-      const insumoId = insumo.id || insumo.idinsumo;
-      await insumoApiService.cambiarEstadoInsumo(insumoId, nuevoEstado);
+      await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
 
       // Actualizar el estado local
       setInsumos(
         insumos.map((i) => {
           const currentId = i.id || i.idinsumo;
-          const targetId = insumo.id || insumo.idinsumo;
-          return currentId === targetId ? { ...i, estado: nuevoEstado } : i;
+          return currentId === id ? { ...i, estado: nuevoEstado } : i;
         })
       );
       
@@ -111,7 +109,7 @@ export default function TablaInsumos() {
     setShowStockInfo((prev) => !prev);
   };
 
-  // 🔧 FIX: Función para abrir selector de catálogo
+  // Función para abrir selector de catálogo
   const abrirModalSelectorCatalogo = (insumo) => {
     console.log('Abriendo selector de catálogo para:', insumo);
     setInsumoParaCatalogo(insumo);
@@ -135,7 +133,7 @@ export default function TablaInsumos() {
     setInsumoParaCatalogo(null);
   };
 
-  // 🔧 FIX: Función para determinar si es categoría especial (corregida)
+  // Función para determinar si es categoría especial (corregida)
   const esCategoriaEspecial = (categoriaId, categoriaNombre) => {
     // Primero intentar por nombre si está disponible
     if (categoriaNombre) {
@@ -170,7 +168,7 @@ export default function TablaInsumos() {
     );
   });
 
-  // 🔧 FIX: Función helper para obtener el ID del insumo
+  // Función helper para obtener el ID del insumo
   const getInsumoId = (rowData) => {
     return rowData.id || rowData.idinsumo;
   };
@@ -344,7 +342,7 @@ export default function TablaInsumos() {
                 🗑️
               </button>
 
-              {/* 🔧 FIX: Botón Catálogo corregido */}
+              {/* Botón Catálogo corregido */}
               {rowData.estado &&
                 esCategoriaEspecial(
                   rowData.idCategoriaInsumos || rowData.idcategoriainsumos,
@@ -390,7 +388,7 @@ export default function TablaInsumos() {
         />
       </DataTable>
 
-      {/* 🔧 MODALES CORREGIDOS */}
+      {/* MODALES CORREGIDOS */}
       {modal.visible && (
         <ModalInsumo
           modal={modal}
@@ -399,18 +397,19 @@ export default function TablaInsumos() {
           unidades={unidades}
           cargarInsumos={cargarDatos}
           showNotification={showNotification}
+          abriragregarCategoria={() => setModalAgregarCategoria(true)}
         />
       )}
 
-      {modalCategoria && (
-        <ModalCategoria
-          cerrar={() => setModalCategoria(false)}
+      {modalAgregarCategoria && (
+        <AgregarCategoria
+          cerrar={() => setModalAgregarCategoria(false)}
           showNotification={showNotification}
           cargarCategorias={cargarDatos}
         />
       )}
 
-      {/* 🔧 FIX: Props corregidas para SelectorCatalogo */}
+      {/* Props corregidas para SelectorCatalogo */}
       {modalSelector && (
         <SelectorCatalogo
           modalSelectorVisible={modalSelector}

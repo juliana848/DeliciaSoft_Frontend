@@ -17,9 +17,9 @@ class ProveedorApiService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error en la respuesta del servidor:', errorText);
-      throw new Error(errorText);
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('❌ Error en la respuesta del servidor:', errorData);
+      throw new Error(errorData.message || 'Error al crear proveedor');
     }
     
     const data = await response.json();
@@ -37,9 +37,9 @@ class ProveedorApiService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error al actualizar proveedor:', errorText);
-      throw new Error(errorText);
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('❌ Error al actualizar proveedor:', errorData);
+      throw new Error(errorData.message || 'Error al actualizar proveedor');
     }
     
     const data = await response.json();
@@ -56,9 +56,9 @@ class ProveedorApiService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error al eliminar proveedor:', errorText);
-      throw new Error(errorText);
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('❌ Error al eliminar proveedor:', errorData);
+      throw new Error(errorData.message || 'Error al eliminar proveedor');
     }
     
     console.log('✅ Proveedor eliminado exitosamente');
@@ -75,9 +75,14 @@ class ProveedorApiService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error al cambiar estado:', errorText);
-      throw new Error(errorText);
+      // 🆕 Mejorar manejo de errores para capturar el mensaje específico
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('❌ Error al cambiar estado:', errorData);
+      
+      // Crear un error con la estructura correcta para que el frontend lo capture
+      const error = new Error(errorData.message || 'Error al cambiar estado');
+      error.response = { data: errorData };
+      throw error;
     }
     
     const data = await response.json();
@@ -94,9 +99,9 @@ class ProveedorApiService {
     });
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error al obtener proveedores:', errorText);
-      throw new Error(errorText);
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('❌ Error al obtener proveedores:', errorData);
+      throw new Error(errorData.message || 'Error al obtener proveedores');
     }
     
     const data = await response.json();

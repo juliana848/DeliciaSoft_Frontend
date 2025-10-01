@@ -526,3 +526,21 @@
 .status-badge {
     animation: statusChange 0.3s ease-in-out;
 }
+/* Cambiar color de los iconos de las tarjetas de totales a rosado */
+.total-card .card-icon {
+    font-size: 2rem;
+    filter: grayscale(100%) brightness(1.2) sepia(100%) hue-rotate(290deg) saturate(500%);
+}
+
+/* O si prefieres usar colores específicos para cada icono */
+.subtotal-card .card-icon {
+    color: #ff0080; /* Rosado */
+}
+
+.iva-card .card-icon {
+    color: #ff0080; /* Rosado */
+}
+
+.total-card-main .card-icon {
+    color: #ff0080; /* Rosado */
+}

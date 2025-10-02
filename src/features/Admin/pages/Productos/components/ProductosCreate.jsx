@@ -1,14 +1,15 @@
+// src/features/Admin/pages/Productos/ProductosCreate.jsx
 import React, { useState, useEffect } from "react";
 import SeleccionarRecetaModal from "./components_recetas/SeleccionarRecetaModal";
 import productoApiService from "../../../services/productos_services";
-import "../../../adminStyles.css";
 import Notification from "../../../components/Notification";
+import "./css/productoscss.css"; 
 
 export default function ProductosCreate({ onSave, onCancel }) {
   const [formData, setFormData] = useState({
     nombreproducto: "",
     precioproducto: "",
-    cantidadproducto: 1, // 🔹 siempre 1
+    cantidadproducto: 1,
     idcategoriaproducto: "",
     idreceta: null,
     recetaSeleccionada: null,
@@ -23,12 +24,12 @@ export default function ProductosCreate({ onSave, onCancel }) {
   const [erroresValidacion, setErroresValidacion] = useState({});
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
-  // Notificaciones
   const [notification, setNotification] = useState({
     visible: false,
     mensaje: "",
     tipo: "success",
   });
+
   const showNotification = (mensaje, tipo = "success") =>
     setNotification({ visible: true, mensaje, tipo });
   const hideNotification = () =>
@@ -45,17 +46,11 @@ export default function ProductosCreate({ onSave, onCancel }) {
         setCategorias(data);
       } catch (error) {
         showNotification("Error al cargar categorías: " + error.message, "error");
-        setCategorias([
-          { idcategoriaproducto: 1, nombrecategoria: "Bebidas" },
-          { idcategoriaproducto: 2, nombrecategoria: "Postres" },
-          { idcategoriaproducto: 3, nombrecategoria: "Panadería" },
-          { idcategoriaproducto: 4, nombrecategoria: "Repostería" },
-        ]);
+        setCategorias([]);
       } finally {
         setLoadingCategorias(false);
       }
     };
-
     cargarCategorias();
   }, []);
 
@@ -65,64 +60,38 @@ export default function ProductosCreate({ onSave, onCancel }) {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
     if (erroresValidacion[name]) {
-      setErroresValidacion((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErroresValidacion((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleImagenChange = (e) => {
     const archivo = e.target.files[0];
-
     if (archivo) {
-      const tiposPermitidos = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
+      const tiposPermitidos = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
       if (!tiposPermitidos.includes(archivo.type)) {
         showNotification("Tipo de archivo no permitido", "error");
         e.target.value = "";
         return;
       }
-
-      const maxSize = 5 * 1024 * 1024;
-      if (archivo.size > maxSize) {
+      if (archivo.size > 5 * 1024 * 1024) {
         showNotification("El archivo es demasiado grande (máx 5MB)", "error");
         e.target.value = "";
         return;
       }
-
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (ev) =>
         setFormData((prev) => ({
           ...prev,
           imagenArchivo: archivo,
-          imagenPreview: e.target.result,
+          imagenPreview: ev.target.result,
         }));
-      };
       reader.readAsDataURL(archivo);
-
-      if (erroresValidacion.imagen) {
-        setErroresValidacion((prev) => ({
-          ...prev,
-          imagen: "",
-        }));
-      }
     }
   };
 
   const removerImagen = () => {
-    setFormData((prev) => ({
-      ...prev,
-      imagenArchivo: null,
-      imagenPreview: null,
-    }));
+    setFormData((prev) => ({ ...prev, imagenArchivo: null, imagenPreview: null }));
     const fileInput = document.getElementById("imagen-upload");
     if (fileInput) fileInput.value = "";
   };
@@ -131,47 +100,33 @@ export default function ProductosCreate({ onSave, onCancel }) {
     setFormData((prev) => ({
       ...prev,
       idreceta: receta.idreceta,
-      recetaSeleccionada: {
-        ...receta,
-        cantidadInsumos: receta.cantidadInsumos || receta.insumos?.length || 0,
-      },
+      recetaSeleccionada: receta,
     }));
     setMostrarModalReceta(false);
   };
 
   const removerReceta = () => {
-    setFormData((prev) => ({
-      ...prev,
-      idreceta: null,
-      recetaSeleccionada: null,
-    }));
+    setFormData((prev) => ({ ...prev, idreceta: null, recetaSeleccionada: null }));
   };
 
   const validateForm = () => {
     const errores = {};
-
     if (!formData.nombreproducto.trim()) {
       errores.nombreproducto = "El nombre del producto es requerido";
     }
-
     if (!formData.idcategoriaproducto) {
       errores.idcategoriaproducto = "Debe seleccionar una categoría";
     }
-
     const precio = parseFloat(formData.precioproducto);
     if (!formData.precioproducto || isNaN(precio) || precio < 0) {
-      errores.precioproducto =
-        "El precio debe ser un número válido mayor o igual a 0";
+      errores.precioproducto = "El precio debe ser un número válido mayor o igual a 0";
     }
-
-    // Cantidad ya no se valida porque siempre es 1 fijo
     setErroresValidacion(errores);
     return Object.keys(errores).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setLoading(true);
@@ -181,12 +136,9 @@ export default function ProductosCreate({ onSave, onCancel }) {
       if (formData.imagenArchivo) {
         setSubiendoImagen(true);
         try {
-          const resultadoImagen = await productoApiService.subirImagen(
-            formData.imagenArchivo
-          );
+          const resultadoImagen = await productoApiService.subirImagen(formData.imagenArchivo);
           idImagenSubida = resultadoImagen.idimagen;
         } catch (errorImagen) {
-          console.error("Error al subir imagen:", errorImagen);
           showNotification("Error al subir la imagen", "error");
           return;
         } finally {
@@ -197,7 +149,7 @@ export default function ProductosCreate({ onSave, onCancel }) {
       const payload = {
         nombreproducto: formData.nombreproducto.trim(),
         precioproducto: parseFloat(formData.precioproducto),
-        cantidadproducto: 1, // 🔹 siempre guardar como 1
+        cantidadproducto: 1,
         estado: true,
         idcategoriaproducto: parseInt(formData.idcategoriaproducto),
         idimagen: idImagenSubida,
@@ -208,7 +160,6 @@ export default function ProductosCreate({ onSave, onCancel }) {
       showNotification("Producto creado exitosamente", "success");
       if (onSave) onSave(productoCreado);
     } catch (error) {
-      console.error("Error creando producto:", error);
       showNotification("Error al crear producto: " + error.message, "error");
     } finally {
       setLoading(false);
@@ -224,206 +175,161 @@ export default function ProductosCreate({ onSave, onCancel }) {
         onClose={hideNotification}
       />
 
-      <h1>Agregar Producto</h1>
-
       <form onSubmit={handleSubmit}>
-        <div className="compra-fields-grid">
-          {/* Nombre */}
-          <div
-            className={`field-group ${
-              erroresValidacion.nombreproducto ? "has-error" : ""
-            }`}
-          >
-            <label>
-              Nombre del Producto <span style={{ color: "red" }}>*</span>
-            </label>
-            <input
-              type="text"
-              name="nombreproducto"
-              value={formData.nombreproducto}
-              onChange={handleInputChange}
-              className={erroresValidacion.nombreproducto ? "field-error" : ""}
-              required
-            />
-            {erroresValidacion.nombreproducto && (
-              <span className="error-message">
-                {erroresValidacion.nombreproducto}
-              </span>
-            )}
-          </div>
+        {/* Card principal */}
+        <div className="form-card">
+          <h2 className="section-title">
+            <span className="title-icon">📦</span> Información del Producto
+          </h2>
 
-          {/* Precio */}
-          <div
-            className={`field-group ${
-              erroresValidacion.precioproducto ? "has-error" : ""
-            }`}
-          >
-            <label>
-              Precio <span style={{ color: "red" }}>*</span>
-            </label>
-            <input
-              type="number"
-              name="precioproducto"
-              value={formData.precioproducto}
-              onChange={handleInputChange}
-              className={erroresValidacion.precioproducto ? "field-error" : ""}
-              min="0"
-              step="0.01"
-              required
-            />
-            {erroresValidacion.precioproducto && (
-              <span className="error-message">
-                {erroresValidacion.precioproducto}
-              </span>
-            )}
-          </div>
-
-          {/* Cantidad (fija en 1) */}
-          <div className="field-group">
-            <label>Cantidad Inicial</label>
-            <input
-              type="number"
-              name="cantidadproducto"
-              value={formData.cantidadproducto}
-              readOnly
-              disabled
-              className="field-disabled"
-            />
-            <span className="info-message">Se crea siempre con 1 unidad</span>
-          </div>
-
-          {/* Categoría */}
-          <div
-            className={`field-group ${
-              erroresValidacion.idcategoriaproducto ? "has-error" : ""
-            }`}
-          >
-            <label>
-              Categoría <span style={{ color: "red" }}>*</span>
-            </label>
-            {loadingCategorias ? (
-              <select disabled className="field-disabled">
-                <option>Cargando categorías...</option>
-              </select>
-            ) : (
-              <select
-                name="idcategoriaproducto"
-                value={formData.idcategoriaproducto}
+          <div className="form-grid">
+            {/* Nombre */}
+            <div className="field-group">
+              <label className="field-label">
+                Nombre del Producto <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                name="nombreproducto"
+                value={formData.nombreproducto}
                 onChange={handleInputChange}
-                className={
-                  erroresValidacion.idcategoriaproducto ? "field-error" : ""
-                }
+                className={`form-input ${erroresValidacion.nombreproducto ? "error" : ""}`}
+                placeholder="Ej: Pan de yuca"
                 required
-              >
-                <option value="">Seleccione una categoría</option>
-                {categorias.map((categoria) => (
-                  <option
-                    key={categoria.idcategoriaproducto}
-                    value={categoria.idcategoriaproducto}
-                  >
-                    {categoria.nombrecategoria || categoria.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
-            {erroresValidacion.idcategoriaproducto && (
-              <span className="error-message">
-                {erroresValidacion.idcategoriaproducto}
-              </span>
-            )}
+              />
+              {erroresValidacion.nombreproducto && (
+                <span className="error-message">{erroresValidacion.nombreproducto}</span>
+              )}
+            </div>
+
+            {/* Precio */}
+            <div className="field-group">
+              <label className="field-label">
+                Precio <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="number"
+                name="precioproducto"
+                value={formData.precioproducto}
+                onChange={handleInputChange}
+                className={`form-input ${erroresValidacion.precioproducto ? "error" : ""}`}
+                min="0"
+                step="0.01"
+                placeholder="Ej: 5000"
+                required
+              />
+              {erroresValidacion.precioproducto && (
+                <span className="error-message">{erroresValidacion.precioproducto}</span>
+              )}
+            </div>
+
+            {/* Cantidad */}
+            <div className="field-group">
+              <label className="field-label">Cantidad Inicial</label>
+              <input
+                type="number"
+                name="cantidadproducto"
+                value={formData.cantidadproducto}
+                className="form-input"
+                readOnly
+                disabled
+              />
+              <small className="info-message">Siempre se crea con 1 unidad</small>
+            </div>
+
+            {/* Categoría */}
+            <div className="field-group">
+              <label className="field-label">
+                Categoría <span style={{ color: "red" }}>*</span>
+              </label>
+              {loadingCategorias ? (
+                <select disabled className="form-input">
+                  <option>Cargando categorías...</option>
+                </select>
+              ) : (
+                <select
+                  name="idcategoriaproducto"
+                  value={formData.idcategoriaproducto}
+                  onChange={handleInputChange}
+                  className={`form-input ${erroresValidacion.idcategoriaproducto ? "error" : ""}`}
+                  required
+                >
+                  <option value="">Seleccione una categoría</option>
+                  {categorias.map((categoria) => (
+                    <option key={categoria.idcategoriaproducto} value={categoria.idcategoriaproducto}>
+                      {categoria.nombrecategoria || categoria.nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {erroresValidacion.idcategoriaproducto && (
+                <span className="error-message">{erroresValidacion.idcategoriaproducto}</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="section-divider"></div>
-
         {/* Imagen */}
-        <div className="detalle-section">
-          <h2>Imagen del Producto:</h2>
-          <div className="imagen-upload-small">
+        <div className="form-card">
+          <h2 className="section-title">
+            <span className="title-icon">🖼️</span> Imagen del Producto
+          </h2>
+          <div>
             {formData.imagenPreview ? (
-              <div className="imagen-preview-container">
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <img
                   src={formData.imagenPreview}
                   alt="Preview"
-                  className="imagen-preview-small"
+                  style={{ width: "120px", borderRadius: "10px" }}
                 />
-                <button
-                  type="button"
-                  className="btn-eliminar"
-                  onClick={removerImagen}
-                >
+                <button type="button" className="delete-btn" onClick={removerImagen}>
                   Eliminar
                 </button>
               </div>
             ) : (
-              <p>No se ha subido imagen</p>
+              <p style={{ color: "#6b7280" }}>No se ha subido imagen</p>
             )}
-            <div className="upload-button-container">
-              <input
-                id="imagen-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImagenChange}
-                style={{ display: "none" }}
-              />
-              <label htmlFor="imagen-upload" className="btn-agregar-insumos">
-                {subiendoImagen
-                  ? "..."
-                  : formData.imagenPreview
-                  ? "Cambiar"
-                  : "Subir"}
-              </label>
-            </div>
+            <input
+              id="imagen-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImagenChange}
+              style={{ display: "none" }}
+            />
+            <label htmlFor="imagen-upload" className="btn-small" style={{ marginTop: "10px" }}>
+              {formData.imagenPreview ? "Cambiar Imagen" : "Subir Imagen"}
+            </label>
           </div>
         </div>
 
-        <div className="section-divider"></div>
-
         {/* Receta */}
-        <div className="detalle-section">
-          <h2>Receta del Producto:</h2>
+        <div className="form-card">
+          <h2 className="section-title">
+            <span className="title-icon">📋</span> Receta del Producto
+          </h2>
           {formData.recetaSeleccionada ? (
-            <div className="receta-seleccionada">
-              <div className="receta-info">
-                <h4>{formData.recetaSeleccionada.nombrereceta}</h4>
-                <p>{formData.recetaSeleccionada.especificaciones}</p>
-              </div>
-              <button
-                type="button"
-                className="btn-eliminar"
-                onClick={removerReceta}
-              >
-                Eliminar
+            <div className="nested-item-list">
+              <strong>{formData.recetaSeleccionada.nombrereceta}</strong>
+              <p>{formData.recetaSeleccionada.especificaciones}</p>
+              <button type="button" className="delete-btn" onClick={removerReceta}>
+                Eliminar Receta
               </button>
             </div>
           ) : (
-            <p>No hay receta asignada a este producto</p>
+            <p style={{ color: "#6b7280" }}>No hay receta asignada</p>
           )}
-
-          <button
-            type="button"
-            className="btn-agregar-insumos"
-            onClick={() => setMostrarModalReceta(true)}
-          >
+          <button type="button" className="btn-small" onClick={() => setMostrarModalReceta(true)}>
             {formData.recetaSeleccionada ? "Cambiar Receta" : "+ Agregar Receta"}
           </button>
         </div>
 
-        <div className="compra-header-actions">
-          <button
-            type="button"
-            className="modal-btn cancel-btn"
-            onClick={onCancel}
-            disabled={loading}
-          >
+        {/* Botones */}
+        <div className="action-buttons">
+          <button type="button" className="btn btn-cancel" onClick={onCancel} disabled={loading}>
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="modal-btn save-btn"
-            disabled={loading || subiendoImagen}
-          >
-            {loading ? "Guardando..." : subiendoImagen ? "Subiendo..." : "Guardar"}
+          <button type="submit" className="btn btn-save" disabled={loading || subiendoImagen}>
+            {loading ? "Guardando..." : subiendoImagen ? "Subiendo..." : "💾 Guardar"}
           </button>
         </div>
       </form>

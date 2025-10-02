@@ -8,7 +8,7 @@ import Notification from '../../../components/Notification';
 import ProveedorModal from './components/ProveedorModal';
 import ProveedorActions from './components/ProveedorActions';
 import { useProveedores } from './hooks/useProveedores';
-import LoadingSpinner from '../../../components/LoadingSpinner.jsx';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 export default function ProveedoresTable() {
   const {
@@ -25,8 +25,6 @@ export default function ProveedoresTable() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTipo, setModalTipo] = useState(null);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-  const [mensajeCarga, setMensajeCarga] = useState('Cargando...'); 
-  
 
   useEffect(() => {
     cargarProveedores();
@@ -72,28 +70,32 @@ export default function ProveedoresTable() {
   });
 
   return (
-    <>
-      <div className="admin-wrapper">
-        <Notification
-          visible={notification.visible}
-          mensaje={notification.mensaje}
-          tipo={notification.tipo}
-          onClose={hideNotification}
-        />
+    <div className="admin-wrapper">
+      <Notification
+        visible={notification.visible}
+        mensaje={notification.mensaje}
+        tipo={notification.tipo}
+        onClose={hideNotification}
+      />
 
-        <div className="admin-toolbar">
-          <button 
-            className="admin-button pink" 
-            onClick={() => abrirModal('agregar')}
-            disabled={loading}
-          >
-            + Agregar
-          </button>
-          <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
+      <div className="admin-toolbar">
+        <button 
+          className="admin-button pink" 
+          onClick={() => abrirModal('agregar')}
+          disabled={loading}
+        >
+          + Agregar
+        </button>
+        <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
+      </div>
+
+      <h2 className="admin-section-title">Proveedores</h2>
+
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
+          <LoadingSpinner />
         </div>
-
-        <h2 className="admin-section-title">Proveedores</h2>
-        
+      ) : (
         <DataTable 
           value={proveedoresFiltrados} 
           className="admin-table" 
@@ -102,7 +104,6 @@ export default function ProveedoresTable() {
           rowsPerPageOptions={[5, 10, 20]}
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
-          loading={loading}
         >
           <Column 
             header="N°" 
@@ -136,17 +137,17 @@ export default function ProveedoresTable() {
             )}
           />
         </DataTable>
+      )}
 
-        <ProveedorModal
-          visible={modalVisible}
-          tipo={modalTipo}
-          proveedor={proveedorSeleccionado}
-          proveedores={proveedores}
-          onClose={cerrarModal}
-          onSuccess={cargarProveedores}
-          loading={loading}
-        />
-      </div>
-    </>
+      <ProveedorModal
+        visible={modalVisible}
+        tipo={modalTipo}
+        proveedor={proveedorSeleccionado}
+        proveedores={proveedores}
+        onClose={cerrarModal}
+        onSuccess={cargarProveedores}
+        loading={loading}
+      />
+    </div>
   );
 }

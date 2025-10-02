@@ -12,6 +12,7 @@ import ModalEliminarProduccion from './Produccion/components/ModalEliminarProduc
 import produccionApiService from '../services/produccion_services';
 import { estadoProduccionMap, estadoPedidoMap } from './Produccion/utils/estadosMaps';
 import { obtenerOpcionesEstadoProduccion, obtenerOpcionesEstadoPedido } from './Produccion/utils/transicionesEstado';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Produccion() {
   const [filtro, setFiltro] = useState('');
@@ -226,7 +227,9 @@ export default function Produccion() {
           </div>
 
           {loading ? (
-            <div className="admin-content-empty">🔄 Cargando Producciones...</div>
+            <div className="admin-loading-container">
+              <LoadingSpinner />
+            </div>
           ) : procesosFiltrados.length === 0 ? (
             <div className="admin-content-empty">No hay producciones de tipo "{pestanaActiva}" registradas</div>
           ) : (

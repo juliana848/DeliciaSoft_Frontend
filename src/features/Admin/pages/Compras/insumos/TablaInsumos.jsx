@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
-
 import "../../../adminStyles.css";
 import SearchBar from "../../../components/SearchBar";
 import Notification from "../../../components/Notification";
@@ -13,9 +12,9 @@ import ModalCatalogo from "./modalCatalogo";
 import SelectorCatalogo from "./modalSelector";
 import IndicadorStock from "./insicadorStock";
 import IndicadorStockMin from "./indicadorStockMin";
-
 import insumoApiService from "../../../services/insumos";
 import categoriaInsumoApiService from "../../../services/categoriainsumos";
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 export default function TablaInsumos() {
   const [insumos, setInsumos] = useState([]);
@@ -182,7 +181,13 @@ const toggleEstado = async (id) => {
     return rowData.id || rowData.idinsumo;
   };
 
-  if (loading) return <div>Cargando insumos...</div>;
+  if (loading) {
+    return (
+      <div>
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="admin-wrapper">

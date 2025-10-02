@@ -6,6 +6,7 @@ import SearchBar from "../../../components/SearchBar";
 import Notification from "../../../components/Notification";
 import productosApiService from "../../../services/productos_services";
 import "../../../adminStyles.css";
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
   const [productos, setProductos] = useState([]);
@@ -132,12 +133,13 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
   if (loading) {
     return (
       <div className="admin-wrapper">
-        <div style={{ textAlign: "center", padding: "2rem" }}>
-          Cargando productos...
+        <div>
+          <LoadingSpinner />
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="admin-wrapper">

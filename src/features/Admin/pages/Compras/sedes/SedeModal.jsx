@@ -182,53 +182,41 @@ export default function SedeModal({
         </Modal>
       );
 
-    case "eliminar":
+  case "eliminar":
       return (
-        <Modal visible={visible} onClose={onClose} width="400px">
+        <Modal visible={visible} onClose={onClose} width="460px">
           <div style={{ 
-            borderBottom: "1px solid #e5e7eb",
-            padding: "16px 24px"
+            padding: "20px 24px"
           }}>
             <h2 style={{ 
-              fontSize: "18px", 
-              fontWeight: "600",
+              fontSize: "20px", 
+              fontWeight: "700",
               margin: 0,
-              color: "#111827"
+              color: "#111827",
+              paddingBottom: "12px",
+              borderBottom: "2px solid #ec4899"
             }}>
-              Confirmar Eliminación
+              Eliminar Insumo
             </h2>
           </div>
           
-          <div style={{ padding: "20px 24px" }}>
+          <div style={{ padding: "24px" }}>
             <p style={{ 
               fontSize: "14px", 
-              color: "#374151", 
-              marginBottom: "16px",
+              color: "#111827", 
               lineHeight: "1.6",
-              margin: "0 0 16px 0"
+              margin: 0
             }}>
-              ¿Seguro que quieres eliminar la categoría{" "}
-              <strong style={{ color: "#ec4899" }}>"{sede?.nombre}"</strong>?
+              ¿Seguro que quieres eliminar el insumo{" "}
+              <strong style={{ fontWeight: "600" }}>{sede?.nombre}</strong>?
             </p>
-            <div style={{
-              fontSize: "13px",
-              color: "#991b1b",
-              fontStyle: "italic",
-              backgroundColor: "#fef2f2",
-              padding: "10px 12px",
-              borderRadius: "4px",
-              borderLeft: "3px solid #ef4444"
-            }}>
-              Esta acción no se puede deshacer.
-            </div>
           </div>
           
-          <div style={{ 
-            padding: "16px 24px", 
-            display: "flex", 
-            justifyContent: "flex-end", 
+          <div style={{
+            display: "flex",
             gap: "12px",
-            borderTop: "1px solid #e5e7eb"
+            justifyContent: "flex-end",
+            padding: "0 24px 24px 24px"
           }}>
             <button
               onClick={onClose}
@@ -236,19 +224,20 @@ export default function SedeModal({
               style={{
                 padding: "8px 20px",
                 fontSize: "14px",
-                backgroundColor: "#f3f4f6",
+                backgroundColor: "#d1d5db",
                 color: "#374151",
                 border: "none",
                 borderRadius: "6px",
                 cursor: loading ? "not-allowed" : "pointer",
                 fontWeight: "500",
-                transition: "background-color 0.2s"
+                transition: "background-color 0.2s",
+                opacity: loading ? 0.6 : 1
               }}
               onMouseOver={(e) => {
-                if (!loading) e.target.style.backgroundColor = "#e5e7eb";
+                if (!loading) e.target.style.backgroundColor = "#9ca3af";
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = "#f3f4f6";
+                if (!loading) e.target.style.backgroundColor = "#d1d5db";
               }}
             >
               Cancelar
@@ -257,22 +246,21 @@ export default function SedeModal({
               onClick={onConfirmarEliminar}
               disabled={loading}
               style={{
-                padding: "8px 20px",
-                fontSize: "14px",
                 backgroundColor: "#ec4899",
                 color: "white",
                 border: "none",
+                padding: "8px 20px",
                 borderRadius: "6px",
                 cursor: loading ? "not-allowed" : "pointer",
                 fontWeight: "500",
                 transition: "background-color 0.2s",
-                opacity: loading ? 0.7 : 1
+                opacity: loading ? 0.6 : 1
               }}
               onMouseOver={(e) => {
                 if (!loading) e.target.style.backgroundColor = "#db2777";
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = "#ec4899";
+                if (!loading) e.target.style.backgroundColor = "#f0f017ff";
               }}
             >
               {loading ? "Eliminando..." : "Eliminar"}

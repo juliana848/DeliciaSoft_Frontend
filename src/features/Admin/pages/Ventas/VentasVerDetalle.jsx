@@ -6,6 +6,7 @@ import './VentasCrear.css';
 export default function VentasVerDetalle({
     ventaSeleccionada,
     onBackToList,
+    productosDisponibles = [] 
 }) {
     if (!ventaSeleccionada) {
         return (
@@ -34,7 +35,11 @@ export default function VentasVerDetalle({
         subtotal = 0,
         iva = 0
     } = ventaSeleccionada;
-
+    const getProductName = (idProducto) => {
+        const producto = productosDisponibles.find(p => p.idproductogeneral === idProducto);
+        // Si no lo encuentra, muestra el ID, no "Producto N/A"
+        return producto?.nombre || `ID: ${idProducto}`; 
+    };
     const getSeverityClass = (nombreEstado) => {
         switch (nombreEstado) {
             case 'Activa':
@@ -251,7 +256,7 @@ export default function VentasVerDetalle({
                             {detalleVenta && detalleVenta.length > 0 ? (
                                 detalleVenta.map((producto, index) => (
                                     <tr key={index} className="product-row">
-                                        <td className="product-name">{producto.nombreProducto}</td>
+                                        <td className="product-name">{getProductName(producto.idproductogeneral)}</td>
                                         <td className="quantity-cell">
                                             <span className="quantity-display">{producto.cantidad}</span>
                                         </td>

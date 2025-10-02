@@ -3,6 +3,82 @@ import ventaApiService from '../../Admin/services/venta_services';
 import clienteApiService from '../../Admin/services/cliente_services';
 import authService from '../../Admin/services/authService';
 
+// Función para transformar ventas a formato de pedidos - MEJORADA
+const transformarVentaAPedido = async (venta) => {
+  try {
+    // Obtener detalles completos de cada venta
+    console.log(`📋 Obteniendo detalle de venta ${venta.idVenta}...`);
+    const detalleCompleto = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+    console.log('Detalle completo obtenido:', detalleCompleto);
+    
+    return {
+      id: `P${venta.idVenta.toString().padStart(3, '0')}`,
+      idVenta: venta.idVenta,
+      fecha: new Date(venta.fechaVenta).toLocaleDateString('es-CO'),
+      hora: new Date(venta.fechaVenta).toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      estado: mapearEstadoVenta(venta.idEstadoVenta),
+      cliente: venta.nombreCliente,
+      telefono: perfilCliente.celular || 'No registrado',
+      ubicacion: `${perfilCliente.direccion || 'Sin dirección'}, ${perfilCliente.barrio || 'Sin barrio'}`,
+      abono: detalleCompleto?.abonos?.reduce((sum, abono) => 
+        sum + parseFloat(abono.TotalPagado || abono.totalPagado || abono.monto || 0), 0
+      ) || 0,
+      total: parseFloat(venta.total || 0),
+      metodoPago: venta.metodoPago || 'No especificado',
+      tipoVenta: venta.tipoVenta,
+      productos: detalleCompleto?.detalleVenta?.map(item => ({
+        id: item.iddetalleventa,
+        nombre: item.nombreProducto || 'Producto sin nombre',
+        cantidad: item.cantidad || 1,
+        precio: parseFloat(item.precioUnitario || item.preciounitario || 0),
+        subtotal: parseFloat(item.subtotal || 0),
+        // Mapear adiciones/toppings/salsas correctamente
+        toppings: item.detalleadiciones
+          ?.filter(d => d.catalogosabor)
+          ?.map(d => d.catalogosabor?.nombre || 'Topping') || [],
+        adicciones: item.detalleadiciones
+          ?.filter(d => d.catalogoadiciones)
+          ?.map(d => d.catalogoadiciones?.nombre || 'Adición') || [],
+        salsas: item.detalleadiciones
+          ?.filter(d => d.catalogorelleno)
+          ?.map(d => d.catalogorelleno?.nombre || 'Salsa') || []
+      })) || [],
+      observaciones: venta.tipoVenta === 'pedido' ? 'Pedido programado' : 'Venta directa',
+      abonos: detalleCompleto?.abonos?.map(abono => ({
+        fecha: new Date().toLocaleDateString('es-CO'),
+        monto: parseFloat(abono.TotalPagado || abono.totalPagado || abono.monto || 0),
+        tipo: abono.metodoPago || abono.metodopago || 'No especificado'
+      })) || []
+    };
+  } catch (error) {
+    console.error(`Error al obtener detalles de venta ${venta.idVenta}:`, error);
+    // Retornar versión básica si falla el detalle
+    return {
+      id: `P${venta.idVenta.toString().padStart(3, '0')}`,
+      idVenta: venta.idVenta,
+      fecha: new Date(venta.fechaVenta).toLocaleDateString('es-CO'),
+      hora: new Date(venta.fechaVenta).toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      estado: mapearEstadoVenta(venta.idEstadoVenta),
+      cliente: venta.nombreCliente,
+      telefono: perfilCliente.celular || 'No registrado',
+      ubicacion: `${perfilCliente.direccion || 'Sin dirección'}, ${perfilCliente.barrio || 'Sin barrio'}`,
+      abono: 0,
+      total: parseFloat(venta.total || 0),
+      metodoPago: venta.metodoPago || 'No especificado',
+      tipoVenta: venta.tipoVenta,
+      productos: [],
+      observaciones: 'Error al cargar detalles',
+      abonos: []
+    };
+  }
+};
+
 const HistorialView = () => {
   // Estado para controlar qué pedido está expandido
   const [pedidoExpandido, setPedidoExpandido] = useState(null);

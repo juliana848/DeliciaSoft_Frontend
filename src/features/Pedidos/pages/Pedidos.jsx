@@ -1,7 +1,10 @@
-// Pedidos.jsx - Componente Principal Mejorado
 import React, { useState, useEffect, useContext } from 'react';
 import { CartContext } from "../../Cartas/pages/CartContext";
 import './Pedidos.css';
+import authService from '../../Admin/services/authService';
+
+// Importar servicios
+import ventaApiService from '../../Admin/services/venta_services';
 
 // Importar componentes
 import ProductosView from '../components/ProductosView';
@@ -14,10 +17,8 @@ import OpcionesPagoView from '../components/OpcionesPagoView';
 import HistorialView from '../components/HistorialView';
 
 const Pedidos = () => {
-  // Estado principal para manejar las vistas
   const [vistaActual, setVistaActual] = useState('productos');
   
-  // Estado del pedido actual MEJORADO
   const [pedidoActual, setPedidoActual] = useState({
     productos: [],
     toppings: [],
@@ -30,32 +31,25 @@ const Pedidos = () => {
     }
   });
 
-  // Estado para la navegación del header
   const [tabActivo, setTabActivo] = useState('nuevo');
-
-  // Estados para items seleccionados en cada vista
   const [toppingsSeleccionados, setToppingsSeleccionados] = useState([]);
   const [adicionesSeleccionadas, setAdicionesSeleccionadas] = useState([]);
   const [salsasSeleccionadas, setSalsasSeleccionadas] = useState([]);
 
-  // Usar el contexto del carrito para mantener sincronización
   const { 
     productosSeleccionados: productosDelContexto,
     limpiarProductosSeleccionados
   } = useContext(CartContext);
 
-  // Función para cambiar de vista
   const cambiarVista = (nuevaVista) => {
     setVistaActual(nuevaVista);
   };
 
-  // Función para manejar el cambio de tabs
   const cambiarTab = (tab) => {
     setTabActivo(tab);
     switch(tab) {
       case 'nuevo':
         setVistaActual('productos');
-        // Reiniciar el pedido cuando se va a nuevo pedido
         reiniciarPedido();
         break;
       case 'historial':
@@ -64,7 +58,6 @@ const Pedidos = () => {
     }
   };
 
-  // Función para reiniciar el pedido
   const reiniciarPedido = () => {
     setPedidoActual({
       productos: [],
@@ -83,7 +76,6 @@ const Pedidos = () => {
     limpiarProductosSeleccionados();
   };
 
-  // Sincronizar productos del contexto con el pedido actual
   useEffect(() => {
     if (productosDelContexto && productosDelContexto.length > 0) {
       setPedidoActual(prev => ({
@@ -93,17 +85,14 @@ const Pedidos = () => {
     }
   }, [productosDelContexto]);
 
-  // Función para agregar productos al pedido
   const agregarProducto = (producto) => {
     setPedidoActual(prev => {
       const productosExistentes = [...prev.productos];
       const productoExistente = productosExistentes.find(p => p.id === producto.id);
       
       if (productoExistente) {
-        // Si ya existe, incrementar cantidad
         productoExistente.cantidad = (productoExistente.cantidad || 1) + 1;
       } else {
-        // Si no existe, agregarlo con cantidad 1
         productosExistentes.push({ ...producto, cantidad: 1 });
       }
       
@@ -114,7 +103,6 @@ const Pedidos = () => {
     });
   };
 
-  // Función para eliminar producto del pedido
   const eliminarProducto = (productoId) => {
     setPedidoActual(prev => ({
       ...prev,
@@ -122,7 +110,6 @@ const Pedidos = () => {
     }));
   };
 
-  // Función para actualizar cantidad de producto
   const actualizarCantidadProducto = (productoId, nuevaCantidad) => {
     if (nuevaCantidad <= 0) {
       eliminarProducto(productoId);
@@ -137,18 +124,14 @@ const Pedidos = () => {
     }));
   };
 
-  // Función para cuando se hace clic en "Siguiente" después de seleccionar productos
   const siguienteDesdeProductos = () => {
-    // Actualizar productos del pedido con los del contexto
     setPedidoActual(prev => ({
       ...prev,
       productos: productosDelContexto || []
     }));
-    // Ir a la vista de toppings
     setVistaActual('toppings');
   };
 
-  // Funciones para manejar la selección en las vistas
   const toggleTopping = (topping) => {
     setToppingsSeleccionados(prev => {
       const existe = prev.find(item => item.id === topping.id);
@@ -182,67 +165,49 @@ const Pedidos = () => {
     });
   };
 
-  // Función para continuar desde la vista de toppings
   const continuarDesdeToppings = () => {
-    // Guardar toppings seleccionados en el pedido
     setPedidoActual(prev => ({
       ...prev,
       toppings: toppingsSeleccionados
     }));
-    
-    // Ir a vista de adiciones
     setVistaActual('adiciones');
   };
 
-  // Función para continuar desde la vista de adiciones
   const continuarDesdeAdiciones = () => {
-    // Guardar adiciones seleccionadas en el pedido
     setPedidoActual(prev => ({
       ...prev,
       adiciones: adicionesSeleccionadas
     }));
-    
-    // Ir a vista de salsas
     setVistaActual('salsas');
   };
 
-  // Función para continuar desde la vista de salsas - IR DIRECTO A ENTREGA
   const continuarDesdeSalsas = () => {
-    // Guardar salsas seleccionadas en el pedido
     setPedidoActual(prev => ({
       ...prev,
       salsas: salsasSeleccionadas
     }));
-    
-    // Ir directamente a opciones de entrega
     setVistaActual('entrega');
   };
 
-  // Función para calcular el total MEJORADA
   const calcularTotal = () => {
     let total = 0;
     
-    // Usar productos del estado del pedido actual o del contexto como fallback
     const productos = pedidoActual.productos.length > 0 
       ? pedidoActual.productos 
       : (productosDelContexto || []);
     
-    // Sumar productos con cantidades
     total += productos.reduce((sum, producto) => 
       sum + (producto.precio * (producto.cantidad || 1)), 0
     );
     
-    // Sumar toppings
     total += pedidoActual.toppings.reduce((sum, topping) => 
       sum + (topping.precio || 0), 0
     );
     
-    // Sumar adiciones
     total += pedidoActual.adiciones.reduce((sum, adicion) => 
       sum + (adicion.precio || 0), 0
     );
     
-    // Sumar salsas
     total += pedidoActual.salsas.reduce((sum, salsa) => 
       sum + (salsa.precio || 0), 0
     );
@@ -250,7 +215,6 @@ const Pedidos = () => {
     return total;
   };
 
-  // Función para manejar la confirmación del pedido
   const manejarConfirmacion = (pedidoConComentarios) => {
     setPedidoActual(prev => ({
       ...prev,
@@ -259,7 +223,90 @@ const Pedidos = () => {
     setVistaActual('pago');
   };
 
-  // Renderizar la vista actual
+ const prepararDatosVenta = async (datosPago) => {
+  const productos = pedidoActual.productos.length > 0 
+    ? pedidoActual.productos 
+    : (productosDelContexto || []);
+
+  console.log('📦 Productos a enviar:', productos);
+
+  // 🔑 OBTENER CLIENTE AUTENTICADO
+  let clienteId = null;
+  let nombreCliente = 'Cliente Pedido Online';
+  
+  try {
+    const clienteAutenticado = await authService.obtenerDatosClienteLogueado();
+    if (clienteAutenticado && clienteAutenticado.idcliente) {
+      clienteId = clienteAutenticado.idcliente;
+      nombreCliente = `${clienteAutenticado.nombre} ${clienteAutenticado.apellido}`;
+      console.log('✅ Cliente autenticado:', nombreCliente, 'ID:', clienteId);
+    }
+  } catch (error) {
+    console.warn('⚠️ No se pudo obtener cliente autenticado, usando genérico:', error);
+  }
+
+  // Preparar productos con sus extras
+  const productosConExtras = productos.map(producto => {
+    const precioBase = producto.precio * (producto.cantidad || 1);
+    
+    // Calcular precio de extras
+    let precioExtras = 0;
+    if (pedidoActual.toppings?.length > 0) {
+      precioExtras += pedidoActual.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
+    }
+    if (pedidoActual.adiciones?.length > 0) {
+      precioExtras += pedidoActual.adiciones.reduce((sum, a) => sum + (a.precio || 0), 0);
+    }
+    if (pedidoActual.salsas?.length > 0) {
+      precioExtras += pedidoActual.salsas.reduce((sum, s) => sum + (s.precio || 0), 0);
+    }
+
+    const subtotal = precioBase + precioExtras;
+    const iva = subtotal * 0.19;
+
+    return {
+      idproductogeneral: producto.id,
+      cantidad: producto.cantidad || 1,
+      preciounitario: producto.precio,
+      subtotal: subtotal,
+      iva: iva
+    };
+  });
+
+  const totalFinal = calcularTotal();
+  const ivaTotal = totalFinal * 0.19;
+
+  // Obtener nombre de sede correcto
+  const sedeNombre = datosPago.sedeNombre || 
+                     pedidoActual.opciones.entrega?.ubicacionData?.nombre || 
+                     'San Benito';
+
+  console.log('🏪 Sede seleccionada:', sedeNombre);
+  console.log('👤 Cliente ID:', clienteId);
+  console.log('📝 Nombre cliente:', nombreCliente);
+
+  return {
+    fechaventa: new Date().toISOString(),
+    cliente: clienteId, // ✅ Enviar ID del cliente autenticado
+    clienteId: clienteId, // ✅ También en clienteId para compatibilidad
+    clienteNombre: nombreCliente,
+    sede: sedeNombre,
+    sedeNombre: sedeNombre,
+    metodopago: datosPago.metodo || pedidoActual.opciones.pago,
+    tipoventa: 'pedido',
+    total: totalFinal + ivaTotal,
+    detalleventa: productosConExtras,
+    // Información adicional del pedido
+    datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
+    comentarios: pedidoActual.comentarios,
+    extras: {
+      toppings: pedidoActual.toppings,
+      adiciones: pedidoActual.adiciones,
+      salsas: pedidoActual.salsas
+    }
+  };
+};
+
   const renderizarVista = () => {
     switch(vistaActual) {
       case 'productos':
@@ -335,8 +382,8 @@ const Pedidos = () => {
           <OpcionesPagoView 
             pedido={pedidoActual}
             total={calcularTotal()}
+            prepararDatosVenta={prepararDatosVenta}
             onPedidoCompletado={() => {
-              // Limpiar el pedido y cambiar a historial
               reiniciarPedido();
               cambiarTab('historial');
             }}
@@ -368,7 +415,6 @@ const Pedidos = () => {
 
   return (
     <div className="pedidos-container">
-      {/* Header con navegación */}
       <div className="pedidos-header">
         <h1 className="pedidos-title">SISTEMA DE PEDIDOS</h1>
         
@@ -388,7 +434,6 @@ const Pedidos = () => {
         </div>
       </div>
 
-      {/* Indicador de progreso (solo para nuevo pedido) */}
       {tabActivo === 'nuevo' && (
         <div className="progress-indicator">
           <div className="progress-steps">
@@ -416,7 +461,6 @@ const Pedidos = () => {
         </div>
       )}
 
-      {/* Contenido principal */}
       <div className="pedidos-content">
         {renderizarVista()}
       </div>

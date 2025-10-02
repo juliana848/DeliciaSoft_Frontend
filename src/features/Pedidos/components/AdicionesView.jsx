@@ -1,53 +1,102 @@
-// components/AdicionesView.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
-  const [adiciones] = useState([
-    {
-      id: 1,
-      nombre: 'Nutella',
-      imagen: 'https://i.pinimg.com/736x/b4/51/15/b45115c6e7e713389ea73f79127aed78.jpg',
-      precio: 3000
-    },
-    {
-      id: 2,
-      nombre: 'Chispas de Colores',
-      imagen: 'https://i.pinimg.com/736x/8b/6d/40/8b6d40ca5b18d59b11ad2d2d3f061a88.jpg',
-      precio: 1200
-    },
-    {
-      id: 3,
-      nombre: 'Oreo',
-      imagen: 'https://i.pinimg.com/736x/19/84/ee/1984eefed011f2db17a53d7ba24b5838.jpg',
-      precio: 1500
-    },
-    {
-      id: 4,
-      nombre: 'Coco Rallado',
-      imagen: 'https://i.pinimg.com/736x/7b/39/af/7b39af1d06e365be340df9b5d3708c90.jpg',
-      precio: 1000
-    },
-    {
-      id: 5,
-      nombre: 'Crema Chantilly',
-      imagen: 'https://i.pinimg.com/736x/a5/4f/73/a54f7307469891f136216ed6041a594e.jpg',
-      precio: 2000
-    },
-    {
-      id: 6,
-      nombre: 'Fresas',
-      imagen: 'https://i.pinimg.com/736x/fb/62/56/fb6256e1223051ad0cc1e4f6dbdb3319.jpg',
-      precio: 2500
-    }
-  ]);
+  const [adiciones, setAdiciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Cargar adiciones desde la API
+  useEffect(() => {
+    const cargarAdiciones = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al cargar adiciones');
+        }
+
+        const data = await response.json();
+        const adicionesActivas = data
+          .filter(adicion => adicion.estado === true)
+          .map(adicion => ({
+            id: adicion.idadiciones,
+            nombre: adicion.nombre,
+            imagen: adicion.imagen || 'https://via.placeholder.com/60x60/E0E0E0/757575?text=A',
+            precio: parseFloat(adicion.precioadicion || 0)
+          }));
+
+        setAdiciones(adicionesActivas);
+        setError(null);
+      } catch (err) {
+        console.error('Error al cargar adiciones:', err);
+        setError('No se pudieron cargar las adiciones');
+        setAdiciones([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarAdiciones();
+  }, []);
 
   const calcularTotalAdiciones = () => {
     return selectedItems.reduce((total, item) => total + item.precio, 0);
   };
 
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '5px solid #f3f3f3',
+            borderTop: '5px solid #e91e63',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#6c757d' }}>Cargando adiciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', backgroundColor: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+          <h3 style={{ color: '#e91e63', marginBottom: '15px' }}>{error}</h3>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '10px',
+              backgroundColor: '#e91e63',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h1 style={{ 
           fontSize: '28px', 
@@ -65,7 +114,6 @@ const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         </p>
       </div>
 
-      {/* Lista de adiciones */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '20px',
@@ -73,93 +121,99 @@ const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         marginBottom: '30px'
       }}>
-        <div style={{ marginBottom: '20px' }}>
-          {adiciones.map(adicion => {
-            const isSelected = selectedItems.some(item => item.id === adicion.id);
-            
-            return (
-              <div 
-                key={adicion.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '15px',
-                  padding: '15px',
-                  margin: '10px 0',
-                  border: isSelected ? '2px solid #e91e63' : '2px solid #ecf0f1',
-                  borderRadius: '15px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: isSelected ? '#fce4ec' : '#f8f9fa',
-                  transform: isSelected ? 'translateY(-2px)' : 'none',
-                  boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
-                }}
-                onClick={() => onItemToggle(adicion)}
-              >
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  backgroundColor: '#e0e0e0',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  flexShrink: 0
-                }}>
-                  <img 
-                    src={adicion.imagen} 
-                    alt={adicion.nombre} 
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                    onError={(e) => {
-                      e.target.src = `https://via.placeholder.com/60x60/E0E0E0/757575?text=${adicion.nombre.charAt(0)}`;
-                    }}
-                  />
-                </div>
-                
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    fontSize: '16px', 
-                    fontWeight: 'bold', 
-                    color: '#2c3e50', 
-                    margin: '0 0 5px 0' 
+        {adiciones.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>📦</div>
+            <p style={{ color: '#6c757d' }}>No hay adiciones disponibles</p>
+          </div>
+        ) : (
+          <div style={{ marginBottom: '20px' }}>
+            {adiciones.map(adicion => {
+              const isSelected = selectedItems.some(item => item.id === adicion.id);
+              
+              return (
+                <div 
+                  key={adicion.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '15px',
+                    margin: '10px 0',
+                    border: isSelected ? '2px solid #e91e63' : '2px solid #ecf0f1',
+                    borderRadius: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backgroundColor: isSelected ? '#fce4ec' : '#f8f9fa',
+                    transform: isSelected ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                  onClick={() => onItemToggle(adicion)}
+                >
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#e0e0e0',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    flexShrink: 0
                   }}>
-                    {adicion.nombre}
-                  </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#e91e63', 
-                    fontWeight: '600',
-                    margin: 0 
+                    <img 
+                      src={adicion.imagen} 
+                      alt={adicion.nombre} 
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        e.target.src = `https://via.placeholder.com/60x60/E0E0E0/757575?text=${adicion.nombre.charAt(0)}`;
+                      }}
+                    />
+                  </div>
+                  
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: 'bold', 
+                      color: '#2c3e50', 
+                      margin: '0 0 5px 0' 
+                    }}>
+                      {adicion.nombre}
+                    </h3>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: '#e91e63', 
+                      fontWeight: '600',
+                      margin: 0 
+                    }}>
+                      ${adicion.precio.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    border: isSelected ? '2px solid #e91e63' : '2px solid #bdc3c7',
+                    backgroundColor: isSelected ? '#e91e63' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isSelected ? 'white' : '#bdc3c7',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease'
                   }}>
-                    ${adicion.precio.toLocaleString()}
-                  </p>
+                    {isSelected && '✓'}
+                  </div>
                 </div>
-                
-                <div style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: isSelected ? '2px solid #e91e63' : '2px solid #bdc3c7',
-                  backgroundColor: isSelected ? '#e91e63' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: isSelected ? 'white' : '#bdc3c7',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
-                }}>
-                  {isSelected && '✓'}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Resumen de selección */}
       {selectedItems.length > 0 && (
         <div style={{
           backgroundColor: 'white',
@@ -211,7 +265,6 @@ const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         </div>
       )}
 
-      {/* Botones de navegación */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -254,6 +307,15 @@ const AdicionesView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
           Continuar →
         </button>
       </div>
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };

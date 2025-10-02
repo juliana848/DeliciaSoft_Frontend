@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { CartContext } from "../../Cartas/pages/CartContext";
 import './Pedidos.css';
+import authService from '../../Admin/services/authService';
 
 // Importar servicios
 import ventaApiService from '../../Admin/services/venta_services';
@@ -222,64 +223,89 @@ const Pedidos = () => {
     setVistaActual('pago');
   };
 
-  // Función para preparar datos para la venta
-  const prepararDatosVenta = (datosPago) => {
-    const productos = pedidoActual.productos.length > 0 
-      ? pedidoActual.productos 
-      : (productosDelContexto || []);
+ const prepararDatosVenta = async (datosPago) => {
+  const productos = pedidoActual.productos.length > 0 
+    ? pedidoActual.productos 
+    : (productosDelContexto || []);
 
-    // Preparar productos con sus extras
-    const productosConExtras = productos.map(producto => {
-      const precioBase = producto.precio * (producto.cantidad || 1);
-      
-      // Calcular precio de extras (solo si hay toppings, adiciones o salsas)
-      let precioExtras = 0;
-      if (pedidoActual.toppings.length > 0) {
-        precioExtras += pedidoActual.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
-      }
-      if (pedidoActual.adiciones.length > 0) {
-        precioExtras += pedidoActual.adiciones.reduce((sum, a) => sum + a.precio, 0);
-      }
-      if (pedidoActual.salsas.length > 0) {
-        precioExtras += pedidoActual.salsas.reduce((sum, s) => sum + s.precio, 0);
-      }
+  console.log('📦 Productos a enviar:', productos);
 
-      const subtotal = precioBase + precioExtras;
-      const iva = subtotal * 0.19;
+  // 🔑 OBTENER CLIENTE AUTENTICADO
+  let clienteId = null;
+  let nombreCliente = 'Cliente Pedido Online';
+  
+  try {
+    const clienteAutenticado = await authService.obtenerDatosClienteLogueado();
+    if (clienteAutenticado && clienteAutenticado.idcliente) {
+      clienteId = clienteAutenticado.idcliente;
+      nombreCliente = `${clienteAutenticado.nombre} ${clienteAutenticado.apellido}`;
+      console.log('✅ Cliente autenticado:', nombreCliente, 'ID:', clienteId);
+    }
+  } catch (error) {
+    console.warn('⚠️ No se pudo obtener cliente autenticado, usando genérico:', error);
+  }
 
-      return {
-        idproductogeneral: producto.id,
-        cantidad: producto.cantidad || 1,
-        precio: producto.precio,
-        preciounitario: producto.precio,
-        subtotal: subtotal,
-        iva: iva
-      };
-    });
+  // Preparar productos con sus extras
+  const productosConExtras = productos.map(producto => {
+    const precioBase = producto.precio * (producto.cantidad || 1);
+    
+    // Calcular precio de extras
+    let precioExtras = 0;
+    if (pedidoActual.toppings?.length > 0) {
+      precioExtras += pedidoActual.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
+    }
+    if (pedidoActual.adiciones?.length > 0) {
+      precioExtras += pedidoActual.adiciones.reduce((sum, a) => sum + (a.precio || 0), 0);
+    }
+    if (pedidoActual.salsas?.length > 0) {
+      precioExtras += pedidoActual.salsas.reduce((sum, s) => sum + (s.precio || 0), 0);
+    }
 
-    const totalFinal = calcularTotal();
-    const ivaTotal = totalFinal * 0.19;
+    const subtotal = precioBase + precioExtras;
+    const iva = subtotal * 0.19;
 
     return {
-      fechaventa: new Date().toISOString(),
-      cliente: null, // Cliente genérico para pedidos desde el sistema público
-      clienteNombre: 'Cliente Pedido Online',
-      sede: datosPago.sedeNombre || pedidoActual.opciones.entrega?.ubicacionData?.nombre,
-      sedeNombre: datosPago.sedeNombre || pedidoActual.opciones.entrega?.ubicacionData?.nombre,
-      metodopago: datosPago.metodo || pedidoActual.opciones.pago,
-      tipoventa: 'pedido',
-      total: totalFinal + ivaTotal,
-      productos: productosConExtras,
-      // Información adicional del pedido
-      datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
-      comentarios: pedidoActual.comentarios,
-      extras: {
-        toppings: pedidoActual.toppings,
-        adiciones: pedidoActual.adiciones,
-        salsas: pedidoActual.salsas
-      }
+      idproductogeneral: producto.id,
+      cantidad: producto.cantidad || 1,
+      preciounitario: producto.precio,
+      subtotal: subtotal,
+      iva: iva
     };
+  });
+
+  const totalFinal = calcularTotal();
+  const ivaTotal = totalFinal * 0.19;
+
+  // Obtener nombre de sede correcto
+  const sedeNombre = datosPago.sedeNombre || 
+                     pedidoActual.opciones.entrega?.ubicacionData?.nombre || 
+                     'San Benito';
+
+  console.log('🏪 Sede seleccionada:', sedeNombre);
+  console.log('👤 Cliente ID:', clienteId);
+  console.log('📝 Nombre cliente:', nombreCliente);
+
+  return {
+    fechaventa: new Date().toISOString(),
+    cliente: clienteId, // ✅ Enviar ID del cliente autenticado
+    clienteId: clienteId, // ✅ También en clienteId para compatibilidad
+    clienteNombre: nombreCliente,
+    sede: sedeNombre,
+    sedeNombre: sedeNombre,
+    metodopago: datosPago.metodo || pedidoActual.opciones.pago,
+    tipoventa: 'pedido',
+    total: totalFinal + ivaTotal,
+    detalleventa: productosConExtras,
+    // Información adicional del pedido
+    datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
+    comentarios: pedidoActual.comentarios,
+    extras: {
+      toppings: pedidoActual.toppings,
+      adiciones: pedidoActual.adiciones,
+      salsas: pedidoActual.salsas
+    }
   };
+};
 
   const renderizarVista = () => {
     switch(vistaActual) {

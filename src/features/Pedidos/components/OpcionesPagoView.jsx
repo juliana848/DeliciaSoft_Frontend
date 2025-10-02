@@ -178,90 +178,130 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
   };
 
   const procesarPago = async () => {
-    if (!metodoPago) {
-      triggerAlert('error', 'Por favor selecciona un método de pago.');
-      return;
-    }
+  if (!metodoPago) {
+    triggerAlert('error', 'Por favor selecciona un método de pago.');
+    return;
+  }
 
-    if (metodoPago === 'transferencia' && !comprobante) {
-      setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
-      return;
-    }
+  if (metodoPago === 'transferencia' && !comprobante) {
+    setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
+    return;
+  }
 
-    if (metodoPago === 'efectivo' && !sedeSeleccionada) {
-      triggerAlert('error', 'Por favor selecciona una sede para el pago en efectivo.');
-      return;
-    }
+  if (metodoPago === 'efectivo' && !sedeSeleccionada) {
+    triggerAlert('error', 'Por favor selecciona una sede para el pago en efectivo.');
+    return;
+  }
 
-    setProcesandoPedido(true);
+  setProcesandoPedido(true);
 
-    try {
-      const sedeInfo = sedes.find(s => s.id === sedeSeleccionada) || sedes[0];
+  try {
+    // Obtener información de la sede
+    const sedeInfo = sedes.find(s => s.id === sedeSeleccionada);
+    const sedeNombre = sedeInfo?.nombre || sedes[0]?.nombre || 'San Benito';
+    
+    console.log('🏪 Sede seleccionada:', sedeNombre);
+    console.log('💳 Método de pago:', metodoPago);
+    console.log('💰 Abono:', abono);
+    console.log('💰 Total:', totalFinal);
+    
+    // Preparar datos de la venta (ahora es async)
+    const datosVenta = await prepararDatosVenta({
+      metodo: metodoPago,
+      sede: sedeSeleccionada,
+      sedeNombre: sedeNombre,
+      abono: abono,
+      total: totalFinal,
+      numeroPedido: numeroPedido,
+      comprobante: comprobante
+    });
+
+    console.log('📤 Datos de venta preparados:', datosVenta);
+
+    // PASO 1: Crear la venta
+    console.log('🔄 Creando venta...');
+    const ventaCreada = await ventaApiService.crearVenta(datosVenta);
+    console.log('✅ Venta creada exitosamente:', ventaCreada);
+
+    // PASO 2: Crear el abono
+    const abonoData = {
+      idpedido: ventaCreada.idVenta,
+      metodopago: metodoPago,
+      cantidadpagar: abono,
+      TotalPagado: abono
+    };
+
+    console.log('🔄 Creando abono con datos:', abonoData);
+    const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
+    console.log('✅ Abono creado exitosamente:', abonoCreado);
+
+    // PASO 3: Actualizar estado según método de pago
+    if (metodoPago === 'efectivo') {
+      // Para efectivo, establecer estado "Activa" (ID 5)
+      await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
       
-      const datosVenta = prepararDatosVenta({
-        metodo: metodoPago,
-        sede: sedeSeleccionada,
-        sedeNombre: sedeInfo?.nombre,
-        abono: abono,
-        total: totalFinal,
-        numeroPedido: numeroPedido,
-        comprobante: comprobante
-      });
-
-      console.log('Creando venta con datos:', datosVenta);
-      
-      const ventaCreada = await ventaApiService.crearVenta(datosVenta);
-      console.log('Venta creada:', ventaCreada);
-
-      const abonoData = {
-        idpedido: ventaCreada.idVenta,
-        metodopago: metodoPago,
-        cantidadpagar: abono,
-        TotalPagado: abono
-      };
-
-      console.log('Creando abono:', abonoData);
-      const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
-      console.log('Abono creado:', abonoCreado);
-
-      if (metodoPago === 'efectivo') {
-        mostrarAlertaEfectivo();
-        await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
-      } else if (metodoPago === 'transferencia') {
-        triggerAlert('success', 
-          `¡Pedido creado exitosamente!\n` +
-          `Número: ${numeroPedido}\n` +
-          `Abono registrado: $${abono.toLocaleString()}\n` +
-          `Su pedido quedará pendiente hasta verificar el comprobante.`
-        );
-      }
-
-      const datosPago = {
-        metodo: metodoPago,
-        sede: sedeSeleccionada,
-        abono: abono,
-        total: totalFinal,
-        numeroPedido: numeroPedido,
-        comprobante: comprobante,
-        idVenta: ventaCreada.idVenta,
-        idAbono: abonoCreado.id
-      };
-
-      onOpcionSeleccionada(datosPago);
-      
-      setTimeout(() => {
-        onPedidoCompletado();
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error al procesar pago:', error);
-      triggerAlert('error', 
-        `Error al crear el pedido: ${error.message}`
+      triggerAlert('success', 
+        `¡Pedido creado exitosamente!\n` +
+        `Número: ${numeroPedido}\n` +
+        `Sede: ${sedeNombre}\n` +
+        `Dirección: ${sedeInfo?.direccion || 'Ver en la sede'}\n` +
+        `Horario: ${sedeInfo?.horario || '9:00 AM - 6:00 PM'}\n` +
+        `Valor a pagar: $${abono.toLocaleString()}\n\n` +
+        `IMPORTANTE: Presenta este número de pedido al llegar a la sede.`
       );
-    } finally {
-      setProcesandoPedido(false);
+    } else if (metodoPago === 'transferencia') {
+      // Para transferencia, dejar en "En espera" (ID 1) hasta verificar comprobante
+      triggerAlert('success', 
+        `¡Pedido creado exitosamente!\n` +
+        `Número: ${numeroPedido}\n` +
+        `Abono registrado: $${abono.toLocaleString()}\n` +
+        `Tu pedido quedará pendiente hasta verificar el comprobante de pago.\n` +
+        `Te notificaremos cuando sea aprobado.`
+      );
     }
-  };
+
+    // Guardar datos del pago para referencia
+    const datosPago = {
+      metodo: metodoPago,
+      sede: sedeSeleccionada,
+      sedeNombre: sedeNombre,
+      abono: abono,
+      total: totalFinal,
+      numeroPedido: numeroPedido,
+      comprobante: comprobante,
+      idVenta: ventaCreada.idVenta,
+      idAbono: abonoCreado.id || abonoCreado.idabono
+    };
+
+    onOpcionSeleccionada(datosPago);
+    
+    // Esperar 3 segundos y recargar la página para mostrar el nuevo pedido
+    setTimeout(() => {
+      console.log('🔄 Recargando página...');
+      window.location.reload();
+    }, 3000);
+
+  } catch (error) {
+    console.error('❌ Error al procesar pago:', error);
+    
+    // Mensajes de error específicos
+    let mensajeError = 'Error al crear el pedido';
+    
+    if (error.message.includes('inventario') || error.message.includes('Inventario')) {
+      mensajeError = `Stock insuficiente: ${error.message}`;
+    } else if (error.message.includes('INVENTARIO_INSUFICIENTE')) {
+      mensajeError = 'No hay suficiente inventario disponible para completar el pedido';
+    } else if (error.message.includes('sede')) {
+      mensajeError = 'Error con la sede seleccionada. Por favor intenta de nuevo';
+    } else {
+      mensajeError = error.message || 'Error desconocido al procesar el pedido';
+    }
+    
+    triggerAlert('error', mensajeError);
+  } finally {
+    setProcesandoPedido(false);
+  }
+};
 
   return (
     <div className="opciones-pago-view">

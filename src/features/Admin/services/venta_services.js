@@ -457,7 +457,6 @@ async crearVenta(ventaData) {
         throw new Error(error.message || 'No se pudo crear la venta');
     }
 }
-
     // FUNCIÓN PARA OBTENER DETALLE DE VENTA CON ABONOS - CORREGIDA
     async obtenerVentaPorId(idVenta) {
         try {

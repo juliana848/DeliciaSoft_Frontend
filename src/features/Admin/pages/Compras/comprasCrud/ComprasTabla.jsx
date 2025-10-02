@@ -466,7 +466,7 @@ export default function ComprasTable() {
                     </div>
 
                     <div className="admin-section-header">
-                        <h2 className="admin-tab">Compras</h2>
+                        <h2 className="admin-tab">Gestión de Compras</h2>
 
                         <button
                             className="admin-tab"

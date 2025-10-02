@@ -54,6 +54,8 @@ const ProveedorModal = ({
             onConfirm={modalLogic.confirmarEliminar}
             onCancel={onClose}
             loading={modalLogic.loading}
+            alerta={modalLogic.alerta}              // ✅ Pasar alerta
+            cerrarAlerta={modalLogic.cerrarAlerta}  // ✅ Pasar cerrarAlerta
           />
         );
       

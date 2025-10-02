@@ -285,7 +285,7 @@ return (
         />
       </div>
 
-      <h2 className="admin-section-title">Categoria Insumos</h2>
+      <h2 className="admin-section-title">Gestión de Categoría Insumos</h2>
 
       {/* SOLUCIÓN 1: Quitar completamente la prop loading */}
       <DataTable

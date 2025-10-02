@@ -22,7 +22,7 @@ export default function CompraActions({
                     }} 
                     disabled={cargando}
                 >
-                    👁️
+                    👁
                 </button>
                 {/* <button
                     className="admin-button green"
@@ -62,7 +62,7 @@ export default function CompraActions({
                 }} 
                 disabled={cargando}
             >
-                👁️
+                👁
             </button>
             <button
                 className="admin-button red"

@@ -36,7 +36,6 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
         estadoProveedor: proveedor.estado
       });
     } else if (tipo === 'agregar') {
-      // Reset para nuevo proveedor
       setFormData({
         tipoProveedor: 'Natural',
         nombre: '',
@@ -56,7 +55,6 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
   }, [tipo, proveedor]);
 
   const handleFieldChange = (field, value) => {
-    // Actualizar datos del formulario
     if (field === 'tipoProveedor') {
       setFormData(prev => ({
         ...prev,
@@ -67,7 +65,6 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
         nombreContacto: value === 'Natural' ? '' : prev.nombreContacto
       }));
       
-      // Revalidar documento si ya está lleno
       if (formData.documentoONit && touched.documentoONit) {
         const docError = validateProveedorField('documentoONit', formData.documentoONit, value);
         setErrors(prev => ({ ...prev, documentoONit: docError }));
@@ -76,7 +73,6 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
 
-    // Validar campo si ya fue tocado
     if (touched[field]) {
       const error = validateProveedorField(field, value, formData.tipoProveedor, formData.tipoDocumento);
       setErrors(prev => ({ ...prev, [field]: error }));
@@ -90,8 +86,12 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
     const error = validateProveedorField(field, value, formData.tipoProveedor, formData.tipoDocumento);
     setErrors(prev => ({ ...prev, [field]: error }));
 
-    // Validaciones de unicidad solo si no hay errores básicos
-    if (!error && tipo === 'agregar') {
+    // Si hay errores básicos, no validar unicidad
+    if (error) return;
+
+    // VALIDACIONES DE UNICIDAD PARA AGREGAR
+    if (tipo === 'agregar') {
+      // Validar correo único
       if (field === 'correo') {
         const emailExists = proveedores.some(p => p.correo.toLowerCase() === value.toLowerCase());
         if (emailExists) {
@@ -99,6 +99,23 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
         }
       }
 
+      // Validar teléfono único
+      if (field === 'contacto') {
+        const phoneExists = proveedores.some(p => p.contacto.toString() === value.toString());
+        if (phoneExists) {
+          setErrors(prev => ({ ...prev, contacto: 'Ya existe un proveedor con este teléfono' }));
+        }
+      }
+
+      // Validar documento único
+      if (field === 'documentoONit') {
+        const docExists = proveedores.some(p => p.documento.toString() === value.toString());
+        if (docExists) {
+          setErrors(prev => ({ ...prev, documentoONit: 'Ya existe un proveedor con este documento' }));
+        }
+      }
+
+      // Validar nombre único (Natural)
       if (field === 'nombre' && formData.tipoProveedor === 'Natural') {
         const nameExists = proveedores.some(p => p.nombre && p.nombre.toLowerCase() === value.toLowerCase());
         if (nameExists) {
@@ -106,6 +123,7 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
         }
       }
 
+      // Validar nombre empresa único (Jurídico)
       if (field === 'nombreEmpresa' && formData.tipoProveedor === 'Jurídico') {
         const nameExists = proveedores.some(p => p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === value.toLowerCase());
         if (nameExists) {
@@ -114,30 +132,60 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
       }
     }
 
-    // Validaciones de unicidad para edición
-    if (!error && tipo === 'editar' && proveedor) {
+    // VALIDACIONES DE UNICIDAD PARA EDITAR
+    if (tipo === 'editar' && proveedor) {
+      const idProveedorActual = proveedor.idProveedor || proveedor.idproveedor;
+
+      // Validar correo único (excluyendo el proveedor actual)
       if (field === 'correo') {
-        const emailExists = proveedores.some(p =>
-          p.idProveedor !== proveedor.idProveedor && p.correo.toLowerCase() === value.toLowerCase()
-        );
+        const emailExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.correo.toLowerCase() === value.toLowerCase();
+        });
         if (emailExists) {
           setErrors(prev => ({ ...prev, correo: 'Ya existe un proveedor con este correo' }));
         }
       }
 
+      // Validar teléfono único (excluyendo el proveedor actual)
+      if (field === 'contacto') {
+        const phoneExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.contacto.toString() === value.toString();
+        });
+        if (phoneExists) {
+          setErrors(prev => ({ ...prev, contacto: 'Ya existe un proveedor con este teléfono' }));
+        }
+      }
+
+      // Validar documento único (excluyendo el proveedor actual)
+      if (field === 'documentoONit') {
+        const docExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.documento.toString() === value.toString();
+        });
+        if (docExists) {
+          setErrors(prev => ({ ...prev, documentoONit: 'Ya existe un proveedor con este documento' }));
+        }
+      }
+
+      // Validar nombre único (Natural)
       if (field === 'nombre' && formData.tipoProveedor === 'Natural') {
-        const nameExists = proveedores.some(p =>
-          p.idProveedor !== proveedor.idProveedor && p.nombre && p.nombre.toLowerCase() === value.toLowerCase()
-        );
+        const nameExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.nombre && p.nombre.toLowerCase() === value.toLowerCase();
+        });
         if (nameExists) {
           setErrors(prev => ({ ...prev, nombre: 'Ya existe un proveedor con este nombre' }));
         }
       }
 
+      // Validar nombre empresa único (Jurídico)
       if (field === 'nombreEmpresa' && formData.tipoProveedor === 'Jurídico') {
-        const nameExists = proveedores.some(p =>
-          p.idProveedor !== proveedor.idProveedor && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === value.toLowerCase()
-        );
+        const nameExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === value.toLowerCase();
+        });
         if (nameExists) {
           setErrors(prev => ({ ...prev, nombreEmpresa: 'Ya existe un proveedor con este nombre de empresa' }));
         }
@@ -157,7 +205,7 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
     let hasErrors = false;
     const newErrors = {};
 
-    // Validar todos los campos
+    // Validar todos los campos básicos
     fields.forEach(field => {
       let value = formData[field];
       const error = validateProveedorField(field, value, formData.tipoProveedor, formData.tipoDocumento);
@@ -167,21 +215,40 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
       }
     });
 
-    // Validar unicidad
+    // VALIDACIONES DE UNICIDAD PARA AGREGAR
     if (tipo === 'agregar') {
+      // Correo único
       const emailExists = proveedores.some(p => p.correo.toLowerCase() === formData.correo.toLowerCase());
       if (emailExists) {
         newErrors.correo = 'Ya existe un proveedor con este correo';
         hasErrors = true;
       }
 
+      // Teléfono único
+      const phoneExists = proveedores.some(p => p.contacto.toString() === formData.contacto.toString());
+      if (phoneExists) {
+        newErrors.contacto = 'Ya existe un proveedor con este teléfono';
+        hasErrors = true;
+      }
+
+      // Documento único
+      const docExists = proveedores.some(p => p.documento.toString() === formData.documentoONit.toString());
+      if (docExists) {
+        newErrors.documentoONit = 'Ya existe un proveedor con este documento';
+        hasErrors = true;
+      }
+
+      // Nombre único (Natural)
       if (formData.tipoProveedor === 'Natural') {
         const nameExists = proveedores.some(p => p.nombre && p.nombre.toLowerCase() === formData.nombre.toLowerCase());
         if (nameExists) {
           newErrors.nombre = 'Ya existe un proveedor con este nombre';
           hasErrors = true;
         }
-      } else {
+      }
+
+      // Nombre empresa único (Jurídico)
+      if (formData.tipoProveedor === 'Jurídico') {
         const nameExists = proveedores.some(p => p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === formData.nombreEmpresa.toLowerCase());
         if (nameExists) {
           newErrors.nombreEmpresa = 'Ya existe un proveedor con este nombre de empresa';
@@ -190,28 +257,58 @@ export const useProveedorForm = ({ tipo, proveedor, proveedores }) => {
       }
     }
 
-    // Validar unicidad para edición
+    // VALIDACIONES DE UNICIDAD PARA EDITAR
     if (tipo === 'editar' && proveedor) {
-      const emailExists = proveedores.some(p =>
-        p.idProveedor !== proveedor.idProveedor && p.correo.toLowerCase() === formData.correo.toLowerCase()
-      );
+      const idProveedorActual = proveedor.idProveedor || proveedor.idproveedor;
+
+      // Correo único
+      const emailExists = proveedores.some(p => {
+        const idP = p.idProveedor || p.idproveedor;
+        return idP !== idProveedorActual && p.correo.toLowerCase() === formData.correo.toLowerCase();
+      });
       if (emailExists) {
         newErrors.correo = 'Ya existe un proveedor con este correo';
         hasErrors = true;
       }
 
+      // Teléfono único
+      const phoneExists = proveedores.some(p => {
+        const idP = p.idProveedor || p.idproveedor;
+        return idP !== idProveedorActual && p.contacto.toString() === formData.contacto.toString();
+      });
+      if (phoneExists) {
+        newErrors.contacto = 'Ya existe un proveedor con este teléfono';
+        hasErrors = true;
+      }
+
+      // Documento único
+      const docExists = proveedores.some(p => {
+        const idP = p.idProveedor || p.idproveedor;
+        return idP !== idProveedorActual && p.documento.toString() === formData.documentoONit.toString();
+      });
+      if (docExists) {
+        newErrors.documentoONit = 'Ya existe un proveedor con este documento';
+        hasErrors = true;
+      }
+
+      // Nombre único (Natural)
       if (formData.tipoProveedor === 'Natural') {
-        const nameExists = proveedores.some(p =>
-          p.idProveedor !== proveedor.idProveedor && p.nombre && p.nombre.toLowerCase() === formData.nombre.toLowerCase()
-        );
+        const nameExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.nombre && p.nombre.toLowerCase() === formData.nombre.toLowerCase();
+        });
         if (nameExists) {
           newErrors.nombre = 'Ya existe un proveedor con este nombre';
           hasErrors = true;
         }
-      } else {
-        const nameExists = proveedores.some(p =>
-          p.idProveedor !== proveedor.idProveedor && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === formData.nombreEmpresa.toLowerCase()
-        );
+      }
+
+      // Nombre empresa único (Jurídico)
+      if (formData.tipoProveedor === 'Jurídico') {
+        const nameExists = proveedores.some(p => {
+          const idP = p.idProveedor || p.idproveedor;
+          return idP !== idProveedorActual && p.nombreEmpresa && p.nombreEmpresa.toLowerCase() === formData.nombreEmpresa.toLowerCase();
+        });
         if (nameExists) {
           newErrors.nombreEmpresa = 'Ya existe un proveedor con este nombre de empresa';
           hasErrors = true;

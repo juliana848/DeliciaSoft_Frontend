@@ -8,6 +8,7 @@ import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import UsuariosForm from './components/UsuariosForm';
 import usuarioApiService from '../../services/usuarios_services';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -211,13 +212,7 @@ export default function Usuarios() {
   );
 
   if (loading) {
-    return (
-      <div className="admin-wrapper">
-        <div className="loading-container">
-          <p>Cargando usuarios...</p>
-        </div>
-      </div>
-    );
+  return <LoadingSpinner />;
   }
 
   return (
@@ -272,7 +267,7 @@ export default function Usuarios() {
         <Column 
           field="correo" 
           header="Correo" 
-          headerStyle={{ paddingLeft: '4rem' }}
+          headerStyle={{ paddingLeft: '10rem' }}
         />
         <Column 
           field="rol_nombre" 
@@ -299,7 +294,7 @@ export default function Usuarios() {
                 title="Visualizar" 
                 onClick={() => abrirModal('visualizar', rowData)}
               >
-                🔍
+                👁
               </button>
               <button
                 className={`admin-button yellow ${!rowData.activo ? 'disabled' : ''}`}
@@ -347,7 +342,6 @@ export default function Usuarios() {
           <h2 className="modal-title modal-title-compact">Confirmar Eliminación</h2>
           <div className="modal-body modal-body-compact">
             <p>¿Está seguro de que desea eliminar al usuario <strong>{usuarioSeleccionado?.nombres} {usuarioSeleccionado?.apellidos}</strong>?</p>
-            <p><small>Esta acción no se puede deshacer.</small></p>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>

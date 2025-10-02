@@ -408,13 +408,92 @@
   font-size: 16px;
 }
 
-/* Responsive Design */
+/* Botón hamburguesa */
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1002;
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  background: linear-gradient(135deg, #ff1493, #dc143c);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+}
+
+.sidebar-toggle i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Overlay para cerrar el menú en tablet/móvil */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+}
+
+/* Responsive Design para Tablets */
+@media (max-width: 1024px) {
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .logout-button-fixed {
+    left: 80px;
+    right: auto;
+  }
+}
+
+/* Responsive Design para Móviles */
 @media (max-width: 768px) {
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    padding: 0;
+    width: 280px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
   }
 
   .sidebar-header {
@@ -432,7 +511,7 @@
 
   .sidebar-nav {
     padding: 15px 10px;
-    max-height: 400px;
+    max-height: calc(100vh - 280px);
   }
 
   .nav-link {
@@ -448,25 +527,16 @@
   }
 
   .logout-button-fixed {
-    top: 10px !important;
-    right: 10px !important;
+    top: 20px !important;
+    left: 80px !important;
+    right: auto !important;
     padding: 10px 16px;
     font-size: 13px;
-    min-width: 130px;
   }
 
-  /* En móvil, aplicar margen más pequeño */
-  .main-wrapper,
-  .content-wrapper,
-  .page-content,
-  main,
-  .container,
-  .container-fluid {
-    margin-top: 60px !important;
-  }
-
-  .sidebar ~ * {
-    margin-top: 60px !important;
+  .sidebar-toggle {
+    top: 20px;
+    left: 20px;
   }
 }
 

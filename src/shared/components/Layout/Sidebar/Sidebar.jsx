@@ -9,6 +9,22 @@ const Sidebar = ({ userRole = 'admin' }) => {
   const [userPermissions, setUserPermissions] = useState([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Cerrar sidebar al cambiar de ruta en dispositivos móviles
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Cerrar sidebar al hacer clic en el overlay
+  const handleOverlayClick = () => {
+    setSidebarOpen(false);
+  };
+
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   // Definición completa del menú de administrador con permisos
   const allAdminMenuItems = [
@@ -363,19 +379,34 @@ const Sidebar = ({ userRole = 'admin' }) => {
             padding-top: 15px !important;
           }
           
-          @media (max-width: 768px) {
+          @media (max-width: 1024px) {
             .content-with-sidebar {
-              margin-left: 0;
-              padding-top: 60px !important;
+              margin-left: 0 !important;
+              padding-top: 80px !important;
             }
           }
         `}
       </style>
 
+      {/* Botón hamburguesa */}
+      <button 
+        className="sidebar-toggle" 
+        onClick={toggleSidebar}
+        aria-label="Toggle menu"
+      >
+        <i className={`bi ${sidebarOpen ? 'bi-x-lg' : 'bi-list'}`}></i>
+      </button>
+
+      {/* Overlay para cerrar el menú */}
+      <div 
+        className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
+        onClick={handleOverlayClick}
+      ></div>
+
       {/* Botón de cerrar sesión fijo en esquina superior derecha */}
       <LogoutButton className="logout-button-fixed" showText={true} />
       
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarOpen ? 'active' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
             <img 

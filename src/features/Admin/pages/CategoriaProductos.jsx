@@ -7,6 +7,7 @@ import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
 import categoriaProductoApiService from '../services/categoriaProductosService';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CategoriaProductos() {
   const [categorias, setCategorias] = useState([]);
@@ -26,6 +27,10 @@ export default function CategoriaProductos() {
   useEffect(() => {
     cargarCategorias();
   }, []);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   const cargarCategorias = async () => {
     try {
@@ -51,22 +56,23 @@ export default function CategoriaProductos() {
 
   const toggleActivo = async (categoria) => {
     try {
-      setLoading(true);
-      
-      // Llamar al servicio para cambiar el estado
-      await categoriaProductoApiService.toggleEstadoCategoria(categoria.id);
-      
-      // Actualizar el estado local
+      // Actualizar el estado local inmediatamente
       const updated = categorias.map(cat =>
         cat.id === categoria.id ? { ...cat, activo: !cat.activo } : cat
       );
       setCategorias(updated);
       
+      // Llamar al servicio en segundo plano
+      await categoriaProductoApiService.toggleEstadoCategoria(categoria.id);
+      
       showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
     } catch (error) {
+      // Revertir el cambio si hay error
+      const reverted = categorias.map(cat =>
+        cat.id === categoria.id ? { ...cat, activo: categoria.activo } : cat
+      );
+      setCategorias(reverted);
       showNotification('Error al cambiar el estado: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -170,8 +176,6 @@ export default function CategoriaProductos() {
     if (!validarFormulario()) return;
 
     try {
-      setLoading(true);
-      
       const datosActualizados = {
         nombre: nombreEditado,
         descripcion: descripcionEditada,
@@ -201,15 +205,11 @@ export default function CategoriaProductos() {
       showNotification('Categoría editada exitosamente');
     } catch (error) {
       showNotification('Error al editar la categoría: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
   const confirmarEliminar = async () => {
     try {
-      setLoading(true);
-      
       // Verificar si la categoría tiene productos asociados
       const tieneProductos = await categoriaProductoApiService.categoriaTieneProductos(categoriaSeleccionada.id);
       
@@ -228,8 +228,6 @@ export default function CategoriaProductos() {
       showNotification('Categoría eliminada exitosamente');
     } catch (error) {
       showNotification('Error al eliminar la categoría: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -237,8 +235,6 @@ export default function CategoriaProductos() {
     if (!validarFormulario()) return;
 
     try {
-      setLoading(true);
-      
       const nuevaCategoria = {
         nombre: nombreEditado,
         descripcion: descripcionEditada,
@@ -247,7 +243,7 @@ export default function CategoriaProductos() {
 
       const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria, archivoImagen);
       
-      // Agregar la nueva categoría al estado local
+      // Agregar la nueva categoría al inicio del estado local
       const categoriaMapeada = {
         id: categoriaCreada.idcategoriaproducto,
         nombre: categoriaCreada.nombrecategoria,
@@ -256,14 +252,12 @@ export default function CategoriaProductos() {
         imagen: categoriaCreada.imagenes ? categoriaCreada.imagenes.urlimg : null
       };
 
-      setCategorias([...categorias, categoriaMapeada]);
+      setCategorias([categoriaMapeada, ...categorias]);
       
       cerrarModal();
       showNotification('Categoría agregada exitosamente');
     } catch (error) {
       showNotification('Error al agregar la categoría: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -332,7 +326,7 @@ export default function CategoriaProductos() {
         />
       </div>
 
-      <h2 className="admin-section-title">Gestión de categorías de productos</h2>
+      <h2 className="admin-section-title">Gestión de Categorías de Productos</h2>
       
       <DataTable
         value={categoriasFiltradas}
@@ -428,65 +422,72 @@ export default function CategoriaProductos() {
           <h2 className="modal-title">
             {modalTipo === 'agregar' ? 'Agregar Nueva Categoría' : 'Editar Categoría'}
           </h2>
-          <div className="modal-body">
-            <label>
-              Nombre:
-              <input
-                type="text"
-                value={nombreEditado}
-                onChange={(e) => setNombreEditado(e.target.value)}
-                className="modal-input"
-                maxLength={20}
-                disabled={loading}
-              />
-              <small>{nombreEditado.length}/20 caracteres</small>
-            </label>
-            <label style={{ marginTop: '1rem', display: 'block' }}>
-              Descripción:
-              <textarea
-                value={descripcionEditada}
-                onChange={(e) => setDescripcionEditada(e.target.value)}
-                className="modal-input"
-                rows={3}
-                maxLength={50}
-                disabled={loading}
-              />
-              <small>{descripcionEditada.length}/50 caracteres</small>
-            </label>
-            
-            {/* Campo de imagen */}
-            <label style={{ marginTop: '1rem', display: 'block' }}>
-              Imagen (opcional):
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="modal-input"
-                disabled={loading}
-                style={{ marginTop: '0.5rem' }}
-              />
-              <small style={{ color: '#666' }}>
-                Formatos permitidos: JPEG, PNG, WebP. Tamaño máximo: 5MB
-              </small>
-            </label>
+          <div className="modal-body" style={{ maxWidth: '600px' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '200px 1fr', 
+              gap: '1rem',
+              alignItems: 'start'
+            }}>
+              {/* Columna izquierda: Nombre */}
+              <div>
+                <label>
+                  Nombre:
+                  <input
+                    type="text"
+                    value={nombreEditado}
+                    onChange={(e) => setNombreEditado(e.target.value)}
+                    className="modal-input"
+                    maxLength={20}
+                    style={{ width: '100%' }}
+                  />
+                  <small>{nombreEditado.length}/20</small>
+                </label>
+              </div>
 
-            {/* Preview de imagen */}
-            {previewImagen && (
-              <div style={{ marginTop: '1rem' }}>
-                <label>Vista previa:</label>
-                <div style={{ 
-                  marginTop: '0.5rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px' 
-                }}>
+              {/* Columna derecha: Descripción */}
+              <div>
+                <label>
+                  Descripción:
+                  <textarea
+                    value={descripcionEditada}
+                    onChange={(e) => setDescripcionEditada(e.target.value)}
+                    className="modal-input"
+                    rows={3}
+                    maxLength={50}
+                    style={{ height: '80px', resize: 'none', width: '100%' }}
+                  />
+                  <small>{descripcionEditada.length}/50</small>
+                </label>
+              </div>
+            </div>
+
+            {/* Imagen debajo */}
+            <div style={{ marginTop: '1rem' }}>
+              <label>
+                Imagen (opcional):
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="modal-input"
+                  style={{ marginTop: '0.5rem' }}
+                />
+                <small style={{ color: '#666', fontSize: '0.75rem' }}>
+                  JPEG, PNG, WebP. Máx: 5MB
+                </small>
+              </label>
+
+              {/* Preview de imagen */}
+              {previewImagen && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <img
                     src={previewImagen}
                     alt="Preview"
                     style={{
-                      width: '100px',
-                      height: '100px',
+                      width: '80px',
+                      height: '80px',
                       borderRadius: '8px',
                       objectFit: 'cover',
                       border: '1px solid #ddd'
@@ -495,21 +496,21 @@ export default function CategoriaProductos() {
                   <button
                     type="button"
                     onClick={limpiarImagen}
-                    disabled={loading}
                     style={{
                       background: '#dc3545',
                       color: 'white',
                       border: 'none',
-                      padding: '5px 10px',
+                      padding: '5px 15px',
                       borderRadius: '4px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
                     }}
                   >
-                    Quitar imagen
+                    Quitar
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {modalTipo === 'editar' && (
               <label style={{ marginTop: '1rem', display: 'block' }}>
@@ -523,7 +524,6 @@ export default function CategoriaProductos() {
                         activo: e.value
                       });
                     }}
-                    disabled={loading}
                   />
                   <span style={{ marginLeft: '0.5rem' }}>
                     {categoriaSeleccionada?.activo ? 'Activo' : 'Inactivo'}
@@ -536,16 +536,14 @@ export default function CategoriaProductos() {
             <button 
               className="modal-btn cancel-btn" 
               onClick={cerrarModal}
-              disabled={loading}
             >
               Cancelar
             </button>
             <button 
               className="modal-btn save-btn" 
               onClick={modalTipo === 'agregar' ? guardarNuevaCategoria : guardarEdicion}
-              disabled={loading}
             >
-              {loading ? 'Guardando...' : 'Guardar'}
+              Guardar
             </button>
           </div>
         </Modal>
@@ -555,42 +553,75 @@ export default function CategoriaProductos() {
       {modalTipo === 'visualizar' && categoriaSeleccionada && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Detalles de la Categoría</h2>
-          <div className="modal-body">
-            {/* Mostrar imagen si existe */}
-            {previewImagen && (
-              <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Imagen:</label>
+          <div className="modal-body" style={{ maxWidth: '600px' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '200px 1fr', 
+              gap: '1rem',
+              alignItems: 'start'
+            }}>
+              {/* Columna izquierda: Nombre */}
+              <div>
+                <label>
+                  Nombre:
+                  <input
+                    type="text"
+                    value={categoriaSeleccionada.nombre}
+                    readOnly
+                    className="modal-input"
+                    style={{ width: '100%' }}
+                  />
+                </label>
+              </div>
+
+              {/* Columna derecha: Descripción */}
+              <div>
+                <label>
+                  Descripción:
+                  <textarea
+                    value={categoriaSeleccionada.descripcion}
+                    readOnly
+                    className="modal-input"
+                    rows={3}
+                    style={{ height: '80px', resize: 'none', width: '100%' }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Imagen debajo */}
+            <div style={{ marginTop: '1rem' }}>
+              <label>Imagen:</label>
+              {previewImagen ? (
                 <img
                   src={previewImagen}
                   alt={categoriaSeleccionada.nombre}
                   style={{
-                    width: '200px',
-                    height: '200px',
+                    width: '150px',
+                    height: '150px',
                     borderRadius: '8px',
                     objectFit: 'cover',
-                    border: '1px solid #ddd'
+                    border: '1px solid #ddd',
+                    marginTop: '0.5rem'
                   }}
                 />
-              </div>
-            )}
-            <label>
-              Nombre:
-              <input
-                type="text"
-                value={categoriaSeleccionada.nombre}
-                readOnly
-                className="modal-input"
-              />
-            </label>
-            <label style={{ marginTop: '1rem', display: 'block' }}>
-              Descripción:
-              <textarea
-                value={categoriaSeleccionada.descripcion}
-                readOnly
-                className="modal-input"
-                rows={3}
-              />
-            </label>
+              ) : (
+                <div style={{
+                  width: '150px',
+                  height: '150px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  marginTop: '0.5rem'
+                }}>
+                  Sin imagen
+                </div>
+              )}
+            </div>
+
             <label style={{ marginTop: '1rem', display: 'block' }}>
               Estado:
               <div style={{ marginTop: '0.5rem' }}>
@@ -613,27 +644,22 @@ export default function CategoriaProductos() {
       {/* Modal Eliminar */}
       {modalTipo === 'eliminar' && categoriaSeleccionada && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">¿Eliminar Categoría?</h2>
+          <h2 className="modal-title">Eliminar Categoría</h2>
           <div className="modal-body">
             <p>¿Estás seguro de que deseas eliminar la categoría <strong>{categoriaSeleccionada.nombre}</strong>?</p>
-            <p style={{ color: '#dc3545', fontSize: '0.9rem' }}>
-              Esta acción no se puede deshacer y también eliminará la imagen asociada.
-            </p>
           </div>
           <div className="modal-footer">
             <button 
               className="modal-btn cancel-btn" 
               onClick={cerrarModal}
-              disabled={loading}
             >
               Cancelar
             </button>
             <button 
               className="modal-btn save-btn" 
               onClick={confirmarEliminar}
-              disabled={loading}
             >
-              {loading ? 'Eliminando...' : 'Eliminar'}
+              Eliminar
             </button>
           </div>
         </Modal>

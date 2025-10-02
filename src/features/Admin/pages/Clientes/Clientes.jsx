@@ -8,6 +8,7 @@ import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import ClienteFormModal from './components/ClientesForm';
 import clienteApiService from '../../services/cliente_services'; 
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -163,15 +164,9 @@ export default function Clientes() {
   );
 
   // Componente de carga
-  if (loading) {
-    return (
-      <div className="admin-wrapper">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-          <p>Cargando clientes...</p>
-        </div>
-      </div>
-    );
-  }
+    if (loading) {
+      return <LoadingSpinner />;
+    }
 
   // Componente de error
   if (error && clientes.length === 0) {
@@ -241,17 +236,17 @@ export default function Clientes() {
         <Column 
           field="nombre" 
           header="Nombre" 
-          headerStyle={{ paddingLeft: '2rem' }} 
+          headerStyle={{ paddingLeft: '3rem' }} 
         />
         <Column 
           field="apellido" 
           header="Apellido" 
-          headerStyle={{ paddingLeft: '2rem' }} 
+          headerStyle={{ paddingLeft: '3rem' }} 
         />
         <Column 
           field="correo" 
           header="Correo" 
-          headerStyle={{ paddingLeft: '2rem' }} 
+          headerStyle={{ paddingLeft: '7rem' }} 
         />
         <Column
           header="Estado"
@@ -344,16 +339,13 @@ export default function Clientes() {
       {/* Modal Confirmar Eliminación */}
       {modalTipo === 'confirmarEliminar' && clienteSeleccionado && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title">Confirmar Eliminación</h2>
+          <h2 className="modal-title"> Eliminar Cliente</h2>
           <div className="modal-body">
-            <p>¿Está completamente seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
-            <p style={{ color: '#e53935', fontSize: '14px' }}>
-              Esta acción no se puede deshacer y se eliminará toda la información del cliente.
-            </p>
+            <p>¿Está seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
           </div>
           <div className="modal-footer">
             <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Confirmar Eliminación</button>
+            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
           </div>
         </Modal>
       )}

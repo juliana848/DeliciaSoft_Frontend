@@ -8,6 +8,7 @@ import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import RoleForm from './Components/FormRol';
 import roleApiService from '../../services/roles_services';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Roles() {
   const [roles, setRoles] = useState([]);
@@ -311,23 +312,8 @@ export default function Roles() {
 
   // Mostrar loading mientras se cargan los datos
   if (loading) {
-    return (
-      <div className="admin-wrapper">
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '50vh',
-          fontSize: '18px',
-          color: '#c2185b'
-        }}>
-          <div>
-            <i className="pi pi-spin pi-spinner" style={{ fontSize: '2rem', marginRight: '1rem' }}></i>
-            Cargando roles...
-          </div>
-        </div>
-      </div>
-    );
+  return <LoadingSpinner />;
+  
   }
 
   return (

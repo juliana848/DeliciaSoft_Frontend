@@ -63,7 +63,7 @@
 }
 
 .btn-agregar-producto {
-  background: #007bff;
+  background: #E91E63;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -73,7 +73,7 @@
 }
 
 .btn-agregar-producto:hover {
-  background: #0056b3;
+  background: #E91E63;
 }
 
 .producto-sin-extras {

@@ -437,11 +437,13 @@ const verAbonosVenta = async (venta) => {
     };
 
     const handleCantidadChange = (itemId, nuevaCantidad) => {
+    const esVentaDirecta = ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa';
+    
     setInsumosSeleccionados(prev => 
         prev.map(item => {
             if (item.id === itemId) {
-                // Solo validar para venta directa
-                if (ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') {
+                // SOLO validar para venta directa
+                if (esVentaDirecta) {
                     const maxDisponible = item.disponible || 0;
                     if (nuevaCantidad > maxDisponible) {
                         showNotification(
@@ -451,6 +453,7 @@ const verAbonosVenta = async (venta) => {
                         return { ...item, cantidad: Math.min(maxDisponible, Math.max(1, nuevaCantidad)) };
                     }
                 }
+                // Para pedidos, permitir cualquier cantidad
                 return { ...item, cantidad: Math.max(1, nuevaCantidad) };
             }
             return item;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './OpcionesPagoView.css';
 import ventaApiService from '../../Admin/services/venta_services.js';
-import sedeApiService from '../../Admin/Services/sedes_services.js'; // Importar servicio de sedes
+import sedeApiService from '../../Admin/Services/sedes_services.js';
 
-const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada }) => {
+const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada, prepararDatosVenta }) => {
   const [metodoPago, setMetodoPago] = useState('');
   const [sedeSeleccionada, setSedeSeleccionada] = useState('');
   const [mostrarDatosBanco, setMostrarDatosBanco] = useState(false);
@@ -13,17 +13,14 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     return `PED-${Date.now().toString().slice(-6)}`;
   });
 
-  // Estados para alertas y procesamiento
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [showImageUploadAlert, setShowImageUploadAlert] = useState(false);
   const [procesandoPedido, setProcesandoPedido] = useState(false);
 
-  // Estados para sedes
   const [sedes, setSedes] = useState([]);
   const [cargandoSedes, setCargandoSedes] = useState(true);
   const [errorSedes, setErrorSedes] = useState('');
 
-  // Cargar sedes desde la API
   useEffect(() => {
     const cargarSedes = async () => {
       try {
@@ -31,9 +28,8 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
         setErrorSedes('');
         const sedesData = await sedeApiService.obtenerSedes();
         
-        // Transformar sedes para el formato esperado
         const sedesTransformadas = sedesData
-          .filter(sede => sede.activo) // Solo sedes activas
+          .filter(sede => sede.activo)
           .map(sede => ({
             id: sede.id.toString(),
             nombre: sede.nombre,
@@ -46,38 +42,24 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
         
         if (sedesTransformadas.length === 0) {
           setErrorSedes('No hay sedes disponibles');
-          // Fallback con sedes por defecto
           setSedes([
             {
               id: 'san-benito',
               nombre: 'San Benito',
               direccion: 'CALLE 9 #7-34',
               horario: '9:00 AM - 6:00 PM'
-            },
-            {
-              id: 'san-pablo',
-              nombre: 'San Pablo',
-              direccion: 'Carrera 15 #12-45',
-              horario: '10:00 AM - 7:00 PM'
             }
           ]);
         }
       } catch (error) {
         console.error('Error al cargar sedes:', error);
         setErrorSedes(`Error al cargar sedes: ${error.message}`);
-        // Usar sedes por defecto en caso de error
         setSedes([
           {
             id: 'san-benito',
             nombre: 'San Benito',
             direccion: 'CALLE 9 #7-34',
             horario: '9:00 AM - 6:00 PM'
-          },
-          {
-            id: 'san-pablo',
-            nombre: 'San Pablo',
-            direccion: 'Carrera 15 #12-45',
-            horario: '10:00 AM - 7:00 PM'
           }
         ]);
       } finally {
@@ -88,19 +70,16 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     cargarSedes();
   }, []);
 
-  // Calcular totales correctamente
   const calcularTotales = () => {
     let subtotalProductos = 0;
     let subtotalExtras = 0;
 
-    // Calcular subtotal de productos
     if (pedido?.productos) {
       subtotalProductos = pedido.productos.reduce((sum, producto) => 
         sum + (producto.precio * (producto.cantidad || 1)), 0
       );
     }
 
-    // Calcular subtotal de extras (toppings, adiciones, salsas)
     if (pedido?.toppings) {
       subtotalExtras += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
     }
@@ -114,7 +93,7 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     const subtotalTotal = subtotalProductos + subtotalExtras;
     const iva = Math.round(subtotalTotal * 0.19);
     const totalFinal = subtotalTotal + iva;
-    const abono = Math.round(totalFinal / 2); // 50% de abono
+    const abono = Math.round(totalFinal / 2);
 
     return {
       subtotalProductos,
@@ -128,7 +107,6 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
 
   const { subtotalProductos, subtotalExtras, subtotalTotal, iva, totalFinal, abono } = calcularTotales();
 
-  // Función para mostrar alertas
   const triggerAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -199,28 +177,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
     triggerAlert('info', mensaje);
   };
 
-  // Transformar productos del pedido al formato esperado por la venta
-  const transformarProductosParaVenta = () => {
-    const productos = [];
-
-    // Agregar productos base
-    if (pedido?.productos) {
-      pedido.productos.forEach(producto => {
-        productos.push({
-          idproductogeneral: producto.id,
-          cantidad: producto.cantidad || 1,
-          precio: producto.precio,
-          preciounitario: producto.precio,
-          subtotal: producto.precio * (producto.cantidad || 1),
-          iva: (producto.precio * (producto.cantidad || 1)) * 0.19
-        });
-      });
-    }
-
-    return productos;
-  };
-
-  // FUNCIÓN PRINCIPAL PARA PROCESAR EL PAGO
   const procesarPago = async () => {
     if (!metodoPago) {
       triggerAlert('error', 'Por favor selecciona un método de pago.');
@@ -237,33 +193,28 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
       return;
     }
 
-    // Mostrar loading
     setProcesandoPedido(true);
 
     try {
-      // 1. CREAR LA VENTA
       const sedeInfo = sedes.find(s => s.id === sedeSeleccionada) || sedes[0];
       
-      const ventaData = {
-        fechaventa: new Date().toISOString(),
-        cliente: null, // Cliente genérico por ahora
-        clienteNombre: 'Cliente Genérico',
-        sede: sedeInfo?.id || 'san-pablo',
-        sedeNombre: sedeInfo?.nombre || 'San Pablo',
-        metodopago: metodoPago,
-        // Si es efectivo en sede = venta directa, si no = pedido
-        tipoventa: metodoPago === 'efectivo' ? 'directa' : 'pedido',
+      const datosVenta = prepararDatosVenta({
+        metodo: metodoPago,
+        sede: sedeSeleccionada,
+        sedeNombre: sedeInfo?.nombre,
+        abono: abono,
         total: totalFinal,
-        productos: transformarProductosParaVenta()
-      };
+        numeroPedido: numeroPedido,
+        comprobante: comprobante
+      });
 
-      console.log('Creando venta:', ventaData);
-      const ventaCreada = await ventaApiService.crearVenta(ventaData);
+      console.log('Creando venta con datos:', datosVenta);
+      
+      const ventaCreada = await ventaApiService.crearVenta(datosVenta);
       console.log('Venta creada:', ventaCreada);
 
-      // 2. CREAR EL ABONO
       const abonoData = {
-        idpedido: ventaCreada.idVenta, // El backend usa esto como ID de venta
+        idpedido: ventaCreada.idVenta,
         metodopago: metodoPago,
         cantidadpagar: abono,
         TotalPagado: abono
@@ -273,22 +224,18 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
       const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
       console.log('Abono creado:', abonoCreado);
 
-      // ÉXITO - Mostrar mensaje según método de pago
       if (metodoPago === 'efectivo') {
         mostrarAlertaEfectivo();
-        // Actualizar estado de venta a "activa" para efectivo
         await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
       } else if (metodoPago === 'transferencia') {
         triggerAlert('success', 
-          `Pedido creado exitosamente!\n` +
+          `¡Pedido creado exitosamente!\n` +
           `Número: ${numeroPedido}\n` +
           `Abono registrado: $${abono.toLocaleString()}\n` +
           `Su pedido quedará pendiente hasta verificar el comprobante.`
         );
-        // Mantener en estado "pendiente" (1) hasta verificar comprobante
       }
 
-      // Notificar al componente padre
       const datosPago = {
         metodo: metodoPago,
         sede: sedeSeleccionada,
@@ -302,7 +249,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
       onOpcionSeleccionada(datosPago);
       
-      // Completar pedido después de un delay para que se vea el mensaje
       setTimeout(() => {
         onPedidoCompletado();
       }, 3000);
@@ -319,7 +265,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
   return (
     <div className="opciones-pago-view">
-      {/* Overlay de loading */}
       {procesandoPedido && (
         <div className="loading-overlay">
           <div className="loading-spinner">
@@ -329,7 +274,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
         </div>
       )}
 
-      {/* Alerta personalizada */}
       {showAlert.show && (
         <div className={`custom-alert ${showAlert.type}`}>
           <span className="alert-icon">
@@ -348,7 +292,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
         </div>
       )}
 
-      {/* Alerta de imagen subida */}
       {showImageUploadAlert && (
         <div className="custom-alert success image-upload-alert">
           <span className="alert-icon">📸</span>
@@ -374,11 +317,9 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
           </div>
         </div>
 
-        {/* Resumen del pedido MEJORADO */}
         <div className="resumen-pago">
           <h3 className="resumen-title">📋 Resumen del Pedido</h3>
 
-          {/* Productos */}
           {pedido?.productos && pedido.productos.length > 0 && (
             <div className="productos-lista">
               <h4 className="subseccion-title">Productos:</h4>
@@ -392,7 +333,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
             </div>
           )}
 
-          {/* Toppings */}
           {pedido?.toppings && pedido.toppings.length > 0 && (
             <div className="extras-section">
               <h4 className="subseccion-title">Toppings:</h4>
@@ -405,7 +345,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
             </div>
           )}
 
-          {/* Adiciones */}
           {pedido?.adiciones && pedido.adiciones.length > 0 && (
             <div className="extras-section">
               <h4 className="subseccion-title">Adiciones:</h4>
@@ -418,7 +357,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
             </div>
           )}
 
-          {/* Salsas */}
           {pedido?.salsas && pedido.salsas.length > 0 && (
             <div className="extras-section">
               <h4 className="subseccion-title">Salsas:</h4>
@@ -431,7 +369,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
             </div>
           )}
 
-          {/* Totales detallados */}
           <div className="totales">
             <div className="total-item">
               <span>Productos:</span>
@@ -462,12 +399,10 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
           </div>
         </div>
 
-        {/* Métodos de pago */}
         <div className="metodos-pago">
           <h3 className="metodos-title">Selecciona tu método de pago</h3>
 
           <div className="metodos-grid">
-            {/* Transferencia */}
             <div className={`metodo-card ${metodoPago === 'transferencia' ? 'selected' : ''}`}>
               <label className="metodo-label">
                 <input
@@ -523,7 +458,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                     </button>
                   </div>
 
-                  {/* Sección de subir comprobante */}
                   <div className="comprobante-section">
                     <h5>📎 Subir Comprobante <span className="obligatorio">*</span></h5>
                     <div className="upload-area">
@@ -551,7 +485,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                     </div>
                     {errorComprobante && (
                       <div className="error-message">
-                        <span className="error-icon">❌</span>
+                        <span className="error-icon">✗</span>
                         <span>{errorComprobante}</span>
                       </div>
                     )}
@@ -560,7 +494,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
               )}
             </div>
 
-            {/* Efectivo en sede */}
             <div className={`metodo-card ${metodoPago === 'efectivo' ? 'selected' : ''}`}>
               <label className="metodo-label">
                 <input

@@ -1033,4 +1033,5 @@ const styles = {
     </div>
   );
 }
+
 export default Dashboard;

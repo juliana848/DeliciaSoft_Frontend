@@ -64,15 +64,36 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
     cargarCategorias();
   }, []);
 
+  // === NUEVO USEEFFECT PARA TRAER LA RECETA REAL ===
   useEffect(() => {
-    if (producto?.idreceta) {
-      const recetaSimulada = {
-        idreceta: producto.idreceta,
-        nombrereceta: "Receta del producto",
-        especificaciones: "Especificaciones de la receta",
-      };
-      setFormData((prev) => ({ ...prev, recetaSeleccionada: recetaSimulada }));
-    }
+    const cargarReceta = async () => {
+      if (!producto?.idreceta) return;
+
+      try {
+        const res = await fetch(
+          "https://deliciasoft-backend.onrender.com/api/receta/recetas"
+        );
+        if (!res.ok) throw new Error("No se pudo cargar las recetas");
+        const data = await res.json();
+
+        const recetaProducto = data.find(r => r.idreceta === producto.idreceta);
+        if (recetaProducto) {
+          setFormData(prev => ({
+            ...prev,
+            recetaSeleccionada: recetaProducto,
+          }));
+        } else {
+          showNotification("No se encontró la receta del producto", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showNotification("No se pudo cargar la receta: " + err.message, "error");
+      }
+    };
+
+    cargarReceta();
+
+    // Mantener la imagen preview actual
     if (producto) {
       setFormData((prev) => ({
         ...prev,
@@ -209,6 +230,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
 
       <h1>Editar Producto</h1>
       <form onSubmit={handleSubmit}>
+        {/* === EL RESTO DEL FORMULARIO QUEDA EXACTAMENTE IGUAL === */}
         <div className="compra-fields-grid">
           {/* Nombre */}
           <div
@@ -329,7 +351,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
             )}
           </div>
 
-          {/* Estado (ahora dentro de la grilla) */}
+          {/* Estado */}
           <div className="field-group">
             <label>Estado</label>
             <select

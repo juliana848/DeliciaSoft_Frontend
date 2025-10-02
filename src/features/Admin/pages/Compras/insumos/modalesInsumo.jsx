@@ -663,13 +663,25 @@ const eliminar = async () => {
             className="modal-btn"
             onClick={eliminar}
             style={{
-              backgroundColor: "#dc3545",
+              backgroundColor: "#ff4081",
               color: "white",
-              border: "none"
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "600",
+              transition: "background-color 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#fbbf24";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#ff4081";
             }}
           >
             Eliminar
           </button>
+
         )}
         
         {(modal.tipo === "agregar" || modal.tipo === "editar") && (

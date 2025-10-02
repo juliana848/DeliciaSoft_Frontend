@@ -1,9 +1,9 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/sede";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/sede";
 
 class SedeApiService {
   constructor() {
     this.baseHeaders = { "Content-Type": "application/json" };
-    this.multipartHeaders = {}; // Para FormData no se debe incluir Content-Type
+    this.multipartHeaders = {};
   }
 
   async handleResponse(response) {
@@ -51,12 +51,10 @@ class SedeApiService {
 
   async crearSede(sedeData) {
     try {
-      // Verificar si se está enviando un FormData (con imagen) o datos normales
       if (sedeData instanceof FormData) {
         return await this.crearSedeConImagen(sedeData);
       }
 
-      // Crear sede sin imagen
       const sedeAPI = this.transformarSedeParaAPI(sedeData);
       this.validarDatosSede(sedeAPI);
 
@@ -76,24 +74,20 @@ class SedeApiService {
 
   async crearSedeConImagen(formData) {
     try {
-      // Validar datos del FormData
       const nombre = formData.get('nombre');
-      const telefono = formData.get('Telefono');
-      const direccion = formData.get('Direccion');
+      const telefono = formData.get('telefono');
+      const direccion = formData.get('direccion');
 
       if (!nombre || !telefono || !direccion) {
         throw new Error("Faltan datos obligatorios");
       }
 
-      // Intentar primero con el endpoint correcto (sin /upload)
       const response = await fetch(`${BASE_URL}`, {
         method: "POST",
-        // No incluir headers para FormData - el navegador los establece automáticamente
         body: formData,
       });
 
       if (!response.ok) {
-        // Si falla, intentar con endpoints alternativos
         console.warn(`POST ${BASE_URL} falló, intentando endpoints alternativos...`);
         return await this.crearSedeConImagenAlternativo(formData);
       }
@@ -102,18 +96,16 @@ class SedeApiService {
       return this.transformarSedeDesdeAPI(data);
     } catch (error) {
       console.error("Error en crearSedeConImagen:", error);
-      // Intentar método alternativo
       return await this.crearSedeConImagenAlternativo(formData);
     }
   }
 
   async crearSedeConImagenAlternativo(formData) {
     try {
-      // Método 1: Probar con diferentes endpoints
       const endpoints = [
-        `${BASE_URL}/crear`, // Endpoint alternativo 1
-        `${BASE_URL}/new`,   // Endpoint alternativo 2
-        `${BASE_URL}/add`,   // Endpoint alternativo 3
+        `${BASE_URL}/crear`,
+        `${BASE_URL}/new`,
+        `${BASE_URL}/add`,
       ];
 
       for (const endpoint of endpoints) {
@@ -134,7 +126,6 @@ class SedeApiService {
         }
       }
 
-      // Método 2: Crear sede primero, luego subir imagen
       return await this.crearSedeDosEtapas(formData);
     } catch (error) {
       console.error("Error en métodos alternativos:", error);
@@ -144,26 +135,22 @@ class SedeApiService {
 
   async crearSedeDosEtapas(formData) {
     try {
-      // Paso 1: Crear sede sin imagen
       const sedeData = {
         nombre: formData.get('nombre'),
-        Telefono: formData.get('Telefono'),
-        Direccion: formData.get('Direccion'),
-        activo: formData.get('activo') === 'true',
+        Telefono: formData.get('telefono'),
+        Direccion: formData.get('direccion'),
+        activo: formData.get('estado') === 'true',
       };
 
       const sedeCreada = await this.crearSede(sedeData);
 
-      // Paso 2: Subir imagen si existe
       const imagen = formData.get('imagen');
       if (imagen && sedeCreada.id) {
         try {
           await this.subirImagenSede(sedeCreada.id, imagen);
-          // Recargar la sede para obtener la imagen actualizada
           return await this.obtenerSedePorId(sedeCreada.id);
         } catch (imageError) {
           console.warn("Sede creada pero error al subir imagen:", imageError);
-          // Devolver la sede sin imagen
           return sedeCreada;
         }
       }
@@ -210,12 +197,10 @@ class SedeApiService {
 
   async actualizarSede(id, sedeData) {
     try {
-      // Verificar si se está enviando un FormData (con imagen) o datos normales
       if (sedeData instanceof FormData) {
         return await this.actualizarSedeConImagen(id, sedeData);
       }
 
-      // Actualizar sede sin imagen
       const sedeAPI = this.transformarSedeParaAPI(sedeData);
       this.validarDatosSede(sedeAPI);
 
@@ -235,16 +220,14 @@ class SedeApiService {
 
   async actualizarSedeConImagen(id, formData) {
     try {
-      // Validar datos del FormData
       const nombre = formData.get('nombre');
-      const telefono = formData.get('Telefono');
-      const direccion = formData.get('Direccion');
+      const telefono = formData.get('telefono');
+      const direccion = formData.get('direccion');
 
       if (!nombre || !telefono || !direccion) {
         throw new Error("Faltan datos obligatorios");
       }
 
-      // Intentar con endpoint directo primero
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
         body: formData,
@@ -255,7 +238,6 @@ class SedeApiService {
         return this.transformarSedeDesdeAPI(data);
       }
 
-      // Si falla, usar método de dos etapas
       return await this.actualizarSedeDosEtapas(id, formData);
     } catch (error) {
       console.error("Error en actualizarSedeConImagen:", error);
@@ -265,22 +247,19 @@ class SedeApiService {
 
   async actualizarSedeDosEtapas(id, formData) {
     try {
-      // Paso 1: Actualizar datos básicos
       const sedeData = {
         nombre: formData.get('nombre'),
-        Telefono: formData.get('Telefono'),
-        Direccion: formData.get('Direccion'),
-        activo: formData.get('activo') === 'true',
+        Telefono: formData.get('telefono'),
+        Direccion: formData.get('direccion'),
+        activo: formData.get('estado') === 'true',
       };
 
       const sedeActualizada = await this.actualizarSede(id, sedeData);
 
-      // Paso 2: Actualizar imagen si se envió una nueva
       const imagen = formData.get('imagen');
       if (imagen && imagen.size > 0) {
         try {
           await this.subirImagenSede(id, imagen);
-          // Recargar la sede para obtener la imagen actualizada
           return await this.obtenerSedePorId(id);
         } catch (imageError) {
           console.warn("Sede actualizada pero error al subir imagen:", imageError);
@@ -331,10 +310,8 @@ class SedeApiService {
     }
   }
 
-  // Método para obtener la URL completa de la imagen
   obtenerUrlImagen(idimagen) {
     if (!idimagen) return null;
-    // Ajustar según la estructura de tu backend
     return `${BASE_URL.replace('/api/sede', '')}/uploads/sedes/${idimagen}`;
   }
 
@@ -346,7 +323,6 @@ class SedeApiService {
     if (!sede.telefono || sede.telefono.trim() === "") {
       errores.push("El teléfono es requerido");
     } else {
-      // Validar formato de teléfono colombiano
       const telefonoRegex = /^[3][0-9]{9}$/;
       if (!telefonoRegex.test(sede.telefono.replace(/\s/g, ''))) {
         errores.push("El teléfono debe ser un número colombiano válido (10 dígitos comenzando con 3)");
@@ -364,7 +340,7 @@ class SedeApiService {
   transformarSedeParaAPI(sede) {
     return {
       nombre: (sede.nombre || "").trim(),
-      telefono: (sede.Telefono || sede.telefono || "").replace(/\s/g, ''), // Limpiar espacios
+      telefono: (sede.Telefono || sede.telefono || "").replace(/\s/g, ''),
       direccion: (sede.Direccion || sede.direccion || "").trim(),
       idimagen: sede.idimagen || null,
       estado: sede.estado !== undefined ? Boolean(sede.estado || sede.activo) : true,
@@ -373,10 +349,10 @@ class SedeApiService {
 
   transformarSedeDesdeAPI(sede) {
     if (!sede) return null;
-    
-    // Generar URL de imagen si existe
-    let imagenUrl = null;
-    if (sede.idimagen) {
+
+    let imagenUrl = sede.imagenUrl || sede.urlImagen || null;
+
+    if (sede.idimagen && !imagenUrl) {
       imagenUrl = this.obtenerUrlImagen(sede.idimagen);
     }
 
@@ -388,7 +364,7 @@ class SedeApiService {
       telefono: sede.telefono || "",
       direccion: sede.direccion || "",
       idimagen: sede.idimagen || null,
-      imagenUrl: imagenUrl, // URL completa de la imagen
+      imagenUrl,
       estado: Boolean(sede.estado),
       activo: Boolean(sede.estado),
     };
@@ -402,7 +378,6 @@ class SedeApiService {
     return sedes.map((s) => this.transformarSedeDesdeAPI(s)).filter(s => s !== null);
   }
 
-  // Método auxiliar para formatear teléfonos para mostrar
   formatearTelefono(telefono) {
     if (!telefono) return "";
     const cleaned = telefono.replace(/\D/g, '');
@@ -412,10 +387,9 @@ class SedeApiService {
     return telefono;
   }
 
-  // Método auxiliar para validar formato de imagen
   validarFormatoImagen(file) {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       throw new Error("Formato de imagen no válido. Use JPEG, PNG, GIF o WebP.");
@@ -426,27 +400,6 @@ class SedeApiService {
     }
 
     return true;
-  }
-
-  // Método de depuración para probar endpoints
-  async probarEndpoints() {
-    const endpoints = [
-      `${BASE_URL}`,
-      `${BASE_URL}/upload`,
-      `${BASE_URL}/crear`,
-      `${BASE_URL}/new`,
-      `${BASE_URL}/add`,
-    ];
-
-    console.log("Probando endpoints disponibles:");
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(endpoint, { method: "GET" });
-        console.log(`${endpoint}: ${response.status} ${response.statusText}`);
-      } catch (error) {
-        console.log(`${endpoint}: Error - ${error.message}`);
-      }
-    }
   }
 }
 

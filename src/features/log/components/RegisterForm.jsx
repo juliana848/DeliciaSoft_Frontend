@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../Admin/services/authService';
+import './RegisterForm.css';
 
 const RegisterForm = () => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidatingDuplicates, setIsValidatingDuplicates] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -22,6 +25,11 @@ const RegisterForm = () => {
 
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [fieldErrors, setFieldErrors] = useState({});
+  const [duplicateErrors, setDuplicateErrors] = useState({});
+  const [hasUserInteracted, setHasUserInteracted] = useState({
+    password: false,
+    confirmPassword: false
+  });
 
   // Límites de caracteres actualizados
   const fieldLimits = {
@@ -33,11 +41,98 @@ const RegisterForm = () => {
     password: 50
   };
 
+  // Cargar reCAPTCHA v3
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/api.js?render=6Lcz0MArAAAAAB0lZvM3iEc_5qvgWYWIQDfMg9-N';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      window.grecaptcha.ready(() => {
+        console.log('reCAPTCHA v3 cargado correctamente');
+      });
+    };
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // Función para ejecutar reCAPTCHA
+  const executeRecaptcha = async () => {
+    try {
+      if (window.grecaptcha && window.grecaptcha.ready) {
+        const token = await window.grecaptcha.execute('6Lcz0MArAAAAAB0lZvM3iEc_5qvgWYWIQDfMg9-N', { action: 'register' });
+        setRecaptchaToken(token);
+        return token;
+      }
+    } catch (error) {
+      console.error('Error ejecutando reCAPTCHA:', error);
+    }
+    return null;
+  };
+
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
       setShowAlert({ show: false, type: '', message: '' });
     }, 4000);
+  };
+
+  // Validar duplicados en tiempo real
+  const validateDuplicates = async (field, value) => {
+    if (!value || value.trim() === '') {
+      setDuplicateErrors(prev => ({ ...prev, [field]: '' }));
+      return true;
+    }
+
+    setIsValidatingDuplicates(true);
+    
+    try {
+      if (field === 'correo') {
+        const exists = await authService.verificarCorreoExistente(value);
+        if (exists) {
+          const errorMsg = 'Ya existe una cuenta con este correo. Por favor, inicia sesión.';
+          setDuplicateErrors(prev => ({ ...prev, [field]: errorMsg }));
+          return false;
+        }
+      } else if (field === 'documento') {
+        // Verificar documento duplicado
+        const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/clientes');
+        if (response.ok) {
+          const clientes = await response.json();
+          const exists = clientes.some(cliente => cliente.numerodocumento === value);
+          if (exists) {
+            const errorMsg = 'Ya existe una cuenta con este documento. Por favor, inicia sesión.';
+            setDuplicateErrors(prev => ({ ...prev, [field]: errorMsg }));
+            return false;
+          }
+        }
+      } else if (field === 'contacto') {
+        // Verificar celular duplicado
+        const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/clientes');
+        if (response.ok) {
+          const clientes = await response.json();
+          const exists = clientes.some(cliente => cliente.celular === value);
+          if (exists) {
+            const errorMsg = 'Ya existe una cuenta con este número de contacto. Por favor, inicia sesión.';
+            setDuplicateErrors(prev => ({ ...prev, [field]: errorMsg }));
+            return false;
+          }
+        }
+      }
+
+      setDuplicateErrors(prev => ({ ...prev, [field]: '' }));
+      return true;
+    } catch (error) {
+      console.error(`Error validando duplicado ${field}:`, error);
+      setDuplicateErrors(prev => ({ ...prev, [field]: '' }));
+      return true; // En caso de error de red, permitir continuar
+    } finally {
+      setIsValidatingDuplicates(false);
+    }
   };
 
   const validateField = (name, value) => {
@@ -98,6 +193,10 @@ const RegisterForm = () => {
         break;
       
       case 'password':
+        // Solo validar si el usuario ha interactuado con el campo
+        if (!hasUserInteracted.password && !value) {
+          return '';
+        }
         if (!value) {
           error = 'Contraseña es requerida';
         } else if (value.length < 8) {
@@ -112,6 +211,10 @@ const RegisterForm = () => {
         break;
       
       case 'confirmPassword':
+        // Solo validar si el usuario ha interactuado con el campo
+        if (!hasUserInteracted.confirmPassword && !value) {
+          return '';
+        }
         if (!value) {
           error = 'Confirmación de contraseña es requerida';
         } else if (value !== formData.password) {
@@ -131,8 +234,13 @@ const RegisterForm = () => {
     return value;
   };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     let { name, value } = e.target;
+    
+    // Marcar interacción del usuario con campos de contraseña
+    if (name === 'password' || name === 'confirmPassword') {
+      setHasUserInteracted(prev => ({ ...prev, [name]: true }));
+    }
     
     // APLICAR LÍMITES PRIMERO - MUY IMPORTANTE
     if (name === 'documento') {
@@ -165,16 +273,23 @@ const RegisterForm = () => {
     }));
 
     // Validar confirmación de contraseña cuando cambie la contraseña
-    if (name === 'password' && formData.confirmPassword) {
+    if (name === 'password' && formData.confirmPassword && hasUserInteracted.confirmPassword) {
       const confirmError = validateField('confirmPassword', formData.confirmPassword);
       setFieldErrors(prev => ({
         ...prev,
         confirmPassword: confirmError
       }));
     }
+
+    // Validar duplicados para campos específicos con debounce de 1 segundo
+    if (['correo', 'documento', 'contacto'].includes(name) && value.trim()) {
+      setTimeout(() => {
+        validateDuplicates(name, value);
+      }, 1000); // Debounce de 1 segundo
+    }
   };
 
-  const validateCurrentStep = () => {
+  const validateCurrentStep = async () => {
     let fieldsToValidate = [];
     let isValid = true;
     const errors = {};
@@ -191,9 +306,12 @@ const RegisterForm = () => {
         break;
       case 4:
         fieldsToValidate = ['password', 'confirmPassword'];
+        // Marcar interacción para activar validaciones
+        setHasUserInteracted({ password: true, confirmPassword: true });
         break;
     }
 
+    // Validar campos básicos
     fieldsToValidate.forEach(field => {
       const error = validateField(field, formData[field]);
       if (error) {
@@ -202,17 +320,53 @@ const RegisterForm = () => {
       }
     });
 
+    // Validar duplicados para el paso 1 y 3
+    if (currentStep === 1 && formData.documento) {
+      const isDocumentValid = await validateDuplicates('documento', formData.documento);
+      if (!isDocumentValid || duplicateErrors.documento) {
+        isValid = false;
+      }
+    }
+
+    if (currentStep === 3) {
+      if (formData.correo) {
+        const isEmailValid = await validateDuplicates('correo', formData.correo);
+        if (!isEmailValid || duplicateErrors.correo) {
+          isValid = false;
+        }
+      }
+      if (formData.contacto) {
+        const isContactValid = await validateDuplicates('contacto', formData.contacto);
+        if (!isContactValid || duplicateErrors.contacto) {
+          isValid = false;
+        }
+      }
+    }
+
     setFieldErrors(prev => ({ ...prev, ...errors }));
     return isValid;
   };
 
-  const handleNext = () => {
-    if (validateCurrentStep()) {
+  const handleNext = async () => {
+    const isStepValid = await validateCurrentStep();
+    
+    if (isStepValid) {
       if (currentStep < 4) {
         setCurrentStep(currentStep + 1);
       }
     } else {
-      showCustomAlert('error', 'Por favor, completa correctamente todos los campos del paso actual.');
+      let errorMessage = 'Por favor, completa correctamente todos los campos del paso actual.';
+      
+      // Mensajes específicos para duplicados
+      if (duplicateErrors.documento) {
+        errorMessage = 'Ya existe una cuenta con este documento. Inicia sesión en su lugar.';
+      } else if (duplicateErrors.correo) {
+        errorMessage = 'Ya existe una cuenta con este correo. Inicia sesión en su lugar.';
+      } else if (duplicateErrors.contacto) {
+        errorMessage = 'Ya existe una cuenta con este número. Inicia sesión en su lugar.';
+      }
+      
+      showCustomAlert('error', errorMessage);
     }
   };
 
@@ -225,7 +379,12 @@ const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateCurrentStep()) {
+    // Marcar interacción con campos de contraseña antes de validar
+    setHasUserInteracted({ password: true, confirmPassword: true });
+
+    const isStepValid = await validateCurrentStep();
+    
+    if (!isStepValid) {
       showCustomAlert('error', 'Por favor, completa correctamente todos los campos.');
       return;
     }
@@ -249,26 +408,37 @@ const RegisterForm = () => {
       return;
     }
 
+    // Verificar que no haya errores de duplicados
+    if (Object.values(duplicateErrors).some(error => error !== '')) {
+      showCustomAlert('error', 'Por favor, corrige los campos duplicados antes de continuar.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Verificar si el correo ya existe
-      const correoExiste = await authService.verificarCorreoExistente(formData.correo);
-      if (correoExiste) {
-        showCustomAlert('error', 'Ya existe una cuenta con este correo electrónico.');
-        setIsLoading(false);
+      // Ejecutar reCAPTCHA
+      const token = await executeRecaptcha();
+      if (!token) {
+        showCustomAlert('error', 'Error de verificación de seguridad. Inténtalo nuevamente.');
         return;
       }
 
-      // Registrar cliente usando el servicio con el endpoint correcto
-      const result = await authService.registrarCliente(formData);
+      // Registrar cliente usando el servicio con el endpoint correcto y reCAPTCHA
+      const dataWithRecaptcha = {
+        ...formData,
+        recaptchaToken: token
+      };
+      
+      const result = await authService.registrarCliente(dataWithRecaptcha);
 
       if (result.success) {
         showCustomAlert('success', '¡Registro exitoso!');
 
+        // Recargar página después de 2 segundos
         setTimeout(() => {
-          navigate('/iniciar-sesion');
-        }, 1500);
+          window.location.reload();
+        }, 2000);
       } else {
         showCustomAlert('error', result.message || 'Error al registrar usuario');
       }
@@ -281,18 +451,48 @@ const RegisterForm = () => {
     }
   };
 
-  // Función para obtener el ícono de validación
+  // Función para obtener el ícono de validación MEJORADO
   const getValidationIcon = (fieldName) => {
-    const hasError = fieldErrors[fieldName];
+    const hasError = fieldErrors[fieldName] || duplicateErrors[fieldName];
     const hasValue = formData[fieldName];
     
     if (!hasValue) return null;
     
     if (hasError) {
-      return <span className="validation-icon error-icon">❌</span>;
+      return (
+        <span className="validation-icon error-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="#ef4444" fillOpacity="0.2" stroke="#ef4444" strokeWidth="2"/>
+            <line x1="15" y1="9" x2="9" y2="15" stroke="#ef4444" strokeWidth="2"/>
+            <line x1="9" y1="9" x2="15" y2="15" stroke="#ef4444" strokeWidth="2"/>
+          </svg>
+        </span>
+      );
     } else {
-      return <span className="validation-icon success-icon">✅</span>;
+      return (
+        <span className="validation-icon success-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="#10b981" fillOpacity="0.2" stroke="#10b981" strokeWidth="2"/>
+            <polyline points="9,12 12,15 16,10" stroke="#10b981" strokeWidth="2" fill="none"/>
+          </svg>
+        </span>
+      );
     }
+  };
+
+  // Función para obtener el mensaje de error completo (incluyendo duplicados)
+  const getFieldError = (fieldName) => {
+    return fieldErrors[fieldName] || duplicateErrors[fieldName] || '';
+  };
+
+  // Función para verificar si la contraseña cumple con los requisitos
+  const getPasswordRequirementStatus = () => {
+    const password = formData.password;
+    return {
+      length: password.length >= 8,
+      uppercase: /(?=.*[A-Z])/.test(password),
+      special: /(?=.*[!@#$%^&*])/.test(password)
+    };
   };
 
   const renderStep = () => {
@@ -304,7 +504,7 @@ const RegisterForm = () => {
               <div className="input-container">
                 <select
                   name="tipoDocumento"
-                  className={`select-documento ${fieldErrors.tipoDocumento ? 'error' : ''}`}
+                  className={`select-documento ${getFieldError('tipoDocumento') ? 'error' : ''}`}
                   value={formData.tipoDocumento}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -317,7 +517,7 @@ const RegisterForm = () => {
                 </select>
                 {getValidationIcon('tipoDocumento')}
               </div>
-              {fieldErrors.tipoDocumento && <span className="error-message">{fieldErrors.tipoDocumento}</span>}
+              {getFieldError('tipoDocumento') && <span className="error-message">{getFieldError('tipoDocumento')}</span>}
             </div>
             <div className="form-group">
               <div className="input-container">
@@ -328,13 +528,13 @@ const RegisterForm = () => {
                   value={formData.documento}
                   onChange={handleChange}
                   maxLength={fieldLimits.documento}
-                  className={fieldErrors.documento ? 'error' : ''}
+                  className={getFieldError('documento') ? 'error' : ''}
                   disabled={isLoading}
                 />
-                {getValidationIcon('documento')}
+{getValidationIcon('documento')}
               </div>
               <small className="char-counter">{formData.documento.length}/{fieldLimits.documento}</small>
-              {fieldErrors.documento && <span className="error-message">{fieldErrors.documento}</span>}
+              {getFieldError('documento') && <span className="error-message">{getFieldError('documento')}</span>}
             </div>
           </>
         );
@@ -351,13 +551,13 @@ const RegisterForm = () => {
                   value={formData.nombre}
                   onChange={handleChange}
                   maxLength={fieldLimits.nombre}
-                  className={fieldErrors.nombre ? 'error' : ''}
+                  className={getFieldError('nombre') ? 'error' : ''}
                   disabled={isLoading}
                 />
                 {getValidationIcon('nombre')}
               </div>
               <small className="char-counter">{formData.nombre.length}/{fieldLimits.nombre}</small>
-              {fieldErrors.nombre && <span className="error-message">{fieldErrors.nombre}</span>}
+              {getFieldError('nombre') && <span className="error-message">{getFieldError('nombre')}</span>}
             </div>
             <div className="form-group">
               <div className="input-container">
@@ -368,13 +568,13 @@ const RegisterForm = () => {
                   value={formData.apellido}
                   onChange={handleChange}
                   maxLength={fieldLimits.apellido}
-                  className={fieldErrors.apellido ? 'error' : ''}
+                  className={getFieldError('apellido') ? 'error' : ''}
                   disabled={isLoading}
                 />
                 {getValidationIcon('apellido')}
               </div>
               <small className="char-counter">{formData.apellido.length}/{fieldLimits.apellido}</small>
-              {fieldErrors.apellido && <span className="error-message">{fieldErrors.apellido}</span>}
+              {getFieldError('apellido') && <span className="error-message">{getFieldError('apellido')}</span>}
             </div>
           </>
         );
@@ -391,13 +591,13 @@ const RegisterForm = () => {
                   value={formData.correo}
                   onChange={handleChange}
                   maxLength={fieldLimits.correo}
-                  className={fieldErrors.correo ? 'error' : ''}
+                  className={getFieldError('correo') ? 'error' : ''}
                   disabled={isLoading}
                 />
-                {getValidationIcon('correo')}
+{getValidationIcon('correo')}
               </div>
               <small className="char-counter">{formData.correo.length}/{fieldLimits.correo}</small>
-              {fieldErrors.correo && <span className="error-message">{fieldErrors.correo}</span>}
+              {getFieldError('correo') && <span className="error-message">{getFieldError('correo')}</span>}
             </div>
             <div className="form-group">
               <div className="input-container">
@@ -408,18 +608,19 @@ const RegisterForm = () => {
                   value={formData.contacto}
                   onChange={handleChange}
                   maxLength={fieldLimits.contacto}
-                  className={fieldErrors.contacto ? 'error' : ''}
+                  className={getFieldError('contacto') ? 'error' : ''}
                   disabled={isLoading}
                 />
-                {getValidationIcon('contacto')}
+{getValidationIcon('contacto')}
               </div>
               <small className="char-counter">{formData.contacto.length}/{fieldLimits.contacto}</small>
-              {fieldErrors.contacto && <span className="error-message">{fieldErrors.contacto}</span>}
+              {getFieldError('contacto') && <span className="error-message">{getFieldError('contacto')}</span>}
             </div>
           </>
         );
       
       case 4:
+        const requirements = getPasswordRequirementStatus();
         return (
           <>
             <div className="form-group">
@@ -430,7 +631,7 @@ const RegisterForm = () => {
                   placeholder="Contraseña"
                   value={formData.password}
                   onChange={handleChange}
-                  className={fieldErrors.password ? 'error' : ''}
+                  className={getFieldError('password') ? 'error' : ''}
                   disabled={isLoading}
                 />
                 <button
@@ -439,12 +640,44 @@ const RegisterForm = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                 >
-                  {showPassword ? '🔒' : '👁'}
+                  <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
                 </button>
                 {getValidationIcon('password')}
               </div>
               <small className="char-counter">{formData.password.length}/{fieldLimits.password}</small>
-              {fieldErrors.password && <span className="error-message">{fieldErrors.password}</span>}
+              {getFieldError('password') && <span className="error-message">{getFieldError('password')}</span>}
+              
+              {/* Indicadores dinámicos solo cuando hay texto */}
+              {formData.password && (
+                <div className="password-requirements-inline">
+                  <small style={{ color: requirements.length ? '#10b981' : '#ef4444' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', marginRight: '4px' }}>
+                      {requirements.uppercase ? (
+                        <polyline points="20,6 9,17 4,12" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      ) : (
+                        <>
+                          <line x1="18" y1="6" x2="6" y2="18" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"/>
+                          <line x1="6" y1="6" x2="18" y2="18" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"/>
+                        </>
+                      )}
+                    </svg>
+                    Mayúscula
+                  </small>
+                  <small style={{ color: requirements.special ? '#10b981' : '#ef4444' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', marginRight: '4px' }}>
+                      {requirements.special ? (
+                        <polyline points="20,6 9,17 4,12" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      ) : (
+                        <>
+                          <line x1="18" y1="6" x2="6" y2="18" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"/>
+                          <line x1="6" y1="6" x2="18" y2="18" stroke="#ef4444" strokeWidth="3" strokeLinecap="round"/>
+                        </>
+                      )}
+                    </svg>
+                    Especial
+                  </small>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <div className="input-container password-container">
@@ -454,7 +687,7 @@ const RegisterForm = () => {
                   placeholder="Confirmar contraseña"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={fieldErrors.confirmPassword ? 'error' : ''}
+                  className={getFieldError('confirmPassword') ? 'error' : ''}
                   disabled={isLoading}
                 />
                 <button
@@ -463,27 +696,11 @@ const RegisterForm = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
                 >
-                  {showConfirmPassword ? '🔒' : '👁'}
+                  <i className={showConfirmPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
                 </button>
                 {getValidationIcon('confirmPassword')}
               </div>
-              {fieldErrors.confirmPassword && <span className="error-message">{fieldErrors.confirmPassword}</span>}
-            </div>
-            
-            {/* Información sobre requisitos de contraseña */}
-            <div className="password-requirements">
-              <strong>Requisitos de contraseña:</strong>
-              <ul>
-                <li style={{ color: formData.password.length >= 8 ? '#10b981' : '#666' }}>
-                  {formData.password.length >= 8 ? '✅' : '❌'} Al menos 8 caracteres
-                </li>
-                <li style={{ color: /(?=.*[A-Z])/.test(formData.password) ? '#10b981' : '#666' }}>
-                  {/(?=.*[A-Z])/.test(formData.password) ? '✅' : '❌'} Una letra mayúscula
-                </li>
-                <li style={{ color: /(?=.*[!@#$%^&*])/.test(formData.password) ? '#10b981' : '#666' }}>
-                  {/(?=.*[!@#$%^&*])/.test(formData.password) ? '✅' : '❌'} Un carácter especial (!@#$%^&*)
-                </li>
-              </ul>
+              {getFieldError('confirmPassword') && <span className="error-message">{getFieldError('confirmPassword')}</span>}
             </div>
           </>
         );
@@ -497,26 +714,7 @@ const RegisterForm = () => {
     <div className="form-container sign-up">
       {/* Alerta personalizada */}
       {showAlert.show && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 2000,
-            padding: '1rem 1.5rem',
-            borderRadius: '15px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            minWidth: '300px',
-            background:
-              showAlert.type === 'success'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : 'linear-gradient(135deg, #ec4899, #be185d)',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            animation: 'slideInRight 0.5s ease-out',
-          }}
-        >
+        <div className="custom-alert" data-type={showAlert.type}>
           {showAlert.message}
         </div>
       )}
@@ -564,7 +762,7 @@ const RegisterForm = () => {
               onClick={handleNext}
               disabled={isLoading}
             >
-              Siguiente →
+              'Siguiente →'
             </button>
           ) : (
             <button 
@@ -580,220 +778,7 @@ const RegisterForm = () => {
             </button>
           )}
         </div>
-
-        {isLoading && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginTop: '10px'
-          }}>
-            <div style={{
-              width: '20px',
-              height: '20px',
-              border: '2px solid #ffffff',
-              borderTop: '2px solid transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }}></div>
-          </div>
-        )}
       </form>
-
-      <style jsx>{`
-        .form-group {
-          width: 100%;
-          margin-bottom: 15px;
-          position: relative;
-        }
-
-        .input-container {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .password-container {
-          position: relative;
-        }
-
-        .eye-button {
-          position: absolute;
-          right: 0px;
-          top: 50%;
-          transform: translateY(-76%);
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 14px;
-          padding: 0;
-          color: #555;
-          z-index: 10;
-          width: 40px; 
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }}
-
-        .eye-button:hover {
-          background: rgba(255, 255, 255, 1);
-          border-color: #666;
-        }
-
-        .password-container input {
-          padding-right: 75px !important;
-        }
-
-        .validation-icon {
-          right: 70px; /* Modificado de 8px a 12px */
-          position: absolute;
-          right: 8px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 14px;
-          z-index: 5;
-        }
-
-        .error-message {
-          color: #dc3545;
-          font-size: 11px;
-          margin-top: 4px;
-          display: block;
-        }
-
-        .char-counter {
-          position: absolute;
-          right: 5px;
-          top: 35px;
-          font-size: 10px;
-          color: rgba(255, 255, 255, 0.6);
-          background-color: rgba(255, 255, 255, 0.3);
-          padding: 2px 6px;
-          border-radius: 3px;
-        }
-
-        .containerlog input.error,
-        .select-documento.error {
-          border: 2px solid #dc3545 !important;
-          background-color: rgb(255, 255, 255) !important;
-        }
-
-        /* Estilos específicos para el indicador de pasos del registro */
-        .registro-step-indicator {
-          width: 100%;
-          margin-bottom: 20px;
-        }
-
-        .registro-progress-bar {
-          width: 100%;
-          height: 8px;
-          background-color: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 10px;
-          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .registro-progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #ff58a6, #fc0278, #ff007b);
-          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 2px 4px rgba(255, 88, 166, 0.3);
-        }
-
-        .registro-step-text {
-          font-size: 15px;
-          color: rgb(255, 255, 255) !important;
-          font-weight: 600;
-          text-align: center;
-          display: block;
-        }
-
-        .registro-step-title {
-          color: #fff;
-          font-size: 18px;
-          font-weight: 700;
-          margin-bottom: 20px;
-          text-align: center;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-          letter-spacing: 0.5px;
-        }
-
-        .form-navigation {
-          display: flex;
-          gap: 10px;
-          justify-content: space-between;
-          width: 100%;
-          margin-top: 15px;
-        }
-
-        .nav-button {
-          padding: 10px 20px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 12px;
-          text-transform: uppercase;
-          transition: all 0.3s ease;
-          min-width: 100px;
-        }
-
-        .nav-button:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .prev-button {
-          background-color: rgba(255, 255, 255, 0.1);
-          color: #fff;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .prev-button:hover:not(:disabled) {
-          background-color: rgba(255, 255, 255, 0.2);
-          transform: translateY(-1px);
-        }
-
-        .next-button {
-          background-color: #ff58a6;
-          color: #fff;
-          margin-left: auto;
-        }
-
-        .next-button:hover:not(:disabled) {
-          background-color: #fc0278;
-          transform: translateY(-1px);
-        }
-
-        .password-requirements {
-          font-size: 12px;
-          color: rgba(0, 0, 0, 0.8);
-          margin-top: 10px;
-          background-color: rgb(255, 255, 255);
-          padding: 12px;
-          border-radius: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .password-requirements ul {
-          margin: 8px 0;
-          padding-left: 15px;
-        }
-
-        .password-requirements li {
-          margin: 4px 0;
-          transition: color 0.3s ease;
-          list-style: none;
-          padding-left: 0;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

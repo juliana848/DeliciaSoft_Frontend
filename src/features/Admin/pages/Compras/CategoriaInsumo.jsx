@@ -7,11 +7,12 @@ import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import categoriaInsumoApiService from '../../services/categoriainsumos';
+import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false); 
-  const [loadingStates, setLoadingStates] = useState({}); // Para loading individual
+  const [loadingStates, setLoadingStates] = useState({}); 
   const [filtro, setFiltro] = useState('');
   const [notification, setNotification] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [modalVisible, setModalVisible] = useState(false);
@@ -22,16 +23,18 @@ export default function CategoriaTableDemo() {
   const [estadoEditado, setEstadoEditado] = useState(true);
   const [errores, setErrores] = useState({ nombre: '', descripcion: '' });
   const [isEditDeleteEnabled, setIsEditDeleteEnabled] = useState(true);
+  const [mensajeCarga, setMensajeCarga] = useState('Cargando...'); 
 
   useEffect(() => {
     cargarCategorias();
   }, []);
 
   // Función para cargar categorías desde la API
-  const cargarCategorias = async () => {
-    try {
-      setLoading(true);
-      const data = await categoriaInsumoApiService.obtenerCategorias();
+const cargarCategorias = async () => {
+  try {
+    setMensajeCarga('Cargando categorías...'); // ✅ NUEVO
+    setLoading(true);
+    const data = await categoriaInsumoApiService.obtenerCategorias();
       const categoriasTransformadas = data.map(cat => ({
         id: cat.id,
         nombre: cat.nombreCategoria,
@@ -147,11 +150,13 @@ export default function CategoriaTableDemo() {
     return true;
   };
 
-  const guardarEdicion = async () => {
-    if (!validarFormulario()) return;
 
-    try {
-      setLoading(true);
+  const guardarEdicion = async () => {
+  if (!validarFormulario()) return;
+
+  try {
+    setMensajeCarga('Guardando cambios...'); // ✅ NUEVO
+    setLoading(true);
       
       const datosCategoria = {
         nombreCategoria: nombreEditado.trim(),
@@ -186,8 +191,9 @@ export default function CategoriaTableDemo() {
   };
 
   const confirmarEliminar = async () => {
-    try {
-      setLoading(true);
+  try {
+    setMensajeCarga('Eliminando categoría...'); // ✅ NUEVO
+    setLoading(true);
       await categoriaInsumoApiService.eliminarCategoria(categoriaSeleccionada.id);
       const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
       setCategorias(updated);
@@ -203,11 +209,12 @@ export default function CategoriaTableDemo() {
   };
 
   // Función para guardar nueva categoría usando API
-  const guardarNuevaCategoria = async () => {
-    if (!validarFormulario()) return;
+const guardarNuevaCategoria = async () => {
+  if (!validarFormulario()) return;
 
-    try {
-      setLoading(true);
+  try {
+    setMensajeCarga('Agregando categoría...'); // ✅ NUEVO
+    setLoading(true);
       
       // Preparar datos para la API
       const datosCategoria = {
@@ -250,9 +257,11 @@ export default function CategoriaTableDemo() {
     );
   });
 
-  return (
-    <div className="admin-wrapper">
-      <Notification
+return (
+  <div className="admin-wrapper">
+    {loading && <LoadingSpinner mensaje={mensajeCarga} fullScreen={true} />}
+    
+    <Notification
         visible={notification.visible}
         mensaje={notification.mensaje}
         tipo={notification.tipo}

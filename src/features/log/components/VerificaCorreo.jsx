@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, ArrowRight } from 'lucide-react';
+import authService from '../../Admin/services/authService';
 
 const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
   const [correo, setCorreo] = useState('');
@@ -21,24 +22,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
     }, 4000);
   };
 
-  const handleResponse = async (response) => {
-    const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      return { isJson: true, data };
-    } else {
-      const text = await response.text();
-      console.error('Respuesta no-JSON recibida:', text.substring(0, 200));
-      return { 
-        isJson: false, 
-        data: { 
-          message: 'Error del servidor: respuesta inválida' 
-        } 
-      };
-    }
-  };
-
   const manejarEnvio = async (e) => {
     e.preventDefault();
     
@@ -56,101 +39,26 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Primera petición: buscar el usuario en ambas tablas
-      const findUserResponse = await fetch('https://deliciasoft-backend.onrender.com/api/auth/find-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          correo: correo
-        }),
-      });
-
-      let userData;
-      let userType = 'cliente'; // Por defecto
-
-      if (findUserResponse.ok) {
-        const findResult = await findUserResponse.json();
-        if (!findResult.found) {
-          showCustomAlert('error', 'No existe una cuenta con este correo electrónico.');
-          setIsLoading(false);
-          return;
-        }
-        userType = findResult.userType;
-        userData = findResult;
-      } else {
-        // Fallback: simular búsqueda exitosa para testing
-        console.warn('API de búsqueda no disponible, usando modo prueba');
-        userData = { found: true, userType: 'cliente' };
-      }
-
-      // Segunda petición: solicitar código de recuperación
-      const response = await fetch('https://deliciasoft-backend.onrender.com/api/auth/request-password-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          correo: correo,
-          userType: userType
-        }),
-      });
-
-      const { isJson, data } = await handleResponse(response);
-
-      if (!isJson) {
-        console.warn('Endpoint de recuperación no disponible, generando código localmente');
-        const codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        showCustomAlert('success', '✅ Código generado (modo desarrollo): ' + codigoGenerado);
-        
-        sessionStorage.setItem('tempEmailRecovery', correo);
-        sessionStorage.setItem('tempUserType', userType);
-        
-        setTimeout(() => {
-          onCodigoGenerado(codigoGenerado);
-        }, 2000);
-        
-        setIsLoading(false);
-        return;
-      }
-
-      if (response.ok) {
+      console.log('Solicitando recuperación de contraseña para:', correo);
+      
+      // USAR EL NUEVO MÉTODO DEL SERVICIO
+      const result = await authService.solicitarRecuperacionPassword(correo);
+      
+      if (result.success) {
         showCustomAlert('success', '✅ Código enviado a tu correo electrónico');
         
         sessionStorage.setItem('tempEmailRecovery', correo);
-        sessionStorage.setItem('tempUserType', userType);
-        
-        const codigo = data.codigo || Math.floor(100000 + Math.random() * 900000).toString();
         
         setTimeout(() => {
-          onCodigoGenerado(codigo);
+          onCodigoGenerado(result.codigo);
         }, 1500);
       } else {
-        showCustomAlert('error', data.message || 'Error al enviar el código');
+        showCustomAlert('error', result.message || 'Error al enviar el código');
       }
 
     } catch (error) {
       console.error('Error:', error);
-      
-      if (error.message.includes('fetch')) {
-        console.warn('Error de conexión, generando código localmente para testing');
-        const codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        showCustomAlert('success', '✅ Código generado (modo offline): ' + codigoGenerado);
-        
-        sessionStorage.setItem('tempEmailRecovery', correo);
-        sessionStorage.setItem('tempUserType', 'cliente');
-        
-        setTimeout(() => {
-          onCodigoGenerado(codigoGenerado);
-        }, 2000);
-      } else {
-        showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
-      }
+      showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -348,6 +256,20 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
           opacity: 0.6 !important;
           cursor: not-allowed !important;
           transform: none !important;
+        }
+
+        .spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top: 2px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 640px) {

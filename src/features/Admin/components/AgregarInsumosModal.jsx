@@ -89,10 +89,30 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
 
         const data = await response.json();
         console.log('🚀 Datos RAW de insumos desde API:', data);
+        
+        // **FILTRAR SOLO INSUMOS ACTIVOS**
+        const insumosActivos = data.filter(insumo => {
+          // Buscar diferentes campos posibles para el estado
+          const estado = insumo.estado || insumo.activo || insumo.active || insumo.isActive;
+          
+          // Verificar si es boolean true o string 'true'/'activo'
+          if (typeof estado === 'boolean') {
+            return estado === true;
+          } else if (typeof estado === 'string') {
+            return estado.toLowerCase() === 'true' || estado.toLowerCase() === 'activo';
+          } else if (typeof estado === 'number') {
+            return estado === 1;
+          }
+          
+          // Si no hay campo de estado definido, asumir que está activo
+          return true;
+        });
+
+        console.log(`📊 Insumos filtrados: ${insumosActivos.length} activos de ${data.length} totales`);
         console.log('📋 Campos disponibles en primer insumo:', Object.keys(data[0] || {}));
         
         // Verificar si hay campo de precio en los datos
-        const tienePrecio = data.some(insumo => 
+        const tienePrecio = insumosActivos.some(insumo => 
           insumo.precio !== undefined && 
           insumo.precio !== null && 
           parseFloat(insumo.precio) > 0
@@ -101,23 +121,27 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         console.log('💰 ¿Los datos incluyen precios?', tienePrecio);
         
         // Transformar datos de la API al formato esperado
-        const insumosTransformados = data.map(insumo => {
-          // Intentar obtener precio real de la base de datos
+// Transformar datos de la API al formato esperado
+        const insumosTransformados = insumosActivos.map(insumo => {
+          // **OBTENER PRECIO REAL DE LA BASE DE DATOS**
           let precio = 0;
           let esPrecioReal = false;
           
-          if (insumo.precio !== undefined && insumo.precio !== null) {
-            const precioNumerico = parseFloat(insumo.precio);
+          // Intentar obtener el precio de diferentes posibles campos
+          const precioRaw = insumo.precio || insumo.preciounitario || insumo.precioUnitario || insumo.precio_unitario;
+          
+          if (precioRaw !== undefined && precioRaw !== null) {
+            const precioNumerico = parseFloat(precioRaw);
             if (!isNaN(precioNumerico) && precioNumerico > 0) {
               precio = precioNumerico;
               esPrecioReal = true;
+              console.log(`✅ Precio encontrado para ${insumo.nombreinsumo}: $${precio}`);
             }
           }
           
-          // Si no hay precio real, usar estimado
-          if (precio === 0) {
-            precio = obtenerPrecioEstimado(insumo.nombreinsumo, insumo.categoriainsumos?.nombrecategoria);
-            esPrecioReal = false;
+          // Si no hay precio, dejar en 0 para que se pueda configurar
+          if (!esPrecioReal) {
+            console.log(`⚠️ Sin precio para ${insumo.nombreinsumo}, debe configurarse manualmente`);
           }
           
           const insumoTransformado = {
@@ -133,17 +157,18 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
               insumo.nombreinsumo
             ),
             esPrecioReal: esPrecioReal,
+            estado: insumo.estado || true,
             datosOriginales: insumo
           };
           
-          console.log(`${esPrecioReal ? '✅' : '⚠️'} ${insumoTransformado.nombre}: $${precio} (${esPrecioReal ? 'real' : 'estimado'})`);
+          console.log(`${esPrecioReal ? '✅' : '⚠️'} ${insumoTransformado.nombre}: $${precio} (${esPrecioReal ? 'BD' : 'sin precio'})`);
           
           return insumoTransformado;
         });
 
-        console.log('📦 Total insumos transformados:', insumosTransformados.length);
-        console.log('💵 Insumos con precio real:', insumosTransformados.filter(i => i.esPrecioReal).length);
-        console.log('⚠️ Insumos con precio estimado:', insumosTransformados.filter(i => !i.esPrecioReal).length);
+        console.log('📦 Total insumos activos transformados:', insumosTransformados.length);
+        console.log('💵 Insumos con precio de BD:', insumosTransformados.filter(i => i.esPrecioReal).length);
+        console.log('⚠️ Insumos sin precio:', insumosTransformados.filter(i => !i.esPrecioReal).length);
 
         setInsumos(insumosTransformados);
         
@@ -168,6 +193,12 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   );
 
   const toggleInsumo = (insumo) => {
+    // **VALIDAR PRECIO ANTES DE AGREGAR**
+    if (insumo.precio <= 0) {
+      alert(`⚠️ El insumo "${insumo.nombre}" no tiene precio configurado. Por favor, edita el precio primero haciendo clic en el botón ✏️`);
+      return;
+    }
+    
     console.log('🎯 Seleccionando insumo:', {
       nombre: insumo.nombre,
       precio: insumo.precio,
@@ -189,7 +220,13 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const abrirModalPrecio = (insumo, e) => {
     e.stopPropagation(); // Evitar que se seleccione el insumo
     setInsumoParaPrecio(insumo);
-    setPrecioTemporal(insumo.precio.toString());
+    
+    // Si no tiene precio, sugerir uno estimado
+    const precioInicial = insumo.precio > 0 
+      ? insumo.precio.toString() 
+      : obtenerPrecioEstimado(insumo.nombre, insumo.category).toString();
+      
+    setPrecioTemporal(precioInicial);
     setMostrarModalPrecio(true);
   };
 
@@ -197,7 +234,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
     try {
       const nuevoPrecio = parseFloat(precioTemporal);
       if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
-        alert('Por favor ingresa un precio válido');
+        alert('Por favor ingresa un precio válido mayor a 0');
         return;
       }
 
@@ -221,12 +258,22 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
       setMostrarModalPrecio(false);
       setInsumoParaPrecio(null);
       setPrecioTemporal('');
+      
+      console.log(`✅ Precio actualizado para ${insumoParaPrecio.nombre}: $${nuevoPrecio}`);
     } catch (error) {
       alert('Error al actualizar el precio: ' + error.message);
     }
   };
 
   const handleAgregar = () => {
+    // **VALIDAR QUE TODOS LOS INSUMOS SELECCIONADOS TENGAN PRECIO**
+    const insumosSinPrecio = selectedInsumos.filter(insumo => insumo.precio <= 0);
+    
+    if (insumosSinPrecio.length > 0) {
+      alert(`⚠️ Los siguientes insumos no tienen precio configurado: ${insumosSinPrecio.map(i => i.nombre).join(', ')}. Por favor, configura los precios antes de continuar.`);
+      return;
+    }
+    
     console.log('📤 Enviando insumos seleccionados:', selectedInsumos);
     onAgregar(selectedInsumos);
     onClose();
@@ -245,7 +292,7 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 20px'
           }}></div>
-          <p>Cargando insumos...</p>
+          <p>Cargando insumos activos...</p>
         </div>
       </div>
     );
@@ -265,8 +312,8 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
     );
   }
 
-  const insumosConPrecioReal = insumos.filter(i => i.esPrecioReal).length;
-  const insumosConPrecioEstimado = insumos.filter(i => !i.esPrecioReal).length;
+  const insumosConPrecio = insumos.filter(i => i.precio > 0).length;
+  const insumosSinPrecio = insumos.filter(i => i.precio <= 0).length;
 
   return (
     <div className="adicion-modal-overlay">
@@ -410,6 +457,11 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             background: #ffe4ec;
           }
 
+          .adicion-modal-card-sin-precio {
+            border-color: #ffa500;
+            background: #fff8e1;
+          }
+
           .adicion-modal-card img {
             width: 100px;
             height: 100px;
@@ -436,10 +488,11 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             font-size: 14px;
           }
 
-          .adicion-modal-card .precio-estimado {
+          .adicion-modal-card .precio-sin-configurar {
             font-weight: bold;
             color: #ffa500;
             font-size: 14px;
+            font-style: italic;
           }
 
           .btn-editar-precio {
@@ -461,6 +514,17 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
 
           .btn-editar-precio:hover {
             background: #d63384;
+          }
+
+          .btn-editar-precio.sin-precio {
+            background: #ffa500;
+            animation: pulse 2s infinite;
+          }
+
+          @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
           }
 
           .modal-precio {
@@ -590,30 +654,30 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         `}</style>
 
         <div className="adicion-modal-header">
-          <h2>Seleccionar Insumos</h2>
+          <h2>Seleccionar Insumos Activos</h2>
           <button onClick={onClose} className="adicion-modal-close-btn">&times;</button>
         </div>
 
-        {insumosConPrecioReal > 0 && insumosConPrecioEstimado > 0 ? (
-          <div className="info-message">
-            ✅ <strong>Precios disponibles:</strong> {insumosConPrecioReal} insumos tienen precio real, 
-            {insumosConPrecioEstimado} usan precio estimado. Haz clic en el botón ✏️ para actualizar precios.
-          </div>
-        ) : insumosConPrecioEstimado > 0 ? (
+        {insumosConPrecio > 0 && insumosSinPrecio > 0 ? (
           <div className="warning-message">
-            ⚠️ <strong>Nota:</strong> Los precios mostrados son estimados. 
-            Haz clic en el botón ✏️ para establecer precios reales.
+            ⚠️ <strong>Atención:</strong> {insumosConPrecio} insumos tienen precio configurado, 
+            pero {insumosSinPrecio} necesitan precio. Haz clic en ✏️ para configurar precios antes de agregar.
+          </div>
+        ) : insumosSinPrecio > 0 ? (
+          <div className="warning-message">
+            ⚠️ <strong>Importante:</strong> Todos los insumos necesitan precio configurado. 
+            Haz clic en ✏️ para establecer precios desde la base de datos.
           </div>
         ) : (
           <div className="info-message">
-            ✅ <strong>Excelente:</strong> Todos los insumos tienen precios reales configurados.
+            ✅ <strong>Perfecto:</strong> Todos los insumos activos tienen precios configurados en la base de datos.
           </div>
         )}
 
         <div className="adicion-modal-search-container">
           <input
             type="text"
-            placeholder="Buscar insumo..."
+            placeholder="Buscar insumo activo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -644,22 +708,23 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
 
         {filteredInsumos.length === 0 && !cargando ? (
           <div className="no-results">
-            <p>No se encontraron insumos con los criterios de búsqueda</p>
+            <p>No se encontraron insumos activos con los criterios de búsqueda</p>
           </div>
         ) : (
           <div className="adicion-modal-grid">
             {filteredInsumos.map(insumo => {
               const isSelected = selectedInsumos.some(i => i.id === insumo.id);
+              const sinPrecio = insumo.precio <= 0;
               return (
                 <div
                   key={insumo.id}
-                  className={`adicion-modal-card ${isSelected ? 'adicion-modal-card-selected' : ''}`}
+                  className={`adicion-modal-card ${isSelected ? 'adicion-modal-card-selected' : ''} ${sinPrecio ? 'adicion-modal-card-sin-precio' : ''}`}
                   onClick={() => toggleInsumo(insumo)}
                 >
                   <button 
-                    className="btn-editar-precio"
+                    className={`btn-editar-precio ${sinPrecio ? 'sin-precio' : ''}`}
                     onClick={(e) => abrirModalPrecio(insumo, e)}
-                    title="Editar precio"
+                    title={sinPrecio ? "⚠️ Configurar precio" : "Editar precio"}
                   >
                     ✏️
                   </button>
@@ -682,14 +747,19 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
                   </div>
                   <h4>{insumo.nombre}</h4>
                   <p>{insumo.unidad}</p>
-                  <p className={insumo.esPrecioReal ? "precio-real" : "precio-estimado"}>
-                    {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                      minimumFractionDigits: 0
-                    }).format(insumo.precio)}
-                    {!insumo.esPrecioReal && ' *'}
-                  </p>
+                  {insumo.precio > 0 ? (
+                    <p className="precio-real">
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0
+                      }).format(insumo.precio)}
+                    </p>
+                  ) : (
+                    <p className="precio-sin-configurar">
+                      Sin precio ⚠️
+                    </p>
+                  )}
                   {insumo.category !== 'Sin categoría' && (
                     <p style={{ fontSize: '10px', fontStyle: 'italic' }}>{insumo.category}</p>
                   )}
@@ -702,11 +772,11 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
 
         <div className="adicion-modal-footer">
           <div className="adicion-modal-info">
-            {filteredInsumos.length} insumos disponibles
+            {filteredInsumos.length} insumos activos disponibles
             <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
-              {insumosConPrecioReal > 0 && `✅ ${insumosConPrecioReal} con precio real`}
-              {insumosConPrecioReal > 0 && insumosConPrecioEstimado > 0 && ' | '}
-              {insumosConPrecioEstimado > 0 && `* ${insumosConPrecioEstimado} estimados`}
+              {insumosConPrecio > 0 && `✅ ${insumosConPrecio} con precio`}
+              {insumosConPrecio > 0 && insumosSinPrecio > 0 && ' | '}
+              {insumosSinPrecio > 0 && `⚠️ ${insumosSinPrecio} sin precio`}
             </div>
           </div>
           <div className="adicion-modal-buttons">
@@ -727,14 +797,23 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         {mostrarModalPrecio && (
           <div className="modal-precio">
             <div className="modal-precio-contenido">
-              <h3>Actualizar precio de {insumoParaPrecio?.nombre}</h3>
+              <h3>
+                {insumoParaPrecio?.precio > 0 ? 'Actualizar precio de' : 'Configurar precio de'} {insumoParaPrecio?.nombre}
+              </h3>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+                {insumoParaPrecio?.precio > 0 
+                  ? `Precio actual: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(insumoParaPrecio.precio)}`
+                  : 'Este insumo no tiene precio configurado'
+                }
+              </p>
               <input
                 type="number"
                 value={precioTemporal}
                 onChange={(e) => setPrecioTemporal(e.target.value)}
-                placeholder="Ingrese el precio"
+                placeholder="Ingrese el precio en COP"
                 min="0"
-                step="0.01"
+                step="1"
+                autoFocus
               />
               <div className="modal-precio-botones">
                 <button 
@@ -750,8 +829,9 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
                 <button 
                   className="adicion-modal-btn adicion-modal-btn-add"
                   onClick={guardarPrecio}
+                  disabled={!precioTemporal || parseFloat(precioTemporal) <= 0}
                 >
-                  Guardar
+                  {insumoParaPrecio?.precio > 0 ? 'Actualizar' : 'Configurar'} Precio
                 </button>
               </div>
             </div>

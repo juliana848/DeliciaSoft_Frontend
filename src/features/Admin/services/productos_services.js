@@ -1,5 +1,5 @@
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/productogeneral";
-const IMAGENES_URL = "https://deliciasoft-backend.onrender.com/api/imagenes";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/productogeneral";
+const IMAGENES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/imagenes";
 
 class ProductoApiService {
   constructor() {
@@ -669,6 +669,76 @@ class ProductoApiService {
       throw error;
     }
   }
+
+  async obtenerProductosConRecetas() {
+  try {
+    console.log('Obteniendo productos con recetas desde la API...');
+    
+    const response = await fetch(`${BASE_URL}`, {
+      method: "GET",
+      headers: this.baseHeaders,
+    });
+    
+    const data = await this.handleResponse(response);
+    console.log('Productos con recetas recibidos:', data);
+    
+    // Transformar productos incluyendo información de recetas
+    const productosConRecetas = data.map(producto => {
+      const productoBase = this.transformarProductoDesdeAPI(producto);
+      
+      return {
+        ...productoBase,
+        // Información de receta si existe
+        receta: producto.receta ? {
+          id: producto.receta.idreceta || producto.idreceta,
+          nombre: producto.receta.nombrereceta || producto.nombrereceta,
+          especificaciones: producto.receta.especificaciones || producto.especificacionesreceta,
+          // Si necesitas detalles de insumos de la receta, deberás hacer otra llamada
+          insumos: [] // Se llenará con otra llamada si es necesario
+        } : null
+      };
+    });
+    
+    console.log('Productos transformados con recetas:', productosConRecetas);
+    return productosConRecetas;
+    
+  } catch (error) {
+    console.error('Error al obtener productos con recetas:', error);
+    throw new Error(`No se pudieron obtener los productos con recetas: ${error.message}`);
+  }
+}
+
+// Método auxiliar para obtener detalles completos de una receta
+async obtenerDetalleReceta(idReceta) {
+  try {
+    console.log(`Obteniendo detalle de receta ${idReceta}...`);
+    
+    const RECETA_URL = "https://deliciasoft-backend.onrender.com/api/receta";
+    const response = await fetch(`${RECETA_URL}/${idReceta}`, {
+      method: "GET",
+      headers: this.baseHeaders,
+    });
+    
+    const receta = await this.handleResponse(response);
+    console.log('Detalle de receta obtenido:', receta);
+    
+    return {
+      id: receta.idreceta,
+      nombre: receta.nombrereceta,
+      especificaciones: receta.especificaciones,
+      insumos: receta.detallereceta?.map(detalle => ({
+        id: detalle.idinsumo,
+        nombre: detalle.insumos?.nombreinsumo || 'Sin nombre',
+        cantidad: parseFloat(detalle.cantidad || 0),
+        unidad: detalle.unidadmedida?.unidadmedida || 'unidad'
+      })) || []
+    };
+    
+  } catch (error) {
+    console.error(`Error al obtener detalle de receta ${idReceta}:`, error);
+    return null;
+  }
+}
 
   async obtenerEstadisticas() {
     try {

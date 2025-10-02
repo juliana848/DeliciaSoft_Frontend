@@ -1,0 +1,646 @@
+/* VentasCrear.css - Tema Gris y Rosa (igual a CompraForm) */
+.compra-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header-info {
+    margin-bottom: 24px;
+}
+
+.info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.1);
+    border: 1px solid #d1d5db;
+}
+
+.badge-icon {
+    font-size: 16px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.title-icon {
+    font-size: 24px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Estilos para compra-fields-grid (usado en ventas) */
+.compra-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-group label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+}
+
+.field-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+}
+
+.form-input,
+.field-group input,
+.field-group select {
+    padding: 12px 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: white;
+    color: #374151;
+}
+
+.form-input:focus,
+.field-group input:focus,
+.field-group select:focus {
+    outline: none;
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+.form-input.error,
+.field-group input.field-error,
+.field-group select.field-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-input:disabled,
+.field-disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    border-color: #e5e7eb;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 4px solid #ef4444;
+    font-weight: 500;
+}
+
+.error-icon {
+    font-size: 16px;
+}
+
+.table-container {
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 20px;
+}
+
+.products-table,
+.compra-detalle-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.products-table th,
+.compra-detalle-table th {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    color: #374151;
+    font-weight: 600;
+    padding: 16px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 14px;
+}
+
+.products-table td,
+.compra-detalle-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: #374151;
+}
+
+.product-row:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.compra-detalle-table tbody tr:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.product-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.quantity-cell {
+    text-align: center;
+}
+
+.quantity-input {
+    width: 80px;
+    padding: 8px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 14px;
+    color: #374151;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #ec4899;
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.1);
+}
+
+.quantity-display {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.unit-cell {
+    text-align: center;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.price-cell,
+.subtotal-cell {
+    text-align: right;
+    font-weight: 600;
+    color: #374151;
+}
+
+.action-cell {
+    text-align: center;
+}
+
+.delete-btn,
+.btn-eliminar {
+    min-width: 36px;
+    height: 36px;
+    border: none;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.delete-btn:hover,
+.btn-eliminar:hover {
+    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+    transform: scale(1.05);
+}
+
+.add-products-btn,
+.btn-agregar-insumos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+}
+
+.add-products-btn:hover,
+.btn-agregar-insumos:hover {
+    background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+.totals-section {
+    margin-bottom: 32px;
+}
+
+.totals-grid,
+.compra-totales-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.total-card,
+.total-item {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.total-item {
+    justify-content: space-between;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-left: 4px solid #6b7280;
+}
+
+.total-item span:first-child {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.total-item span:last-child {
+    font-size: 20px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.total-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.subtotal-card {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-left: 4px solid #6b7280;
+}
+
+.total-card-main {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+    border-left: 4px solid #ec4899;
+    box-shadow: 0 6px 25px rgba(236, 72, 153, 0.2);
+}
+
+.card-icon {
+    font-size: 32px;
+    opacity: 0.8;
+}
+
+.card-content {
+    flex: 1;
+}
+
+.card-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.card-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.total-value {
+    font-size: 24px;
+    color: #ec4899;
+}
+
+.action-buttons,
+.compra-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn,
+.modal-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.btn-cancel,
+.cancel-btn {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #6b7280;
+    border: 2px solid #d1d5db;
+}
+
+.btn-cancel:hover,
+.cancel-btn:hover {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    color: #374151;
+    transform: translateY(-1px);
+}
+
+.btn-save,
+.save-btn {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+}
+
+.btn-save:hover,
+.save-btn:hover {
+    background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+}
+
+.btn-save:disabled,
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Dropdown de clientes */
+.clientes-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+}
+
+.cliente-option {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.cliente-option:hover {
+    background-color: #fdf2f8;
+}
+
+.cliente-option:last-child {
+    border-bottom: none;
+}
+
+.cliente-nombre {
+    font-weight: 500;
+    color: #374151;
+}
+
+.cliente-documento {
+    font-size: 0.9em;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Estilos para botones pequeños */
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-small:hover {
+    background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+    transform: translateY(-1px);
+}
+
+.btn-eliminar-nested {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+    padding: 2px 8px;
+    margin-left: 8px;
+}
+
+.btn-eliminar-nested:hover {
+    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+}
+
+.toggle-details-btn {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #374151;
+}
+
+/* Estilos para lista de elementos anidados */
+.nested-item-list {
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 6px;
+    margin: 4px 0;
+}
+
+.nested-item-list > div {
+    padding: 4px 0;
+    color: #374151;
+    font-size: 13px;
+}
+
+.nested-item-list strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #1f2937;
+}
+
+/* Estilos adicionales para la sección de detalle */
+.detalle-section {
+    margin-bottom: 24px;
+}
+
+.detalle-section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+.section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    margin: 24px 0;
+}
+
+/* Estilos para estados */
+.estado-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estado-activa {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+}
+
+.estado-anulada {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+}
+
+.estado-espera {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
+.estado-produccion {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+}
+
+.estado-entregar {
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+    color: #3730a3;
+}
+
+.estado-finalizado {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .compra-form-container {
+        padding: 16px;
+    }
+
+    .form-grid,
+    .compra-fields-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .totals-grid,
+    .compra-totales-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .products-table,
+    .compra-detalle-table {
+        font-size: 12px;
+    }
+
+    .products-table th,
+    .products-table td,
+    .compra-detalle-table th,
+    .compra-detalle-table td {
+        padding: 8px 6px;
+    }
+
+    .action-buttons,
+    .compra-header-actions {
+        flex-direction: column;
+    }
+
+    .btn,
+    .modal-btn {
+        justify-content: center;
+    }
+
+    .total-card,
+    .total-item {
+        padding: 16px;
+    }
+
+    .card-icon {
+        font-size: 28px;
+    }
+
+    .card-value {
+        font-size: 18px;
+    }
+
+    .total-value {
+        font-size: 20px;
+    }
+}

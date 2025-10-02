@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import ventaApiService from '../services/venta_services';
+import compraApiService from '../services/compras_services';
+import productosApiService from '../services/productos_services';
 
 const Dashboard = () => {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('diario');
@@ -7,124 +10,528 @@ const Dashboard = () => {
   const [mostrarCompras, setMostrarCompras] = useState(true);
   const [sedeSeleccionada, setSedeSeleccionada] = useState('todas');
   const [ventasRealTime, setVentasRealTime] = useState([]);
+  const [sedes, setSedes] = useState([]);
   const [periodoTorta, setPeriodoTorta] = useState('diario');
   const [mostrarPorcentajes, setMostrarPorcentajes] = useState(false);
   const [tortaExpandida, setTortaExpandida] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [datosVentas, setDatosVentas] = useState({
+    diarios: [],
+    semanales: [],
+    mensuales: []
+  });
+  const [datosCompras, setDatosCompras] = useState({
+    diarios: [],
+    semanales: [],
+    mensuales: []
+  });
+  const [datosCategorias, setDatosCategorias] = useState({
+    diarias: [],
+    semanales: [],
+    mensuales: []
+  });
 
-  // Datos para diferentes períodos
-  const datosDiarios = [
-    { periodo: 'Lun', ventas: 4800, compras: 2200 },
-    { periodo: 'Mar', ventas: 3600, compras: 1800 },
-    { periodo: 'Mie', ventas: 5100, compras: 2400 },
-    { periodo: 'Jue', ventas: 4200, compras: 2000 },
-    { periodo: 'Vie', ventas: 5600, compras: 2800 },
-    { periodo: 'Sab', ventas: 3100, compras: 1500 },
-    { periodo: 'Dom', ventas: 3900, compras: 1900 }
-  ];
+  // Funciones para procesar datos
+  const procesarDatosCompras = (compras) => {
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    // Inicializar acumuladores
+    const comprasDiarias = new Array(7).fill(0);
+    const comprasSemanales = new Array(4).fill(0);
+    const comprasMensuales = new Array(12).fill(0);
 
-  const datosSemanales = [
-    { periodo: 'Semana 1', ventas: 28500, compras: 14200 },
-    { periodo: 'Semana 2', ventas: 32100, compras: 15800 },
-    { periodo: 'Semana 3', ventas: 29800, compras: 14500 },
-    { periodo: 'Semana 4', ventas: 35200, compras: 17100 }
-  ];
+    // Procesar cada compra
+    compras.forEach(compra => {
+      const fecha = new Date(compra.fechacompra || compra.fechaCompra);
+      const dia = fecha.getDay(); // 0-6
+      const mes = fecha.getMonth(); // 0-11
+      const semana = Math.floor(fecha.getDate() / 7); // 0-3
+      const total = parseFloat(compra.total || 0);
 
-  const datosMensuales = [
-    { periodo: 'Enero', ventas: 85000, compras: 42000 },
-    { periodo: 'Febrero', ventas: 92000, compras: 45000 },
-    { periodo: 'Marzo', ventas: 88000, compras: 43500 },
-    { periodo: 'Abril', ventas: 95000, compras: 47000 },
-    { periodo: 'Mayo', ventas: 102000, compras: 49500 },
-    { periodo: 'Junio', ventas: 78000, compras: 38000 }
-  ];
+      comprasDiarias[dia] += total;
+      if (semana < 4) comprasSemanales[semana] += total;
+      comprasMensuales[mes] += total;
+    });
 
-  // Datos de categorías diferenciados por período
-  const categoriasDiarias = [
-    { categoria: 'Fresas con Crema', ventas: 1200, color: '#FF1493' },
-    { categoria: 'Obleas', ventas: 800, color: '#FF69B4' },
-    { categoria: 'Cupcakes', ventas: 950, color: '#FFB6C1' },
-    { categoria: 'Postres', ventas: 700, color: '#FF20B2' },
-    { categoria: 'Tortas', ventas: 600, color: '#DC143C' },
-    { categoria: 'Arroz con Leche', ventas: 450, color: '#FF8FA3' },
-    { categoria: 'Sándwiches', ventas: 320, color: '#FF007F' }
-  ];
+    // Formatear datos
+    const datosDiarios = diasSemana.map((dia, index) => ({
+      periodo: dia,
+      compras: comprasDiarias[index]
+    }));
 
-  const categoriasSemanales = [
-    { categoria: 'Fresas con Crema', ventas: 8400, color: '#FF1493' },
-    { categoria: 'Obleas', ventas: 5600, color: '#FF69B4' },
-    { categoria: 'Cupcakes', ventas: 6650, color: '#FFB6C1' },
-    { categoria: 'Postres', ventas: 4900, color: '#FF20B2' },
-    { categoria: 'Tortas', ventas: 4200, color: '#DC143C' },
-    { categoria: 'Arroz con Leche', ventas: 3150, color: '#FF8FA3' },
-    { categoria: 'Sándwiches', ventas: 2240, color: '#FF007F' }
-  ];
+    const datosSemanales = comprasSemanales.map((total, index) => ({
+      periodo: `Semana ${index + 1}`,
+      compras: total
+    }));
 
-  const categoriasMensuales = [
-    { categoria: 'Fresas con Crema', ventas: 33600, color: '#FF1493' },
-    { categoria: 'Obleas', ventas: 22400, color: '#FF69B4' },
-    { categoria: 'Cupcakes', ventas: 26600, color: '#FFB6C1' },
-    { categoria: 'Postres', ventas: 19600, color: '#FF20B2' },
-    { categoria: 'Tortas', ventas: 16800, color: '#DC143C' },
-    { categoria: 'Arroz con Leche', ventas: 12600, color: '#FF8FA3' },
-    { categoria: 'Sándwiches', ventas: 8960, color: '#FF007F' }
-  ];
+    const datosMensuales = meses.map((mes, index) => ({
+      periodo: mes,
+      compras: comprasMensuales[index]
+    }));
 
-  const productos = [
-    { id: 1, nombre: 'Fresas con Crema', imagen: 'https://images.unsplash.com/photo-1464454709131-ffd692591ee5?w=100&h=100&fit=crop&crop=center', precio: 8500, categoria: 'Fresas con Crema' },
-    { id: 2, nombre: 'Obleas', imagen: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=100&h=100&fit=crop&crop=center', precio: 4500, categoria: 'Obleas' },
-    { id: 3, nombre: 'Arroz con Leche', imagen: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=100&h=100&fit=crop&crop=center', precio: 6000, categoria: 'Arroz con Leche' },
-    { id: 4, nombre: 'Cupcakes', imagen: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=100&h=100&fit=crop&crop=center', precio: 7200, categoria: 'Cupcakes' },
-    { id: 5, nombre: 'Torta de Chocolate', imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop&crop=center', precio: 15000, categoria: 'Tortas' },
-    { id: 6, nombre: 'Postre de Fresa', imagen: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=100&h=100&fit=crop&crop=center', precio: 5500, categoria: 'Postres' },
-    { id: 7, nombre: 'Sándwich Club', imagen: 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=100&h=100&fit=crop&crop=center', precio: 9500, categoria: 'Sándwiches' }
-  ];
+    return { datosDiarios, datosSemanales, datosMensuales };
+  };
 
-  const sedes = ['San Pablo', 'San Benito'];
+  const procesarDatosVentas = (ventas) => {
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    // Inicializar acumuladores
+    const ventasDiarias = new Array(7).fill(0);
+    const ventasSemanales = new Array(4).fill(0);
+    const ventasMensuales = new Array(12).fill(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nuevoProducto = productos[Math.floor(Math.random() * productos.length)];
-      const sede = sedes[Math.floor(Math.random() * sedes.length)];
-      const cantidad = Math.floor(Math.random() * 5) + 1;
+    // Procesar cada venta
+    ventas.forEach(venta => {
+      const fecha = new Date(venta.fechaventa || venta.fechaVenta);
+      const dia = fecha.getDay(); // 0-6
+      const mes = fecha.getMonth(); // 0-11
+      const semana = Math.floor(fecha.getDate() / 7); // 0-3
+      const total = parseFloat(venta.total || 0);
+
+      ventasDiarias[dia] += total;
+      if (semana < 4) ventasSemanales[semana] += total;
+      ventasMensuales[mes] += total;
+    });
+
+    // Formatear datos
+    const datosDiarios = diasSemana.map((dia, index) => ({
+      periodo: dia,
+      ventas: ventasDiarias[index]
+    }));
+
+    const datosSemanales = ventasSemanales.map((total, index) => ({
+      periodo: `Semana ${index + 1}`,
+      ventas: total
+    }));
+
+    const datosMensuales = meses.map((mes, index) => ({
+      periodo: mes,
+      ventas: ventasMensuales[index]
+    }));
+
+    return { datosDiarios, datosSemanales, datosMensuales };
+  };
+
+  // Colores para las categorías
+  const coloresCategorias = {
+    'Fresas con Crema': '#FF1493',
+    'Obleas': '#FF69B4',
+    'Cupcakes': '#FFB6C1',
+    'Postres': '#FF20B2',
+    'Tortas': '#DC143C',
+    'Arroz con Leche': '#FF8FA3',
+    'Sándwiches': '#FF007F'
+  };
+
+  // Función para procesar ventas por categorías
+  const procesarVentasPorCategoria = (ventas, periodoInicio, periodoFin) => {
+    const ventasPorCategoria = {};
+    
+    ventas.forEach(venta => {
+      const fechaVenta = new Date(venta.fechaventa || venta.fechaVenta);
       
-      const nuevaVenta = {
-        id: Date.now(),
-        producto: nuevoProducto.nombre,
-        imagen: nuevoProducto.imagen,
-        cantidad: cantidad,
-        precio: nuevoProducto.precio,
-        sede: sede,
-        categoria: nuevoProducto.categoria,
-        timestamp: new Date()
-      };
+      if (fechaVenta >= periodoInicio && fechaVenta <= periodoFin) {
+        // Acceder a los detalles de venta correctamente
+        const detalles = venta.detalleventa || venta.detalleVenta || [];
+        
+        detalles.forEach(detalle => {
+          const productoInfo = detalle.productogeneral || detalle.producto || {};
+          const categoria = productoInfo.categoria?.nombre || 'Otros';
+          const cantidad = parseInt(detalle.cantidad || 0);
+          
+          if (!ventasPorCategoria[categoria]) {
+            ventasPorCategoria[categoria] = {
+              cantidad: 0,
+              total: 0
+            };
+          }
+          ventasPorCategoria[categoria].cantidad += cantidad;
+          ventasPorCategoria[categoria].total += parseFloat(detalle.subtotal || 0);
+        });
+      }
+    });
 
-      setVentasRealTime(prev => [nuevaVenta, ...prev].slice(0, 8));
-    }, 10000);
+    // Convertir a formato para el gráfico
+    return Object.entries(ventasPorCategoria).map(([categoria, datos]) => ({
+      categoria,
+      ventas: datos.total,
+      cantidad: datos.cantidad,
+      color: generarColorAleatorio()
+    })).sort((a, b) => b.ventas - a.ventas);
+  };
 
-    return () => clearInterval(interval);
-  }, []);
 
-  const obtenerDatos = () => {
-    switch (periodoSeleccionado) {
-      case 'diario': return datosDiarios;
-      case 'semanal': return datosSemanales;
-      case 'mensual': return datosMensuales;
-      default: return datosDiarios;
+  // Función para cargar sedes
+  const cargarSedes = async () => {
+    try {
+      const sedesObtenidas = await ventaApiService.obtenerSedes();
+      setSedes(sedesObtenidas);
+      console.log('Sedes cargadas:', sedesObtenidas);
+    } catch (error) {
+      console.error('Error al cargar sedes:', error);
     }
   };
 
-  const obtenerDatosTorta = useMemo(() => {
-    switch (periodoTorta) {
-      case 'diario': return categoriasDiarias;
-      case 'semanal': return categoriasSemanales;
-      case 'mensual': return categoriasMensuales;
-      default: return categoriasDiarias;
-    }
-  }, [periodoTorta]);
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const ventasFiltradas = ventasRealTime.filter(venta => 
-    sedeSeleccionada === 'todas' || venta.sede === sedeSeleccionada
+      let ventas = [];
+      let compras = [];
+      
+      try {
+        ventas = await ventaApiService.obtenerVentas();
+        console.log('Ventas obtenidas correctamente');
+      } catch (ventasError) {
+        console.error('Error al obtener ventas:', ventasError);
+        setError('No se pudieron cargar las ventas');
+      }
+
+      try {
+        compras = await compraApiService.obtenerCompras();
+        console.log('Compras obtenidas correctamente');
+      } catch (comprasError) {
+        console.error('Error al obtener compras:', comprasError);
+        // No establecemos error general para permitir que el dashboard funcione con las ventas
+      }
+
+      // Procesar ventas si hay datos
+      if (ventas.length > 0) {
+        const datosVentasProcesados = procesarDatosVentas(ventas);
+        setDatosVentas({
+          diarios: datosVentasProcesados.datosDiarios,
+          semanales: datosVentasProcesados.datosSemanales,
+          mensuales: datosVentasProcesados.datosMensuales
+        });
+      }
+
+      // Procesar compras si hay datos
+      if (compras.length > 0) {
+        const datosComprasProcesados = procesarDatosCompras(compras);
+        setDatosCompras({
+          diarios: datosComprasProcesados.datosDiarios,
+          semanales: datosComprasProcesados.datosSemanales,
+          mensuales: datosComprasProcesados.datosMensuales
+        });
+      } else {
+        // Si no hay datos de compras, inicializar con valores vacíos
+        setDatosCompras({
+          diarios: [],
+          semanales: [],
+          mensuales: []
+        });
+      }
+
+      // Procesar categorías por períodos
+      const ahora = new Date();
+      const inicioDia = new Date(ahora);
+      inicioDia.setHours(0, 0, 0, 0);
+      
+      const inicioSemana = new Date(ahora);
+      inicioSemana.setDate(ahora.getDate() - ahora.getDay());
+      inicioSemana.setHours(0, 0, 0, 0);
+      
+      const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+      
+      setDatosCategorias({
+        diarias: procesarVentasPorCategoria(ventas, inicioDia, ahora),
+        semanales: procesarVentasPorCategoria(ventas, inicioSemana, ahora),
+        mensuales: procesarVentasPorCategoria(ventas, inicioMes, ahora)
+      });
+
+      // Actualizar ventas en tiempo real - últimas 5 ventas
+      const ventasRecientes = ventas
+        .sort((a, b) => new Date(b.fechaventa || b.fechaVenta) - new Date(a.fechaventa || a.fechaVenta))
+        .slice(0, 5)
+        .map(venta => {
+          const detalle = (venta.detalleventa || venta.detalleVenta || [])[0] || {};
+          const productoInfo = detalle.productogeneral || detalle.producto || {};
+          return {
+            idVenta: venta.idventa || venta.idVenta,
+            producto: productoInfo.nombre || 'Producto no especificado',
+            cantidad: parseInt(detalle.cantidad || 0),
+            precio: parseFloat(detalle.subtotal || 0),
+            imagen: productoInfo.imagen || '',
+            sede: venta.sede?.nombre || venta.nombreSede || 'Sede principal',
+            timestamp: new Date(venta.fechaventa || venta.fechaVenta)
+          };
+        });
+
+      setVentasRealTime(ventasRecientes);
+    } catch (err) {
+      console.error('Error al cargar datos:', err);
+      if (err.name === 'AbortError') {
+        setError('La carga de datos fue cancelada');
+      } else if (err.response?.status === 404) {
+        setError('No se encontraron datos para mostrar');
+      } else if (err.response?.status === 401) {
+        setError('No tienes permisos para ver estos datos');
+      } else if (!navigator.onLine) {
+        setError('No hay conexión a internet. Por favor, verifica tu conexión');
+      } else {
+        setError('Error al cargar los datos del dashboard: ' + (err.message || 'Error desconocido'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarVentasEnTiempoReal = async () => {
+    try {
+      console.log('Iniciando carga de ventas en tiempo real...');
+      const ventas = await ventaApiService.obtenerVentas();
+      console.log('Ventas recibidas de la API:', ventas);
+
+      // Filtrar y procesar solo ventas con detalles válidos
+      const ventasValidas = ventas
+        .filter(venta => {
+          // Verificar que la venta tenga detalles y producto
+          const tieneDetalles = venta.detalleventa && 
+                               Array.isArray(venta.detalleventa) && 
+                               venta.detalleventa.length > 0 &&
+                               venta.detalleventa[0].productogeneral;
+          
+          if (!tieneDetalles) {
+            console.log('Venta sin detalles válidos:', venta);
+          }
+          return tieneDetalles;
+        })
+        .sort((a, b) => new Date(b.fechaventa || b.fechaVenta) - new Date(a.fechaventa || a.fechaVenta))
+        .slice(0, 5)
+        .map(venta => {
+          const detalle = venta.detalleventa[0];
+          const producto = detalle.productogeneral;
+          
+          console.log('Procesando venta:', {
+            idVenta: venta.idventa,
+            detalle: detalle,
+            producto: producto
+          });
+
+          // Obtener el nombre del producto de manera segura
+          const nombreProducto = producto.nombreproducto || producto.nombre || 'Producto no especificado';
+          
+          // Obtener la URL de la imagen de manera segura
+          let urlImagen = null;
+          if (producto.imagenes?.urlimg) {
+            urlImagen = producto.imagenes.urlimg;
+          } else if (producto.imagen?.urlimg) {
+            urlImagen = producto.imagen.urlimg;
+          } else if (typeof producto.imagen === 'string') {
+            urlImagen = producto.imagen;
+          }
+
+          return {
+            idVenta: venta.idventa,
+            producto: nombreProducto,
+            cantidad: parseInt(detalle.cantidad) || 0,
+            precio: parseFloat(detalle.subtotal) || 0,
+            imagen: urlImagen,
+            sede: venta.sede?.nombre || venta.sede || 'Sede principal',
+            timestamp: new Date(venta.fechaventa)
+          };
+        });
+
+      console.log('Ventas procesadas:', ventasValidas);
+
+      if (ventasValidas.length > 0) {
+        setVentasRealTime(prevVentas => {
+          const nuevasVentas = ventasValidas.filter(nuevaVenta => 
+            !prevVentas.some(prevVenta => prevVenta.idVenta === nuevaVenta.idVenta)
+          );
+
+          if (nuevasVentas.length > 0) {
+            console.log('Agregando nuevas ventas:', nuevasVentas);
+            return [...nuevasVentas, ...prevVentas].slice(0, 5);
+          }
+          return prevVentas;
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar ventas en tiempo real:', error);
+    }
+    try {
+      console.log('Iniciando carga de ventas en tiempo real...');
+      const ventas = await ventaApiService.obtenerVentas();
+      console.log('Ventas completas recibidas:', ventas);
+      const ventasOrdenadas = ventas
+        .sort((a, b) => new Date(b.fechaventa || b.fechaVenta) - new Date(a.fechaventa || a.fechaVenta))
+        .slice(0, 5);
+
+      // Procesar cada venta y obtener detalles del producto
+      console.log('Ventas ordenadas:', ventasOrdenadas); // Debug
+
+      const ventasProcesadas = await Promise.all(ventasOrdenadas.map(async (venta) => {
+        console.log('Procesando venta:', venta); // Debug
+        
+        // Obtener el primer detalle de venta
+        const detalleVenta = venta.detalleventa?.[0] || venta.detalleVenta?.[0];
+        console.log('Detalle de venta:', detalleVenta); // Debug
+
+        if (!detalleVenta) {
+          console.error('No hay detalle de venta disponible para:', venta.idventa || venta.idVenta);
+          return null;
+        }
+
+        const idProducto = detalleVenta.idproductogeneral;
+        console.log('ID del producto:', idProducto); // Debug
+
+        if (!idProducto) {
+          console.error('No se encontró ID del producto en el detalle:', detalleVenta);
+          return null;
+        }
+
+        try {
+          // Obtener detalles del producto
+          const productoInfo = await productosApiService.obtenerProductoPorId(idProducto);
+          console.log('Info del producto obtenida:', productoInfo); // Debug
+
+          return {
+            idVenta: venta.idventa || venta.idVenta,
+            producto: productoInfo.nombre,
+            cantidad: parseInt(detalleVenta.cantidad || '0'),
+            precio: parseFloat(detalleVenta.subtotal || '0'),
+            imagen: productoInfo.imagen,
+            sede: venta.sede?.nombre || venta.nombreSede || 'Sede principal',
+            timestamp: new Date(venta.fechaventa || venta.fechaVenta)
+          };
+        } catch (error) {
+          console.error(`Error al obtener producto ${idProducto}:`, error);
+          return null;
+        }
+      }));
+
+      // Filtrar ventas nulas y procesar las ventas válidas
+      const ventasValidas = ventasProcesadas.filter(venta => venta !== null);
+      console.log('Ventas válidas procesadas:', ventasValidas); // Debug
+
+      if (ventasValidas.length > 0) {
+        setVentasRealTime(prevVentas => {
+          // Verificar si hay nuevas ventas comparando IDs
+          const nuevasVentas = ventasValidas.filter(nuevaVenta => 
+            !prevVentas.some(prevVenta => prevVenta.idVenta === nuevaVenta.idVenta)
+          );
+
+          if (nuevasVentas.length > 0) {
+            console.log('Nuevas ventas a agregar:', nuevasVentas); // Debug
+            // Combinar ventas anteriores con nuevas y mantener solo las últimas 5
+            const ventasActualizadas = [...nuevasVentas, ...prevVentas].slice(0, 5);
+            console.log('Estado final de ventas:', ventasActualizadas); // Debug
+            return ventasActualizadas;
+          }
+          return prevVentas;
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar ventas en tiempo real:', error);
+    }
+  };
+
+  useEffect(() => {
+    cargarSedes();
+    cargarDatos();
+    cargarVentasEnTiempoReal();
+    
+    // Actualizar ventas en tiempo real cada 30 segundos
+    const intervaloRealTime = setInterval(cargarVentasEnTiempoReal, 30000);
+    
+    // Actualizar estadísticas cada 5 minutos
+    const intervaloEstadisticas = setInterval(cargarDatos, 300000);
+    
+    return () => {
+      clearInterval(intervaloRealTime);
+      clearInterval(intervaloEstadisticas);
+    };
+  }, []);
+
+  const obtenerDatosCalculados = useMemo(() => {
+    const datosVentasActuales = datosVentas[periodoSeleccionado === 'diario' ? 'diarios' : 
+                                          periodoSeleccionado === 'semanal' ? 'semanales' : 'mensuales'];
+    const datosComprasActuales = datosCompras[periodoSeleccionado === 'diario' ? 'diarios' : 
+                                            periodoSeleccionado === 'semanal' ? 'semanales' : 'mensuales'];
+
+    // Combinar datos de ventas y compras
+    return datosVentasActuales.map((dato, index) => ({
+      periodo: dato.periodo,
+      ventas: dato.ventas,
+      compras: datosComprasActuales[index]?.compras || 0
+    }));
+  }, [periodoSeleccionado, datosVentas, datosCompras]);
+
+  const calcularTotales = useMemo(() => {
+    const totalVentas = obtenerDatosCalculados.reduce((sum, dato) => sum + (dato.ventas || 0), 0);
+    const totalCompras = obtenerDatosCalculados.reduce((sum, dato) => sum + (dato.compras || 0), 0);
+    const porcentajeVentas = totalVentas > 0 ? 100 : 0;
+    // Si no hay datos de compras, el porcentaje será 0
+    const porcentajeCompras = (totalVentas > 0 && totalCompras > 0) ? (totalCompras / totalVentas) * 100 : 0;
+
+    return {
+      ventas: totalVentas,
+      compras: totalCompras,
+      porcentajeVentas: `${Math.min(100, porcentajeVentas)}%`,
+      porcentajeCompras: `${Math.min(100, porcentajeCompras)}%`
+    };
+  }, [periodoSeleccionado, datosVentas, datosCompras]);
+
+  const obtenerDatosTorta = useMemo(() => {
+    return datosCategorias[periodoTorta === 'diario' ? 'diarias' : 
+                          periodoTorta === 'semanal' ? 'semanales' : 'mensuales'];
+  }, [periodoTorta, datosCategorias]);
+
+  const ventasFiltradas = useMemo(() => 
+    ventasRealTime.filter(venta => 
+      sedeSeleccionada === 'todas' || venta.sede === sedeSeleccionada
+    ),
+    [ventasRealTime, sedeSeleccionada]
   );
+
+// Componente de carga
+const LoadingSpinner = ({ mensaje = 'Cargando datos...' }) => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    minHeight: '200px',
+    flexDirection: 'column',
+    gap: '10px'
+  }}>
+    <div className="loading-spinner"></div>
+    <div>{mensaje}</div>
+  </div>
+);
+
+// Componente para mostrar cuando no hay datos
+const NoData = ({ mensaje = 'No hay datos disponibles' }) => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px',
+    color: '#666',
+    flexDirection: 'column',
+    gap: '10px'
+  }}>
+    <span style={{ fontSize: '24px' }}>📊</span>
+    <div>{mensaje}</div>
+  </div>
+);
+
+// Componente de error
+const ErrorMessage = ({ message }) => (
+  <div style={{ 
+    padding: '20px', 
+    backgroundColor: '#ffebee', 
+    color: '#c62828', 
+    borderRadius: '4px',
+    margin: '20px 0'
+  }}>
+    {message}
+  </div>
+);
 
 const styles = {
     dashboard: {
@@ -313,9 +720,9 @@ const styles = {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '10px 0',
+      padding: '10px',
       borderBottom: '1px solid #f0f0f0',
-      animation: 'slideIn 0.5s ease-out'
+      transition: 'background-color 0.3s ease'
     },
     ventaImagen: {
       width: '40px',
@@ -585,25 +992,60 @@ const styles = {
 
   return (
     <div style={styles.dashboard}>
-      <style>{`@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } } @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }`}</style>
-      
-      {tortaExpandida && <div style={styles.overlay} onClick={() => setTortaExpandida(false)} />}
+      <style>{`
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes slideIn { 
+          from { 
+            opacity: 0; 
+            transform: translateY(-20px); 
+            background-color: rgba(255, 20, 147, 0.1);
+          } 
+          to { 
+            opacity: 1; 
+            transform: translateY(0);
+            background-color: transparent;
+          } 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #FF1493;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        .venta-nueva {
+          animation: slideIn 0.5s ease-out;
+        }
+      `}</style>
       
       <div style={styles.container}>
         <h1 style={styles.header}>Dashboard</h1>
         
-        <div style={styles.mainContent}>
+        {loading ? (
+          <LoadingSpinner />
+        ) : error ? (
+          <ErrorMessage message={error} />
+        ) : (
+          <div>
+            {tortaExpandida && <div style={styles.overlay} onClick={() => setTortaExpandida(false)} />}
+            <div style={styles.mainContent}>
           <div style={styles.leftSection}>
             <div style={styles.statsRow}>
               <div style={styles.statCard}>
                 <div style={styles.statTitle}>Ventas totales</div>
-                <div style={styles.statValue}>$ 354.200</div>
-                <div style={styles.statProgress}><div style={styles.progressBarVentas}></div></div>
+                <div style={styles.statValue}>{formatearValor(calcularTotales.ventas)}</div>
+                <div style={styles.statProgress}>
+                  <div style={{...styles.progressBarVentas, width: calcularTotales.porcentajeVentas}}></div>
+                </div>
               </div>
               <div style={styles.statCard}>
                 <div style={styles.statTitle}>Compras totales</div>
-                <div style={styles.statValue}>$ 49.600</div>
-                <div style={styles.statProgress}><div style={styles.progressBarCompras}></div></div>
+                <div style={styles.statValue}>{formatearValor(calcularTotales.compras)}</div>
+                <div style={styles.statProgress}>
+                  <div style={{...styles.progressBarCompras, width: calcularTotales.porcentajeCompras}}></div>
+                </div>
               </div>
             </div>
 
@@ -629,14 +1071,18 @@ const styles = {
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={obtenerDatos()} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="periodo" axisLine={false} tickLine={false} fontSize={12} />
-                  <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(value) => `${(value / 1000)}k`} />
-                  <Tooltip content={<CustomTooltip />} />
-                  {mostrarVentas && <Bar dataKey="ventas" fill="#FF1493" radius={[2, 2, 0, 0]} name="Ventas" />}
-                  {mostrarCompras && <Bar dataKey="compras" fill="#A9A9A9" radius={[2, 2, 0, 0]} name="Compras" />} {/* Changed from #CCCCCC to #A9A9A9 */}
-                </BarChart>
+                {obtenerDatosCalculados.length === 0 ? (
+                  <NoData mensaje="No hay datos de ventas o compras para mostrar" />
+                ) : (
+                  <BarChart data={obtenerDatosCalculados} barCategoryGap="20%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="periodo" axisLine={false} tickLine={false} fontSize={12} />
+                    <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(value) => `${(value / 1000)}k`} />
+                    <Tooltip content={<CustomTooltip />} />
+                    {mostrarVentas && <Bar dataKey="ventas" fill="#FF1493" radius={[2, 2, 0, 0]} name="Ventas" />}
+                    {mostrarCompras && <Bar dataKey="compras" fill="#A9A9A9" radius={[2, 2, 0, 0]} name="Compras" />}
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
           </div>
@@ -652,8 +1098,9 @@ const styles = {
                 </div>
                 <select style={styles.sedeSelector} value={sedeSeleccionada} onChange={(e) => setSedeSeleccionada(e.target.value)}>
                   <option value="todas">Todas las sedes</option>
-                  <option value="San Pablo">San Pablo</option>
-                  <option value="San Benito">San Benito</option>
+                  {sedes.map(sede => (
+                    <option key={sede.idsede} value={sede.nombre}>{sede.nombre}</option>
+                  ))}
                 </select>
               </div>
               <div style={styles.ventasList}>
@@ -667,7 +1114,7 @@ const styles = {
                         <div style={styles.ventaNombre}>{venta.producto}</div>
                         <div style={styles.ventaDetalles}>
                           <span>x{venta.cantidad}</span>
-                          <span style={{...styles.sedeTag, ...(venta.sede === 'San Pablo' ? styles.sedeSanPablo : styles.sedeSanBenito)}}>{venta.sede}</span>
+                          <span style={{...styles.sedeTag, backgroundColor: '#FF1493', color: 'white'}}>{venta.sede}</span>
                         </div>
                       </div>
                       <div style={styles.ventaPrecio}>{formatearValor(venta.precio * venta.cantidad)}</div>
@@ -679,10 +1126,9 @@ const styles = {
           </div>
         </div>
       </div>
-
-      {tortaExpandida && <TortaComponent expanded={true} />}
+        )}
+      </div>
     </div>
   );
-};
-
+}
 export default Dashboard;

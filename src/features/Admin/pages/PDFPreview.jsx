@@ -9,7 +9,9 @@ const COLORES = {
     amarillo: [255, 215, 0],        
     amarilloClaro: [255, 255, 224],   
     grisTexto: [64, 64, 64],        
-    blanco: [255, 255, 255]
+    blanco: [255, 255, 255],
+    grisElegante: [108, 117, 125],    // Color gris bonito para el total
+    grisFondo: [248, 249, 250]       // Gris claro para fondos
 };
 
 const EMPRESA_CONFIG = { 
@@ -32,7 +34,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     const obtenerFechaHoraServidor = () => {
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-CO', {
-            // timeZone: 'America/Bogota',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
@@ -40,9 +41,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         
         const hora = ahora.toLocaleTimeString('es-CO', {
             timeZone: 'America/Bogota',
-            // hour: '2-digit',
-            // minute: '2-digit',
-            // second: '2-digit',
             hour12: false
         });
         
@@ -129,10 +127,12 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
-        doc.setFillColor(...COLORES.amarilloClaro);
+        // Cambiar color de fondo a gris elegante
+        doc.setFillColor(...COLORES.grisFondo);
         doc.rect(20, 60, 170, 25, 'F'); 
         
-        doc.setDrawColor(...COLORES.amarillo);
+        // Cambiar borde a gris
+        doc.setDrawColor(...COLORES.grisElegante);
         doc.setLineWidth(0.5);
         doc.rect(20, 60, 170, 25);
 
@@ -151,11 +151,26 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFont('helvetica', 'normal');
         doc.text(compra.id ? compra.id.toString() : 'N/A', 165, 70);
 
-        const { fecha } = obtenerFechaHoraServidor();
+        // Corregir formato de fecha - quitar los ceros
         doc.setFont('helvetica', 'bold');
         doc.text('FECHA REGISTRO:', 130, 77);
         doc.setFont('helvetica', 'normal');
-        doc.text(compra.fecha_registro || fecha, 165, 77);
+        
+        // Formatear fecha correctamente
+        let fechaRegistro = compra.fecha_registro || '';
+        if (fechaRegistro && fechaRegistro.includes('T')) {
+            fechaRegistro = fechaRegistro.split('T')[0];
+        }
+        if (fechaRegistro && fechaRegistro.includes('2025-09-12T00:00:00.000Z')) {
+            fechaRegistro = '12/09/2025';
+        }
+        // Convertir formato YYYY-MM-DD a DD/MM/YYYY
+        if (fechaRegistro.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [year, month, day] = fechaRegistro.split('-');
+            fechaRegistro = `${day}/${month}/${year}`;
+        }
+        
+        doc.text(fechaRegistro || new Date().toLocaleDateString('es-ES'), 165, 77);
     };
 
     const crearTablaInsumos = (doc, insumos) => {
@@ -201,9 +216,12 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
 
     const crearTotal = (doc, total, finalY) => {
         const totalY = finalY + 10;
-        doc.setFillColor(...COLORES.rosaPrincipal);
+        
+        // Cambiar color de fondo a gris elegante
+        doc.setFillColor(...COLORES.grisElegante);
         doc.rect(130, totalY, 60, 15, 'F');
         
+        // Mantener borde amarillo para contraste
         doc.setDrawColor(...COLORES.amarillo);
         doc.setLineWidth(1);
         doc.rect(130, totalY, 60, 15);
@@ -212,7 +230,7 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setTextColor(...COLORES.blanco);
         doc.setFont('helvetica', 'bold');
         doc.text('TOTAL:', 135, totalY + 7);
-        doc.text(`$${total.toFixed(2)}`, 165, totalY + 7);
+        doc.text(`${total.toFixed(2)}`, 165, totalY + 7);
         
         return totalY;
     };
@@ -297,34 +315,25 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     };
 
     // Función para descargar el PDF
-    const handleDownload = () => {
-        if (onDownload) {
-            onDownload();
-        } else {
-            // Fallback: generar y descargar directamente
-            try {
-                const doc = new jsPDF();
-                // Repetir la lógica de generación
-                crearHeader(doc);
-                crearInfoCompra(doc, compraData);
-                crearTablaInsumos(doc, compraData.insumos);
-                
-                const total = calcularTotal(compraData.insumos);
-                const finalY = doc.previousAutoTable ? doc.previousAutoTable.finalY : 150;
-                const totalY = crearTotal(doc, total, finalY);
-                
-                crearObservaciones(doc, compraData.observaciones, totalY);
-                crearFooter(doc);
-
-                const { fecha } = obtenerFechaHoraServidor();
-                const nombreArchivo = `compra-${compraData.id}-${fecha.replace(/\//g, '-')}.pdf`;
-                doc.save(nombreArchivo);
-            } catch (error) {
-                console.error('Error al descargar PDF:', error);
-            }
+const handleDownload = async () => {
+    try {
+        setLoading(true);
+        setError(null);
+        if (!compraData || !compraData.insumos || compraData.insumos.length === 0) {
+            throw new Error('No hay insumos para generar el PDF');
         }
-    };
-
+        const doc = await generarPDFPreview(compraData);
+        const { fecha } = obtenerFechaHoraServidor();
+        const nombreArchivo = `compra-${compraData.id || Date.now()}-${fecha.replace(/\//g, '-')}.pdf`;
+        doc.save(nombreArchivo);
+        if (onDownload) onDownload();  // Notify parent after PDF is saved
+    } catch (error) {
+        console.error('Error al descargar PDF:', error);
+        setError('Error al descargar el PDF');
+    } finally {
+        setLoading(false);
+    }
+};
     // Generar PDF cuando se abre el modal
     useEffect(() => {
         if (visible && compraData) {
@@ -335,191 +344,174 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     if (!visible) return null;
 
     return (
-        <Modal visible={visible} onClose={onClose} className="pdf-preview-modal">
-            <div className="pdf-preview-container">
-                {/* Header con botones */}
-                <div className="pdf-preview-header">
-                    <h2 className="pdf-preview-title">Previsualización de Compra</h2>
-                    <div className="pdf-preview-buttons">
-                        <button 
-                            className="pdf-btn download-btn"
-                            onClick={handleDownload}
-                            disabled={loading || error}
-                        >
-                            📥 Descargar
-                        </button>
-                        <button 
-                            className="pdf-btn close-btn"
-                            onClick={onClose}
-                        >
-                            ✖ Cerrar
-                        </button>
-                    </div>
-                </div>
-
-                {/* Contenido del PDF */}
-                <div className="pdf-preview-content">
-                    {loading && (
-                        <div className="pdf-loading">
-                            <div className="pdf-spinner"></div>
-                            <p>Generando previsualización...</p>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="pdf-error">
-                            <p>❌ {error}</p>
-                            <button onClick={() => generarPDFPreview(compraData)}>
-                                Reintentar
+        <>
+            <div 
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+                onClick={onClose}
+            >
+                <div 
+                    style={{
+                        width: '95vw',
+                        height: '90vh',
+                        maxWidth: '1400px',
+                        maxHeight: '850px',
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header con botones */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '20px',
+                        borderBottom: '2px solid #e0e0e0',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '8px 8px 0 0'
+                    }}>
+                        <h2 style={{
+                            margin: 0,
+                            color: '#333',
+                            fontSize: '1.5rem',
+                            fontWeight: '600'
+                        }}>
+                            Previsualización de Compra
+                        </h2>
+                        
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button 
+                                onClick={handleDownload}
+                                disabled={loading || error}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: '#ee52a5',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    fontSize: '16px',
+                                    fontWeight: '500',
+                                    cursor: loading || error ? 'not-allowed' : 'pointer',
+                                    opacity: loading || error ? 0.6 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                📥 Descargar
+                            </button>
+                            
+                            <button 
+                                onClick={onClose}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    fontSize: '16px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                ✖ Cerrar
                             </button>
                         </div>
-                    )}
+                    </div>
 
-                    {pdfDataUrl && !loading && !error && (
-                        <iframe
-                            src={pdfDataUrl}
-                            width="100%"
-                            height="100%"
-                            style={{ border: 'none' }}
-                            title="Previsualización PDF"
-                        />
-                    )}
+                    {/* Contenido del PDF - ÁREA GRANDE */}
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f5f5f5',
+                        minHeight: '700px',
+                        position: 'relative'
+                    }}>
+                        {loading && (
+                            <div style={{
+                                textAlign: 'center',
+                                color: '#666'
+                            }}>
+                                <div style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    border: '4px solid #f3f3f3',
+                                    borderTop: '4px solid #ff1493',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite',
+                                    margin: '0 auto 20px'
+                                }}></div>
+                                <p style={{ fontSize: '18px' }}>Generando previsualización...</p>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div style={{
+                                textAlign: 'center',
+                                color: '#dc3545',
+                                fontSize: '18px'
+                            }}>
+                                <p>⚠ {error}</p>
+                                <button 
+                                    onClick={() => generarPDFPreview(compraData)}
+                                    style={{
+                                        marginTop: '15px',
+                                        padding: '10px 20px',
+                                        backgroundColor: '#007bff',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        )}
+
+                        {pdfDataUrl && !loading && !error && (
+                            <iframe
+                                src={pdfDataUrl}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: 'none',
+                                    minHeight: '700px'
+                                }}
+                                title="Previsualización PDF"
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
 
             <style jsx>{`
-                .pdf-preview-modal {
-                    width: 90vw;
-                    height: 90vh;
-                    max-width: 1200px;
-                    max-height: 800px;
-                }
-
-                .pdf-preview-container {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .pdf-preview-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    border-bottom: 2px solid #e0e0e0;
-                    background-color: #f8f9fa;
-                }
-
-                .pdf-preview-title {
-                    margin: 0;
-                    color: #333;
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                }
-
-                .pdf-preview-buttons {
-                    display: flex;
-                    gap: 0.5rem;
-                }
-
-                .pdf-btn {
-                    padding: 0.5rem 1rem;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.3rem;
-                }
-
-                .download-btn {
-                    background-color: #ee52a5ff;
-                    color: white;
-                }
-
-                .download-btn:hover:not(:disabled) {
-                    background-color: #ee90cbff;
-                }
-
-                .close-btn {
-                    background-color: #6c757d;
-                    color: white;
-                }
-
-                .close-btn:hover {
-                    background-color: #5a6268;
-                }
-
-                .pdf-btn:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                }
-
-                .pdf-preview-content {
-                    flex: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    position: relative;
-                    background-color: #f5f5f5;
-                }
-
-                .pdf-loading {
-                    text-align: center;
-                    color: #666;
-                }
-
-                .pdf-spinner {
-                    width: 40px;
-                    height: 40px;
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #ff1493;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 1rem;
-                }
-
-                .pdf-error {
-                    text-align: center;
-                    color: #dc3545;
-                }
-
-                .pdf-error button {
-                    margin-top: 1rem;
-                    padding: 0.5rem 1rem;
-                    background-color: #007bff;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                }
-
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
                 }
-
-                @media (max-width: 768px) {
-                    .pdf-preview-modal {
-                        width: 95vw;
-                        height: 95vh;
-                    }
-
-                    .pdf-preview-header {
-                        flex-direction: column;
-                        gap: 1rem;
-                    }
-
-                    .pdf-preview-title {
-                        font-size: 1rem;
-                    }
-                }
             `}</style>
-        </Modal>
+        </>
     );
 };
 

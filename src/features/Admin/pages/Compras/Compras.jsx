@@ -7,12 +7,12 @@ import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import AgregarInsumosModal from '../../components/AgregarInsumosModal';
-import PDFPreview from '../PDFPreview'; // Importamos el componente PDFPreview
+import PDFPreview from '../PDFPreview';
 import { generarPDFCompra, configurarEmpresa } from '../pdf';
 import { XCircle } from 'lucide-react';
 import compraApiService from '../../services/compras_services';
 import proveedorApiService from '../../services/proveedor_services';
-import insumoApiService from '../../services/insumos';
+
 
 export default function ComprasTable() {
     const [compras, setCompras] = useState([]);
@@ -29,9 +29,15 @@ export default function ComprasTable() {
     const [cargando, setCargando] = useState(false);
     const [proveedorId, setProveedorId] = useState("");
 
+    // Agregar estos nuevos estados después de los existentes
+    const [mostrarDropdown, setMostrarDropdown] = useState(false);
+    const [opcionSeleccionada, setOpcionSeleccionada] = useState(-1);
+
     // Estados para PDFPreview
     const [pdfPreviewVisible, setPdfPreviewVisible] = useState(false);
     const [compraPdf, setCompraPdf] = useState(null);
+    const [insumos, setInsumos] = useState([]);
+
 
     // Estados para el modal de proveedores
     const [modalProveedorVisible, setModalProveedorVisible] = useState(false);
@@ -49,6 +55,9 @@ export default function ComprasTable() {
     const [nombreEmpresa, setNombreEmpresa] = useState('');
     const [nombreContacto, setNombreContacto] = useState('');
     const [estadoProveedor, setEstadoProveedor] = useState(true);
+
+    // NUEVO: Estado para buscador de proveedores
+    const [buscarProveedor, setBuscarProveedor] = useState('');
 
     // Estados de validación para proveedor
     const [errorsProveedor, setErrorsProveedor] = useState({});
@@ -93,6 +102,22 @@ export default function ComprasTable() {
             tipo: 'success'
         });
     };
+
+    useEffect(() => {
+  const cargarInsumos = async () => {
+    const resp = await fetch("https://deliciasoft-backend.onrender.com/api/insumos");
+    const raw = await resp.json();
+    const insumos = transformarInsumosDesdeAPI(raw);
+
+    console.log("📋 Insumos transformados (cantidad como number):", insumos);
+
+    setInsumos(insumos); // <-- aquí guardas en tu estado
+  };
+
+  cargarInsumos();
+}, []);
+
+
 
     const cargarProveedores = async () => {
         try {
@@ -498,7 +523,10 @@ export default function ComprasTable() {
     const cargarCompras = async () => {
         try {
             setCargando(true);
+            console.log('=== CARGANDO COMPRAS ===');
             const comprasAPI = await compraApiService.obtenerCompras();
+            console.log('Compras obtenidas de la API:', comprasAPI);
+            
             setCompras(comprasAPI);
         } catch (error) {
             console.error('Error al cargar compras:', error);
@@ -558,214 +586,247 @@ export default function ComprasTable() {
         });
     };
 
+    // FUNCIÓN CORREGIDA para anular compra
+
+
     const anularCompra = async () => {
-        try {
-            setCargando(true);
-            await compraApiService.cambiarEstadoCompra(compraSeleccionada.id, false);
-            await cargarCompras();
-            cerrarModal();
-            
-            showNotification("Compra anulada exitosamente. Para verla, cambie a 'Ver Anuladas'.");
-        } catch (error) {
-            console.error("Error al anular compra:", error);
-            setNotification({
-                visible: true,
-                mensaje: "Error al anular la compra: " + error.message,
-                tipo: "error",
-            });
-        } finally {
-            setCargando(false);
-        }
-    };
+  try {
+    if (!compraSeleccionada || !compraSeleccionada.id) {
+      showNotification("No se ha seleccionado una compra válida", "error");
+      return;
+    }
 
-    const actualizarStockInsumos = async (insumosComprados) => {
-        try {
-            console.log('=== ACTUALIZANDO STOCK DE INSUMOS ===');
-            console.log('Insumos a actualizar:', insumosComprados);
+    setCargando(true);
 
-            const actualizaciones = [];
+    await compraApiService.cambiarEstadoCompra(compraSeleccionada.id, false);
 
-            for (const insumo of insumosComprados) {
-                try {
-                    console.log(`Actualizando insumo ID ${insumo.id}:`);
-                    console.log(`  - Cantidad a sumar: ${insumo.cantidad}`);
+    showNotification("Compra anulada correctamente", "success");
+    setModalVisible(false);
+    await cargarCompras(); // refrescar lista
+  } catch (error) {
+    console.error("❌ Error al anular compra:", error);
+    showNotification("Error al anular la compra: " + error.message, "error");
+  } finally {
+    setCargando(false);
+  }
+};
 
-                    // Obtener datos actuales del insumo
-                    const insumoActual = await insumoApiService.obtenerInsumoPorId(insumo.id);
-                    console.log(`  - Stock actual: ${insumoActual.cantidad}`);
 
-                    // Calcular nuevo stock
-                    const nuevoStock = (insumoActual.cantidad || 0) + (insumo.cantidad || 0);
-                    console.log(`  - Nuevo stock: ${nuevoStock}`);
 
-                    // Preparar datos para actualización
-                    const datosActualizacion = {
-                        nombreInsumo: insumoActual.nombreInsumo,
-                        idCategoriaInsumos: insumoActual.idCategoriaInsumos,
-                        idUnidadMedida: insumoActual.idUnidadMedida,
-                        cantidad: nuevoStock,
-                        estado: insumoActual.estado,
-                        idImagen: insumoActual.idImagen
-                    };
+const reactivarCompra = async (compra) => {
+  try {
+    setCargando(true);
 
-                    console.log(`  - Datos para actualización:`, datosActualizacion);
+    // 🟢 Sumar stock (convertir detalles a positivos)
+    if (compra.detalles && compra.detalles.length > 0) {
+      const detallesPositivos = compra.detalles.map((d) => ({
+        idinsumo: d.idinsumo,
+        cantidad: Math.abs(d.cantidad), // siempre positivo
+      }));
+      await actualizarStockInsumos(detallesPositivos);
+    }
 
-                    // Actualizar el insumo
-                    const insumoActualizado = await insumoApiService.actualizarInsumo(insumo.id, datosActualizacion);
+    // Cambiar estado en backend
+    const resultado = await compraApiService.cambiarEstadoCompra(compra.id, true);
 
-                    actualizaciones.push({
-                        id: insumo.id,
-                        nombre: insumo.nombre,
-                        stockAnterior: insumoActual.cantidad,
-                        cantidadComprada: insumo.cantidad,
-                        stockNuevo: nuevoStock,
-                        exito: true
-                    });
+    if (resultado) {
+      await cargarCompras();
+      showNotification("Compra reactivada exitosamente.", "success");
+    }
+  } catch (error) {
+    console.error("Error al reactivar compra:", error);
+    showNotification("Error al reactivar la compra: " + error.message, "error");
+  } finally {
+    setCargando(false);
+  }
+};
 
-                    console.log(`  ✅ Stock actualizado exitosamente`);
 
-                } catch (error) {
-                    console.error(`❌ Error al actualizar insumo ${insumo.id}:`, error);
 
-                    actualizaciones.push({
-                        id: insumo.id,
-                        nombre: insumo.nombre,
-                        error: error.message,
-                        exito: false
-                    });
+    
+    
+// 🔥 Tu función principal
+// ✅ Actualizar stock de insumos con fetch directo
+function transformarInsumoDesdeAPI(apiInsumo) {
+  return {
+    idinsumo: apiInsumo.idinsumo,
+    nombreinsumo: apiInsumo.nombreinsumo,
+    idcategoriainsumos: apiInsumo.idcategoriainsumos,
+    idunidadmedida: apiInsumo.idunidadmedida,
+    idimagen: apiInsumo.idimagen,
+    estado: apiInsumo.estado,
+    cantidad: (apiInsumo.cantidad !== null && apiInsumo.cantidad !== undefined && apiInsumo.cantidad !== "")
+      ? parseFloat(apiInsumo.cantidad)
+      : 0,
+    precio: apiInsumo.precio,
+  };
+}
 
-                    showNotification(
-                        `Advertencia: No se pudo actualizar el stock de "${insumo.nombre}": ${error.message}`,
-                        'warning'
-                    );
-                }
-            }
 
-            // Mostrar resumen de actualizaciones
-            const exitosos = actualizaciones.filter(a => a.exito);
-            const fallidos = actualizaciones.filter(a => !a.exito);
 
-            console.log('=== RESUMEN DE ACTUALIZACIONES ===');
-            console.log(`✅ Exitosos: ${exitosos.length}`);
-            console.log(`❌ Fallidos: ${fallidos.length}`);
+const actualizarStockInsumos = async (detalles) => {
+  try {
+    // 1. Traer todos los insumos de la BD
+    const resInsumos = await fetch("https://deliciasoft-backend.onrender.com/api/insumos");
+    const listaInsumosRaw = await resInsumos.json();
+    const listaInsumos = listaInsumosRaw.map(transformarInsumoDesdeAPI);
 
-            if (exitosos.length > 0) {
-                console.log('Actualizaciones exitosas:');
-                exitosos.forEach(a => {
-                    console.log(`  - ${a.nombre}: ${a.stockAnterior} + ${a.cantidadComprada} = ${a.stockNuevo}`);
-                });
-            }
+    // 2. Diccionario con stock actual
+    const stockActual = {};
+    listaInsumos.forEach((i) => {
+      stockActual[i.idinsumo] = i.cantidad;
+    });
 
-            if (fallidos.length > 0) {
-                console.log('Actualizaciones fallidas:');
-                fallidos.forEach(a => {
-                    console.log(`  - ${a.nombre}: ${a.error}`);
-                });
-            }
+    // 3. Diccionario con cantidades a sumar
+    const stockCompra = {};
+    detalles.forEach((d) => {
+      stockCompra[d.idinsumo] = (stockCompra[d.idinsumo] || 0) + parseFloat(d.cantidad);
+    });
 
-            console.log('================================');
+    // 4. Actualizar cada insumo
+    for (const id of Object.keys(stockCompra)) {
+      const res = await fetch(`https://deliciasoft-backend.onrender.com/api/Insumos/${id}`);
+const insumoRaw = await res.json();
 
-            // Mostrar notificación resumen
-            if (exitosos.length > 0 && fallidos.length === 0) {
-                showNotification(
-                    `✅ Stock actualizado para ${exitosos.length} insumo(s)`,
-                    'success'
-                );
-            } else if (exitosos.length > 0 && fallidos.length > 0) {
-                showNotification(
-                    `⚠️ Stock actualizado para ${exitosos.length} insumo(s), ${fallidos.length} fallaron`,
-                    'warning'
-                );
-            } else if (fallidos.length > 0) {
-                showNotification(
-                    `❌ Error: No se pudo actualizar el stock de ${fallidos.length} insumo(s)`,
-                    'error'
-                );
-            }
+console.log("🔍 Insumo crudo desde API:", insumoRaw);  // <-- así vemos qué viene
 
-            return actualizaciones;
+const insumoActual = transformarInsumoDesdeAPI(insumoRaw);
+console.log("📦 Insumo normalizado:", insumoActual);
 
-        } catch (error) {
-            console.error('❌ Error general al actualizar stocks:', error);
-            throw new Error(`Error al actualizar stock de insumos: ${error.message}`);
-        }
-    };
+
+      const cantidadActual = insumoActual.cantidad;
+      const cantidadNueva = Number((cantidadActual + stockCompra[id]).toFixed(2));
+
+      console.log(`🔄 Actualizando insumo ${id}: ${cantidadActual} + ${stockCompra[id]} = ${cantidadNueva}`);
+
+      // ✅ payload con número real
+      const payload = {
+        idinsumo: insumoActual.idinsumo,
+        nombreinsumo: insumoActual.nombreinsumo,
+        idcategoriainsumos: insumoActual.idcategoriainsumos,
+        idunidadmedida: insumoActual.idunidadmedida,
+        idimagen: insumoActual.idimagen,
+        estado: insumoActual.estado,
+        cantidad: cantidadNueva,
+      };
+
+      await fetch(`https://deliciasoft-backend.onrender.com/api/Insumos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      console.log(`✅ Insumo ${id} actualizado con cantidad ${cantidadNueva}`);
+    }
+
+  } catch (error) {
+    console.error("❌ Error actualizando stock de insumos:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const abrirModal = async (tipo, compra = null) => {
-        console.log("abrirModal llamado con:", tipo, compra);
-        setModalTipo(tipo);
-        setCompraSeleccionada(compra);
+  console.log("abrirModal llamado con:", tipo, compra);
+  setModalTipo(tipo);
+  setCompraSeleccionada(compra);
 
-        if (tipo === "ver" && compra) {
-            try {
-                setCargando(true);
+  if (tipo === "ver" && compra) {
+    try {
+      setCargando(true);
 
-                const compraId =
-                    compra.id ||
-                    compra.idcompra ||
-                    compra.idCompra ||
-                    compra.id_compra ||
-                    compra.compraId;
+      const compraId =
+        compra.id ||
+        compra.idcompra ||
+        compra.idCompra ||
+        compra.id_compra ||
+        compra.compraId;
 
-                if (!compraId) {
-                    console.error("❌ No se pudo determinar el ID de la compra:", compra);
-                    showNotification("Error: No se encontró un ID válido", "error");
-                    return;
-                }
+      if (!compraId) {
+        console.error("❌ No se pudo determinar el ID de la compra:", compra);
+        showNotification("Error: No se encontró un ID válido", "error");
+        return;
+      }
 
-                console.log("🆔 ID detectado:", compraId);
+      console.log("🆔 ID detectado:", compraId);
 
-                // Obtener la compra del backend
-                const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
-                console.log("📊 Compra obtenida:", datosCompra);
+      // Obtener la compra del backend
+      const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
+      console.log("📊 Compra obtenida:", datosCompra);
 
-                // Mapear proveedor y campos principales
-                setCompraData({
-                    proveedor: datosCompra.proveedor?.nombre || "N/A",
-                    idProveedor: datosCompra.idProveedor || null,
-                    fechaCompra: datosCompra.fechaCompra
-                        ? String(datosCompra.fechaCompra).slice(0, 10)
-                        : "",
-                    fechaRegistro: datosCompra.fechaRegistro
-                        ? String(datosCompra.fechaRegistro).slice(0, 10)
-                        : "",
-                    observaciones: datosCompra.observaciones || "",
-                });
+      // Mapear proveedor y campos principales
+      setCompraData({
+        proveedor: datosCompra.proveedor?.nombre || "N/A",
+        idProveedor: datosCompra.idProveedor || null,
+        fechaCompra: datosCompra.fechaCompra
+          ? String(datosCompra.fechaCompra).slice(0, 10)
+          : "",
+        fechaRegistro: datosCompra.fechaRegistro
+          ? String(datosCompra.fechaRegistro).slice(0, 10)
+          : "",
+        observaciones: datosCompra.observaciones || "",
+      });
 
-                const detalles = datosCompra.detalles || [];
-                console.log("📋 Detalles encontrados:", detalles);
+      const detalles = datosCompra.detalles || [];
+      console.log("📋 Detalles encontrados:", detalles);
 
-                const insumosFormateados = detalles.map((detalle) => ({
-                    id: detalle.insumo?.id || detalle.idInsumo,
-                    nombre: detalle.insumo?.nombre || "N/A",
-                    cantidad: Number(detalle.cantidad) || 0,
-                    precioUnitario: Number(detalle.precioUnitario) || 0,
-                    unidad: detalle.insumo?.unidad || "N/A",
-                }));
+      const insumosFormateados = detalles.map((detalle) => ({
+        id: detalle.insumo?.id || detalle.idInsumo,
+        nombre: detalle.insumo?.nombre || "N/A",
+        cantidad: Number(detalle.cantidad) || 0,
+        precioUnitario: Number(detalle.precioUnitario) || 0,
+        unidad: detalle.insumo?.unidad || "N/A",
+      }));
 
-                setInsumosSeleccionados(insumosFormateados);
-                setMostrarAgregarCompra(true);
-            } catch (error) {
-                console.error("❌ Error al cargar compra:", error);
-                showNotification("Error al cargar la compra: " + error.message, "error");
-            } finally {
-                setCargando(false);
-            }
-        } else if (tipo === "agregar") {
-            setCompraData({
-                proveedor: "",
-                idProveedor: null,
-                fechaCompra: "",
-                fechaRegistro: new Date().toISOString().split("T")[0],
-                observaciones: "",
-            });
-            setInsumosSeleccionados([]);
-            setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
-            setMostrarAgregarCompra(true);
-        } else if (tipo === "anular") {
-            setModalVisible(true);
-        }
-    };
+      setInsumosSeleccionados(insumosFormateados);
+      setMostrarAgregarCompra(true);
+    } catch (error) {
+      console.error("❌ Error al cargar compra:", error);
+      showNotification("Error al cargar la compra: " + error.message, "error");
+    } finally {
+      setCargando(false);
+    }
+  } else if (tipo === "agregar") {
+    setCompraData({
+      proveedor: "",
+      idProveedor: null,
+      fechaCompra: "",
+      fechaRegistro: new Date().toISOString().split("T")[0],
+      observaciones: "",
+    });
+    setInsumosSeleccionados([]);
+    setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
+    setMostrarAgregarCompra(true);
+  } else if (tipo === "anular" && compra) {
+    const compraId =
+      compra.id ||
+      compra.idcompra ||
+      compra.idCompra ||
+      compra.id_compra ||
+      compra.compraId;
+
+    if (!compraId) {
+      console.error("❌ No se pudo determinar el ID de la compra:", compra);
+      showNotification("Error: No se encontró un ID válido", "error");
+      return;
+    }
+
+    setCompraSeleccionada({ ...compra, id: compraId });
+    setModalVisible(true);
+  }
+};
 
     // Función de filtrado mejorada
     const filtrarCompras = (compras, filtro) => {
@@ -806,10 +867,19 @@ export default function ComprasTable() {
         });
     };
 
-    // Aplicar filtros - LÓGICA CORREGIDA
-    const comprasFiltradas = filtrarCompras(compras, filtro).filter(c =>
-        mostrarAnuladas ? !c.estado : c.estado
-    );
+    // LÓGICA CORREGIDA: Aplicar filtros según estado - MEJORADA
+    const comprasFiltradas = filtrarCompras(compras, filtro).filter(c => {
+        // Debug para ver qué está pasando
+        console.log('Compra:', c.id, 'Estado:', c.estado, 'Mostrar anuladas:', mostrarAnuladas);
+        
+        if (mostrarAnuladas) {
+            // Mostrar compras anuladas (estado === false)
+            return c.estado === false;
+        } else {
+            // Mostrar compras activas (estado === true o undefined para compatibilidad)
+            return c.estado === true || c.estado === undefined;
+        }
+    });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -830,6 +900,7 @@ export default function ComprasTable() {
         }
     };
 
+    // FUNCIÓN CORREGIDA: Agregar insumos con conversión correcta
     const agregarInsumos = (nuevos) => {
         // ASEGURAR QUE LOS DATOS SEAN NÚMEROS AL AGREGAR
         const nuevosInsumosNormalizados = nuevos.map(insumo => ({
@@ -890,58 +961,67 @@ export default function ComprasTable() {
         return true;
     };
 
-    const guardarCompra = async () => {
-        try {
-            if (!compraData.idProveedor || insumosSeleccionados.length === 0) {
-                showNotification("Debe seleccionar un proveedor y agregar al menos un insumo", "error");
-                return;
-            }
+    // 🔹 Función principal para guardar la compra
+const guardarCompra = async () => {
+  try {
+    if (!compraData.idProveedor || insumosSeleccionados.length === 0) {
+      showNotification("Debe seleccionar un proveedor y agregar al menos un insumo", "error");
+      return;
+    }
 
-            setCargando(true); // Mostrar loading
+    setCargando(true);
 
-            const subtotal = insumosSeleccionados.reduce(
-                (acc, item) => acc + (item.cantidad || 0) * (item.precioUnitario || item.precio || 0),
-                0
-            );
-            const iva = subtotal * 0.19;
-            const total = subtotal + iva;
+    // Calcular subtotal, IVA y total
+    const subtotal = insumosSeleccionados.reduce(
+      (acc, item) => acc + (item.cantidad || 0) * (item.precioUnitario || item.precio || 0),
+      0
+    );
+    const iva = subtotal * 0.19;
+    const total = subtotal + iva;
 
-            const nuevaCompraData = {
-                idProveedor: compraData.idProveedor,
-                fechaCompra: compraData.fechaCompra,
-                fechaRegistro: compraData.fechaRegistro,
-                observaciones: compraData.observaciones,
-                detalles: insumosSeleccionados.map(item => ({
-                    idInsumo: item.id,
-                    cantidad: item.cantidad,
-                    precioUnitario: item.precioUnitario || item.precio,
-                    subtotalProducto: (item.cantidad || 0) * (item.precioUnitario || item.precio || 0)
-                })),
-                subtotal,
-                iva,
-                total
-            };
+    // ✅ Armar detalles
+    const detalles = insumosSeleccionados.map(item => ({
+  idinsumo: item.idinsumo ?? item.id,
+  cantidad: Number(item.cantidad) || 0,
+  precioUnitario: item.precioUnitario || item.precio,
+  subtotalProducto: (Number(item.cantidad) || 0) * (item.precioUnitario || item.precio || 0)
+}));
 
-            console.log('Guardando compra con datos:', nuevaCompraData);
-
-            // Crear la compra
-            const compraCreada = await compraApiService.crearCompra(nuevaCompraData);
-            console.log('Compra creada exitosamente:', compraCreada);
-
-            // NUEVA FUNCIONALIDAD: Actualizar stock de insumos
-            console.log('Actualizando stock de insumos...');
-            await actualizarStockInsumos(insumosSeleccionados);
-
-            showNotification("Compra guardada correctamente y stock actualizado");
-            cancelarFormulario();
-            await cargarCompras();
-        } catch (error) {
-            console.error("Error al guardar la compra:", error);
-            showNotification("Error al guardar la compra: " + error.message, "error");
-        } finally {
-            setCargando(false);
-        }
+    const nuevaCompraData = {
+      idProveedor: compraData.idProveedor,
+      fechaCompra: compraData.fechaCompra,
+      fechaRegistro: compraData.fechaRegistro,
+      observaciones: compraData.observaciones,
+      detalles,
+      subtotal,
+      iva,
+      total,
     };
+
+    console.log("📦 Guardando compra con datos:", nuevaCompraData);
+
+    // 1. Crear la compra
+    const compraCreada = await compraApiService.crearCompra(nuevaCompraData);
+    console.log("✅ Compra creada exitosamente:", compraCreada);
+
+    // 2. Actualizar stock con función separada
+    await actualizarStockInsumos(detalles);
+
+    // 3. Notificación y refresco
+    showNotification("Compra guardada correctamente y stock actualizado");
+    cancelarFormulario();
+    await cargarCompras();
+  } catch (error) {
+    console.error("❌ Error al guardar la compra:", error);
+    showNotification("Error al guardar la compra: " + error.message, "error");
+  } finally {
+    setCargando(false);
+  }
+};
+
+
+
+
 
     const subtotal = insumosSeleccionados.reduce((s, i) => s + (i.precio || i.precioUnitario || 0) * (i.cantidad || 0), 0);
     const iva = subtotal * 0.19; 
@@ -951,12 +1031,14 @@ export default function ComprasTable() {
         <div className="admin-wrapper">
             <Notification visible={notification.visible} mensaje={notification.mensaje} tipo={notification.tipo} onClose={hideNotification} />
 
-            {/* Modal de previsualización de PDF */}
+            {/* Modal de previsualización de PDF - MEJORADO CON MAS TAMAÑO */}
             <PDFPreview 
                 visible={pdfPreviewVisible}
                 onClose={cerrarPDFPreview}
                 compraData={compraPdf}
                 onDownload={descargarPDFDesdePreview}
+                // Agregamos prop personalizada para tamaño más grande
+                modalSize="large"
             />
 
             {cargando && (
@@ -1102,10 +1184,50 @@ export default function ComprasTable() {
                         <Column
                             header="Acción"
                             body={rowData => {
-                                if (!rowData.estado) return <span style={{ color: 'gray' }}>Anulada</span>;
+                                // LÓGICA CORREGIDA: Mostrar diferentes acciones según el estado
+                                if (!rowData.estado) {
+                                    // Para compras anuladas
+                                    return (
+                                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                            <button 
+                                                className="admin-button gray" 
+                                                title="Visualizar" 
+                                                onClick={() => abrirModal('ver', rowData)} 
+                                                disabled={cargando}
+                                            >
+                                                👁
+                                            </button>
+                                            <button
+                                                className="admin-button green"
+                                                title="Reactivar"
+                                                onClick={() => reactivarCompra(rowData)}
+                                                disabled={cargando}
+                                            >
+                                                ↩️
+                                            </button>
+                                            <button 
+                                                className="admin-button blue" 
+                                                title="Descargar PDF" 
+                                                onClick={() => generarPDF(rowData)}
+                                                disabled={cargando}
+                                            >
+                                                📄
+                                            </button>
+                                        </div>
+                                    );
+                                }
+
+                                // Para compras activas
                                 return (
                                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                                        <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('ver', rowData)} disabled={cargando}>👁</button>
+                                        <button 
+                                            className="admin-button gray" 
+                                            title="Visualizar" 
+                                            onClick={() => abrirModal('ver', rowData)} 
+                                            disabled={cargando}
+                                        >
+                                            👁
+                                        </button>
                                         <button
                                             className="admin-button red"
                                             title="Anular"
@@ -1165,59 +1287,98 @@ export default function ComprasTable() {
                     </div>
                     
                     <div className="compra-fields-grid">
-                        <div className="field-group">
-                            <label>Proveedor*</label>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
-                                <select
-                                    name="idProveedor"
-                                    value={compraData.idProveedor || ''}
-                                    onChange={handleChange}
-                                    disabled={modalTipo === 'ver' || cargando}
-                                    style={{ 
-                                        borderColor: errores.proveedor ? 'red' : '',
-                                        flex: 1
-                                    }}
-                                >
-                                    <option value="">Seleccione un proveedor</option>
-                                    {proveedores.map(proveedor => (
-                                        <option key={proveedor.idProveedor} value={proveedor.idProveedor}>
-                                            {proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa}
-                                        </option>
-                                    ))}
-                                </select>
-                                
-                                {modalTipo !== 'ver' && (
-                                    <button
-                                        type="button"
-                                        onClick={abrirModalProveedor}
-                                        className="admin-button pink"
-                                        title="Agregar nuevo proveedor"
-                                        disabled={cargando}
-                                        style={{
-                                            minWidth: '40px',
-                                            height: '38px',
-                                            padding: '0 8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        +
-                                    </button>
-                                )}
-                            </div>
+    <div className="field-group">
+        <label>Proveedor*</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+            {/* CAMPO CON DATALIST */}
+            <div style={{ flex: 1 }}>
+                <input
+                    type="text"
+                    list="proveedores-list"
+                    placeholder="Buscar o seleccionar proveedor..."
+                    value={buscarProveedor}
+                    onChange={(e) => {
+                        setBuscarProveedor(e.target.value);
+                        // Buscar coincidencia exacta para autoseleccionar
+                        const proveedorEncontrado = proveedores.find(p => {
+                            const nombre = p.nombre || p.nombreProveedor || p.nombreempresa || '';
+                            return nombre.toLowerCase() === e.target.value.toLowerCase();
+                        });
+                        if (proveedorEncontrado) {
+                            setCompraData(prev => ({
+                                ...prev,
+                                idProveedor: proveedorEncontrado.idProveedor,
+                                proveedor: proveedorEncontrado.nombre || proveedorEncontrado.nombreProveedor || proveedorEncontrado.nombreempresa
+                            }));
+                            setErrores(prev => ({ ...prev, proveedor: '' }));
+                        } else {
+                            setCompraData(prev => ({
+                                ...prev,
+                                idProveedor: null,
+                                proveedor: ''
+                            }));
+                        }
+                    }}
+                    style={{ 
+                        width: '100%',
+                        padding: '8px',
+                        border: errores.proveedor ? '1px solid red' : '1px solid #ccc',
+                        borderRadius: '4px'
 
-                            {errores.proveedor && (
-                                <small style={{ color: 'red', fontSize: '12px' }}>
-                                    {errores.proveedor}
-                                </small>
-                            )}
-                            {proveedores.length === 0 && (
-                                <small style={{ color: 'orange', fontSize: '10px' }}>
-                                    No hay proveedores disponibles
-                                </small>
-                            )}
-                        </div>
+                    }}
+                    
+                    disabled={modalTipo === 'ver' || cargando}
+                />
+                
+                <datalist id="proveedores-list">
+                    {proveedores.map(proveedor => (
+                        <option 
+                            key={proveedor.idProveedor} 
+                            value={proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa}
+                        />
+                    ))}
+                </datalist>
+            </div>
+            
+            {modalTipo !== 'ver' && (
+                <button
+                    type="button"
+                    onClick={abrirModalProveedor}
+                    className="admin-button pink"
+                    title="Agregar nuevo proveedor"
+                    disabled={cargando}
+                    style={{
+                        minWidth: '40px',
+                        height: '38px',
+                        padding: '0 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        alignSelf: 'flex-end'
+                    }}
+                >
+                    +
+                </button>
+            )}
+        </div>
+
+        {errores.proveedor && (
+            <small style={{ color: 'red', fontSize: '12px' }}>
+                {errores.proveedor}
+            </small>
+        )}
+        {proveedores.length === 0 && (
+            <small style={{ color: 'orange', fontSize: '10px' }}>
+                No hay proveedores disponibles
+            </small>
+        )}
+        {/* Mostrar proveedor seleccionado */}
+        {compraData.idProveedor && (
+            <small style={{ color: 'green', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                ✓ Seleccionado: {compraData.proveedor}
+            </small>
+        )}
+    </div>
                         
                         <div className="field-group">
                             <label>Fecha de compra*</label>
@@ -1537,6 +1698,78 @@ export default function ComprasTable() {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
                 }
+
+    
+                /* Estilos para el datalist mejorado */
+                input[list]::-webkit-list-button {
+                    display: none;
+                }
+                
+                input[list] {
+                    position: relative;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8.825c-.2 0-.4-.1-.5-.2L1.2 4.3c-.3-.3-.3-.8 0-1.1s.8-.3 1.1 0L6 7.1l3.7-3.9c.3-.3.8-.3 1.1 0s.3.8 0 1.1L6.5 8.625c-.1.1-.3.2-.5.2z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 8px center;
+                    background-size: 12px;
+                    padding-right: 30px !important;
+                    cursor: pointer;
+                }
+                
+                input[list]:focus {
+                    outline: 2px solid #007bff;
+                    outline-offset: 2px;
+                    border-color: #007bff;
+                    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                }
+                
+                /* Para navegadores que soportan datalist styling */
+                datalist {
+                    position: absolute;
+                    background-color: white;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
+                }
+                
+                datalist option {
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #f0f0f0;
+                    font-size: 14px;
+                }
+                
+                datalist option:hover {
+                    background-color: #f8f9fa;
+                }
+                
+                datalist option:last-child {
+                    border-bottom: none;
+                }
+                
+                /* Estilo cuando el proveedor está seleccionado */
+                .proveedor-seleccionado {
+                    background-color: #e8f5e8 !important;
+                    border-color: #28a745 !important;
+                }
+                
+                /* Animación sutil para el ícono de confirmación */
+                .check-animation {
+                    animation: checkFade 0.3s ease-in;
+                }
+                
+                @keyframes checkFade {
+                    from { opacity: 0; transform: translateY(-5px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                .fila-anulada {
+                    background-color: #ffebee !important;
+                    opacity: 0.7;
+                }
+    
                 .fila-anulada {
                     background-color: #ffebee !important;
                     opacity: 0.7;
@@ -1583,6 +1816,24 @@ export default function ComprasTable() {
                 
                 .compra-detalle-table tbody tr:hover {
                     background-color: #e9ecef;
+                }
+
+                /* Botón verde para reactivar */
+                .admin-button.green {
+                    background-color: #28a745;
+                    color: white;
+                    border: 1px solid #28a745;
+                }
+
+                .admin-button.green:hover {
+                    background-color: #218838;
+                    border-color: #1e7e34;
+                }
+
+                .admin-button.green:disabled {
+                    background-color: #6c757d;
+                    border-color: #6c757d;
+                    opacity: 0.65;
                 }
             `}</style>
         </div>

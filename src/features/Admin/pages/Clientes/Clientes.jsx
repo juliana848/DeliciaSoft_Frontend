@@ -43,10 +43,7 @@ export default function Clientes() {
 
   const toggleEstado = async (cliente) => {
     try {
-      console.log('Cliente antes del toggle:', cliente);
-      
       const clienteActualizado = await clienteApiService.toggleEstadoCliente(cliente.idCliente);
-      console.log('Cliente actualizado desde API:', clienteActualizado);
 
       // Actualizar el estado local inmediatamente
       setClientes(prevClientes => {
@@ -59,7 +56,6 @@ export default function Clientes() {
           }
           return c;
         });
-        console.log('Estado actualizado en lista local');
         return nuevosClientes;
       });
 
@@ -87,13 +83,8 @@ export default function Clientes() {
 
     // Verificar si el cliente tiene ventas cuando se intenta eliminar
     if (tipo === 'eliminar' && cliente) {
-      try {
-        const tieneVentas = await clienteApiService.clienteTieneVentas(cliente.idCliente);
-        setClienteSeleccionado({ ...cliente, tieneVentas });
-      } catch (error) {
-        console.error('Error al verificar ventas:', error);
-        setClienteSeleccionado({ ...cliente, tieneVentas: false });
-      }
+      const tieneVentas = await clienteApiService.clienteTieneVentas(cliente.idCliente);
+      setClienteSeleccionado({ ...cliente, tieneVentas });
     }
   };
 
@@ -146,23 +137,21 @@ export default function Clientes() {
   };
 
   const confirmarEliminar = async () => {
-    try {
-      await clienteApiService.eliminarCliente(clienteSeleccionado.idCliente);
+    // Llamar al servicio sin try-catch para evitar errores en consola
+    const resultado = await clienteApiService.eliminarCliente(clienteSeleccionado.idCliente);
+    
+    cerrarModal();
+    
+    // Verificar el resultado
+    if (resultado.success) {
+      // Eliminación exitosa
       setClientes(prevClientes => 
         prevClientes.filter(c => c.idCliente !== clienteSeleccionado.idCliente)
       );
-      cerrarModal();
       showNotification('Cliente eliminado exitosamente');
-    } catch (error) {
-      console.error('Error al eliminar cliente:', error);
-      cerrarModal();
-      
-      // Manejar específicamente el error de ventas asociadas
-      if (error.message.includes('tiene ventas asociadas')) {
-        showNotification('No se puede eliminar el cliente porque tiene ventas asociadas', 'error');
-      } else {
-        showNotification(`Error al eliminar cliente: ${error.message}`, 'error');
-      }
+    } else {
+      // No se pudo eliminar (tiene ventas asociadas u otro error)
+      showNotification(resultado.message, 'error');
     }
   };
 

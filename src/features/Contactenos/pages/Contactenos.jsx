@@ -23,7 +23,7 @@ const Contactenos = () => {
   const [errors, setErrors] = useState({});
 
   // URL base de la API
-  const API_BASE_URL = 'https://deliciasoft-backend.onrender.com';
+  const API_BASE_URL = 'https://deliciasoft-backend-i6g9.onrender.com';
 
   // Cargar datos del usuario si está logueado - CORREGIDO
   useEffect(() => {

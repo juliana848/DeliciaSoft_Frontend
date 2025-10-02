@@ -1,6 +1,6 @@
 // src/services/produccion_services.js
 
-const BASE_URL = "https://deliciasoft-backend.onrender.com/api/produccion";
+const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/produccion";
 
 class ProduccionApiService {
   constructor() {

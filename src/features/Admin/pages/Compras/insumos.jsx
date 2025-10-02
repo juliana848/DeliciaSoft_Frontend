@@ -37,25 +37,27 @@ export default function InsumosTable() {
   const [modal, setModal] = useState({ visible: false, tipo: '', insumo: null });
   
   // Estados para formulario principal de insumos
-  const [form, setForm] = useState({ 
-    nombreInsumo: '', 
-    idCategoriaInsumos: '', 
-    cantidad: '', 
-    idUnidadMedida: '', 
-    idImagen: null, 
-    estado: true,
-    stockMinimo: 5
-  });
+const [form, setForm] = useState({ 
+  nombreInsumo: '', 
+  idCategoriaInsumos: '', 
+  cantidad: '', 
+  idUnidadMedida: '', 
+  idImagen: null, 
+  estado: true,
+  stockMinimo: 5,
+  precio: '' // ⭐ NUEVO CAMPO
+});
 
   const opcionesNombre = Object.keys(unidadesPorProducto);
 
-  const [errors, setErrors] = useState({
-    nombreInsumo: null,
-    idCategoriaInsumos: null,
-    cantidad: null,
-    idUnidadMedida: null,
-    stockMinimo: null
-  });
+const [errors, setErrors] = useState({
+  nombreInsumo: null,
+  idCategoriaInsumos: null,
+  cantidad: null,
+  idUnidadMedida: null,
+  stockMinimo: null,
+  precio: null // ⭐ NUEVO ERROR
+});
 
   // Estados para el modal de categoría
   const [modalCategoriaVisible, setModalCategoriaVisible] = useState(false);
@@ -156,47 +158,48 @@ export default function InsumosTable() {
 
   // Función para cargar insumos
   const cargarInsumos = async () => {
-    try {
-      setLoading(true);
-      console.log('Cargando insumos...');
-      
-      const insumosAPI = await insumoApiService.obtenerInsumos();
-      console.log('Insumos recibidos:', insumosAPI);
-      
-      const insumosTransformados = insumosAPI.map(insumo => {
-        let categoria = insumo.nombreCategoria;
-        if (!categoria) {
-          const categoriaEncontrada = categorias.find(cat => cat.id === parseInt(insumo.idCategoriaInsumos));
-          categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'Categoría desconocida';
-        }
+  try {
+    setLoading(true);
+    console.log('Cargando insumos...');
+    
+    const insumosAPI = await insumoApiService.obtenerInsumos();
+    console.log('Insumos recibidos:', insumosAPI);
+    
+    const insumosTransformados = insumosAPI.map(insumo => {
+      let categoria = insumo.nombreCategoria;
+      if (!categoria) {
+        const categoriaEncontrada = categorias.find(cat => cat.id === parseInt(insumo.idCategoriaInsumos));
+        categoria = categoriaEncontrada ? categoriaEncontrada.nombreCategoria : 'Categoría desconocida';
+      }
 
-        let unidad = insumo.nombreUnidadMedida;
-        if (!unidad) {
-          const unidadEncontrada = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(insumo.idUnidadMedida));
-          unidad = unidadEncontrada ? unidadEncontrada.unidadmedida : 'unid';
-        }
+      let unidad = insumo.nombreUnidadMedida;
+      if (!unidad) {
+        const unidadEncontrada = unidades.find(uni => parseInt(uni.idunidadmedida) === parseInt(insumo.idUnidadMedida));
+        unidad = unidadEncontrada ? unidadEncontrada.unidadmedida : 'unid';
+      }
 
-        return {
-          id: insumo.id,
-          nombre: insumo.nombreInsumo,
-          categoria,
-          cantidad: insumo.cantidad,
-          unidad,
-          estado: insumo.estado,
-          stockMinimo: 5,
-          _originalData: insumo
-        };
-      });
-      
-      setInsumos(insumosTransformados);
-      console.log('Insumos transformados:', insumosTransformados.length);
-    } catch (error) {
-      console.error('Error al cargar insumos:', error);
-      showNotification('Error al cargar los insumos: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        id: insumo.id,
+        nombre: insumo.nombreInsumo,
+        categoria,
+        cantidad: insumo.cantidad,
+        unidad,
+        estado: insumo.estado,
+        stockMinimo: 5,
+        precio: insumo.precio || 0, // ⭐ INCLUIR PRECIO
+        _originalData: insumo
+      };
+    });
+    
+    setInsumos(insumosTransformados);
+    console.log('Insumos transformados:', insumosTransformados.length);
+  } catch (error) {
+    console.error('Error al cargar insumos:', error);
+    showNotification('Error al cargar los insumos: ' + error.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Funciones auxiliares
   const getCategoriaName = (id) => {
@@ -282,34 +285,20 @@ export default function InsumosTable() {
 
   // Funciones del modal principal
   const abrirModal = (tipo, insumo = null) => {
-    setModal({ visible: true, tipo, insumo });
-    if (tipo === 'editar' && insumo) {
-      const originalData = insumo._originalData;
-      setForm({ 
-        nombreInsumo: originalData.nombreInsumo,
-        idCategoriaInsumos: originalData.idCategoriaInsumos,
-        cantidad: originalData.cantidad,
-        idUnidadMedida: originalData.idUnidadMedida,
-        idImagen: originalData.idImagen,
-        estado: originalData.estado,
-        stockMinimo: insumo.stockMinimo
-      });
-    } else if (tipo === 'agregar') {
-      setForm({ 
-        nombreInsumo: '', 
-        idCategoriaInsumos: '', 
-        cantidad: '', 
-        idUnidadMedida: '', 
-        idImagen: null, 
-        estado: true, 
-        stockMinimo: 5
-      });
-    }
-    setErrors({});
-  };
-
-  const cerrarModal = () => {
-    setModal({ visible: false, tipo: '', insumo: null });
+  setModal({ visible: true, tipo, insumo });
+  if (tipo === 'editar' && insumo) {
+    const originalData = insumo._originalData;
+    setForm({ 
+      nombreInsumo: originalData.nombreInsumo,
+      idCategoriaInsumos: originalData.idCategoriaInsumos,
+      cantidad: originalData.cantidad,
+      idUnidadMedida: originalData.idUnidadMedida,
+      idImagen: originalData.idImagen,
+      estado: originalData.estado,
+      stockMinimo: insumo.stockMinimo,
+      precio: originalData.precio || '' // ⭐ INCLUIR PRECIO
+    });
+  } else if (tipo === 'agregar') {
     setForm({ 
       nombreInsumo: '', 
       idCategoriaInsumos: '', 
@@ -317,10 +306,26 @@ export default function InsumosTable() {
       idUnidadMedida: '', 
       idImagen: null, 
       estado: true, 
-      stockMinimo: 5
+      stockMinimo: 5,
+      precio: '' // ⭐ INCLUIR PRECIO
     });
-    setErrors({});
-  };
+  }
+  setErrors({});
+};
+const cerrarModal = () => {
+  setModal({ visible: false, tipo: '', insumo: null });
+  setForm({ 
+    nombreInsumo: '', 
+    idCategoriaInsumos: '', 
+    cantidad: '', 
+    idUnidadMedida: '', 
+    idImagen: null, 
+    estado: true, 
+    stockMinimo: 5,
+    precio: '' // ⭐ INCLUIR PRECIO
+  });
+  setErrors({});
+};
 
   // Funciones para el modal de categoría
   const abrirModalCategoria = () => {
@@ -569,51 +574,61 @@ export default function InsumosTable() {
 
   // Validación de campos
   const validateField = (name, value) => {
-    let error = null;
+  let error = null;
+  
+  switch (name) {
+    case 'nombreInsumo':
+      if (!value.toString().trim()) {
+        error = 'El nombre es obligatorio';
+      }
+      break;
     
-    switch (name) {
-      case 'nombreInsumo':
-        if (!value.toString().trim()) {
-          error = 'El nombre es obligatorio';
-        }
-        break;
-      
-      case 'idCategoriaInsumos':
-        if (!value) {
-          error = 'La categoría es obligatoria';
-        }
-        break;
-      
-      case 'idUnidadMedida':
-        if (!value) {
-          error = 'La unidad es obligatoria';
-        }
-        break;
-      
-      case 'cantidad':
-        if (!value.toString().trim()) {
-          error = 'La cantidad es obligatoria';
-        } else if (isNaN(value) || Number(value) <= 0) {
-          error = 'La cantidad debe ser un número mayor a 0';
-        } else if (Number(value) > 10000) {
-          error = 'La cantidad no puede ser mayor a 10,000';
-        }
-        break;
-
-      case 'stockMinimo':
-        if (!value.toString().trim()) {
-          error = 'El stock mínimo es obligatorio';
-        } else if (isNaN(value) || Number(value) < 0) {
-          error = 'El stock mínimo debe ser un número mayor o igual a 0';
-        } else if (Number(value) > 1000) {
-          error = 'El stock mínimo no puede ser mayor a 1,000';
-        }
-        break;
-    }
+    case 'idCategoriaInsumos':
+      if (!value) {
+        error = 'La categoría es obligatoria';
+      }
+      break;
     
-    return error;
-  };
+    case 'idUnidadMedida':
+      if (!value) {
+        error = 'La unidad es obligatoria';
+      }
+      break;
+    
+    case 'cantidad':
+      if (!value.toString().trim()) {
+        error = 'La cantidad es obligatoria';
+      } else if (isNaN(value) || Number(value) <= 0) {
+        error = 'La cantidad debe ser un número mayor a 0';
+      } else if (Number(value) > 10000) {
+        error = 'La cantidad no puede ser mayor a 10,000';
+      }
+      break;
 
+    case 'stockMinimo':
+      if (!value.toString().trim()) {
+        error = 'El stock mínimo es obligatorio';
+      } else if (isNaN(value) || Number(value) < 0) {
+        error = 'El stock mínimo debe ser un número mayor o igual a 0';
+      } else if (Number(value) > 1000) {
+        error = 'El stock mínimo no puede ser mayor a 1,000';
+      }
+      break;
+
+    // ⭐ NUEVA VALIDACIÓN DE PRECIO
+    case 'precio':
+      if (!value.toString().trim()) {
+        error = 'El precio es obligatorio';
+      } else if (isNaN(value) || Number(value) <= 0) {
+        error = 'El precio debe ser un número mayor a 0';
+      } else if (Number(value) > 1000000) {
+        error = 'El precio no puede ser mayor a 1,000,000';
+      }
+      break;
+  }
+  
+  return error;
+};
   // Función para convertir archivo a Base64
   const convertirABase64 = (file, callback) => {
     const reader = new FileReader();
@@ -623,26 +638,27 @@ export default function InsumosTable() {
   };
 
   // Validación completa del formulario
-  const validarFormulario = () => {
-    const erroresValidacion = {
-      nombreInsumo: validateField('nombreInsumo', form.nombreInsumo),
-      idCategoriaInsumos: validateField('idCategoriaInsumos', form.idCategoriaInsumos),
-      idUnidadMedida: validateField('idUnidadMedida', form.idUnidadMedida),
-      cantidad: validateField('cantidad', form.cantidad),
-      stockMinimo: validateField('stockMinimo', form.stockMinimo)
-    };
-
-    setErrors(erroresValidacion);
-
-    const hasErrors = Object.values(erroresValidacion).some(error => error !== null);
-    
-    if (hasErrors) {
-      showNotification('Por favor corrige los errores en el formulario', 'error');
-      return false;
-    }
-
-    return true;
+const validarFormulario = () => {
+  const erroresValidacion = {
+    nombreInsumo: validateField('nombreInsumo', form.nombreInsumo),
+    idCategoriaInsumos: validateField('idCategoriaInsumos', form.idCategoriaInsumos),
+    idUnidadMedida: validateField('idUnidadMedida', form.idUnidadMedida),
+    cantidad: validateField('cantidad', form.cantidad),
+    stockMinimo: validateField('stockMinimo', form.stockMinimo),
+    precio: validateField('precio', form.precio) // ⭐ VALIDAR PRECIO
   };
+
+  setErrors(erroresValidacion);
+
+  const hasErrors = Object.values(erroresValidacion).some(error => error !== null);
+  
+  if (hasErrors) {
+    showNotification('Por favor corrige los errores en el formulario', 'error');
+    return false;
+  }
+
+  return true;
+};
 
   // Función para guardar insumo - FIX DEL BUG DE IMAGEN
   const guardar = async () => {
@@ -1027,6 +1043,34 @@ export default function InsumosTable() {
                       />
                     </div>
 
+                    <label>
+  Precio*
+  <div style={{ position: 'relative' }}>
+    <span style={{
+      position: 'absolute',
+      left: '12px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#6c757d',
+      fontSize: '14px',
+      fontWeight: '500'
+    }}>$</span>
+    <input
+      type="number"
+      name="precio"
+      value={form.precio}
+      onChange={handleChange}
+      className={`modal-input ${errors.precio ? 'input-invalid' : form.precio ? 'input-valid' : ''}`}
+      min="0"
+      step="0.01"
+      placeholder="0.00"
+      style={{ paddingLeft: '25px' }}
+    />
+  </div>
+  {errors.precio && <span className="error-message">{errors.precio}</span>}
+</label>
+
+
                     <div style={{ flex: 1 }}>
                       <div>Estado</div>
                       <div style={{
@@ -1174,6 +1218,33 @@ export default function InsumosTable() {
                         step="1"
                       />
                       {errors.stockMinimo && <span className="error-message">{errors.stockMinimo}</span>}
+
+                      <label>
+  Precio*
+  <div style={{ position: 'relative' }}>
+    <span style={{
+      position: 'absolute',
+      left: '12px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#6c757d',
+      fontSize: '14px',
+      fontWeight: '500'
+    }}>$</span>
+    <input
+      type="number"
+      name="precio"
+      value={form.precio}
+      onChange={handleChange}
+      className={`modal-input ${errors.precio ? 'input-invalid' : form.precio ? 'input-valid' : ''}`}
+      min="0"
+      step="0.01"
+      placeholder="0.00"
+      style={{ paddingLeft: '25px' }}
+    />
+  </div>
+  {errors.precio && <span className="error-message">{errors.precio}</span>}
+</label>
                     </div>
                     
                     {modal.tipo !== 'agregar' && (

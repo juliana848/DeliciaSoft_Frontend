@@ -1,52 +1,51 @@
-// cliente_services.js actualizado para crear ventas
-const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
+// cliente_services.js - Sin errores en consola
+const API_BASE_URL = 'https://deliciasoft-backend-i6g9.onrender.com/api';
 
 class ClienteApiService {
   // Obtener todos los clientes para el dropdown
-async obtenerClientesParaVenta() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/clientes`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    // Agregar cliente genérico al inicio de la lista
-    const clientesConGenerico = [
-      {
+  async obtenerClientesParaVenta() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Agregar cliente genérico al inicio de la lista
+      const clientesConGenerico = [
+        {
+          idcliente: null,
+          nombre: 'Cliente',
+          apellido: 'Genérico',
+          numeroDocumento: '',
+          nombreCompleto: 'Cliente Genérico'
+        },
+        ...data.map(cliente => ({
+          ...cliente,
+          numeroDocumento: cliente.numerodocumento || '',
+          nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
+        }))
+      ];
+      
+      return clientesConGenerico;
+    } catch (error) {
+      console.error('Error al obtener clientes:', error);
+      return [{
         idcliente: null,
         nombre: 'Cliente',
         apellido: 'Genérico',
-        numeroDocumento: '', // Asegurar campo documento
+        numeroDocumento: '',
         nombreCompleto: 'Cliente Genérico'
-      },
-      ...data.map(cliente => ({
-        ...cliente,
-        numeroDocumento: cliente.numerodocumento || '', // Mapear documento desde API
-        nombreCompleto: `${cliente.nombre} ${cliente.apellido}`.trim()
-      }))
-    ];
-    
-    return clientesConGenerico;
-  } catch (error) {
-    console.error('Error al obtener clientes:', error);
-    // Retornar solo cliente genérico en caso de error
-    return [{
-      idcliente: null,
-      nombre: 'Cliente',
-      apellido: 'Genérico',
-      numeroDocumento: '',
-      nombreCompleto: 'Cliente Genérico'
-    }];
+      }];
+    }
   }
-}
 
   // Obtener todos los clientes
   async obtenerClientes() {
@@ -153,15 +152,9 @@ async obtenerClientesParaVenta() {
     }
   }
 
-  // Eliminar cliente
+  // Eliminar cliente - SIN MOSTRAR ERRORES EN CONSOLA
   async eliminarCliente(id) {
     try {
-      // Verificar primero si tiene ventas asociadas
-      const tieneVentas = await this.clienteTieneVentas(id);
-      if (tieneVentas) {
-        throw new Error('No se puede eliminar el cliente porque tiene ventas asociadas');
-      }
-
       const response = await fetch(`${API_BASE_URL}/clientes/${id}`, {
         method: 'DELETE',
         headers: {
@@ -169,15 +162,44 @@ async obtenerClientesParaVenta() {
         },
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      
+      // Si la respuesta es exitosa (200)
+      if (response.ok) {
+        return { 
+          success: true, 
+          message: data.message || 'Cliente eliminado exitosamente' 
+        };
       }
       
-      return { success: true, message: 'Cliente eliminado exitosamente' };
+      // Si hay error (400, 404, etc)
+      if (response.status === 400 && data.tieneVentas) {
+        return { 
+          success: false, 
+          tieneVentas: true,
+          message: 'No se puede eliminar el cliente porque está asociado a una venta' 
+        };
+      }
+      
+      if (response.status === 404) {
+        return { 
+          success: false, 
+          message: 'Cliente no encontrado' 
+        };
+      }
+      
+      // Otros errores
+      return { 
+        success: false, 
+        message: data.message || 'Error al eliminar cliente' 
+      };
+      
     } catch (error) {
-      console.error('Error al eliminar cliente:', error);
-      throw error;
+      // Error de red u otro error inesperado
+      return { 
+        success: false, 
+        message: 'Error de conexión al intentar eliminar el cliente' 
+      };
     }
   }
 
@@ -197,14 +219,9 @@ async obtenerClientesParaVenta() {
       }
 
       const data = await response.json();
-      console.log('Respuesta completa de la API:', data);
-      
-      // El backend devuelve { message, cliente }, necesitamos el cliente
-      const clienteActualizado = data.cliente || data;
       
       // Después del toggle, obtener el cliente actualizado directamente
       const clienteCompleto = await this.obtenerClientePorId(id);
-      console.log('Cliente obtenido después del toggle:', clienteCompleto);
       
       return clienteCompleto;
     } catch (error) {
@@ -213,7 +230,7 @@ async obtenerClientesParaVenta() {
     }
   }
 
-  // Verificar si cliente tiene ventas
+  // Verificar si cliente tiene ventas - SIN ERRORES EN CONSOLA
   async clienteTieneVentas(id) {
     try {
       const response = await fetch(`${API_BASE_URL}/clientes/${id}/ventas`, {
@@ -223,6 +240,7 @@ async obtenerClientesParaVenta() {
         },
       });
       
+      // Si hay error en la respuesta, asumimos que no tiene ventas
       if (!response.ok) {
         return false;
       }
@@ -230,7 +248,7 @@ async obtenerClientesParaVenta() {
       const data = await response.json();
       return data.tieneVentas || false;
     } catch (error) {
-      console.error('Error al verificar ventas del cliente:', error);
+      // Retornar false sin mostrar error
       return false;
     }
   }
@@ -274,7 +292,6 @@ async obtenerClientesParaVenta() {
         throw error;
       }
       console.warn('No se pudo validar duplicados con usuarios:', error);
-      // Continuar sin validación de usuarios si la API no está disponible
     }
   }
 
@@ -304,41 +321,41 @@ async obtenerClientesParaVenta() {
     }
   }
 
-async actualizarContrasenaCliente(id, nuevaContrasena) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/clientes/${id}/password`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ nuevaContrasena }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  async actualizarContrasenaCliente(id, nuevaContrasena) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/clientes/${id}/password`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nuevaContrasena }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error al actualizar contraseña:', error);
+      throw error;
     }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error al actualizar contraseña:', error);
-    throw error;
   }
-}
 
-async obtenerPerfilCliente() {
-  try {
-    const profile = authService.getUserProfile();
-    if (!profile || !profile.data || !profile.data.idcliente) {
-      throw new Error('No hay sesión activa de cliente');
+  async obtenerPerfilCliente() {
+    try {
+      const profile = authService.getUserProfile();
+      if (!profile || !profile.data || !profile.data.idcliente) {
+        throw new Error('No hay sesión activa de cliente');
+      }
+      
+      return await this.obtenerClientePorId(profile.data.idcliente);
+    } catch (error) {
+      console.error('Error al obtener perfil:', error);
+      throw error;
     }
-    
-    return await this.obtenerClientePorId(profile.data.idcliente);
-  } catch (error) {
-    console.error('Error al obtener perfil:', error);
-    throw error;
   }
-}
 
   // Transformar datos desde la API (snake_case a camelCase)
   transformarClienteDesdeAPI(cliente) {

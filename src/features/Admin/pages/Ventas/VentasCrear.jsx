@@ -538,20 +538,32 @@ export default function VentasCrear({
                                                     {nestedDetailsVisible[item.id] ? '▲' : '▼'}
                                                 </button>
                                             </td>
-                                            <td className="quantity-cell">
+                                           <td className="quantity-cell">
                                                 <input
                                                     type="number"
                                                     min={1}
-                                                    max={(ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') ? item.disponible : undefined}
+                                                    // SOLO establecer max para venta directa
+                                                    max={
+                                                        (ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') 
+                                                            ? item.disponible 
+                                                            : undefined
+                                                    }
                                                     value={item.cantidad || 1}
                                                     onChange={e =>
                                                         handleCantidadChange(item.id, parseInt(e.target.value) || 1)
                                                     }
                                                     className="quantity-input"
                                                 />
+                                                {/* SOLO mostrar disponibilidad para venta directa */}
                                                 {(ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') && (
                                                     <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
                                                         Máx: {item.disponible}
+                                                    </div>
+                                                )}
+                                                {/* Mostrar mensaje informativo para pedidos */}
+                                                {ventaData.tipo_venta === 'pedido' && (
+                                                    <div style={{ fontSize: '11px', color: '#2563eb', marginTop: '2px' }}>
+                                                        Sin límite (se producirá)
                                                     </div>
                                                 )}
                                             </td>

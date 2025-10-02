@@ -343,7 +343,7 @@ async crearVenta(ventaData) {
     try {
         console.log('Datos originales recibidos para crear venta:', ventaData);
         
-        // CORRECCIÓN PRINCIPAL: Simplificar la lógica del cliente
+        // Simplificar la lógica del cliente
         let clienteId = null;
         if (ventaData.clienteId !== null && ventaData.clienteId !== undefined) {
             clienteId = parseInt(ventaData.clienteId);
@@ -356,6 +356,7 @@ async crearVenta(ventaData) {
         const sedeId = await this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
         console.log(`Sede procesada: ${ventaData.sedeNombre || ventaData.sede} -> ID: ${sedeId}`);
         
+        // Normalizar tipo de venta
         let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
         if (tipoVenta === 'venta directa') {
             tipoVenta = 'directa';
@@ -391,6 +392,7 @@ async crearVenta(ventaData) {
         console.log('Datos transformados para la API:', ventaParaAPI);
         console.log('Cliente final que se enviará:', clienteId);
         console.log('Sede final que se enviará:', sedeId);
+        console.log('Tipo de venta:', tipoVenta);
         
         if (!ventaParaAPI.metodopago) {
             throw new Error('Método de pago es requerido');
@@ -416,7 +418,22 @@ async crearVenta(ventaData) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Error al crear venta:', errorText);
-            throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+            
+            // Intentar parsear el error como JSON
+            let errorMessage = `HTTP error! Status: ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.message) {
+                    errorMessage = errorJson.message;
+                }
+                if (errorJson.tipo === 'INVENTARIO_INSUFICIENTE') {
+                    errorMessage = `Stock insuficiente: ${errorJson.message}`;
+                }
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const ventaCreada = await response.json();
@@ -431,12 +448,13 @@ async crearVenta(ventaData) {
             idEstadoVenta: ventaCreada.estadoVentaId || estadoId,
             nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
             nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
-            nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A'
+            nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A',
+            mensaje: ventaCreada.mensaje // El backend devuelve un mensaje descriptivo
         };
         
     } catch (error) {
         console.error('Error al crear la venta:', error);
-        throw new Error(`No se pudo crear la venta: ${error.message}`);
+        throw new Error(error.message || 'No se pudo crear la venta');
     }
 }
 

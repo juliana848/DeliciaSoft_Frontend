@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import sedeApiService from "../../../../Services/sedes_services";
+import sedeApiService from "../../../../services/sedes_services";
 
 export default function useSedeOperations(showNotification) {
   const [sedes, setSedes] = useState([]);
@@ -309,12 +309,16 @@ export default function useSedeOperations(showNotification) {
       showNotification("Sede eliminada exitosamente");
     } catch (error) {
       console.error("Error al eliminar sede:", error);
-      showNotification(error.message || "Error al eliminar la sede", "error");
+      
+      // Mostrar el mensaje específico del error
+      const mensajeError = error.message || "Error al eliminar la sede";
+      showNotification(mensajeError, "error");
+      
+      // No cerrar el modal para que el usuario vea el error
     } finally {
       setLoading(false);
     }
   };
-
   return {
     sedes,
     loading,

@@ -183,40 +183,102 @@ export default function SedeModal({
       );
 
     case "eliminar":
-  return (
-    <Modal visible={visible} onClose={onClose} width="450px">
-      <div className="modal-header">
-        <h2 className="modal-title">Confirmar Eliminación</h2>
-      </div>
-      <div className="modal-body">
-        <div className="modal-confirmation-compact">
-          <p className="confirmation-text-compact">
-            ¿Estás seguro de que deseas eliminar la sede{" "}
-            <strong>"{sede?.nombre}"</strong>?
-          </p>
-          <div className="confirmation-warning-compact">
-            Esta acción no se puede deshacer.
+      return (
+        <Modal visible={visible} onClose={onClose} width="400px">
+          <div style={{ 
+            borderBottom: "1px solid #e5e7eb",
+            padding: "16px 24px"
+          }}>
+            <h2 style={{ 
+              fontSize: "18px", 
+              fontWeight: "600",
+              margin: 0,
+              color: "#111827"
+            }}>
+              Confirmar Eliminación
+            </h2>
           </div>
-        </div>
-      </div>
-      <div className="modal-footer mt-2 flex justify-end gap-2">
-        <button
-          className="modal-btn cancel-btn text-sm px-3 py-1"
-          onClick={onClose}
-          disabled={loading}
-        >
-          Cancelar
-        </button>
-        <button
-          className="modal-btn save-btn text-sm px-3 py-1"
-          onClick={onConfirmarEliminar}
-          disabled={loading}
-          style={{ backgroundColor: "#ef4444" }}
-        >
-          {loading ? "Eliminando..." : "Eliminar"}
-        </button>
-      </div>
-    </Modal>
+          
+          <div style={{ padding: "20px 24px" }}>
+            <p style={{ 
+              fontSize: "14px", 
+              color: "#374151", 
+              marginBottom: "16px",
+              lineHeight: "1.6",
+              margin: "0 0 16px 0"
+            }}>
+              ¿Seguro que quieres eliminar la categoría{" "}
+              <strong style={{ color: "#ec4899" }}>"{sede?.nombre}"</strong>?
+            </p>
+            <div style={{
+              fontSize: "13px",
+              color: "#991b1b",
+              fontStyle: "italic",
+              backgroundColor: "#fef2f2",
+              padding: "10px 12px",
+              borderRadius: "4px",
+              borderLeft: "3px solid #ef4444"
+            }}>
+              Esta acción no se puede deshacer.
+            </div>
+          </div>
+          
+          <div style={{ 
+            padding: "16px 24px", 
+            display: "flex", 
+            justifyContent: "flex-end", 
+            gap: "12px",
+            borderTop: "1px solid #e5e7eb"
+          }}>
+            <button
+              onClick={onClose}
+              disabled={loading}
+              style={{
+                padding: "8px 20px",
+                fontSize: "14px",
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
+                border: "none",
+                borderRadius: "6px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontWeight: "500",
+                transition: "background-color 0.2s"
+              }}
+              onMouseOver={(e) => {
+                if (!loading) e.target.style.backgroundColor = "#e5e7eb";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = "#f3f4f6";
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirmarEliminar}
+              disabled={loading}
+              style={{
+                padding: "8px 20px",
+                fontSize: "14px",
+                backgroundColor: "#ec4899",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontWeight: "500",
+                transition: "background-color 0.2s",
+                opacity: loading ? 0.7 : 1
+              }}
+              onMouseOver={(e) => {
+                if (!loading) e.target.style.backgroundColor = "#db2777";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = "#ec4899";
+              }}
+            >
+              {loading ? "Eliminando..." : "Eliminar"}
+            </button>
+          </div>
+        </Modal>
       );
 
     default:

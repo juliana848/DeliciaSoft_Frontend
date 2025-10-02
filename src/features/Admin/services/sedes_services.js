@@ -280,11 +280,29 @@ class SedeApiService {
         method: "DELETE",
         headers: this.baseHeaders,
       });
+      
+      if (!response.ok) {
+        let errorMessage = "Error al eliminar la sede";
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          if (response.status === 500) {
+            errorMessage = "No se puede eliminar la sede porque tiene registros asociados. Intenta desactivarla usando el switch de estado.";
+          }
+        }
+        throw new Error(errorMessage);
+      }
+      
       await this.handleResponse(response);
       return { success: true, message: "Sede eliminada exitosamente" };
     } catch (error) {
       console.error("Error en eliminarSede:", error);
-      throw new Error("Error al eliminar la sede: " + error.message);
+      throw error;
     }
   }
 

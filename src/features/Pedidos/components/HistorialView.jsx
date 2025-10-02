@@ -1,102 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import ventaApiService from '../../Admin/services/venta_services';
-import clienteApiService from '../../Admin/services/cliente_services';
 import authService from '../../Admin/services/authService';
-
-// Función para transformar ventas a formato de pedidos - MEJORADA
-const transformarVentaAPedido = async (venta) => {
-  try {
-    // Obtener detalles completos de cada venta
-    console.log(`📋 Obteniendo detalle de venta ${venta.idVenta}...`);
-    const detalleCompleto = await ventaApiService.obtenerVentaPorId(venta.idVenta);
-    console.log('Detalle completo obtenido:', detalleCompleto);
-    
-    return {
-      id: `P${venta.idVenta.toString().padStart(3, '0')}`,
-      idVenta: venta.idVenta,
-      fecha: new Date(venta.fechaVenta).toLocaleDateString('es-CO'),
-      hora: new Date(venta.fechaVenta).toLocaleTimeString('es-CO', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      estado: mapearEstadoVenta(venta.idEstadoVenta),
-      cliente: venta.nombreCliente,
-      telefono: perfilCliente.celular || 'No registrado',
-      ubicacion: `${perfilCliente.direccion || 'Sin dirección'}, ${perfilCliente.barrio || 'Sin barrio'}`,
-      abono: detalleCompleto?.abonos?.reduce((sum, abono) => 
-        sum + parseFloat(abono.TotalPagado || abono.totalPagado || abono.monto || 0), 0
-      ) || 0,
-      total: parseFloat(venta.total || 0),
-      metodoPago: venta.metodoPago || 'No especificado',
-      tipoVenta: venta.tipoVenta,
-      productos: detalleCompleto?.detalleVenta?.map(item => ({
-        id: item.iddetalleventa,
-        nombre: item.nombreProducto || 'Producto sin nombre',
-        cantidad: item.cantidad || 1,
-        precio: parseFloat(item.precioUnitario || item.preciounitario || 0),
-        subtotal: parseFloat(item.subtotal || 0),
-        // Mapear adiciones/toppings/salsas correctamente
-        toppings: item.detalleadiciones
-          ?.filter(d => d.catalogosabor)
-          ?.map(d => d.catalogosabor?.nombre || 'Topping') || [],
-        adicciones: item.detalleadiciones
-          ?.filter(d => d.catalogoadiciones)
-          ?.map(d => d.catalogoadiciones?.nombre || 'Adición') || [],
-        salsas: item.detalleadiciones
-          ?.filter(d => d.catalogorelleno)
-          ?.map(d => d.catalogorelleno?.nombre || 'Salsa') || []
-      })) || [],
-      observaciones: venta.tipoVenta === 'pedido' ? 'Pedido programado' : 'Venta directa',
-      abonos: detalleCompleto?.abonos?.map(abono => ({
-        fecha: new Date().toLocaleDateString('es-CO'),
-        monto: parseFloat(abono.TotalPagado || abono.totalPagado || abono.monto || 0),
-        tipo: abono.metodoPago || abono.metodopago || 'No especificado'
-      })) || []
-    };
-  } catch (error) {
-    console.error(`Error al obtener detalles de venta ${venta.idVenta}:`, error);
-    // Retornar versión básica si falla el detalle
-    return {
-      id: `P${venta.idVenta.toString().padStart(3, '0')}`,
-      idVenta: venta.idVenta,
-      fecha: new Date(venta.fechaVenta).toLocaleDateString('es-CO'),
-      hora: new Date(venta.fechaVenta).toLocaleTimeString('es-CO', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      estado: mapearEstadoVenta(venta.idEstadoVenta),
-      cliente: venta.nombreCliente,
-      telefono: perfilCliente.celular || 'No registrado',
-      ubicacion: `${perfilCliente.direccion || 'Sin dirección'}, ${perfilCliente.barrio || 'Sin barrio'}`,
-      abono: 0,
-      total: parseFloat(venta.total || 0),
-      metodoPago: venta.metodoPago || 'No especificado',
-      tipoVenta: venta.tipoVenta,
-      productos: [],
-      observaciones: 'Error al cargar detalles',
-      abonos: []
-    };
-  }
-};
+import productoApiService from '../../Admin/services/productos_services';
 
 const HistorialView = () => {
-  // Estado para controlar qué pedido está expandido
   const [pedidoExpandido, setPedidoExpandido] = useState(null);
-  
-  // Estados de modales y alertas
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pedidoToAnnull, setPedidoToAnnull] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
-
-  // Estados principales
   const [pedidos, setPedidos] = useState([]);
-  const [estados, setEstados] = useState({});
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [clienteActual, setClienteActual] = useState(null);
+  const [productosDisponibles, setProductosDisponibles] = useState([]);
 
-  // Cargar datos iniciales
   useEffect(() => {
     cargarDatos();
   }, []);
@@ -106,44 +24,42 @@ const HistorialView = () => {
     setError(null);
     
     try {
-      // 1. Obtener el perfil del cliente autenticado
+      // 1. Obtener catálogo de productos
+      const productos = await productoApiService.obtenerProductos();
+      setProductosDisponibles(productos);
+      console.log('Productos disponibles cargados:', productos);
+
+      // 2. Obtener cliente autenticado
       const perfilCliente = await authService.obtenerDatosClienteLogueado();
       setClienteActual(perfilCliente);
       console.log('Cliente autenticado:', perfilCliente);
 
-      // 2. Obtener estados de venta para el mapeo
-      const estadosAPI = await ventaApiService.obtenerEstadosVenta();
-      const estadosMap = estadosAPI.reduce((acc, estado) => {
-        acc[estado.idestadoventa] = {
-          color: obtenerColorEstado(estado.idestadoventa),
-          label: estado.nombre_estado
-        };
-        return acc;
-      }, {});
-      setEstados(estadosMap);
-      console.log('Estados cargados:', estadosMap);
-
       // 3. Obtener todas las ventas
       const todasLasVentas = await ventaApiService.obtenerVentas();
-      console.log('Todas las ventas obtenidas:', todasLasVentas);
+      console.log('Todas las ventas:', todasLasVentas);
 
-      // 4. Filtrar solo las ventas del cliente autenticado
+      // 4. Filtrar ventas del cliente
       const ventasDelCliente = todasLasVentas.filter(venta => {
-        // Comparar por nombre completo o ID si está disponible
         const nombreVenta = venta.nombreCliente?.toLowerCase() || '';
-        const nombreCompleto = `${perfilCliente.nombre} ${perfilCliente.apellido}`.toLowerCase();
         return nombreVenta.includes(perfilCliente.nombre.toLowerCase()) && 
                nombreVenta.includes(perfilCliente.apellido.toLowerCase());
       });
 
-      console.log(`Ventas del cliente ${perfilCliente.nombre}:`, ventasDelCliente);
+      console.log(`Ventas del cliente:`, ventasDelCliente);
 
-      // 5. Transformar ventas a formato de pedidos
+      // 5. Función auxiliar para obtener nombre de producto (igual que en VentasVerDetalle)
+      const getProductName = (idProducto) => {
+        const producto = productos.find(p => p.idproductogeneral === idProducto);
+        return producto?.nombre || `ID: ${idProducto}`;
+      };
+
+      // 6. Transformar ventas a pedidos con detalles completos
       const pedidosTransformados = await Promise.all(
         ventasDelCliente.map(async (venta) => {
           try {
-            // Obtener detalles completos de cada venta
+            // Obtener detalle completo (igual que en VentasVerDetalle)
             const detalleCompleto = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+            console.log(`Detalle de venta ${venta.idVenta}:`, detalleCompleto);
             
             return {
               id: `P${venta.idVenta.toString().padStart(3, '0')}`,
@@ -156,31 +72,35 @@ const HistorialView = () => {
               estado: mapearEstadoVenta(venta.idEstadoVenta),
               cliente: venta.nombreCliente,
               telefono: perfilCliente.celular || 'No registrado',
-              ubicacion: `${perfilCliente.direccion}, ${perfilCliente.barrio}` || 'No registrada',
-              abono: detalleCompleto?.abonos?.reduce((sum, abono) => sum + abono.TotalPagado, 0) || 0,
-              total: venta.total,
-              metodoPago: venta.metodoPago,
+              ubicacion: `${perfilCliente.direccion || 'Sin dirección'}, ${perfilCliente.barrio || 'Sin barrio'}`,
+              abono: detalleCompleto?.abonos?.reduce((sum, abono) => 
+                sum + parseFloat(abono.TotalPagado || abono.monto || 0), 0
+              ) || 0,
+              total: parseFloat(venta.total || 0),
+              metodoPago: venta.metodoPago || 'No especificado',
               tipoVenta: venta.tipoVenta,
-              productos: detalleCompleto?.detalleVenta?.map(item => ({
+              // ✅ USAR detalleVenta directamente como en VentasVerDetalle
+              productos: (detalleCompleto?.detalleVenta || []).map(item => ({
                 id: item.iddetalleventa,
-                nombre: item.nombreProducto,
-                cantidad: item.cantidad,
-                precio: item.precioUnitario,
-                subtotal: item.subtotal,
-                toppings: item.sabores?.map(sabor => sabor.nombre) || [],
-                adicciones: item.adiciones?.map(adicion => adicion.nombre) || [],
-                salsas: item.salsas?.map(salsa => salsa.nombre) || []
-              })) || [],
+                // ✅ Usar la función getProductName en lugar de nombreProducto
+                nombre: getProductName(item.idproductogeneral),
+                cantidad: item.cantidad || 1,
+                precio: parseFloat(item.precioUnitario || 0),
+                subtotal: parseFloat(item.subtotal || 0),
+                // Mapear extras correctamente
+                toppings: (item.sabores || []).map(s => s.nombre),
+                adicciones: (item.adiciones || []).map(a => a.nombre),
+                salsas: (item.salsas || []).map(s => s.nombre)
+              })),
               observaciones: venta.tipoVenta === 'pedido' ? 'Pedido programado' : 'Venta directa',
-              abonos: detalleCompleto?.abonos?.map(abono => ({
+              abonos: (detalleCompleto?.abonos || []).map(abono => ({
                 fecha: new Date().toLocaleDateString('es-CO'),
-                monto: abono.TotalPagado,
-                tipo: abono.metodoPago
-              })) || []
+                monto: parseFloat(abono.TotalPagado || abono.monto || 0),
+                tipo: abono.metodoPago || abono.metodopago || 'No especificado'
+              }))
             };
           } catch (error) {
             console.error(`Error al obtener detalles de venta ${venta.idVenta}:`, error);
-            // Retornar versión básica si falla el detalle
             return {
               id: `P${venta.idVenta.toString().padStart(3, '0')}`,
               idVenta: venta.idVenta,
@@ -192,10 +112,10 @@ const HistorialView = () => {
               estado: mapearEstadoVenta(venta.idEstadoVenta),
               cliente: venta.nombreCliente,
               telefono: perfilCliente.celular || 'No registrado',
-              ubicacion: `${perfilCliente.direccion}, ${perfilCliente.barrio}` || 'No registrada',
+              ubicacion: 'No disponible',
               abono: 0,
-              total: venta.total,
-              metodoPago: venta.metodoPago,
+              total: parseFloat(venta.total || 0),
+              metodoPago: venta.metodoPago || 'No especificado',
               tipoVenta: venta.tipoVenta,
               productos: [],
               observaciones: 'Error al cargar detalles',
@@ -217,33 +137,18 @@ const HistorialView = () => {
     }
   };
 
-  // Función para mapear estados de venta a estados de pedido
   const mapearEstadoVenta = (idEstadoVenta) => {
     const mapeoEstados = {
-      1: 'pendiente',     // En espera
-      2: 'enProduccion',  // En producción
-      3: 'entregadoVentas', // Por entregar
-      4: 'entregado',     // Finalizado
-      5: 'abonado',       // Activa (consideramos como abonado)
-      6: 'anulado'        // Anulada
+      1: 'pendiente',
+      2: 'enProduccion',
+      3: 'entregadoVentas',
+      4: 'entregado',
+      5: 'abonado',
+      6: 'anulado'
     };
     return mapeoEstados[idEstadoVenta] || 'pendiente';
   };
 
-  // Función para obtener colores de estado
-  const obtenerColorEstado = (idEstado) => {
-    const colores = {
-      1: '#ffc107', // En espera - amarillo
-      2: '#007bff', // En producción - azul
-      3: '#17a2b8', // Por entregar - cyan
-      4: '#9b9b9b', // Finalizado - gris
-      5: '#6f42c1', // Activa - púrpura
-      6: '#dc3545'  // Anulada - rojo
-    };
-    return colores[idEstado] || '#6c757d';
-  };
-
-  // Función para mostrar alertas
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
     setTimeout(() => {
@@ -251,12 +156,10 @@ const HistorialView = () => {
     }, 3000);
   };
 
-  // Función para alternar expansión de detalles
   const toggleDetalles = (pedidoId) => {
     setPedidoExpandido(pedidoExpandido === pedidoId ? null : pedidoId);
   };
 
-  // Función para manejar anulación de pedido
   const handleAnularPedidoClick = (pedidoId) => {
     const pedido = pedidos.find(p => p.id === pedidoId);
     if (pedido && ['pendiente', 'abonado'].includes(pedido.estado)) {
@@ -267,22 +170,16 @@ const HistorialView = () => {
     }
   };
 
-  // Función para confirmar anulación
   const confirmAnularPedido = async () => {
     try {
       const pedido = pedidos.find(p => p.id === pedidoToAnnull);
       if (pedido) {
         await ventaApiService.anularVenta(pedido.idVenta);
-        
-        // Actualizar estado local
         setPedidos(prevPedidos => 
           prevPedidos.map(p => 
-            p.id === pedidoToAnnull
-              ? { ...p, estado: 'anulado' }
-              : p
+            p.id === pedidoToAnnull ? { ...p, estado: 'anulado' } : p
           )
         );
-        
         showCustomAlert('success', `Pedido ${pedidoToAnnull} anulado exitosamente.`);
       }
     } catch (error) {
@@ -294,19 +191,12 @@ const HistorialView = () => {
     }
   };
 
-  // Función para cancelar anulación
   const cancelAnularPedido = () => {
     setShowConfirmModal(false);
     setPedidoToAnnull(null);
     showCustomAlert('info', 'Anulación de pedido cancelada.');
   };
 
-  // Filtrar pedidos
-  const pedidosFiltrados = filtroEstado === 'todos' 
-    ? pedidos 
-    : pedidos.filter(pedido => pedido.estado === filtroEstado);
-
-  // Estados disponibles para filtros
   const estadosDisponibles = {
     pendiente: { color: '#ffc107', label: 'Pendiente' },
     abonado: { color: '#6f42c1', label: 'Abonado' },
@@ -315,6 +205,10 @@ const HistorialView = () => {
     anulado: { color: '#dc3545', label: 'Anulado' },
     entregado: { color: '#9b9b9b', label: 'Entregado' }
   };
+
+  const pedidosFiltrados = filtroEstado === 'todos' 
+    ? pedidos 
+    : pedidos.filter(pedido => pedido.estado === filtroEstado);
 
   if (loading) {
     return (
@@ -327,11 +221,7 @@ const HistorialView = () => {
         borderRadius: '15px'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            marginBottom: '20px',
-            animation: 'spin 2s linear infinite'
-          }}>⏳</div>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
           <p style={{ color: '#6c757d' }}>Cargando tu historial de pedidos...</p>
         </div>
       </div>
@@ -376,35 +266,30 @@ const HistorialView = () => {
       padding: '20px',
       fontFamily: 'Inter, sans-serif'
     }}>
-      {/* Alerta personalizada */}
       {showAlert.show && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 2000,
-            padding: '1rem 1.5rem',
-            borderRadius: '15px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            minWidth: '300px',
-            background:
-              showAlert.type === 'success'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : showAlert.type === 'error'
-                ? 'linear-gradient(135deg, #ec4899, #be185d)'
-                : 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-          }}
-        >
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 2000,
+          padding: '1rem 1.5rem',
+          borderRadius: '15px',
+          color: 'white',
+          fontWeight: '600',
+          fontSize: '0.9rem',
+          minWidth: '300px',
+          background: showAlert.type === 'success'
+            ? 'linear-gradient(135deg, #10b981, #059669)'
+            : showAlert.type === 'error'
+            ? 'linear-gradient(135deg, #ec4899, #be185d)'
+            : 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+        }}>
           {showAlert.message}
         </div>
       )}
 
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
         <div style={{
           background: 'white',
           borderRadius: '20px',
@@ -425,12 +310,11 @@ const HistorialView = () => {
           </h1>
           {clienteActual && (
             <p style={{ color: '#6c757d', fontSize: '16px' }}>
-              Bienvenido/a {clienteActual.nombre} - Aquí puedes ver todos tus pedidos
+              Bienvenido/a {clienteActual.nombre}
             </p>
           )}
         </div>
 
-        {/* Filtros */}
         <div style={{
           background: 'white',
           borderRadius: '15px',
@@ -476,25 +360,15 @@ const HistorialView = () => {
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: '500',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  transition: 'all 0.3s ease'
                 }}
               >
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: estado.color
-                }}></div>
                 {estado.label} ({count})
               </button>
             );
           })}
         </div>
 
-        {/* Lista de Pedidos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {pedidosFiltrados.length === 0 ? (
             <div style={{
@@ -505,15 +379,9 @@ const HistorialView = () => {
               boxShadow: '0 5px 15px rgba(0,0,0,0.08)'
             }}>
               <div style={{ fontSize: '48px', marginBottom: '20px' }}>📋</div>
-              <h3 style={{ color: '#6c757d', marginBottom: '10px' }}>
+              <h3 style={{ color: '#6c757d' }}>
                 {filtroEstado === 'todos' ? 'No tienes pedidos aún' : 'No hay pedidos con este estado'}
               </h3>
-              <p style={{ color: '#adb5bd' }}>
-                {filtroEstado === 'todos' 
-                  ? '¡Realiza tu primer pedido y aparecerá aquí!'
-                  : 'No se encontraron pedidos con el filtro seleccionado'
-                }
-              </p>
             </div>
           ) : (
             pedidosFiltrados.map((pedido) => (
@@ -522,10 +390,8 @@ const HistorialView = () => {
                 borderRadius: '15px',
                 boxShadow: '0 5px 15px rgba(0,0,0,0.08)',
                 border: '2px solid #f8f9fa',
-                overflow: 'hidden',
-                transition: 'all 0.3s ease'
+                overflow: 'hidden'
               }}>
-                {/* Header del pedido */}
                 <div style={{
                   padding: '20px',
                   borderBottom: '1px solid #f8f9fa',
@@ -537,23 +403,13 @@ const HistorialView = () => {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
                     <div>
-                      <h3 style={{ 
-                        fontSize: '18px', 
-                        fontWeight: '700', 
-                        color: '#495057',
-                        margin: '0 0 5px 0'
-                      }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#495057', margin: '0 0 5px 0' }}>
                         Pedido {pedido.id}
                       </h3>
-                      <p style={{ 
-                        color: '#6c757d', 
-                        fontSize: '14px',
-                        margin: '0'
-                      }}>
+                      <p style={{ color: '#6c757d', fontSize: '14px', margin: '0' }}>
                         {pedido.fecha} • {pedido.hora}
                       </p>
                     </div>
-                    
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -563,12 +419,6 @@ const HistorialView = () => {
                       background: `${estadosDisponibles[pedido.estado].color}15`,
                       border: `2px solid ${estadosDisponibles[pedido.estado].color}30`
                     }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: estadosDisponibles[pedido.estado].color
-                      }}></div>
                       <span style={{
                         color: estadosDisponibles[pedido.estado].color,
                         fontWeight: '600',
@@ -576,17 +426,6 @@ const HistorialView = () => {
                       }}>
                         {estadosDisponibles[pedido.estado].label}
                       </span>
-                    </div>
-
-                    <div style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      background: pedido.tipoVenta === 'pedido' ? '#e3f2fd' : '#f3e5f5',
-                      color: pedido.tipoVenta === 'pedido' ? '#1976d2' : '#7b1fa2',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {pedido.tipoVenta === 'pedido' ? '🛍️ Pedido' : '🏪 Venta directa'}
                     </div>
                   </div>
 
@@ -597,7 +436,6 @@ const HistorialView = () => {
                         ${pedido.total.toLocaleString()}
                       </div>
                     </div>
-                    
                     <button
                       onClick={() => toggleDetalles(pedido.id)}
                       style={{
@@ -608,13 +446,11 @@ const HistorialView = () => {
                         color: 'white',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        fontWeight: '600',
-                        transition: 'all 0.3s ease'
+                        fontWeight: '600'
                       }}
                     >
-                      {pedidoExpandido === pedido.id ? 'Ocultar Detalles' : 'Ver Detalles'}
+                      {pedidoExpandido === pedido.id ? 'Ocultar' : 'Ver Detalles'}
                     </button>
-                    
                     {['pendiente', 'abonado'].includes(pedido.estado) && (
                       <button
                         onClick={() => handleAnularPedidoClick(pedido.id)}
@@ -626,313 +462,60 @@ const HistorialView = () => {
                           color: 'white',
                           cursor: 'pointer',
                           fontSize: '14px',
-                          fontWeight: '600',
-                          transition: 'all 0.3s ease'
+                          fontWeight: '600'
                         }}
                       >
-                        Anular Pedido
+                        Anular
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Detalles del pedido */}
                 {pedidoExpandido === pedido.id && (
                   <div style={{ padding: '20px', background: '#f8f9fa' }}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                      gap: '20px',
-                      marginBottom: '25px'
-                    }}>
-                      {/* Información del cliente */}
-                      <div style={{
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#495057',
-                          marginBottom: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          👤 Información de Entrega
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div><strong>Cliente:</strong> {pedido.cliente}</div>
-                          <div><strong>Teléfono:</strong> {pedido.telefono}</div>
-                          <div><strong>Ubicación:</strong> {pedido.ubicacion}</div>
-                          <div><strong>Método de pago:</strong> {pedido.metodoPago}</div>
-                        </div>
-                      </div>
-
-                      {/* Información financiera */}
-                      <div style={{
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#495057',
-                          marginBottom: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          💰 Información de Pago
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Total:</span>
-                            <strong>${pedido.total.toLocaleString()}</strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Abono:</span>
-                            <strong style={{ color: pedido.abono > 0 ? '#28a745' : '#dc3545' }}>
-                              ${pedido.abono.toLocaleString()}
-                            </strong>
-                          </div>
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between',
-                            paddingTop: '8px',
-                            borderTop: '1px solid #dee2e6'
-                          }}>
-                            <span><strong>Pendiente:</strong></span>
-                            <strong style={{ color: '#e91e63' }}>
-                              ${(pedido.total - pedido.abono).toLocaleString()}
-                            </strong>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Productos */}
                     {pedido.productos && pedido.productos.length > 0 && (
                       <div style={{
                         background: 'white',
                         padding: '20px',
                         borderRadius: '12px',
-                        border: '1px solid #dee2e6'
+                        marginBottom: '20px'
                       }}>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#495057',
-                          marginBottom: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          🍽️ Productos del Pedido
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>
+                          🍽️ Productos
                         </h4>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                          {pedido.productos.map((producto, index) => (
-                            <div key={producto.id || index} style={{
-                              padding: '15px',
-                              background: '#f8f9fa',
-                              borderRadius: '10px',
-                              border: '1px solid #e9ecef'
-                            }}>
-                              <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '10px'
-                              }}>
-                                <h5 style={{
-                                  fontSize: '16px',
-                                  fontWeight: '600',
-                                  color: '#495057',
-                                  margin: '0'
-                                }}>
-                                  {producto.nombre}
-                                </h5>
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                                    Cantidad: {producto.cantidad}
-                                  </div>
-                                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#e91e63' }}>
-                                    ${producto.precio.toLocaleString()}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {producto.toppings && producto.toppings.length > 0 && (
-                                <div style={{ marginBottom: '8px' }}>
-                                  <strong style={{ fontSize: '14px', color: '#495057' }}>
-                                    🧄 Sabores:
-                                  </strong>
-                                  <div style={{ 
-                                    display: 'flex', 
-                                    flexWrap: 'wrap', 
-                                    gap: '5px',
-                                    marginTop: '5px'
-                                  }}>
-                                    {producto.toppings.map((topping, index) => (
-                                      <span key={index} style={{
-                                        padding: '4px 8px',
-                                        background: '#e91e63',
-                                        color: 'white',
-                                        borderRadius: '12px',
-                                        fontSize: '12px',
-                                        fontWeight: '500'
-                                      }}>
-                                        {topping}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {producto.adicciones && producto.adicciones.length > 0 && (
-                                <div style={{ marginBottom: '8px' }}>
-                                  <strong style={{ fontSize: '14px', color: '#495057' }}>
-                                    ➕ Adiciones:
-                                  </strong>
-                                  <div style={{ 
-                                    display: 'flex', 
-                                    flexWrap: 'wrap', 
-                                    gap: '5px',
-                                    marginTop: '5px'
-                                  }}>
-                                    {producto.adicciones.map((adicion, index) => (
-                                      <span key={index} style={{
-                                        padding: '4px 8px',
-                                        background: '#17a2b8',
-                                        color: 'white',
-                                        borderRadius: '12px',
-                                        fontSize: '12px',
-                                        fontWeight: '500'
-                                      }}>
-                                        {adicion}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {producto.salsas && producto.salsas.length > 0 && (
-                                <div>
-                                  <strong style={{ fontSize: '14px', color: '#495057' }}>
-                                    🌶️ Salsas:
-                                  </strong>
-                                  <div style={{ 
-                                    display: 'flex', 
-                                    flexWrap: 'wrap', 
-                                    gap: '5px',
-                                    marginTop: '5px'
-                                  }}>
-                                    {producto.salsas.map((salsa, index) => (
-                                      <span key={index} style={{
-                                        padding: '4px 8px',
-                                        background: '#fd7e14',
-                                        color: 'white',
-                                        borderRadius: '12px',
-                                        fontSize: '12px',
-                                        fontWeight: '500'
-                                      }}>
-                                        {salsa}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Abonos realizados */}
-                    {pedido.abonos && pedido.abonos.length > 0 && (
-                      <div style={{
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: '1px solid #dee2e6',
-                        marginTop: '20px'
-                      }}>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#495057',
-                          marginBottom: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          💳 Historial de Pagos
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {pedido.abonos.map((abono, index) => (
-                            <div key={index} style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '10px',
-                              background: '#f8f9fa',
-                              borderRadius: '8px',
-                              border: '1px solid #e9ecef'
-                            }}>
+                        {pedido.productos.map((producto, idx) => (
+                          <div key={idx} style={{
+                            padding: '15px',
+                            background: '#f8f9fa',
+                            borderRadius: '10px',
+                            marginBottom: '10px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                              <h5 style={{ margin: 0 }}>{producto.nombre}</h5>
                               <div>
-                                <div style={{ fontWeight: '500', fontSize: '14px' }}>
-                                  {abono.tipo}
+                                <div>Cantidad: {producto.cantidad}</div>
+                                <div style={{ color: '#e91e63', fontWeight: '600' }}>
+                                  ${producto.precio.toLocaleString()}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  {abono.fecha}
-                                </div>
-                              </div>
-                              <div style={{ 
-                                fontWeight: '600', 
-                                color: '#28a745',
-                                fontSize: '16px'
-                              }}>
-                                ${abono.monto.toLocaleString()}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Observaciones */}
-                    {pedido.observaciones && (
-                      <div style={{
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: '1px solid #dee2e6',
-                        marginTop: '20px'
-                      }}>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#495057',
-                          marginBottom: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          📝 Observaciones
-                        </h4>
-                        <p style={{ 
-                          color: '#6c757d',
-                          margin: '0',
-                          fontSize: '14px',
-                          fontStyle: 'italic'
-                        }}>
-                          {pedido.observaciones}
-                        </p>
+                            {producto.toppings?.length > 0 && (
+                              <div style={{ marginTop: '10px' }}>
+                                <strong>Toppings:</strong> {producto.toppings.join(', ')}
+                              </div>
+                            )}
+                            {producto.adicciones?.length > 0 && (
+                              <div style={{ marginTop: '5px' }}>
+                                <strong>Adiciones:</strong> {producto.adicciones.join(', ')}
+                              </div>
+                            )}
+                            {producto.salsas?.length > 0 && (
+                              <div style={{ marginTop: '5px' }}>
+                                <strong>Salsas:</strong> {producto.salsas.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -943,7 +526,6 @@ const HistorialView = () => {
         </div>
       </div>
 
-      {/* Modal de Confirmación */}
       {showConfirmModal && (
         <div style={{
           position: 'fixed',
@@ -961,48 +543,15 @@ const HistorialView = () => {
             background: 'white',
             borderRadius: '15px',
             padding: '30px',
-            width: '90%',
             maxWidth: '450px',
-            boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
-            textAlign: 'center',
-            animation: 'fadeInUp 0.3s ease-out',
-            position: 'relative'
+            textAlign: 'center'
           }}>
-            <button
-              onClick={cancelAnularPedido}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#adb5bd'
-              }}
-            >
-              &times;
-            </button>
-            <div style={{ fontSize: '60px', marginBottom: '20px', lineHeight: '1' }}>
-              ⚠️
-            </div>
-            <h3 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#495057',
-              marginBottom: '15px'
-            }}>
-              ¿Anular Pedido?
-            </h3>
-            <p style={{
-              color: '#6c757d',
-              fontSize: '16px',
-              marginBottom: '30px'
-            }}>
-              Estás a punto de anular el pedido <strong style={{color: '#e91e63'}}>{pedidoToAnnull}</strong>. Esta acción no se puede deshacer.
-              ¿Estás seguro de que quieres continuar?
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>⚠️</div>
+            <h3 style={{ fontSize: '24px', marginBottom: '15px' }}>¿Anular Pedido?</h3>
+            <p style={{ marginBottom: '30px' }}>
+              ¿Seguro que quieres anular el pedido {pedidoToAnnull}?
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
               <button
                 onClick={cancelAnularPedido}
                 style={{
@@ -1010,11 +559,7 @@ const HistorialView = () => {
                   border: '2px solid #6c757d',
                   borderRadius: '10px',
                   background: 'white',
-                  color: '#6c757d',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease'
+                  cursor: 'pointer'
                 }}
               >
                 Cancelar
@@ -1025,13 +570,9 @@ const HistorialView = () => {
                   padding: '12px 25px',
                   border: 'none',
                   borderRadius: '10px',
-                  background: 'linear-gradient(45deg, #dc3545, #e85a67)',
+                  background: '#dc3545',
                   color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 10px rgba(220, 53, 69, 0.3)'
+                  cursor: 'pointer'
                 }}
               >
                 Sí, Anular
@@ -1040,35 +581,6 @@ const HistorialView = () => {
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translate3d(0, 100%, 0);
-          }
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-        }
-        
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translate3d(100%, 0, 0);
-          }
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-        }
-      `}</style>
     </div>
   );
 };

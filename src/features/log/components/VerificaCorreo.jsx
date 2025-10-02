@@ -7,7 +7,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Agregar clase al body para ocultar el toggle
   useEffect(() => {
     document.body.classList.add('hide-toggle');
     return () => {
@@ -41,13 +40,16 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
     try {
       console.log('Solicitando recuperación de contraseña para:', correo);
       
-      // USAR EL NUEVO MÉTODO DEL SERVICIO
       const result = await authService.solicitarRecuperacionPassword(correo);
       
       if (result.success) {
         showCustomAlert('success', '✅ Código enviado a tu correo electrónico');
         
+        // CRÍTICO: Guardar tanto el correo como el código en sessionStorage
         sessionStorage.setItem('tempEmailRecovery', correo);
+        sessionStorage.setItem('tempRecoveryCode', result.codigo || '');
+        
+        console.log('✅ Código guardado en sessionStorage:', result.codigo);
         
         setTimeout(() => {
           onCodigoGenerado(result.codigo);
@@ -66,7 +68,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
 
   return (
     <div className="recovery-overlay">
-      {/* Alerta personalizada */}
       {showAlert.show && (
         <div className={`custom-alert alert-${showAlert.type}`}>
           {showAlert.message}
@@ -79,7 +80,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
         minHeight: 'auto',
         maxHeight: '85vh'
       }}>
-        {/* Indicador de progreso más compacto */}
         <div className="progress-indicator" style={{ marginBottom: '1.5rem' }}>
           <div className="step active">
             <div className="step-circle">1</div>
@@ -184,7 +184,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
                 </button>
               </div>
 
-              {/* Información de ayuda más compacta */}
               <div style={{
                 background: 'rgba(233, 30, 99, 0.05)',
                 border: '1px solid rgba(233, 30, 99, 0.1)',
@@ -277,29 +276,6 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
             margin: 1rem !important;
             padding: 1.5rem 1rem !important;
             max-height: 90vh !important;
-          }
-
-          .progress-indicator {
-            margin-bottom: 1rem !important;
-          }
-
-          .step-circle {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 13px !important;
-          }
-
-          .step-line {
-            width: 30px !important;
-          }
-
-          .modal-header h2 {
-            font-size: 1.3rem !important;
-          }
-
-          .icon-container {
-            width: 50px !important;
-            height: 50px !important;
           }
         }
       `}</style>

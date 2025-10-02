@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import authService from '../../Admin/services/authService'; 
 import ModalVerificarCorreo from './VerificaCorreo';
 import ModalIngresarCodigo from './VerificarCodigo';
@@ -14,6 +15,7 @@ const LoginForm = () => {
   const [codigoGenerado, setCodigoGenerado] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -30,6 +32,7 @@ const LoginForm = () => {
   };
 
   const manejarCodigoGenerado = (codigo) => {
+    console.log('📝 Código recibido en LoginForm:', codigo);
     setCodigoGenerado(codigo);
     setMostrarModalCorreo(false);
     setMostrarModalCodigo(true);
@@ -60,7 +63,6 @@ const LoginForm = () => {
 
     const redirectPath = localStorage.getItem('redirectAfterLogin');
     
-    // Guardar tokens y datos de usuario
     localStorage.setItem('authToken', 'jwt-token-' + Date.now());
     localStorage.setItem('userRole', userType);
     localStorage.setItem('userEmail', datosLoginPendiente.email);
@@ -269,15 +271,48 @@ const LoginForm = () => {
           disabled={isLoading}
           required
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Contraseña"
-          value={formData.password}
-          onChange={handleInputChange}
-          disabled={isLoading}
-          required
-        />
+        
+        {/* Campo de contraseña con toggle */}
+        <div style={{ position: 'relative', width: '100%' }}>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            placeholder="Contraseña"
+            value={formData.password}
+            onChange={handleInputChange}
+            disabled={isLoading}
+            required
+            style={{
+              width: '100%',
+              paddingRight: '45px'
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            disabled={isLoading}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '30%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666',
+              transition: 'color 0.3s ease',
+              zIndex: 10
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#ff58a6'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
 
         <a
           type="button"
@@ -319,10 +354,10 @@ const LoginForm = () => {
         )}
       </form>
 
-      {/* Modal validación de login - Solo envía el código al servidor */}
+      {/* Modal validación de login */}
       {mostrarModalValidacionLogin && datosLoginPendiente && (
         <ModalIngresarCodigo
-          codigoCorrecto="000000" // No importa, el servidor valida
+          codigoCorrecto="000000"
           onClose={cerrarModales}
           onCodigoValido={completarLogin}
           correoEmail={datosLoginPendiente.email}

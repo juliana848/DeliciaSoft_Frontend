@@ -1,3 +1,4 @@
+// src/features/Admin/pages/Produccion/components/ModalDetalleReceta.jsx
 import React from 'react';
 
 export default function ModalDetalleReceta({ receta, onClose }) {
@@ -16,7 +17,7 @@ export default function ModalDetalleReceta({ receta, onClose }) {
         <div>
           <h2 style={{ margin: '0 0 8px 0' }}>{receta.nombre}</h2>
           <p style={{ margin: 0, color: '#666' }}>
-            {receta.insumos.length} insumos • {receta.pasos.length} pasos
+            {receta.insumos?.length || 0} insumos • {receta.pasos?.length || 0} pasos
           </p>
         </div>
       </div>
@@ -25,7 +26,7 @@ export default function ModalDetalleReceta({ receta, onClose }) {
         <div>
           <h3>📋 Insumos necesarios:</h3>
           <ul style={{ listStyle: 'none', padding: '0' }}>
-            {receta.insumos.map((insumo, index) => (
+            {receta.insumos?.map((insumo, index) => (
               <li
                 key={index}
                 style={{
@@ -44,7 +45,7 @@ export default function ModalDetalleReceta({ receta, onClose }) {
         <div>
           <h3>👩‍🍳 Pasos de preparación:</h3>
           <ol style={{ paddingLeft: '20px' }}>
-            {receta.pasos.map((paso, index) => (
+            {receta.pasos?.map((paso, index) => (
               <li
                 key={index}
                 style={{

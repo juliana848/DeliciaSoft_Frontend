@@ -309,6 +309,19 @@ const verAbonosVenta = async (venta) => {
     if (!ventaData.metodo_pago) errores.metodo_pago = 'El método de pago es requerido';
     if (insumosSeleccionados.length === 0) errores.productos = 'Debe agregar al menos un producto';
     
+    // VALIDACIÓN ADICIONAL PARA VENTA DIRECTA - VERIFICAR CANTIDADES
+    if (ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') {
+        for (const producto of insumosSeleccionados) {
+            const disponible = producto.disponible || 0;
+            const solicitado = producto.cantidad || 1;
+            
+            if (solicitado > disponible) {
+                errores.productos = `El producto "${producto.nombre}" excede la cantidad disponible. Disponible: ${disponible}, Solicitado: ${solicitado}`;
+                break;
+            }
+        }
+    }
+    
     if (ventaData.tipo_venta === 'pedido' && !ventaData.fecha_entrega) {
         errores.fecha_entrega = 'La fecha de entrega es requerida para pedidos';
     }
@@ -320,7 +333,6 @@ const verAbonosVenta = async (venta) => {
     }
 
     try {
-        // Logs de depuración
         console.log('Datos de venta antes de enviar:');
         console.log('ventaData.cliente:', ventaData.cliente);
         console.log('ventaData.clienteId:', ventaData.clienteId);
@@ -330,11 +342,10 @@ const verAbonosVenta = async (venta) => {
         
         const nuevaVenta = {
             fechaventa: ventaData.fecha_venta,
-            // CORRECCIÓN: Pasar directamente el clienteId, no hacer verificaciones aquí
-            clienteId: ventaData.clienteId, // Cambiar de 'cliente' a 'clienteId' 
+            clienteId: ventaData.clienteId,
             idsede: sedeId,
             metodopago: ventaData.metodo_pago,
-            tipoventa: ventaData.tipo_venta === 'venta directa' ? 'venta directa' : ventaData.tipo_venta,
+            tipoventa: ventaData.tipo_venta === 'venta directa' ? 'directa' : ventaData.tipo_venta,
             estadoVentaId: estadoActivoId,
             total: total,
             clienteNombre: ventaData.cliente,
@@ -355,14 +366,13 @@ const verAbonosVenta = async (venta) => {
             })
         };
         
-
         console.log('Enviando nueva venta a la API:', nuevaVenta);
         
         const ventaCreada = await ventaApiService.crearVenta(nuevaVenta);
         console.log('Venta creada exitosamente:', ventaCreada);
 
         setAllSales(prevSales => [ventaCreada, ...prevSales]);
-        showNotification('Venta creada exitosamente', 'success');
+        showNotification('Venta creada exitosamente. Inventario actualizado.', 'success');
 
         // Resetear formulario
         setMostrarAgregarVenta(false);
@@ -371,7 +381,7 @@ const verAbonosVenta = async (venta) => {
             cod_venta: '00000000',
             tipo_venta: '',
             cliente: '',
-            clienteId: null, // ← También aquí
+            clienteId: null,
             sede: '',
             metodo_pago: '',
             fecha_venta: new Date().toISOString().split('T')[0],
@@ -383,7 +393,15 @@ const verAbonosVenta = async (venta) => {
         
     } catch (error) {
         console.error('Error al crear venta:', error);
-        showNotification(error.message || 'Error al crear la venta', 'error');
+        
+        // Mensaje específico para error de inventario
+        if (error.message.includes('inventario') || error.message.includes('Inventario')) {
+            showNotification('Stock insuficiente: ' + error.message, 'error');
+        } else if (error.message.includes('INVENTARIO_INSUFICIENTE')) {
+            showNotification('No hay suficiente inventario para completar la venta', 'error');
+        } else {
+            showNotification(error.message || 'Error al crear la venta', 'error');
+        }
     }
 };
 
@@ -404,14 +422,26 @@ const verAbonosVenta = async (venta) => {
     };
 
     const handleCantidadChange = (itemId, nuevaCantidad) => {
-        setInsumosSeleccionados(prev => 
-            prev.map(item => 
-                item.id === itemId 
-                    ? { ...item, cantidad: Math.max(1, nuevaCantidad) }
-                    : item
-            )
-        );
-    };
+    setInsumosSeleccionados(prev => 
+        prev.map(item => {
+            if (item.id === itemId) {
+                // Solo validar para venta directa
+                if (ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') {
+                    const maxDisponible = item.disponible || 0;
+                    if (nuevaCantidad > maxDisponible) {
+                        showNotification(
+                            `Cantidad máxima disponible para ${item.nombre}: ${maxDisponible} unidades`, 
+                            'error'
+                        );
+                        return { ...item, cantidad: Math.min(maxDisponible, Math.max(1, nuevaCantidad)) };
+                    }
+                }
+                return { ...item, cantidad: Math.max(1, nuevaCantidad) };
+            }
+            return item;
+        })
+    );
+};
 
     // Funciones para manejar adiciones, salsas y rellenos
     const abrirModalAdiciones = (productoId) => {

@@ -1,26 +1,42 @@
-import React from 'react';
+// src/features/Admin/pages/Produccion/components/ModalAgregarProductos.jsx
+import React, { useState } from 'react';
 import './Css/ModalAgregarProductos.css';
 
 export default function ModalAgregarProductos({
   productosDisponibles = [],
   productosSeleccionados = [],
   setProductosSeleccionados,
-  filtro = '',
-  setFiltro,
-  onClose
+  onClose,
+  tipoProduccion = 'pedido',
+  sedes = []
 }) {
-  // 👉 alternar selección de producto
+  const [filtro, setFiltro] = useState('');
+
   const toggleSeleccion = (producto) => {
     const yaSeleccionado = productosSeleccionados.some(p => p.id === producto.id);
+    
     if (yaSeleccionado) {
-      // si ya estaba, lo quitamos
       setProductosSeleccionados(prev => prev.filter(p => p.id !== producto.id));
     } else {
-      // si no estaba, lo agregamos con cantidad = 1
-      setProductosSeleccionados(prev => [
-        ...prev,
-        { ...producto, cantidad: 1, receta: producto.receta || null, sede: "" }
-      ]);
+      // Inicializar cantidades según el tipo de producción
+      const nuevoProducto = { 
+        ...producto, 
+        cantidad: 1, 
+        receta: producto.receta || null, 
+        sede: tipoProduccion === 'pedido' ? "" : null
+      };
+
+      // Si es fábrica, inicializar cantidadesPorSede
+      if (tipoProduccion === 'fabrica') {
+        const cantidadesPorSede = {};
+        sedes.forEach(sede => {
+          cantidadesPorSede[sede.nombre] = 0;
+        });
+        nuevoProducto.cantidadesPorSede = cantidadesPorSede;
+        nuevoProducto.cantidad = 0; // Total inicial es 0
+      }
+
+      setProductosSeleccionados(prev => [...prev, nuevoProducto]);
     }
   };
 
@@ -64,10 +80,7 @@ export default function ModalAgregarProductos({
 
       <div className="modal-agregar-footer">
         <button className="cancel-btn" onClick={onClose}>Cancelar</button>
-        <button
-          className="save-btn"
-          onClick={onClose} // 👈 solo cierra, productos ya quedan seleccionados
-        >
+        <button className="save-btn" onClick={onClose}>
           Guardar ({productosSeleccionados.length})
         </button>
       </div>

@@ -67,36 +67,45 @@ export default function TablaInsumos() {
 
   const hideNotification = () => setNotification({ visible: false });
 
-  // Función para cambiar estado corregida
-  const toggleEstado = async (id) => {
-    try {
-      const insumo = insumos.find((i) => (i.id || i.idinsumo) === id);
-      if (!insumo) {
-        console.error('Insumo no encontrado:', id);
-        showNotification("Insumo no encontrado", "error");
-        return;
-      }
-
-      const nuevoEstado = !insumo.estado;
-      console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
-      
-      await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
-
-      // Actualizar el estado local
-      setInsumos(
-        insumos.map((i) => {
-          const currentId = i.id || i.idinsumo;
-          return currentId === id ? { ...i, estado: nuevoEstado } : i;
-        })
-      );
-      
-      showNotification(`Insumo ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      showNotification("Error cambiando estado: " + error.message, "error");
+ // Función para cambiar estado con validación de stock
+const toggleEstado = async (id) => {
+  try {
+    const insumo = insumos.find((i) => (i.id || i.idinsumo) === id);
+    if (!insumo) {
+      console.error('Insumo no encontrado:', id);
+      showNotification("Insumo no encontrado", "error");
+      return;
     }
-  };
 
+    const nuevoEstado = !insumo.estado;
+    
+    // Validar que no se pueda deshabilitar si hay stock disponible
+    if (!nuevoEstado && parseFloat(insumo.cantidad) > 0) {
+      showNotification(
+        `No se puede deshabilitar este insumo porque tiene ${insumo.cantidad} unidades en stock. Para deshabilitarlo, primero debe reducir el stock a 0.`,
+        "error"
+      );
+      return;
+    }
+    
+    console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
+    
+    await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
+
+    // Actualizar el estado local
+    setInsumos(
+      insumos.map((i) => {
+        const currentId = i.id || i.idinsumo;
+        return currentId === id ? { ...i, estado: nuevoEstado } : i;
+      })
+    );
+    
+    showNotification(`Insumo ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    showNotification("Error cambiando estado: " + error.message, "error");
+  }
+};
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
   };
@@ -352,35 +361,51 @@ export default function TablaInsumos() {
                     className="catalog-button"
                     title="Agregar Catálogo"
                     onClick={() => abrirModalSelectorCatalogo(rowData)}
+                    // style={{
+                    //   backgroundColor: "#6c5ce7",
+                    //   color: "white",
+                    //   border: "none",
+                    //   borderRadius: "6px",
+                    //   padding: "8px 12px",
+                    //   fontSize: "12px",
+                    //   fontWeight: "500",
+                    //   cursor: "pointer",
+                    //   display: "flex",
+                    //   alignItems: "center",
+                    //   gap: "4px",
+                    //   transition: "all 0.2s ease",
+                    //   boxShadow: "0 2px 4px rgba(108, 92, 231, 0.3)",
+                    //   minHeight: "32px",
+                    // }}
+                    // onMouseEnter={(e) => {
+                    //   e.target.style.backgroundColor = "#5f3dc4";
+                    //   e.target.style.transform = "translateY(-1px)";
+                    //   e.target.style.boxShadow = "0 4px 8px rgba(108, 92, 231, 0.4)";
+                    // }}
+                    // onMouseLeave={(e) => {
+                    //   e.target.style.backgroundColor = "#6c5ce7";
+                    //   e.target.style.transform = "translateY(0)";
+                    //   e.target.style.boxShadow = "0 2px 4px rgba(108, 92, 231, 0.3)";
+                    // }}
+                  >
+                    <button
+                    className={`admin-button purple ${
+                      !rowData.estado ? "disabled" : ""
+                    }`}
+                    title="Copiar"
+                    onClick={() => rowData.estado && copiar(rowData)} // 👈 tu función aquí
+                    disabled={!rowData.estado}
                     style={{
                       backgroundColor: "#6c5ce7",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      padding: "8px 12px",
-                      fontSize: "12px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      transition: "all 0.2s ease",
-                      boxShadow: "0 2px 4px rgba(108, 92, 231, 0.3)",
-                      minHeight: "32px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "#5f3dc4";
-                      e.target.style.transform = "translateY(-1px)";
-                      e.target.style.boxShadow = "0 4px 8px rgba(108, 92, 231, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "#6c5ce7";
-                      e.target.style.transform = "translateY(0)";
-                      e.target.style.boxShadow = "0 2px 4px rgba(108, 92, 231, 0.3)";
+                      opacity: !rowData.estado ? 0.5 : 1,
+                      cursor: !rowData.estado ? "not-allowed" : "pointer",
+                      
                     }}
                   >
-                    <span style={{ fontSize: "14px" }}>📋</span>
-                    <span>Catálogo</span>
+                    📋
+                  </button>
+
+                    {/* <span>Catálogo</span> */}
                   </button>
                 )}
             </div>

@@ -14,18 +14,142 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
   const [insumoParaPrecio, setInsumoParaPrecio] = useState(null);
   const [precioTemporal, setPrecioTemporal] = useState('');
 
-  // Función para obtener imagen por defecto según categoría
-  const obtenerImagenPorDefecto = (categoria, nombreInsumo) => {
+  // Función para obtener imagen desde Spoonacular API
+  const obtenerImagenDesdeAPI = (nombreInsumo, categoria) => {
+    const nombreLower = (nombreInsumo || '').toLowerCase().trim();
+    
+    // Mapeo de nombres en español a nombres en inglés para la API
+    const mapaIngredientes = {
+      // Lácteos
+      'leche': 'milk',
+      'mantequilla': 'butter',
+      'queso': 'cheese',
+      'yogurt': 'yogurt',
+      'crema': 'cream',
+      'nata': 'heavy-cream',
+      
+      // Huevos
+      'huevo': 'egg',
+      'huevos': 'egg',
+      'clara': 'egg-white',
+      'yema': 'egg-yolk',
+      
+      // Harinas y granos
+      'harina': 'flour',
+      'harina de trigo': 'white-flour',
+      'arroz': 'rice',
+      'avena': 'oats',
+      'maíz': 'corn',
+      'maicena': 'cornstarch',
+      
+      // Azúcares y endulzantes
+      'azucar': 'sugar',
+      'azúcar': 'sugar',
+      'azúcar morena': 'brown-sugar',
+      'miel': 'honey',
+      'panela': 'brown-sugar',
+      
+      // Condimentos
+      'sal': 'salt',
+      'pimienta': 'pepper',
+      'canela': 'cinnamon',
+      'vainilla': 'vanilla',
+      'extracto de vainilla': 'vanilla-extract',
+      
+      // Frutas
+      'fresa': 'strawberry',
+      'fresas': 'strawberries',
+      'mora': 'blackberry',
+      'arándano': 'blueberry',
+      'banano': 'banana',
+      'manzana': 'apple',
+      'naranja': 'orange',
+      'limón': 'lemon',
+      'piña': 'pineapple',
+      'mango': 'mango',
+      'durazno': 'peach',
+      
+      // Chocolates
+      'chocolate': 'chocolate',
+      'cacao': 'cocoa-powder',
+      'chispas de chocolate': 'chocolate-chips',
+      
+      // Frutos secos
+      'nuez': 'walnuts',
+      'almendra': 'almonds',
+      'maní': 'peanuts',
+      'avellana': 'hazelnuts',
+      
+      // Aceites y grasas
+      'aceite': 'vegetable-oil',
+      'aceite de oliva': 'olive-oil',
+      'manteca': 'lard',
+      
+      // Levaduras
+      'levadura': 'yeast',
+      'polvo de hornear': 'baking-powder',
+      'bicarbonato': 'baking-soda',
+      
+      // Otros
+      'gelatina': 'gelatin',
+      'mermelada': 'jam',
+      'caramelo': 'caramel',
+      'crema de leche': 'heavy-cream'
+    };
+    
+    // Buscar coincidencia exacta o parcial
+    let ingredienteEnIngles = null;
+    
+    // Primero buscar coincidencia exacta
+    if (mapaIngredientes[nombreLower]) {
+      ingredienteEnIngles = mapaIngredientes[nombreLower];
+    } else {
+      // Buscar coincidencia parcial
+      for (const [espanol, ingles] of Object.entries(mapaIngredientes)) {
+        if (nombreLower.includes(espanol) || espanol.includes(nombreLower)) {
+          ingredienteEnIngles = ingles;
+          break;
+        }
+      }
+    }
+    
+    // Si encontramos el ingrediente, usar la API de Spoonacular
+    if (ingredienteEnIngles) {
+      return `https://spoonacular.com/cdn/ingredients_100x100/${ingredienteEnIngles}.jpg`;
+    }
+    
+    // Si no hay coincidencia, usar imagen por defecto según categoría
+    return obtenerImagenPorDefectoPorCategoria(categoria);
+  };
+
+  // Función para obtener imagen por defecto según categoría (fallback)
+  const obtenerImagenPorDefectoPorCategoria = (categoria) => {
     const categoriaLower = (categoria || '').toLowerCase();
-    const nombreLower = (nombreInsumo || '').toLowerCase();
     
-    if (nombreLower.includes('leche')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJVhI6leNnj0FWig5Z4uPFhq-lZafYWFkfYQ&s';
-    if (nombreLower.includes('huevo')) return 'https://static.vecteezy.com/system/resources/previews/008/848/340/original/isolated-eggs-on-white-background-free-photo.jpg';
-    if (nombreLower.includes('harina')) return 'https://olimpica.vtexassets.com/arquivos/ids/617052/7701008629240.jpg?v=637626523850430000';
-    if (nombreLower.includes('azucar') || nombreLower.includes('azúcar')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxvQQZ8vQYm9mNxQM0x0xGzB1L1L1L1L1L1w&s';
-    if (nombreLower.includes('sal')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKKdX3LZ8vMf9YzR4QnPjkKdL2vX8QlmwA&s';
+    if (categoriaLower.includes('lácte') || categoriaLower.includes('lacte')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/milk.jpg';
+    }
+    if (categoriaLower.includes('fruta')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/strawberries.jpg';
+    }
+    if (categoriaLower.includes('seco') || categoriaLower.includes('nuec')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/almonds.jpg';
+    }
+    if (categoriaLower.includes('cereal') || categoriaLower.includes('grano')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/flour.jpg';
+    }
+    if (categoriaLower.includes('dulce') || categoriaLower.includes('azúcar')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/sugar.jpg';
+    }
+    if (categoriaLower.includes('condimento') || categoriaLower.includes('especia')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/salt.jpg';
+    }
+    if (categoriaLower.includes('chocolate')) {
+      return 'https://spoonacular.com/cdn/ingredients_100x100/chocolate.jpg';
+    }
     
-    return 'https://via.placeholder.com/100x100/ff69b4/ffffff?text=📦';
+    // Imagen genérica de ingrediente
+    return 'https://spoonacular.com/cdn/ingredients_100x100/flour.jpg';
   };
 
   // Función para obtener precio estimado (fallback)
@@ -121,7 +245,6 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
         console.log('💰 ¿Los datos incluyen precios?', tienePrecio);
         
         // Transformar datos de la API al formato esperado
-// Transformar datos de la API al formato esperado
         const insumosTransformados = insumosActivos.map(insumo => {
           // **OBTENER PRECIO REAL DE LA BASE DE DATOS**
           let precio = 0;
@@ -144,24 +267,28 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
             console.log(`⚠️ Sin precio para ${insumo.nombreinsumo}, debe configurarse manualmente`);
           }
           
+          const nombreInsumo = insumo.nombreinsumo || insumo.nombre || 'Sin nombre';
+          const categoria = insumo.categoriainsumos?.nombrecategoria || 'Sin categoría';
+          
+          // **OBTENER IMAGEN DESDE API DE SPOONACULAR**
+          const imagenAPI = obtenerImagenDesdeAPI(nombreInsumo, categoria);
+          
           const insumoTransformado = {
             id: insumo.idinsumo || insumo.id,
-            nombre: insumo.nombreinsumo || insumo.nombre || 'Sin nombre',
+            nombre: nombreInsumo,
             unidad: insumo.unidadmedida?.unidadmedida || 'Unidad',
             precio: precio,
             precioUnitario: precio,
             cantidad: parseInt(insumo.cantidad) || 1,
-            category: insumo.categoriainsumos?.nombrecategoria || 'Sin categoría',
-            imagen: insumo.imagen || obtenerImagenPorDefecto(
-              insumo.categoriainsumos?.nombrecategoria, 
-              insumo.nombreinsumo
-            ),
+            category: categoria,
+            imagen: imagenAPI, // Usar imagen de API
             esPrecioReal: esPrecioReal,
             estado: insumo.estado || true,
             datosOriginales: insumo
           };
           
           console.log(`${esPrecioReal ? '✅' : '⚠️'} ${insumoTransformado.nombre}: $${precio} (${esPrecioReal ? 'BD' : 'sin precio'})`);
+          console.log(`🖼️ Imagen API: ${imagenAPI}`);
           
           return insumoTransformado;
         });
@@ -729,22 +856,15 @@ const AgregarInsumosModal = ({ onClose, onAgregar }) => {
                     ✏️
                   </button>
 
-                  {insumo.imagen && insumo.imagen !== 'https://via.placeholder.com/100x100/ff69b4/ffffff?text=📦' ? (
-                    <img 
-                      src={insumo.imagen} 
-                      alt={insumo.nombre}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className="imagen-placeholder" 
-                    style={{ display: insumo.imagen && insumo.imagen !== 'https://via.placeholder.com/100x100/ff69b4/ffffff?text=📦' ? 'none' : 'flex' }}
-                  >
-                    📦
-                  </div>
+                  <img 
+                    src={insumo.imagen} 
+                    alt={insumo.nombre}
+                    onError={(e) => {
+                      // Si falla la imagen de la API, usar placeholder
+                      e.target.src = 'https://spoonacular.com/cdn/ingredients_100x100/flour.jpg';
+                    }}
+                  />
+                  
                   <h4>{insumo.nombre}</h4>
                   <p>{insumo.unidad}</p>
                   {insumo.precio > 0 ? (

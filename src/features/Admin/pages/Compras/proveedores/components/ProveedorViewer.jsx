@@ -14,7 +14,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.tipo}
@@ -25,7 +24,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.tipoDocumento}
@@ -40,7 +38,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.documento || proveedor.extra}
@@ -52,7 +49,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
               <div className="modal-input" style={{ 
                 backgroundColor: '#f8f9fa', 
                 cursor: 'default', 
-                border: '2px solid #e91e63',
                 pointerEvents: 'none'
               }}>
                 {proveedor.nombreProveedor || proveedor.nombre}
@@ -64,7 +60,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
                 <div className="modal-input" style={{ 
                   backgroundColor: '#f8f9fa', 
                   cursor: 'default', 
-                  border: '2px solid #e91e63',
                   pointerEvents: 'none'
                 }}>
                   {proveedor.nombreEmpresa}
@@ -75,7 +70,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
                 <div className="modal-input" style={{ 
                   backgroundColor: '#f8f9fa', 
                   cursor: 'default', 
-                  border: '2px solid #e91e63',
                   pointerEvents: 'none'
                 }}>
                   {proveedor.nombreProveedor || proveedor.nombreContacto}
@@ -88,7 +82,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.contacto}
@@ -99,7 +92,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.correo}
@@ -110,7 +102,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               {proveedor.direccion}
@@ -121,7 +112,6 @@ const ProveedorViewer = ({ proveedor, onClose }) => {
             <div className="modal-input" style={{ 
               backgroundColor: '#f8f9fa', 
               cursor: 'default', 
-              border: '2px solid #e91e63',
               pointerEvents: 'none'
             }}>
               <span style={{ color: proveedor.estado ? '#4CAF50' : '#f44336', fontWeight: 'bold' }}>

@@ -1,47 +1,51 @@
-// components/SalsasView.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
-  const [salsas] = useState([
-    {
-      id: 1,
-      nombre: 'Arequipe',
-      imagen: 'https://i.pinimg.com/736x/ed/d3/35/edd3357867f3ccc9b84df746d2941f97.jpg',
-      precio: 2500
-    },
-    {
-      id: 2,
-      nombre: 'Lechera',
-      imagen: 'https://i.pinimg.com/736x/0f/6c/7f/0f6c7f676e02bae61c1ba3f96634dc4a.jpg',
-      precio: 2000
-    },
-    {
-      id: 3,
-      nombre: 'Salsa de Mora',
-      imagen: 'https://i.pinimg.com/736x/3e/ee/58/3eee581de7ecd7962a275100fed03a0f.jpg',
-      precio: 2200
-    },
-    {
-      id: 4,
-      nombre: 'Salsa de Chocolate',
-      imagen: 'https://i.pinimg.com/736x/fd/8d/50/fd8d50f4c111ae95257d79fd16142876.jpg',
-      precio: 2800
-    },
-    {
-      id: 5,
-      nombre: 'Salsa de Fresa',
-      imagen: 'https://i.pinimg.com/736x/5b/88/aa/5b88aa145b8dcfe733b4006b5ff39dba.jpg',
-      precio: 2200
-    },
-    {
-      id: 6,
-      nombre: 'Caramelo',
-      imagen: 'https://i.pinimg.com/736x/d2/f2/36/d2f23694b64c62e240b2b8dbb22b5a6a.jpg',
-      precio: 2600
-    }
-  ]);
-
+  const [salsas, setSalsas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+
+  // Cargar salsas desde la API
+  useEffect(() => {
+    const cargarSalsas = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al cargar salsas');
+        }
+
+        const data = await response.json();
+        const salsasActivas = data
+          .filter(salsa => salsa.estado === true)
+          .map(salsa => ({
+            id: salsa.idsalsa,
+            nombre: salsa.nombre,
+            imagen: salsa.imagen || 'https://via.placeholder.com/60x60/E0E0E0/757575?text=S',
+            precio: parseFloat(salsa.precioadicion || 0)
+          }));
+
+        setSalsas(salsasActivas);
+        setError(null);
+      } catch (err) {
+        console.error('Error al cargar salsas:', err);
+        setError('No se pudieron cargar las salsas');
+        setSalsas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarSalsas();
+  }, []);
 
   const showCustomAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
@@ -58,18 +62,62 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
     const isSelected = selectedItems.some(item => item.id === salsa.id);
 
     if (isSelected) {
-      onItemToggle(salsa); // Deselect if already selected
+      onItemToggle(salsa);
     } else {
-      if (selectedItems.length === 2) { // If two salsas are already selected, and user tries to add a third
+      if (selectedItems.length === 2) {
         showCustomAlert('info', 'A partir de la tercera salsa, cada una tendrá un costo adicional.');
       }
-      onItemToggle(salsa); // Always allow selection, the alert is just a warning.
+      onItemToggle(salsa);
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '5px solid #f3f3f3',
+            borderTop: '5px solid #e91e63',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px'
+          }} />
+          <p style={{ color: '#6c757d' }}>Cargando salsas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', backgroundColor: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+          <h3 style={{ color: '#e91e63', marginBottom: '15px' }}>{error}</h3>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '10px',
+              backgroundColor: '#e91e63',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
-      {/* Alerta personalizada */}
       {showAlert.show && (
         <div
           style={{
@@ -83,12 +131,9 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
             fontWeight: '600',
             fontSize: '0.9rem',
             minWidth: '300px',
-            background:
-              showAlert.type === 'success'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : showAlert.type === 'info'
-                ? 'linear-gradient(135deg, #2196F3, #1976D2)' // Blue gradient for info
-                : 'linear-gradient(135deg, #ec4899, #be185d)', // Default error pink
+            background: showAlert.type === 'info'
+              ? 'linear-gradient(135deg, #e91e63, #f06292)'
+              : 'linear-gradient(135deg, #dc3545, #e85a67)',
             boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
             animation: 'slideInRight 0.5s ease-out'
           }}
@@ -97,11 +142,10 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         </div>
       )}
 
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 'bold',
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: 'bold', 
           color: '#2c3e50',
           marginBottom: '10px',
           background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
@@ -115,7 +159,6 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         </p>
       </div>
 
-      {/* Lista de salsas */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '20px',
@@ -123,93 +166,99 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         marginBottom: '30px'
       }}>
-        <div style={{ marginBottom: '20px' }}>
-          {salsas.map(salsa => {
-            const isSelected = selectedItems.some(item => item.id === salsa.id);
+        {salsas.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>📦</div>
+            <p style={{ color: '#6c757d' }}>No hay salsas disponibles</p>
+          </div>
+        ) : (
+          <div style={{ marginBottom: '20px' }}>
+            {salsas.map(salsa => {
+              const isSelected = selectedItems.some(item => item.id === salsa.id);
 
-            return (
-              <div
-                key={salsa.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '15px',
-                  padding: '15px',
-                  margin: '10px 0',
-                  border: isSelected ? '2px solid #e91e63' : '2px solid #ecf0f1',
-                  borderRadius: '15px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  backgroundColor: isSelected ? '#fce4ec' : '#f8f9fa',
-                  transform: isSelected ? 'translateY(-2px)' : 'none',
-                  boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
-                }}
-                onClick={() => handleItemToggle(salsa)}
-              >
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  backgroundColor: '#e0e0e0',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  flexShrink: 0
-                }}>
-                  <img
-                    src={salsa.imagen}
-                    alt={salsa.nombre}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                    onError={(e) => {
-                      e.target.src = `https://via.placeholder.com/60x60/E0E0E0/757575?text=${salsa.nombre.charAt(0)}`;
-                    }}
-                  />
-                </div>
+              return (
+                <div
+                  key={salsa.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '15px',
+                    margin: '10px 0',
+                    border: isSelected ? '2px solid #e91e63' : '2px solid #ecf0f1',
+                    borderRadius: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backgroundColor: isSelected ? '#fce4ec' : '#f8f9fa',
+                    transform: isSelected ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSelected ? '0 4px 15px rgba(233,30,99,0.2)' : '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                  onClick={() => handleItemToggle(salsa)}
+                >
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#e0e0e0',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={salsa.imagen}
+                      alt={salsa.nombre}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        e.target.src = `https://via.placeholder.com/60x60/E0E0E0/757575?text=${salsa.nombre.charAt(0)}`;
+                      }}
+                    />
+                  </div>
 
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      color: '#2c3e50',
+                      margin: '0 0 5px 0'
+                    }}>
+                      {salsa.nombre}
+                    </h3>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#e91e63',
+                      fontWeight: '600',
+                      margin: 0
+                    }}>
+                      ${salsa.precio.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    border: isSelected ? '2px solid #e91e63' : '2px solid #bdc3c7',
+                    backgroundColor: isSelected ? '#e91e63' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: isSelected ? 'white' : '#bdc3c7',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    color: '#2c3e50',
-                    margin: '0 0 5px 0'
+                    transition: 'all 0.3s ease'
                   }}>
-                    {salsa.nombre}
-                  </h3>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#e91e63',
-                    fontWeight: '600',
-                    margin: 0
-                  }}>
-                    ${salsa.precio.toLocaleString()}
-                  </p>
+                    {isSelected && '✓'}
+                  </div>
                 </div>
-
-                <div style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  border: isSelected ? '2px solid #e91e63' : '2px solid #bdc3c7',
-                  backgroundColor: isSelected ? '#e91e63' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: isSelected ? 'white' : '#bdc3c7',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
-                }}>
-                  {isSelected && '✓'}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Resumen de selección */}
       {selectedItems.length > 0 && (
         <div style={{
           backgroundColor: 'white',
@@ -261,7 +310,6 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
         </div>
       )}
 
-      {/* Botones de navegación */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -304,6 +352,26 @@ const SalsasView = ({ selectedItems, onItemToggle, onContinue, onBack }) => {
           Continuar →
         </button>
       </div>
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          @keyframes slideInRight {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

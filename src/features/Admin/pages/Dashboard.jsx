@@ -280,156 +280,58 @@ const Dashboard = () => {
     }
   };
 
-  const cargarVentasEnTiempoReal = async () => {
-    try {
-      console.log('Iniciando carga de ventas en tiempo real...');
-      const ventas = await ventaApiService.obtenerVentas();
-      console.log('Ventas recibidas de la API:', ventas);
+const cargarVentasEnTiempoReal = async () => {
+  try {
+    console.log('Iniciando carga de ventas en tiempo real...');
+    const ventas = await ventaApiService.obtenerVentas(); // ← trae listado-resumen
 
-      // Filtrar y procesar solo ventas con detalles válidos
-      const ventasValidas = ventas
-        .filter(venta => {
-          // Verificar que la venta tenga detalles y producto
-          const tieneDetalles = venta.detalleventa && 
-                               Array.isArray(venta.detalleventa) && 
-                               venta.detalleventa.length > 0 &&
-                               venta.detalleventa[0].productogeneral;
-          
-          if (!tieneDetalles) {
-            console.log('Venta sin detalles válidos:', venta);
-          }
-          return tieneDetalles;
-        })
-        .sort((a, b) => new Date(b.fechaventa || b.fechaVenta) - new Date(a.fechaventa || a.fechaVenta))
-        .slice(0, 5)
-        .map(venta => {
-          const detalle = venta.detalleventa[0];
-          const producto = detalle.productogeneral;
-          
-          console.log('Procesando venta:', {
-            idVenta: venta.idventa,
-            detalle: detalle,
-            producto: producto
-          });
+    // Ordenar y limitar a las 5 más recientes
+    const ventasOrdenadas = ventas
+      .sort((a, b) => new Date(b.fechaVenta) - new Date(a.fechaVenta))
+      .slice(0, 5);
 
-          // Obtener el nombre del producto de manera segura
-          const nombreProducto = producto.nombreproducto || producto.nombre || 'Producto no especificado';
-          
-          // Obtener la URL de la imagen de manera segura
-          let urlImagen = null;
-          if (producto.imagenes?.urlimg) {
-            urlImagen = producto.imagenes.urlimg;
-          } else if (producto.imagen?.urlimg) {
-            urlImagen = producto.imagen.urlimg;
-          } else if (typeof producto.imagen === 'string') {
-            urlImagen = producto.imagen;
-          }
-
-          return {
-            idVenta: venta.idventa,
-            producto: nombreProducto,
-            cantidad: parseInt(detalle.cantidad) || 0,
-            precio: parseFloat(detalle.subtotal) || 0,
-            imagen: urlImagen,
-            sede: venta.sede?.nombre || venta.sede || 'Sede principal',
-            timestamp: new Date(venta.fechaventa)
-          };
-        });
-
-      console.log('Ventas procesadas:', ventasValidas);
-
-      if (ventasValidas.length > 0) {
-        setVentasRealTime(prevVentas => {
-          const nuevasVentas = ventasValidas.filter(nuevaVenta => 
-            !prevVentas.some(prevVenta => prevVenta.idVenta === nuevaVenta.idVenta)
-          );
-
-          if (nuevasVentas.length > 0) {
-            console.log('Agregando nuevas ventas:', nuevasVentas);
-            return [...nuevasVentas, ...prevVentas].slice(0, 5);
-          }
-          return prevVentas;
-        });
-      }
-    } catch (error) {
-      console.error('Error al cargar ventas en tiempo real:', error);
-    }
-    try {
-      console.log('Iniciando carga de ventas en tiempo real...');
-      const ventas = await ventaApiService.obtenerVentas();
-      console.log('Ventas completas recibidas:', ventas);
-      const ventasOrdenadas = ventas
-        .sort((a, b) => new Date(b.fechaventa || b.fechaVenta) - new Date(a.fechaventa || a.fechaVenta))
-        .slice(0, 5);
-
-      // Procesar cada venta y obtener detalles del producto
-      console.log('Ventas ordenadas:', ventasOrdenadas); // Debug
-
-      const ventasProcesadas = await Promise.all(ventasOrdenadas.map(async (venta) => {
-        console.log('Procesando venta:', venta); // Debug
-        
-        // Obtener el primer detalle de venta
-        const detalleVenta = venta.detalleventa?.[0] || venta.detalleVenta?.[0];
-        console.log('Detalle de venta:', detalleVenta); // Debug
-
-        if (!detalleVenta) {
-          console.error('No hay detalle de venta disponible para:', venta.idventa || venta.idVenta);
-          return null;
-        }
-
-        const idProducto = detalleVenta.idproductogeneral;
-        console.log('ID del producto:', idProducto); // Debug
-
-        if (!idProducto) {
-          console.error('No se encontró ID del producto en el detalle:', detalleVenta);
-          return null;
-        }
-
+    // Ahora sí, obtener el detalle de cada venta por ID
+    const ventasProcesadas = await Promise.all(
+      ventasOrdenadas.map(async (venta) => {
         try {
-          // Obtener detalles del producto
-          const productoInfo = await productosApiService.obtenerProductoPorId(idProducto);
-          console.log('Info del producto obtenida:', productoInfo); // Debug
+          const ventaConDetalles = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+          const detalle = ventaConDetalles.detalleVenta?.[0];
+
+          if (!detalle) {
+            console.warn(`La venta ${venta.idVenta} no tiene detalle`);
+            return null;
+          }
+
+          // Buscar info del producto
+          const productoInfo = await productosApiService.obtenerProductoPorId(detalle.idproductogeneral);
 
           return {
-            idVenta: venta.idventa || venta.idVenta,
-            producto: productoInfo.nombre,
-            cantidad: parseInt(detalleVenta.cantidad || '0'),
-            precio: parseFloat(detalleVenta.subtotal || '0'),
-            imagen: productoInfo.imagen,
-            sede: venta.sede?.nombre || venta.nombreSede || 'Sede principal',
-            timestamp: new Date(venta.fechaventa || venta.fechaVenta)
+            idVenta: venta.idVenta,
+            producto: productoInfo.nombre || productoInfo.nombreproducto || 'Producto N/A',
+            cantidad: parseInt(detalle.cantidad || '0'),
+            precio: parseFloat(detalle.subtotal || '0'),
+            imagen: productoInfo.urlimagen || productoInfo.imagenes?.urlimg || '',
+            sede: venta.nombreSede || 'Sede principal',
+            timestamp: new Date(venta.fechaVenta)
           };
         } catch (error) {
-          console.error(`Error al obtener producto ${idProducto}:`, error);
+          console.error(`Error al procesar venta ${venta.idVenta}:`, error);
           return null;
         }
-      }));
+      })
+    );
 
-      // Filtrar ventas nulas y procesar las ventas válidas
-      const ventasValidas = ventasProcesadas.filter(venta => venta !== null);
-      console.log('Ventas válidas procesadas:', ventasValidas); // Debug
+    // Filtrar ventas válidas
+    const ventasValidas = ventasProcesadas.filter(v => v !== null);
+    console.log('Ventas válidas procesadas:', ventasValidas);
 
-      if (ventasValidas.length > 0) {
-        setVentasRealTime(prevVentas => {
-          // Verificar si hay nuevas ventas comparando IDs
-          const nuevasVentas = ventasValidas.filter(nuevaVenta => 
-            !prevVentas.some(prevVenta => prevVenta.idVenta === nuevaVenta.idVenta)
-          );
+    setVentasRealTime(ventasValidas);
+  } catch (error) {
+    console.error('Error al cargar ventas en tiempo real:', error);
+  }
+};
 
-          if (nuevasVentas.length > 0) {
-            console.log('Nuevas ventas a agregar:', nuevasVentas); // Debug
-            // Combinar ventas anteriores con nuevas y mantener solo las últimas 5
-            const ventasActualizadas = [...nuevasVentas, ...prevVentas].slice(0, 5);
-            console.log('Estado final de ventas:', ventasActualizadas); // Debug
-            return ventasActualizadas;
-          }
-          return prevVentas;
-        });
-      }
-    } catch (error) {
-      console.error('Error al cargar ventas en tiempo real:', error);
-    }
-  };
+
 
   useEffect(() => {
     cargarSedes();

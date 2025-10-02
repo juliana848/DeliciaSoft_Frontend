@@ -19,6 +19,7 @@ import AppNotification from '../../components/Notification';
 
 // Importar el servicio
 import ventaApiService from '../../services/venta_services';
+import productoApiService from '../../services/productos_services'; 
 
 export default function Ventas() {
     const [allSales, setAllSales] = useState([]);
@@ -46,6 +47,7 @@ export default function Ventas() {
     const [abonoSeleccionado, setAbonoSeleccionado] = useState(null);
     const [mostrarModalDetalleAbono, setMostrarModalDetalleAbono] = useState(false);
     const [filtroTipoVenta, setFiltroTipoVenta] = useState('directa');
+    
 
     // Estados para modales de adiciones, salsas y rellenos
     const [mostrarModalAdiciones, setMostrarModalAdiciones] = useState(false);
@@ -55,6 +57,7 @@ export default function Ventas() {
     
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
     const [estadosVenta, setEstadosVenta] = useState([]);
+    const [productosDisponibles, setProductosDisponibles] = useState([]); 
 
     // Estado para el formulario de venta
 
@@ -71,6 +74,17 @@ const [ventaData, setVentaData] = useState({
     observaciones: ''
 });
 
+// Función para obtener productos desde la API
+    const fetchProductos = async () => {
+        try {
+            const productos = await productoApiService.obtenerProductos(); // Llama a la función del servicio
+            console.log('Productos disponibles obtenidos:', productos);
+            setProductosDisponibles(productos);
+        } catch (error) {
+            console.error('Error al obtener productos:', error);
+            showNotification(error.message || 'Error al obtener el catálogo de productos', 'error');
+        }
+    };
 
     const toggleNestedDetails = (itemId) => {
         setNestedDetailsVisible(prevState => ({
@@ -131,6 +145,7 @@ const [ventaData, setVentaData] = useState({
     // Cargar datos al montar el componente
     useEffect(() => {
         fetchVentas();
+        fetchProductos();
         fetchEstadosVenta();
     }, []);
 
@@ -687,6 +702,7 @@ const verAbonosVenta = async (venta) => {
                 <VentasVerDetalle
                     ventaSeleccionada={ventaSeleccionada}
                     onBackToList={onBackToList}
+                    productosDisponibles={productosDisponibles}
                 />
             ) : mostrarAgregarVenta ? (
                 <VentasCrear

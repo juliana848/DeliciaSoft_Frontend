@@ -1,6 +1,7 @@
 // ventas.jsx - Versión corregida con abonos funcionales
 import React, { useState, useEffect, useMemo } from 'react';
 import '../../adminStyles.css';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // Importar los nuevos componentes
 import VentasListar from './VentasListar';
@@ -680,13 +681,13 @@ const verAbonosVenta = async (venta) => {
     };
 
     if (loading) {
-        return (
-            <div className="admin-container">
-                <div className="loading-container">
-                    <p>Cargando ventas...</p>
-                </div>
-            </div>
-        );
+    return (
+        <div className="admin-container">
+        <div className="loading-container">
+            <LoadingSpinner />
+        </div>
+        </div>
+    );
     }
 
     return (

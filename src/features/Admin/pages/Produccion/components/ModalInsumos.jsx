@@ -4,6 +4,11 @@ import React from 'react';
 export default function ModalInsumos({ producto, onClose }) {
   if (!producto) return null;
 
+  // Fallback: usar receta.insumos si producto.insumos está vacío
+  const insumos = producto.insumos?.length
+    ? producto.insumos
+    : producto.receta?.insumos || [];
+
   return (
     <div className="insumos-modal-container">
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
@@ -20,7 +25,7 @@ export default function ModalInsumos({ producto, onClose }) {
             Cantidad seleccionada: <strong>{producto.cantidad || 1}</strong>
           </p>
           <p style={{ margin: 0, color: '#666' }}>
-            {producto.insumos?.length || 0} insumos necesarios
+            {insumos.length} insumos necesarios
           </p>
         </div>
       </div>
@@ -34,13 +39,16 @@ export default function ModalInsumos({ producto, onClose }) {
           </tr>
         </thead>
         <tbody>
-          {producto.insumos?.map((insumo, index) => {
+          {insumos.map((insumo, index) => {
             const cantidad = (producto.cantidad || 1) * (insumo.cantidad || 0);
+            const unidad = insumo.unidadmedida || insumo.unidad || 'N/A';
+            const nombre = insumo.nombreinsumo || insumo.nombre || insumo.insumo?.nombreinsumo || 'Sin nombre';
+
             return (
               <tr key={index} style={{ borderBottom: '1px solid #dee2e6' }}>
                 <td style={{ padding: '12px', fontWeight: 'bold', color: '#495057' }}>{cantidad}</td>
-                <td style={{ padding: '12px', color: '#6c757d' }}>{insumo.unidad || 'N/A'}</td>
-                <td style={{ padding: '12px', color: '#212529' }}>{insumo.nombre || insumo}</td>
+                <td style={{ padding: '12px', color: '#6c757d' }}>{unidad}</td>
+                <td style={{ padding: '12px', color: '#212529' }}>{nombre}</td>
               </tr>
             );
           })}

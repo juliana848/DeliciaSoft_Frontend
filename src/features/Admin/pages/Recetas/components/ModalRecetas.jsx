@@ -48,7 +48,9 @@ useEffect(() => {
 
           <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
             {loading ? (
-              <p>Cargando recetas...</p>
+              <div>
+                <LoadingSpinner />
+              </div>
             ) : filteredRecetas.length === 0 ? (
               <p>No se encontraron recetas</p>
             ) : (

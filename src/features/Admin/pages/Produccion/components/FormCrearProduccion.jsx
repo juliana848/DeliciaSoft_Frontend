@@ -22,13 +22,10 @@ export default function FormCrearProduccion({
   const [mostrarDetalleInsumos, setMostrarDetalleInsumos] = useState(false);
   const [productoDetalleInsumos, setProductoDetalleInsumos] = useState(null);
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
-  
   const [productosDisponibles, setProductosDisponibles] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
-  
   const [sedes, setSedes] = useState([]);
   const [cargandoSedes, setCargandoSedes] = useState(true);
-
   const [procesoData, setProcesoData] = useState({
     tipoProduccion: pestanaActiva,
     nombreProduccion: '',
@@ -47,7 +44,6 @@ export default function FormCrearProduccion({
       const sedesData = await sedeApiService.obtenerSedes();
       const sedesActivas = sedesData.filter(s => s.estado || s.activo);
       setSedes(sedesActivas);
-      console.log('Sedes cargadas:', sedesActivas);
     } catch (error) {
       console.error('Error cargando sedes:', error);
       showNotification('Error al cargar las sedes', 'error');
@@ -61,22 +57,37 @@ export default function FormCrearProduccion({
     try {
       setCargandoProductos(true);
       const productos = await productoApiService.obtenerProductosConRecetas();
-      
       const productosFormateados = productos
         .filter(p => p.estado === true)
-        .map(producto => ({
-          id: producto.idproductogeneral,
-          nombre: producto.nombreproducto,
-          imagen: producto.urlimagen || 'https://via.placeholder.com/150',
-          categoria: producto.categoria,
-          precio: producto.precioproducto,
-          receta: producto.receta,
-          insumos: producto.receta?.insumos || []
-        }));
+        .map(producto => {
+          const receta = producto.receta
+            ? {
+                ...producto.receta,
+                nombre: producto.receta.nombrereceta,
+                especificaciones: producto.receta.especificaciones,
+                insumos: producto.receta.insumos?.map(ins => ({
+                  id: ins.iddetallereceta,
+                  cantidad: ins.cantidad,
+                  unidadmedida: ins.unidadmedida,
+                  nombre: ins.insumo?.nombreinsumo || "Sin nombre"
+                })) || []
+              }
+            : null;
+
+          return {
+            id: producto.idproductogeneral,
+            nombre: producto.nombreproducto,
+            imagen: producto.urlimagen || 'https://via.placeholder.com/150',
+            categoria: producto.categoria,
+            precio: producto.precioproducto,
+            receta,
+            insumos: receta?.insumos || [],
+            cantidad: 1, // <--- cantidad por defecto en crear
+            cantidadesPorSede: {} // <--- inicializar objeto de cantidades por sede
+          };
+        });
       
       setProductosDisponibles(productosFormateados);
-      console.log('Productos con recetas cargados:', productosFormateados);
-      
     } catch (error) {
       showNotification('Error al cargar productos: ' + error.message, 'error');
       setProductosDisponibles([]);
@@ -126,40 +137,59 @@ export default function FormCrearProduccion({
     showNotification('Producto eliminado de la lista');
   };
 
-  const verInsumosProducto = async (producto) => {
+  const verInsumosProducto = (producto) => {
     try {
       const base = productosDisponibles.find(p => p.id === producto.id) || producto;
-      
       if (!base) {
         showNotification('No se encontró información del producto', 'error');
         return;
       }
-      
-      const cantidad = producto.cantidad || 1;
-      const insumosCalculados = base.insumos || [];
-      
-      const insumosMultiplicados = insumosCalculados.map(insumo => ({
+
+      const cantidadProducto = producto.cantidad || 1; // siempre al menos 1
+
+      const insumosMultiplicados = (base.insumos || []).map(insumo => ({
         ...insumo,
-        cantidad: (parseFloat(insumo.cantidad) || 0) * cantidad
+        cantidad: (parseFloat(insumo.cantidad) || 0) * cantidadProducto,
+        unidadmedida: insumo.unidadmedida || 'N/A',
+        nombreinsumo: insumo.nombreinsumo || insumo.nombre || insumo.insumo?.nombreinsumo || 'Sin nombre'
       }));
-      
-      setProductoDetalleInsumos({ 
-        ...producto, 
-        imagen: base.imagen, 
-        insumos: insumosMultiplicados 
+
+      setProductoDetalleInsumos({
+        ...producto,
+        imagen: base.imagen,
+        insumos: insumosMultiplicados
       });
       setMostrarDetalleInsumos(true);
-      
+
     } catch (error) {
+      console.error('Error al cargar insumos del producto:', error);
       showNotification('Error al cargar insumos del producto', 'error');
     }
   };
 
-  const abrirModalRecetaDetalle = async (receta) => {
+  const abrirModalRecetaDetalle = async (producto) => {
     try {
-      setRecetaSeleccionada(receta);
+      if (!producto.receta?.id) {
+        showNotification('Este producto no tiene receta asociada', 'error');
+        return;
+      }
+
+      const res = await fetch('https://deliciasoft-backend.onrender.com/api/receta/recetas');
+      const data = await res.json();
+
+      const recetaCompleta = data.find(r => r.idreceta === producto.receta.id);
+      if (!recetaCompleta) {
+        showNotification('No se encontró la receta en la base de datos', 'error');
+        return;
+      }
+
+      recetaCompleta.imagen = producto.imagen;
+
+      setRecetaSeleccionada(recetaCompleta);
       setMostrarModalRecetaDetalle(true);
+
     } catch (error) {
+      console.error('Error cargando receta:', error);
       showNotification('Error al cargar detalle de receta', 'error');
     }
   };
@@ -245,8 +275,6 @@ export default function FormCrearProduccion({
         }
       })
     };
-
-    console.log("Enviando payload:", JSON.stringify(payload, null, 2));
 
     try {
       const creado = await produccionApiService.crearProduccion(payload);
@@ -505,7 +533,7 @@ export default function FormCrearProduccion({
                             <button 
                               type="button" 
                               className="btn-small" 
-                              onClick={() => abrirModalRecetaDetalle(item.receta)} 
+                              onClick={() => abrirModalRecetaDetalle(item)} 
                               style={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)' }}
                             >
                               Ver receta

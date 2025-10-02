@@ -12,6 +12,7 @@ import ModalEliminarProduccion from './Produccion/components/ModalEliminarProduc
 import produccionApiService from '../services/produccion_services';
 import { estadoProduccionMap, estadoPedidoMap } from './Produccion/utils/estadosMaps';
 import { obtenerOpcionesEstadoProduccion, obtenerOpcionesEstadoPedido } from './Produccion/utils/transicionesEstado';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Produccion() {
   const [filtro, setFiltro] = useState('');
@@ -30,21 +31,16 @@ export default function Produccion() {
       setLoading(true);
       try {
         const data = await produccionApiService.obtenerProducciones();
-        console.log('📊 Datos recibidos del backend:', data);
-        
+        // mapear datos al formato que esperas en la UI
         const mapped = Array.isArray(data)
           ? data.map((item) => {
               const tipo = (item.TipoProduccion || item.tipoProduccion || '').toLowerCase();
-              
               const formatearFecha = (fecha) => {
                 if (!fecha) return new Date().toISOString().split('T')[0];
-                if (typeof fecha === 'string' && fecha.includes('T')) {
-                  return fecha.split('T')[0];
-                }
+                if (typeof fecha === 'string' && fecha.includes('T')) return fecha.split('T')[0];
                 return fecha;
               };
 
-              // Transformar productos del detalle de producción
               const productos = (item.detalleproduccion || []).map(detalle => ({
                 id: detalle.id,
                 nombre: detalle.nombre,
@@ -56,7 +52,7 @@ export default function Produccion() {
                 insumos: detalle.insumos || []
               }));
 
-              const mapped = {
+              return {
                 id: item.idproduccion ?? item.id,
                 tipoProduccion: tipo || 'fabrica',
                 nombreProduccion: item.nombreproduccion || `Producción #${item.idproduccion}`,
@@ -65,18 +61,13 @@ export default function Produccion() {
                 estadoProduccion: item.estadoproduccion || 1,
                 estadoPedido: item.estadopedido || 1,
                 numeroPedido: item.numeropedido || '',
-                productos: productos
+                productos
               };
-              
-              console.log('📄 Item mapeado:', mapped);
-              return mapped;
             })
           : [];
-        
-        console.log('✅ Total de procesos mapeados:', mapped.length);
         setProcesos(mapped);
       } catch (e) {
-        console.error('❌ Error obteniendo procesos:', e);
+        console.error('Error obteniendo procesos:', e);
         setProcesos([]);
       } finally {
         setLoading(false);
@@ -94,19 +85,16 @@ export default function Produccion() {
       (p.fechaCreacion && p.fechaCreacion.toLowerCase().includes(texto)) ||
       (p.fechaEntrega && p.fechaEntrega.toLowerCase().includes(texto)) ||
       (p.numeroPedido && p.numeroPedido.toLowerCase().includes(texto)) ||
-      (p.estadoPedido && estadoPedidoMap[p.estadoPedido]?.toLowerCase().includes(texto)) || 
-      (p.estadoProduccion && estadoProduccionMap[p.estadoProduccion]?.toLowerCase().includes(texto)) 
+      (p.estadoPedido && estadoPedidoMap[p.estadoPedido]?.toLowerCase().includes(texto)) ||
+      (p.estadoProduccion && estadoProduccionMap[p.estadoProduccion]?.toLowerCase().includes(texto))
     );
   });
 
-  // ======================= FUNCIONES HELPER =======================
+  // ======================= HELPERS =======================
   const showNotification = (mensaje, tipo = 'success') => {
     setNotification({ visible: true, mensaje, tipo });
-    setTimeout(() => {
-      setNotification((s) => ({ ...s, visible: false }));
-    }, 4000);
+    setTimeout(() => setNotification((s) => ({ ...s, visible: false })), 4000);
   };
-
   const hideNotification = () => setNotification({ visible: false, mensaje: '', tipo: 'success' });
 
   const abrirModal = (tipo, proceso) => {
@@ -114,7 +102,6 @@ export default function Produccion() {
     setProcesoSeleccionado(proceso);
     setModalVisible(true);
   };
-
   const cerrarModal = () => {
     setModalVisible(false);
     setProcesoSeleccionado(null);
@@ -127,13 +114,8 @@ export default function Produccion() {
       const estados = {
         [campo === 'estadoProduccion' ? 'estadoproduccion' : 'estadopedido']: valor
       };
-      
       await produccionApiService.actualizarEstado(procesoId, estados);
-      
-      setProcesos(prev =>
-        prev.map(p => (p.id === procesoId ? { ...p, [campo]: valor } : p))
-      );
-      
+      setProcesos(prev => prev.map(p => (p.id === procesoId ? { ...p, [campo]: valor } : p)));
       showNotification('Estado actualizado correctamente');
     } catch (error) {
       console.error('Error actualizando estado:', error);
@@ -144,9 +126,7 @@ export default function Produccion() {
   // ======================= ELIMINAR PROCESO =======================
   const eliminarProceso = async (proceso) => {
     try {
-      if (proceso.id) {
-        await produccionApiService.eliminarProduccion(proceso.id);
-      }
+      if (proceso.id) await produccionApiService.eliminarProduccion(proceso.id);
       setProcesos(prev => prev.filter(p => p.id !== proceso.id));
       cerrarModal();
       showNotification('Proceso eliminado exitosamente');
@@ -160,11 +140,9 @@ export default function Produccion() {
   const renderEstadoSelect = (rowData, campo) => {
     const estadoActual = rowData[campo];
     const esProduccion = campo === 'estadoProduccion';
-    
     const estadosFinales = esProduccion ? [6, 99] : [6, 7, 99];
     const deshabilitar = estadosFinales.includes(estadoActual);
-    
-    const opciones = esProduccion 
+    const opciones = esProduccion
       ? obtenerOpcionesEstadoProduccion(estadoActual)
       : obtenerOpcionesEstadoPedido(estadoActual);
 
@@ -196,41 +174,51 @@ export default function Produccion() {
   // ======================= RENDER PRINCIPAL =======================
   return (
     <div className="admin-wrapper">
-      <Notification 
-        visible={notification.visible} 
-        mensaje={notification.mensaje} 
-        tipo={notification.tipo} 
-        onClose={hideNotification} 
+      <Notification
+        visible={notification.visible}
+        mensaje={notification.mensaje}
+        tipo={notification.tipo}
+        onClose={hideNotification}
       />
 
-      {!mostrarAgregarProceso ? (
+      {mostrarAgregarProceso ? (
+        <FormCrearProduccion
+          pestanaActiva={pestanaActiva}
+          procesos={procesos}
+          setProcesos={setProcesos}
+          showNotification={showNotification}
+          onCancelar={() => setMostrarAgregarProceso(false)}
+        />
+      ) : modalVisible && modalTipo === 'visualizar' ? (
+        <ModalVisualizarProduccion
+          proceso={procesoSeleccionado}
+          pestanaActiva={pestanaActiva}
+          onClose={cerrarModal}
+        />
+      ) : (
         <>
           <div className="admin-toolbar">
-            <button 
-              className="admin-button pink" 
-              onClick={() => setMostrarAgregarProceso(true)} 
+            <button
+              className="admin-button pink"
+              onClick={() => setMostrarAgregarProceso(true)}
               type="button"
             >
               + Agregar
             </button>
-            <SearchBar 
-              placeholder="Buscar producción..." 
-              value={filtro} 
-              onChange={setFiltro} 
-            />
+            <SearchBar placeholder="Buscar producción..." value={filtro} onChange={setFiltro} />
           </div>
 
           <div className="ventas-header-container">
             <h2 className="admin-section-title">Gestión de producción</h2>
             <div className="filter-buttons-container" style={{ justifyContent: 'flex-end' }}>
-              <button 
-                className={`filter-tab ${pestanaActiva === 'pedido' ? 'filter-tab-active' : ''}`} 
+              <button
+                className={`filter-tab ${pestanaActiva === 'pedido' ? 'filter-tab-active' : ''}`}
                 onClick={() => setPestanaActiva('pedido')}
               >
                 Pedidos
               </button>
-              <button 
-                className={`filter-tab ${pestanaActiva === 'fabrica' ? 'filter-tab-active' : ''}`} 
+              <button
+                className={`filter-tab ${pestanaActiva === 'fabrica' ? 'filter-tab-active' : ''}`}
                 onClick={() => setPestanaActiva('fabrica')}
               >
                 Fábrica
@@ -239,80 +227,38 @@ export default function Produccion() {
           </div>
 
           {loading ? (
-            <div className="admin-content-empty">🔄 Cargando Producciones...</div>
-          ) : procesosFiltrados.length === 0 ? (
-            <div className="admin-content-empty">
-              No hay producciones de tipo "{pestanaActiva}" registradas
+            <div className="admin-loading-container">
+              <LoadingSpinner />
             </div>
+          ) : procesosFiltrados.length === 0 ? (
+            <div className="admin-content-empty">No hay producciones de tipo "{pestanaActiva}" registradas</div>
           ) : (
             <>
               {pestanaActiva === 'pedido' ? (
-                <DataTable 
-                  value={procesosFiltrados} 
-                  className="admin-table" 
-                  paginator 
-                  rows={10} 
-                  rowsPerPageOptions={[5,10,25]}
-                >
+                <DataTable value={procesosFiltrados} className="admin-table" paginator rows={10} rowsPerPageOptions={[5,10,25]}>
                   <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />
                   <Column field="fechaEntrega" header="Fecha Entrega" />
-                  <Column 
-                    header="Estado Pedido" 
-                    body={(rowData) => renderEstadoSelect(rowData, 'estadoPedido')} 
-                  />
+                  <Column header="Estado Pedido" body={(rowData) => renderEstadoSelect(rowData, 'estadoPedido')} />
                   <Column field="numeroPedido" header="N° Pedido" />
                   <Column header="Acción" body={(rowData) => (
                     <>
-                      <button 
-                        className="admin-button gray" 
-                        title="Visualizar" 
-                        onClick={() => abrirModal('visualizar', rowData)}
-                      >
-                        👁
-                      </button>
-                      <button 
-                        className="admin-button red" 
-                        title="Eliminar" 
-                        onClick={() => abrirModal('eliminar', rowData)}
-                      >
-                        🗑️
-                      </button>
+                      <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+                      <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
                     </>
                   )} />
                 </DataTable>
               ) : (
-                <DataTable 
-                  value={procesosFiltrados} 
-                  className="admin-table" 
-                  paginator 
-                  rows={10} 
-                  rowsPerPageOptions={[5,10,25]}
-                >
+                <DataTable value={procesosFiltrados} className="admin-table" paginator rows={10} rowsPerPageOptions={[5,10,25]}>
                   <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />
-                  <Column 
-                    header="Estado Producción" 
-                    body={(rowData) => renderEstadoSelect(rowData, 'estadoProduccion')} 
-                  />
+                  <Column header="Estado Producción" body={(rowData) => renderEstadoSelect(rowData, 'estadoProduccion')} />
                   <Column header="Acción" body={(rowData) => (
                     <>
-                      <button 
-                        className="admin-button gray" 
-                        title="Visualizar" 
-                        onClick={() => abrirModal('visualizar', rowData)}
-                      >
-                        👁
-                      </button>
-                      <button 
-                        className="admin-button red" 
-                        title="Eliminar" 
-                        onClick={() => abrirModal('eliminar', rowData)}
-                      >
-                        🗑️
-                      </button>
+                      <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+                      <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
                     </>
                   )} />
                 </DataTable>
@@ -320,30 +266,16 @@ export default function Produccion() {
             </>
           )}
 
-          <Modal visible={modalVisible && modalTipo === 'visualizar'} onClose={cerrarModal}>
-            <ModalVisualizarProduccion 
-              proceso={procesoSeleccionado}
-              pestanaActiva={pestanaActiva}
-              onClose={cerrarModal}
-            />
-          </Modal>
-
-          <Modal visible={modalVisible && modalTipo === 'eliminar'} onClose={cerrarModal}>
-            <ModalEliminarProduccion 
-              proceso={procesoSeleccionado}
-              onEliminar={eliminarProceso}
-              onCancelar={cerrarModal}
-            />
-          </Modal>
+          {modalVisible && modalTipo === 'eliminar' && (
+            <Modal visible={true} onClose={cerrarModal}>
+              <ModalEliminarProduccion
+                proceso={procesoSeleccionado}
+                onEliminar={eliminarProceso}
+                onCancelar={cerrarModal}
+              />
+            </Modal>
+          )}
         </>
-      ) : (
-        <FormCrearProduccion 
-          pestanaActiva={pestanaActiva}
-          procesos={procesos}
-          setProcesos={setProcesos}
-          showNotification={showNotification}
-          onCancelar={() => setMostrarAgregarProceso(false)}
-        />
       )}
     </div>
   );

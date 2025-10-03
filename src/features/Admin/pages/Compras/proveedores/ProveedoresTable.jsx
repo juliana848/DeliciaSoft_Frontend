@@ -89,7 +89,7 @@ export default function ProveedoresTable() {
         <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
       </div>
 
-      <h2 className="admin-section-title">Proveedores</h2>
+      <h2 className="admin-section-title"> Gestión de Proveedores</h2>
 
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>

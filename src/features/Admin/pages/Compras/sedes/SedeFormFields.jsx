@@ -1,4 +1,5 @@
 import React from "react";
+import DireccionAutocomplete from "./DireccionAutocomplete"; // Ajusta la ruta según tu estructura
 
 export default function SedeFormFields({
   formData,
@@ -36,23 +37,36 @@ export default function SedeFormFields({
         <label className="modal-label">
           Dirección: {!readOnly && <span style={{ color: "red" }}>*</span>}
         </label>
-        <textarea
-          value={formData.Direccion}
-          onChange={(e) => onInputChange("Direccion", e.target.value)}
-          className="modal-input"
-          placeholder="Ingrese la dirección completa de la sede"
-          required
-          disabled={readOnly}
-          readOnly={readOnly}
-          style={{
-            minHeight: "60px",
-            resize: "vertical",
-            fontFamily: "inherit",
-          }}
-        />
+        
+        {!readOnly ? (
+          <DireccionAutocomplete
+            value={formData.Direccion}
+            onChange={(valor) => onInputChange("Direccion", valor)}
+            placeholder="Ej: Calle 10 #20-30 o Carrera 45 #67-89"
+            disabled={readOnly}
+            readOnly={readOnly}
+          />
+        ) : (
+          <textarea
+            value={formData.Direccion}
+            className="modal-input"
+            disabled
+            readOnly
+            style={{
+              minHeight: "60px",
+              resize: "vertical",
+              fontFamily: "inherit",
+            }}
+          />
+        )}
+        
         {!readOnly && (
-          <small style={{ color: "#666", fontSize: "12px" }}>
-            Mínimo 10 caracteres
+          <small style={{ color: "#666", fontSize: "12px", display: "block", marginTop: "4px" }}>
+            Formato válido: Calle/Carrera # Número-Número
+            <br />
+            <span style={{ color: "#10b981", fontWeight: "500" }}>
+              💡 Escribe para ver sugerencias de direcciones reales
+            </span>
           </small>
         )}
       </div>

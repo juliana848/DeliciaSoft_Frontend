@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import sedeApiService from '../../Admin/Services/sedes_services.js';
+import sedeApiService from '../../Admin/services/sedes_services.js';
 import './OpcionesEntregaView.css';
 
 const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccionada }) => {

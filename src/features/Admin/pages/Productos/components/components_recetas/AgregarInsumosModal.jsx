@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import recetaApiService from "../../../../services/Receta_Services";
+import recetaApiService from "../../../../services/Receta_services";
 
 const InsumoCard = ({ insumo, selected, onToggle, cantidad, onCantidadChange }) => {
   return (

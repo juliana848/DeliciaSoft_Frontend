@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AgregarInsumosModal from "./AgregarInsumosModal";
-import recetaApiService from "../../../../services/Receta_Services";
+import recetaApiService from "../../../../services/Receta_services";
 
 export default function CrearRecetaModal({ onClose, onGuardar }) {
   const [formData, setFormData] = useState({

@@ -8,6 +8,7 @@ import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
 import categoriaInsumoApiService from '../../services/categoriainsumos';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
+import SearchableInput from './SearchableInput.jsx'; // ← NUEVO
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
@@ -29,12 +30,11 @@ export default function CategoriaTableDemo() {
     cargarCategorias();
   }, []);
 
-  // Función para cargar categorías desde la API
-const cargarCategorias = async () => {
-  try {
-    setMensajeCarga('Cargando categorías...'); // ✅ NUEVO
-    setLoading(true);
-    const data = await categoriaInsumoApiService.obtenerCategorias();
+  const cargarCategorias = async () => {
+    try {
+      setMensajeCarga('Cargando categorías...');
+      setLoading(true);
+      const data = await categoriaInsumoApiService.obtenerCategorias();
       const categoriasTransformadas = data.map(cat => ({
         id: cat.id,
         nombre: cat.nombreCategoria,
@@ -67,7 +67,7 @@ const cargarCategorias = async () => {
       nuevosErrores.nombre = 'El nombre debe tener al menos 3 caracteres';
     } else if (nombreEditado.trim().length > 50) {
       nuevosErrores.nombre = 'El nombre no puede superar los 50 caracteres';
-    } else if (!/^[A-Za-zÀÁÉÍÓÚÀáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
+    } else if (!/^[A-Za-zÀÁÉÍÓÚàáéíóúÑñ\s]+$/.test(nombreEditado.trim())) {
       nuevosErrores.nombre = 'El nombre solo puede contener letras y espacios';
     }
 
@@ -84,7 +84,6 @@ const cargarCategorias = async () => {
 
   const toggleActivo = async (categoria) => {
     try {
-      // Loading individual para cada switch
       setLoadingStates(prev => ({ ...prev, [categoria.id]: true }));
       
       const nuevoEstado = !categoria.activo;
@@ -150,13 +149,12 @@ const cargarCategorias = async () => {
     return true;
   };
 
-
   const guardarEdicion = async () => {
-  if (!validarFormulario()) return;
+    if (!validarFormulario()) return;
 
-  try {
-    setMensajeCarga('Guardando cambios...'); // ✅ NUEVO
-    setLoading(true);
+    try {
+      setMensajeCarga('Guardando cambios...');
+      setLoading(true);
       
       const datosCategoria = {
         nombreCategoria: nombreEditado.trim(),
@@ -191,9 +189,9 @@ const cargarCategorias = async () => {
   };
 
   const confirmarEliminar = async () => {
-  try {
-    setMensajeCarga('Eliminando categoría...'); // ✅ NUEVO
-    setLoading(true);
+    try {
+      setMensajeCarga('Eliminando categoría...');
+      setLoading(true);
       await categoriaInsumoApiService.eliminarCategoria(categoriaSeleccionada.id);
       const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
       setCategorias(updated);
@@ -208,25 +206,21 @@ const cargarCategorias = async () => {
     }
   };
 
-  // Función para guardar nueva categoría usando API
-const guardarNuevaCategoria = async () => {
-  if (!validarFormulario()) return;
+  const guardarNuevaCategoria = async () => {
+    if (!validarFormulario()) return;
 
-  try {
-    setMensajeCarga('Agregando categoría...'); // ✅ NUEVO
-    setLoading(true);
+    try {
+      setMensajeCarga('Agregando categoría...');
+      setLoading(true);
       
-      // Preparar datos para la API
       const datosCategoria = {
         nombreCategoria: nombreEditado.trim(),
         descripcion: descripcionEditada.trim(),
-        estado: true // Siempre activo para nuevas categorías
+        estado: true
       };
 
-      // Llamar a la API para crear
       const nuevaCategoria = await categoriaInsumoApiService.crearCategoria(datosCategoria);
 
-      // Agregar al estado local
       const categoriaParaEstado = {
         id: nuevaCategoria.id,
         nombre: nuevaCategoria.nombreCategoria,
@@ -257,11 +251,16 @@ const guardarNuevaCategoria = async () => {
     );
   });
 
-return (
-  <div className="admin-wrapper">
-    {loading && <LoadingSpinner mensaje={mensajeCarga} fullScreen={true} />}
-    
-    <Notification
+  // Obtener solo nombres de categorías activas para sugerencias
+  const sugerenciasNombres = categorias
+    .filter(cat => cat.activo)
+    .map(cat => cat.nombre);
+
+  return (
+    <div className="admin-wrapper">
+      {loading && <LoadingSpinner mensaje={mensajeCarga} fullScreen={true} />}
+      
+      <Notification
         visible={notification.visible}
         mensaje={notification.mensaje}
         tipo={notification.tipo}
@@ -287,7 +286,6 @@ return (
 
       <h2 className="admin-section-title">Gestión de Categoría Insumos</h2>
 
-      {/* SOLUCIÓN 1: Quitar completamente la prop loading */}
       <DataTable
         value={categoriasFiltradas}
         className="admin-table"
@@ -295,7 +293,6 @@ return (
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: '50rem' }}
-        // loading={loading} // <- COMENTADO PARA EVITAR EL OVERLAY GRIS
       >
         <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
         <Column field="nombre" header="Nombre" />
@@ -306,7 +303,7 @@ return (
             <InputSwitch
               checked={rowData.activo}
               onChange={() => toggleActivo(rowData)}
-              disabled={loadingStates[rowData.id]} // Loading individual
+              disabled={loadingStates[rowData.id]}
             />
           )}
         />
@@ -368,20 +365,15 @@ return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
                 Nombre*
-                <input
-                  list="categorias-list"
+                <SearchableInput
                   value={nombreEditado}
-                  onChange={(e) => setNombreEditado(e.target.value)}
-                  className="modal-input"
+                  onChange={setNombreEditado}
+                  sugerencias={sugerenciasNombres}
                   placeholder="Seleccione o escriba una categoría"
+                  error={!!errores.nombre}
                   disabled={loading}
                 />
                 {errores.nombre && <p className="error">{errores.nombre}</p>}
-                <datalist id="categorias-list">
-                  {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.nombre} />
-                  ))}
-                </datalist>
               </label>
               <label>
                 Descripción*
@@ -396,7 +388,6 @@ return (
                 {errores.descripcion && <p className="error">{errores.descripcion}</p>}
               </label>
               
-              {/* Switch de estado solo en modal de editar */}
               {modalTipo === 'editar' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <label style={{ margin: 0 }}>Estado:</label>

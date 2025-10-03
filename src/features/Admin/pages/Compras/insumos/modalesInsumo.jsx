@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Modal from "../../../components/modal";
 import { InputSwitch } from "primereact/inputswitch";
 import insumoApiService from "../../../services/insumos";
+import SearchableSelect from "./SearchableSelect";
+import StyledSelect from "./StyledSelect";
 
 export default function ModalInsumo({
   modal,
@@ -10,7 +12,7 @@ export default function ModalInsumo({
   unidades,
   cargarInsumos,
   showNotification,
-  abriragregarCategoria, // Nueva prop para abrir modal de categoría
+  abriragregarCategoria,
 }) {
   const [form, setForm] = useState({
     nombreInsumo: "",
@@ -62,19 +64,16 @@ export default function ModalInsumo({
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
         showNotification("Por favor selecciona un archivo de imagen válido", "error");
         return;
       }
 
-      // Validar tamaño (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showNotification("La imagen no debe superar los 5MB", "error");
         return;
       }
 
-      // Crear preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setForm(prev => ({
@@ -107,12 +106,10 @@ export default function ModalInsumo({
     });
   };
 
-  // Función helper para obtener el nombre de la categoría
   const getNombreCategoria = (insumo) => {
     if (insumo.nombreCategoria) return insumo.nombreCategoria;
     if (insumo.categoriainsumos?.nombrecategoria) return insumo.categoriainsumos.nombrecategoria;
     
-    // Buscar en la lista de categorías
     const categoriaId = insumo.idCategoriaInsumos || insumo.idcategoriainsumos;
     if (categoriaId && categorias.length > 0) {
       const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
@@ -122,12 +119,10 @@ export default function ModalInsumo({
     return "Sin categoría";
   };
 
-  // Función helper para obtener el nombre de la unidad
   const getNombreUnidad = (insumo) => {
     if (insumo.nombreUnidadMedida) return insumo.nombreUnidadMedida;
     if (insumo.unidadmedida?.unidadmedida) return insumo.unidadmedida.unidadmedida;
     
-    // Buscar en la lista de unidades
     const unidadId = insumo.idUnidadMedida || insumo.idunidadmedida;
     if (unidadId && unidades.length > 0) {
       const unidad = unidades.find(uni => uni.idunidadmedida === parseInt(unidadId));
@@ -137,13 +132,49 @@ export default function ModalInsumo({
     return "Sin unidad";
   };
 
+  const verificarNombreDuplicado = async (nombre, idActual = null) => {
+    try {
+      const insumos = await insumoApiService.obtenerInsumos();
+      const nombreNormalizado = nombre.trim().toLowerCase();
+      
+      const duplicado = insumos.find(insumo => {
+        const idInsumo = insumo.id || insumo.idinsumo;
+        const nombreInsumo = (insumo.nombreInsumo || insumo.nombreinsumo || '').trim().toLowerCase();
+        
+        // Si estamos editando, excluir el insumo actual de la búsqueda
+        if (idActual && idInsumo === idActual) {
+          return false;
+        }
+        
+        return nombreInsumo === nombreNormalizado;
+      });
+      
+      return duplicado !== undefined;
+    } catch (error) {
+      console.error("Error al verificar duplicados:", error);
+      return false;
+    }
+  };
+
   const guardar = async () => {
     try {
-      // Validación básica
       if (!form.nombreInsumo.trim()) {
         showNotification("El nombre del insumo es obligatorio", "error");
         return;
       }
+
+      // Verificar si el nombre ya existe
+      const idActual = modal.tipo === "editar" ? (modal.insumo.id || modal.insumo.idinsumo) : null;
+      const existeDuplicado = await verificarNombreDuplicado(form.nombreInsumo, idActual);
+      
+      if (existeDuplicado) {
+        showNotification(
+          `Ya existe un insumo con el nombre "${form.nombreInsumo}". Por favor, usa un nombre diferente.`,
+          "error"
+        );
+        return;
+      }
+
       if (!form.idCategoriaInsumos) {
         showNotification("La categoría es obligatoria", "error");
         return;
@@ -152,8 +183,8 @@ export default function ModalInsumo({
         showNotification("La cantidad debe ser mayor a 0", "error");
         return;
       }
-      if (!form.precio || form.precio <= 0) {
-        showNotification("El precio debe ser mayor a 0", "error");
+      if (!form.precio || form.precio < 1000) {
+        showNotification("El precio debe ser mínimo $1,000 COP", "error");
         return;
       }
 
@@ -166,7 +197,6 @@ export default function ModalInsumo({
         precio: parseFloat(form.precio),
       };
 
-      // Si hay una nueva imagen, convertirla a base64
       if (form.imagen) {
         const imagenBase64 = await convertirImagenABase64(form.imagen);
         datosEnvio.idImagen = imagenBase64;
@@ -189,76 +219,44 @@ export default function ModalInsumo({
     }
   };
 
-  // const eliminar = async () => {
-  //   try {
-  //     const insumoId = modal.insumo.id || modal.insumo.idinsumo;
-  //     await insumoApiService.eliminarInsumo(insumoId);
-  //     showNotification("Insumo eliminado exitosamente");
-  //     await cargarInsumos();
-  //     cerrar();
-  //   } catch (error) {
-  //     console.error("Error al eliminar:", error);
+  const eliminar = async () => {
+    try {
+      const cantidadActual = parseFloat(modal.insumo.cantidad) || 0;
       
-  //     // Mensajes más claros según el tipo de error
-  //     let mensajeError = "Error al eliminar el insumo";
-      
-  //     if (error.message?.includes("asociado") || 
-  //         error.message?.includes("referencia") || 
-  //         error.message?.includes("constraint") ||
-  //         error.message?.includes("foreign key") ||
-  //         error.status === 409) {
-  //       mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
-  //     } else if (error.status === 404) {
-  //       mensajeError = "El insumo no existe o ya fue eliminado";
-  //     } else if (error.message) {
-  //       mensajeError = error.message;
-  //     }
-      
-  //     showNotification(mensajeError, "error");
-  //   }
-  // };
-  // Reemplaza la función eliminar en modalesInsumo.jsx
+      if (cantidadActual > 0) {
+        showNotification(
+          `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. ` +
+          `Para eliminarlo, primero debe reducir el stock a 0.`,
+          "error"
+        );
+        return;
+      }
 
-const eliminar = async () => {
-  try {
-    // Validar que el insumo no tenga stock disponible
-    const cantidadActual = parseFloat(modal.insumo.cantidad) || 0;
-    
-    if (cantidadActual > 0) {
-      showNotification(
-        `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. ` +
-        `Para eliminarlo, primero debe reducir el stock a 0.`,
-        "error"
-      );
-      return;
+      const insumoId = modal.insumo.id || modal.insumo.idinsumo;
+      await insumoApiService.eliminarInsumo(insumoId);
+      showNotification("Insumo eliminado exitosamente");
+      await cargarInsumos();
+      cerrar();
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      
+      let mensajeError = "Error al eliminar el insumo";
+      
+      if (error.message?.includes("asociado") || 
+          error.message?.includes("referencia") || 
+          error.message?.includes("constraint") ||
+          error.message?.includes("foreign key") ||
+          error.status === 409) {
+        mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
+      } else if (error.status === 404) {
+        mensajeError = "El insumo no existe o ya fue eliminado";
+      } else if (error.message) {
+        mensajeError = error.message;
+      }
+      
+      showNotification(mensajeError, "error");
     }
-
-    const insumoId = modal.insumo.id || modal.insumo.idinsumo;
-    await insumoApiService.eliminarInsumo(insumoId);
-    showNotification("Insumo eliminado exitosamente");
-    await cargarInsumos();
-    cerrar();
-  } catch (error) {
-    console.error("Error al eliminar:", error);
-    
-    // Mensajes más claros según el tipo de error
-    let mensajeError = "Error al eliminar el insumo";
-    
-    if (error.message?.includes("asociado") || 
-        error.message?.includes("referencia") || 
-        error.message?.includes("constraint") ||
-        error.message?.includes("foreign key") ||
-        error.status === 409) {
-      mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
-    } else if (error.status === 404) {
-      mensajeError = "El insumo no existe o ya fue eliminado";
-    } else if (error.message) {
-      mensajeError = error.message;
-    }
-    
-    showNotification(mensajeError, "error");
-  }
-};
+  };
 
   return (
     <Modal visible={modal.visible} onClose={cerrar}>
@@ -354,8 +352,13 @@ const eliminar = async () => {
                   color: "#6c757d"
                 }}>$</span>
                 <input 
-                  type="number" 
-                  value={modal.insumo?.precio || 0} 
+                  type="text"
+                  value={modal.insumo?.precio ? new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(modal.insumo.precio) : '$0'} 
                   readOnly 
                   className="modal-input"
                   style={{ 
@@ -422,59 +425,17 @@ const eliminar = async () => {
 
             <label>
               Categoría*
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select
-                  name="idCategoriaInsumos"
-                  value={form.idCategoriaInsumos}
-                  onChange={handleChange}
-                  className="modal-input"
-                  style={{ flex: 1 }}
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.nombreCategoria}
-                    </option>
-                  ))}
-                </select>
-                {abriragregarCategoria && (
-                  <button
-                    type="button"
-                    onClick={abriragregarCategoria}
-                    title="Agregar nueva categoría"
-                    style={{
-                      width: '40px',
-                      minWidth: '40px',
-                      height: '40px',
-                      backgroundColor: '#e91e63',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '20px',
-                      fontWeight: 'bold',
-                      padding: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 4px rgba(233, 30, 99, 0.3)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#c2185b';
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(233, 30, 99, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#e91e63';
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(233, 30, 99, 0.3)';
-                    }}
-                  >
-                    +
-                  </button>
-                )}
-              </div>
+              <SearchableSelect
+                categorias={categorias.map(cat => ({ 
+                  _id: cat.id, 
+                  nombreCategoria: cat.nombreCategoria 
+                }))}
+                valorSeleccionado={form.idCategoriaInsumos}
+                onChange={(id) => setForm({ ...form, idCategoriaInsumos: id })}
+                onAgregarNueva={abriragregarCategoria}
+                placeholder="Selecciona una categoría"
+                error={false}
+              />
             </label>
 
             <label>
@@ -493,19 +454,15 @@ const eliminar = async () => {
 
             <label>
               Unidad*
-              <select
-                name="idUnidadMedida"
-                value={form.idUnidadMedida}
-                onChange={handleChange}
-                className="modal-input"
-              >
-                <option value="">Selecciona una unidad</option>
-                {unidades.map((uni) => (
-                  <option key={uni.idunidadmedida} value={uni.idunidadmedida}>
-                    {uni.unidadmedida}
-                  </option>
-                ))}
-              </select>
+              <StyledSelect
+                opciones={unidades}
+                valorSeleccionado={form.idUnidadMedida}
+                onChange={(id) => setForm({ ...form, idUnidadMedida: id })}
+                placeholder="Selecciona una unidad"
+                error={false}
+                campoValor="idunidadmedida"
+                campoTexto="unidadmedida"
+              />
             </label>
 
             <label>
@@ -540,93 +497,21 @@ const eliminar = async () => {
                   value={form.precio}
                   onChange={handleChange}
                   className="modal-input"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
+                  min="1000"
+                  step="100"
+                  placeholder="1,000"
                   style={{ paddingLeft: "25px" }}
                 />
+                <small style={{
+                  display: "block",
+                  marginTop: "4px",
+                  color: "#6c757d",
+                  fontSize: "12px"
+                }}>
+                  Mínimo: $1,000 COP
+                </small>
               </div>
             </label>
-
-            {/* Campo de imagen
-            <div style={{ 
-              gridColumn: "1 / -1",
-              border: '2px dashed #ddd', 
-              borderRadius: '8px', 
-              padding: '20px',
-              textAlign: 'center',
-              backgroundColor: '#fafafa',
-              marginTop: '10px'
-            }}>
-              <strong style={{ display: 'block', marginBottom: '10px' }}>Imagen del Insumo</strong>
-              
-              {form.imagenPreview ? (
-                <div>
-                  <img 
-                    src={form.imagenPreview} 
-                    alt="Preview" 
-                    style={{ 
-                      maxWidth: '200px', 
-                      maxHeight: '200px',
-                      borderRadius: '8px',
-                      marginBottom: '10px',
-                      border: '2px solid #ddd'
-                    }} 
-                  />
-                  <div>
-                    <button
-                      type="button"
-                      onClick={removerImagen}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Remover Imagen
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ fontSize: '48px', marginBottom: '10px' }}>📷</div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    style={{ display: 'none' }}
-                    id="imagen-input"
-                  />
-                  <label 
-                    htmlFor="imagen-input"
-                    style={{
-                      display: 'inline-block',
-                      padding: '10px 20px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Seleccionar Imagen
-                  </label>
-                  <p style={{ 
-                    fontSize: '12px', 
-                    color: '#666', 
-                    marginTop: '10px',
-                    marginBottom: 0 
-                  }}>
-                    Formatos: JPG, PNG, GIF (Máx. 5MB)
-                  </p>
-                </div>
-              )}
-            </div> */}
 
             {modal.tipo !== "agregar" && (
               <div style={{ 
@@ -681,7 +566,6 @@ const eliminar = async () => {
           >
             Eliminar
           </button>
-
         )}
         
         {(modal.tipo === "agregar" || modal.tipo === "editar") && (

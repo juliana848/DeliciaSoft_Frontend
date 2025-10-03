@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './OpcionesPagoView.css';
 import ventaApiService from '../../Admin/services/venta_services.js';
-import sedeApiService from '../../Admin/Services/sedes_services.js';
+import sedeApiService from '../../Admin/services/sedes_services.js';
 
 const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada, prepararDatosVenta }) => {
   const [metodoPago, setMetodoPago] = useState('');

@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import sedeApiService from "../../../../services/sedes_services";
+import { validarDireccionMedellin, normalizarDireccion } from "./validadorDirecciones";
+
 
 export default function useSedeOperations(showNotification) {
   const [sedes, setSedes] = useState([]);
@@ -201,11 +203,10 @@ export default function useSedeOperations(showNotification) {
       return false;
     }
 
-    if (Direccion.trim().length < 10) {
-      showNotification(
-        "La dirección debe tener al menos 10 caracteres",
-        "error"
-      );
+    // Validación mejorada de dirección
+    const validacionDireccion = validarDireccionMedellin(Direccion.trim());
+    if (!validacionDireccion.valida) {
+      showNotification(validacionDireccion.mensaje, "error");
       return false;
     }
 
@@ -310,15 +311,13 @@ export default function useSedeOperations(showNotification) {
     } catch (error) {
       console.error("Error al eliminar sede:", error);
       
-      // Mostrar el mensaje específico del error
       const mensajeError = error.message || "Error al eliminar la sede";
       showNotification(mensajeError, "error");
-      
-      // No cerrar el modal para que el usuario vea el error
     } finally {
       setLoading(false);
     }
   };
+
   return {
     sedes,
     loading,

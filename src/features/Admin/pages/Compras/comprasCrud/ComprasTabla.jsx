@@ -16,7 +16,7 @@ import { useProveedores } from './Hooks/useProveedor.jsx';
 import { useNotification } from './Hooks/useNotification.jsx';
 import compraApiService from '../../../services/compras_services.js';
 import './styles/CompraStyles.css';
-
+import compraValidationService from '../../../services/compras_validation_services';
 export default function ComprasTable() {
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -218,27 +218,58 @@ export default function ComprasTable() {
         });
     };
 
-    const anularCompra = async () => {
-        try {
-            if (!compraSeleccionada || !compraSeleccionada.id) {
-                showNotification("No se ha seleccionado una compra válida", "error");
-                return;
-            }
-
-            setMensajeCarga('Anulando compra...');
-            setCargando(true);
-            await anularCompraHook(compraSeleccionada.id);
-            showNotification("Compra anulada correctamente", "success");
-            setModalVisible(false);
-            await cargarCompras();
-        } catch (error) {
-            console.error("Error al anular compra:", error);
-            showNotification("Error al anular la compra: " + error.message, "error");
-        } finally {
-            setCargando(false);
+  const anularCompra = async () => {
+    try {
+        if (!compraSeleccionada || !compraSeleccionada.id) {
+            showNotification("No se ha seleccionado una compra válida", "error");
+            return;
         }
-    };
 
+        setMensajeCarga('Validando compra...');
+        setCargando(true);
+        
+        // Validar antes de anular
+        const validacion = await compraValidationService.validarAnulacionCompra(compraSeleccionada.id);
+        
+        // Si no puede anular, mostrar error y detener
+        if (!validacion.puedeAnular) {
+            setCargando(false);
+            setModalVisible(false);
+            
+            let mensajeDetallado = validacion.mensaje + '\n\n';
+            
+            validacion.detalles
+                .filter(d => !d.puedeAnular)
+                .forEach(d => {
+                    mensajeDetallado += `${d.nombreInsumo}:\n`;
+                    mensajeDetallado += `  Stock actual: ${d.stockActual}\n`;
+                    mensajeDetallado += `  Cantidad en compra: ${d.cantidadCompra}\n`;
+                    mensajeDetallado += `  Quedaría: ${d.stockDespuesAnulacion}\n`;
+                    mensajeDetallado += `  Necesario en producción: ${d.usoEnProduccion}\n\n`;
+                });
+            
+            showNotification(mensajeDetallado, 'error');
+            return;
+        }
+
+        // Si puede anular, proceder
+        setMensajeCarga('Anulando compra...');
+        await anularCompraHook(compraSeleccionada.id);
+        
+        // Cambiar a vista anuladas
+        setMostrarAnuladas(true);
+        
+        await cargarCompras();
+        showNotification("Compra anulada correctamente", "success");
+        setModalVisible(false);
+        
+    } catch (error) {
+        console.error("Error al anular compra:", error);
+        showNotification("Error al anular la compra: " + error.message, "error");
+    } finally {
+        setCargando(false);
+    }
+};
     const reactivarCompra = async (compra) => {
         try {
             setMensajeCarga('Reactivando compra...');

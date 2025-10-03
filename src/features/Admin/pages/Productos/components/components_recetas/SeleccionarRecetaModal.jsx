@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CrearRecetaModal from "./CrearRecetaModal";
-import recetaApiService from "../../../../services/Receta_Services";
+import recetaApiService from "../../../../services/Receta_services";
 
 const RecetaCard = ({ receta, onSelect }) => {
   return (

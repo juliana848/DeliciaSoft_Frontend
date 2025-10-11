@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AgregarInsumosModal from '../../../components/AgregarInsumosModal';
 import ProveedorAutocomplete from './ProveedorAutocomplete';
+import { obtenerFechaColombia, esFechaValidaColombia } from '../comprasCrud/Utils/fechaUtils';
 import './styles/CompraForm.css';
 
 export default function CompraForm({
@@ -21,68 +22,66 @@ export default function CompraForm({
     mostrarModalInsumos,
     setMostrarModalInsumos
 }) {
-    // Estado local para manejar los datos cuando se pasa una compra existente
     const [datosLocales, setDatosLocales] = useState({
         idProveedor: '',
         proveedor: '',
+        documentoProveedor: '',
         fechaCompra: '',
-        fechaRegistro: new Date().toISOString().split('T')[0]
+        fechaRegistro: obtenerFechaColombia() 
     });
     
     const [insumosLocales, setInsumosLocales] = useState([]);
 
-    // Efecto para cargar datos cuando se pasa una compra existente
-    useEffect(() => {
+useEffect(() => {
         console.log('=== CARGANDO DATOS EN COMPRAFORM ===');
         console.log('modalTipo:', modalTipo);
         console.log('compraData COMPLETO:', JSON.stringify(compraData, null, 2));
-        console.log('compraData.detallecompra:', compraData?.detallecompra);
-        console.log('compraData.detalles:', compraData?.detalles);
-        console.log('compraData.proveedor:', compraData?.proveedor);
-        console.log('compraData.nombreProveedor:', compraData?.nombreProveedor);
         
         if (compraData && modalTipo === 'ver') {
-            // Cargar datos de la compra
             const proveedor = compraData.proveedor?.nombreproveedor || 
                             compraData.proveedor?.nombreempresa || 
                             compraData.proveedor?.nombre ||
                             compraData.nombreProveedor || '';
             
+            // Buscar documento en todas las posibles ubicaciones
+            const documento = compraData.proveedor?.documento || 
+                            compraData.proveedor?.nit ||
+                            compraData.proveedor?.documentoProveedor ||
+                            compraData.documentoProveedor ||
+                            compraData.documento_proveedor || // Agregado: formato snake_case
+                            '';
+            
             const fechaCompra = compraData.fechacompra || compraData.fechaCompra;
             const fechaRegistro = compraData.fecharegistro || compraData.fechaRegistro;
             
             console.log('Proveedor encontrado:', proveedor);
-            console.log('Fecha compra:', fechaCompra);
+            console.log('Documento encontrado:', documento);
+            console.log('Estructura proveedor completa:', compraData.proveedor);
             
             setDatosLocales({
                 idProveedor: compraData.idproveedor || compraData.idProveedor,
                 proveedor: proveedor,
+                documentoProveedor: documento,
                 fechaCompra: fechaCompra ? new Date(fechaCompra).toISOString().split('T')[0] : '',
                 fechaRegistro: fechaRegistro ? new Date(fechaRegistro).toISOString().split('T')[0] : ''
             });
 
-            // Cargar detalles de la compra (insumos)
             let detalles = [];
             
-            // Intentar obtener detalles de diferentes propiedades
             if (compraData.detallecompra && Array.isArray(compraData.detallecompra)) {
                 detalles = compraData.detallecompra;
-                console.log('Detalles desde detallecompra:', detalles);
             } else if (compraData.detalles && Array.isArray(compraData.detalles)) {
                 detalles = compraData.detalles;
-                console.log('Detalles desde detalles:', detalles);
             }
 
             if (detalles.length > 0) {
                 const insumosFormateados = detalles.map(detalle => {
-                    console.log('Procesando detalle:', detalle);
-                    
                     return {
                         id: detalle.idinsumos || detalle.idInsumo || detalle.id,
                         nombre: detalle.nombreInsumo || 
-                               detalle.insumos?.nombreinsumo || 
-                               detalle.insumo?.nombre ||
-                               `Insumo ${detalle.idinsumos || detalle.idInsumo}`,
+                        detalle.insumos?.nombreinsumo || 
+                        detalle.insumo?.nombre ||
+                        `Insumo ${detalle.idinsumos || detalle.idInsumo}`,
                         cantidad: parseInt(detalle.cantidad) || 0,
                         precio: parseFloat(detalle.preciounitario || detalle.precioUnitario) || 0,
                         precioUnitario: parseFloat(detalle.preciounitario || detalle.precioUnitario) || 0,
@@ -93,18 +92,15 @@ export default function CompraForm({
                     };
                 });
                 
-                console.log('Insumos formateados:', insumosFormateados);
                 setInsumosLocales(insumosFormateados);
-            } else {
-                console.warn('No se encontraron detalles en la compra');
             }
         }
     }, [compraData, modalTipo]);
 
-    // Usar datos locales o props según el caso
     const datosAUsar = (modalTipo === 'ver' && compraData) ? datosLocales : (compraData || {
         idProveedor: '',
         proveedor: '',
+        documentoProveedor: '',
         fechaCompra: '',
         fechaRegistro: new Date().toISOString().split('T')[0]
     });
@@ -119,15 +115,12 @@ export default function CompraForm({
         }).format(valor);
     };
 
-    const obtenerFechaActual = () => new Date().toISOString().split('T')[0];
+    const obtenerFechaActual = () => obtenerFechaColombia();
 
     const validarFecha = (fecha) => {
         if (!fecha) return 'La fecha de compra es obligatoria';
-        const fechaCompra = new Date(fecha);
-        const fechaActual = new Date();
-        fechaActual.setHours(23, 59, 59, 999);
-
-        if (fechaCompra > fechaActual) {
+        
+        if (!esFechaValidaColombia(fecha)) {
             return 'La fecha de compra no puede ser mayor al día presente';
         }
 
@@ -152,7 +145,8 @@ export default function CompraForm({
             setCompraData(prev => ({
                 ...prev,
                 idProveedor: value ? Number(value) : null,
-                proveedor: provSel?.nombre || provSel?.nombreProveedor || provSel?.nombreempresa || ''
+                proveedor: provSel?.nombre || provSel?.nombreProveedor || provSel?.nombreempresa || '',
+                documentoProveedor: provSel?.documento || provSel?.nit || ''
             }));
             setErrores(prev => ({ ...prev, proveedor: provSel ? '' : 'Debe seleccionar un proveedor' }));
         } else {
@@ -217,7 +211,6 @@ export default function CompraForm({
     const iva = subtotal * 0.19; 
     const total = subtotal + iva;
 
-    // Función para obtener el título según el estado
     const obtenerTitulo = () => {
         if (modalTipo === 'ver') {
             const estado = compraData?.estado !== false ? 'Activa' : 'Anulada';
@@ -228,7 +221,6 @@ export default function CompraForm({
 
     return (
         <div className="compra-form-container">
-            {/* Header con estado de la compra */}
             {modalTipo === 'ver' && compraData && (
                 <div className={`compra-status-header ${compraData.estado === false ? 'anulada' : 'activa'}`}>
                     <h1 className="compra-title">{obtenerTitulo()}</h1>
@@ -240,7 +232,6 @@ export default function CompraForm({
                 </div>
             )}
 
-            {/* Header con información */}
             <div className="header-info">
                 <div className="info-badge">
                     <span className="badge-icon">📊</span>
@@ -248,7 +239,6 @@ export default function CompraForm({
                 </div>
             </div>
             
-            {/* Formulario principal */}
             <div className="form-card">
                 <h2 className="section-title">
                     <span className="title-icon">🏢</span>
@@ -272,7 +262,8 @@ export default function CompraForm({
                                         setCompraData(prev => ({
                                             ...prev,
                                             idProveedor: proveedor.idProveedor,
-                                            proveedor: proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa
+                                            proveedor: proveedor.nombre || proveedor.nombreProveedor || proveedor.nombreempresa,
+                                            documentoProveedor: proveedor.documento || proveedor.nit || ''
                                         }));
                                         setErrores(prev => ({ ...prev, proveedor: '' }));
                                         if (setBuscarProveedor) {
@@ -314,6 +305,19 @@ export default function CompraForm({
                             </small>
                         )}
                     </div>
+
+                    <div className="field-group">
+                        <label className="field-label">Documento del Proveedor</label>
+                        <input
+                            type="text"
+                            name="documentoProveedor"
+                            value={datosAUsar?.documentoProveedor || ''}
+                            onChange={handleChange}
+                            disabled={true}
+                            className="form-input"
+                            placeholder="Se llena automáticamente"
+                        />
+                    </div>
                     
                     <div className="field-group">
                         <label className="field-label">Fecha de compra *</label>
@@ -345,7 +349,6 @@ export default function CompraForm({
                 </div>
             </div>
             
-            {/* Sección de detalles */}
             <div className="form-card">
                 <h2 className="section-title">
                     <span className="title-icon">📦</span>
@@ -428,12 +431,11 @@ export default function CompraForm({
                         disabled={cargando}
                     >
                         <span className="btn-icon">+</span>
-                        Agregar Productos
+                        Agregar Insumos
                     </button>
                 )}
             </div>
             
-            {/* Tarjetas de totales */}
             <div className="totals-section">
                 <div className="totals-grid">
                     <div className="total-card subtotal-card">
@@ -462,7 +464,6 @@ export default function CompraForm({
                 </div>
             </div>
 
-            {/* Botones de acción */}
             <div className="action-buttons">
                 <button 
                     className="btn btn-cancel"
@@ -477,13 +478,12 @@ export default function CompraForm({
                         onClick={handleGuardar}
                         disabled={cargando}
                     >
-                        <span className="btn-icon"></span>
+                        <span className="btn-icon">✓</span>
                         Guardar 
                     </button>
                 )}
             </div>
             
-            {/* Modal de insumos */}
             {mostrarModalInsumos && modalTipo !== 'ver' && setMostrarModalInsumos && (
                 <AgregarInsumosModal
                     onClose={() => setMostrarModalInsumos(false)}

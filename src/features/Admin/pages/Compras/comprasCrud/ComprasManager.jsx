@@ -215,31 +215,36 @@ const verCompra = async (compra) => {
     console.log('📊 Compras anuladas disponibles:', compras.filter(c => Boolean(c.estado) === false).length);
 
     // Cargar compras al iniciar
-    useEffect(() => {
-        const cargarCompras = async () => {
-            try {
-                setCargando(true);
-                console.log('📡 Cargando compras...');
-                const data = await compraApiService.obtenerCompras();
-                console.log('📋 Compras cargadas:', data.length);
-                console.log('📋 Primera compra ejemplo:', data[0]);
-                
-                // Verificar estados
-                const activas = data.filter(c => Boolean(c.estado) === true);
-                const anuladas = data.filter(c => Boolean(c.estado) === false);
-                console.log('📊 Al cargar - Activas:', activas.length, 'Anuladas:', anuladas.length);
-                
-                setCompras(data);
-            } catch (error) {
-                console.error('❌ Error al cargar compras:', error);
-                alert(`❌ Error al cargar compras: ${error.message}`);
-            } finally {
-                setCargando(false);
-            }
-        };
+   useEffect(() => {
+    const cargarCompras = async () => {
+        try {
+            setCargando(true);
+            console.log('Cargando compras...');
+            const data = await compraApiService.obtenerCompras();
+            console.log('Compras cargadas:', data.length);
+            
+            // ORDENAR POR FECHA DESCENDENTE (más reciente primero)
+            const comprasOrdenadas = data.sort((a, b) => {
+                const fechaA = new Date(a.fechaCompra || a.fechacompra).getTime();
+                const fechaB = new Date(b.fechaCompra || b.fechacompra).getTime();
+                return fechaB - fechaA; // Fechas más recientes primero
+            });
+            
+            const activas = comprasOrdenadas.filter(c => Boolean(c.estado) === true);
+            const anuladas = comprasOrdenadas.filter(c => Boolean(c.estado) === false);
+            console.log('Al cargar - Activas:', activas.length, 'Anuladas:', anuladas.length);
+            
+            setCompras(comprasOrdenadas);
+        } catch (error) {
+            console.error('Error al cargar compras:', error);
+            alert(`Error al cargar compras: ${error.message}`);
+        } finally {
+            setCargando(false);
+        }
+    };
 
-        cargarCompras();
-    }, []);
+    cargarCompras();
+}, []);
 
     return (
         <div className="compras-manager">

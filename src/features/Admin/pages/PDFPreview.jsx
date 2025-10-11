@@ -10,8 +10,8 @@ const COLORES = {
     amarilloClaro: [255, 255, 224],   
     grisTexto: [64, 64, 64],        
     blanco: [255, 255, 255],
-    grisElegante: [108, 117, 125],    // Color gris bonito para el total
-    grisFondo: [248, 249, 250]       // Gris claro para fondos
+    grisElegante: [108, 117, 125],
+    grisFondo: [248, 249, 250]
 };
 
 const EMPRESA_CONFIG = { 
@@ -30,24 +30,48 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Función para obtener fecha y hora del servidor
-    const obtenerFechaHoraServidor = () => {
+    // Función para obtener fecha y hora de Colombia
+    const obtenerFechaHoraColombia = () => {
         const ahora = new Date();
+        
+        // Fecha en formato Colombia
         const fecha = ahora.toLocaleDateString('es-CO', {
+            timeZone: 'America/Bogota',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
         });
         
+        // Hora en formato Colombia (24 horas)
         const hora = ahora.toLocaleTimeString('es-CO', {
             timeZone: 'America/Bogota',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
             hour12: false
         });
         
         return { fecha, hora };
     };
 
-    // Función para crear el logo
+    // Función para formatear números con separador de miles
+    const formatearNumero = (numero) => {
+        return new Intl.NumberFormat('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(numero);
+    };
+
+    // Función para formatear moneda colombiana
+    const formatearMoneda = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(valor);
+    };
+
     const crearLogo = (doc, x, y, size = 20) => {
         if (EMPRESA_CONFIG.usarLogoPersonalizado && EMPRESA_CONFIG.logoURL) {
             try {
@@ -105,7 +129,7 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFontSize(18);
         doc.setTextColor(...COLORES.blanco);
         doc.setFont('helvetica', 'bold');
-        doc.text('DETALLE DE COMPRA ', 20, 18);
+        doc.text('DETALLE DE COMPRA', 20, 18);
 
         doc.setFontSize(14);
         doc.text('Delicias Darsy', 20, 26);
@@ -124,53 +148,63 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
 
     const crearInfoCompra = (doc, compra) => {
         doc.setTextColor(...COLORES.grisTexto);
-        doc.setFontSize(11);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
 
-        // Cambiar color de fondo a gris elegante
+        // Aumentar altura del rectángulo para incluir documento
         doc.setFillColor(...COLORES.grisFondo);
-        doc.rect(20, 60, 170, 25, 'F'); 
+        doc.rect(20, 60, 170, 32, 'F'); 
         
-        // Cambiar borde a gris
         doc.setDrawColor(...COLORES.grisElegante);
         doc.setLineWidth(0.5);
-        doc.rect(20, 60, 170, 25);
+        doc.rect(20, 60, 170, 32);
 
+        // COLUMNA IZQUIERDA
+        // Proveedor
         doc.setFont('helvetica', 'bold');
-        doc.text('PROVEEDOR:', 25, 70);
+        doc.text('PROVEEDOR:', 25, 68);
         doc.setFont('helvetica', 'normal');
-        doc.text(compra.proveedor || 'N/A', 65, 70);
+        const nombreProveedor = compra.proveedor || 'N/A';
+        doc.text(nombreProveedor, 60, 68);
 
+        // Documento del proveedor
         doc.setFont('helvetica', 'bold');
-        doc.text('FECHA DE COMPRA:', 25, 77);
+        doc.text('DOCUMENTO:', 25, 75);
         doc.setFont('helvetica', 'normal');
-        doc.text(compra.fecha_compra || compra.fecha || 'N/A', 75, 77);
+        const documentoProveedor = compra.documento_proveedor || compra.documentoProveedor || 'N/A';
+        doc.text(documentoProveedor, 60, 75);
 
+        // Fecha de compra
         doc.setFont('helvetica', 'bold');
-        doc.text('COMPRA N°:', 130, 70);
-        doc.setFont('helvetica', 'normal');
-        doc.text(compra.id ? compra.id.toString() : 'N/A', 165, 70);
-
-        // Corregir formato de fecha - quitar los ceros
-        doc.setFont('helvetica', 'bold');
-        doc.text('FECHA REGISTRO:', 130, 77);
+        doc.text('FECHA COMPRA:', 25, 82);
         doc.setFont('helvetica', 'normal');
         
-        // Formatear fecha correctamente
-        let fechaRegistro = compra.fecha_registro || '';
-        if (fechaRegistro && fechaRegistro.includes('T')) {
-            fechaRegistro = fechaRegistro.split('T')[0];
+        let fechaCompra = compra.fecha_compra || compra.fecha || '';
+        if (fechaCompra) {
+            if (fechaCompra.includes('T')) {
+                fechaCompra = fechaCompra.split('T')[0];
+            }
+            if (fechaCompra.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = fechaCompra.split('-');
+                fechaCompra = `${day}/${month}/${year}`;
+            }
         }
-        if (fechaRegistro && fechaRegistro.includes('2025-09-12T00:00:00.000Z')) {
-            fechaRegistro = '12/09/2025';
-        }
-        // Convertir formato YYYY-MM-DD a DD/MM/YYYY
-        if (fechaRegistro.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            const [year, month, day] = fechaRegistro.split('-');
-            fechaRegistro = `${day}/${month}/${year}`;
-        }
+        doc.text(fechaCompra || 'N/A', 60, 82);
+
+        // COLUMNA DERECHA
+        // Número de compra
+        doc.setFont('helvetica', 'bold');
+        doc.text('COMPRA N°:', 120, 68);
+        doc.setFont('helvetica', 'normal');
+        doc.text(compra.id ? compra.id.toString() : 'N/A', 148, 68);
+
+        // Fecha de registro
+        doc.setFont('helvetica', 'bold');
+        doc.text('FECHA REGISTRO:', 120, 75);
+        doc.setFont('helvetica', 'normal');
         
-        doc.text(fechaRegistro || new Date().toLocaleDateString('es-ES'), 165, 77);
+        const { fecha: fechaRegistroColombia } = obtenerFechaHoraColombia();
+        doc.text(fechaRegistroColombia, 160, 75);
     };
 
     const crearTablaInsumos = (doc, insumos) => {
@@ -178,17 +212,17 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
             head: [['Nombre Producto', 'Cantidad', 'Unidad Medida', 'Precio unitario', 'Subtotal']],
             body: insumos.map(insumo => [
                 insumo.nombre || 'N/A',
-                insumo.cantidad || 0,
+                formatearNumero(insumo.cantidad || 0),
                 insumo.unidad_medida || insumo.unidad || 'Unidad',
-                `$${(insumo.precio || 0).toFixed(2)}`,
-                `$${((insumo.cantidad || 0) * (insumo.precio || 0)).toFixed(2)}`
+                formatearMoneda(insumo.precio || 0),
+                formatearMoneda((insumo.cantidad || 0) * (insumo.precio || 0))
             ]),
-            startY: 95, 
+            startY: 110, // Aumentado de 100 a 110 para más espacio
             styles: {
                 fillColor: COLORES.blanco,
                 textColor: COLORES.grisTexto,
-                fontSize: 9,
-                cellPadding: 4,
+                fontSize: 10,
+                cellPadding: 5,
                 lineWidth: 0.1,
                 lineColor: [220, 220, 220],
                 halign: 'center'
@@ -199,29 +233,29 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
                 fontSize: 10,
                 fontStyle: 'bold',
                 halign: 'center',
-                valign: 'middle'
+                valign: 'middle',
+                cellPadding: 5
             },
             alternateRowStyles: {
-                fillColor: [248, 248, 248]
+                fillColor: [252, 252, 252]
             },
             columnStyles: {
-                0: { halign: 'left', cellWidth: 42 },
+                0: { halign: 'left', cellWidth: 45 },
                 1: { halign: 'center', cellWidth: 25 },
-                2: { halign: 'center', cellWidth: 40 },
-                3: { halign: 'right', cellWidth: 25 },
-                4: { halign: 'right', cellWidth: 45, fontStyle: 'bold' }
-            }
+                2: { halign: 'center', cellWidth: 35 },
+                3: { halign: 'right', cellWidth: 35 },
+                4: { halign: 'right', cellWidth: 40, fontStyle: 'bold' }
+            },
+            margin: { top: 15 } // Margen adicional superior
         }); 
     };
 
     const crearTotal = (doc, total, finalY) => {
         const totalY = finalY + 10;
         
-        // Cambiar color de fondo a gris elegante
         doc.setFillColor(...COLORES.grisElegante);
         doc.rect(130, totalY, 60, 15, 'F');
         
-        // Mantener borde amarillo para contraste
         doc.setDrawColor(...COLORES.amarillo);
         doc.setLineWidth(1);
         doc.rect(130, totalY, 60, 15);
@@ -229,8 +263,11 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFontSize(14);
         doc.setTextColor(...COLORES.blanco);
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL:', 135, totalY + 7);
-        doc.text(`${total.toFixed(2)}`, 165, totalY + 7);
+        doc.text('TOTAL:', 135, totalY + 10);
+        
+        // Formatear total con signo de pesos y separador de miles
+        const totalFormateado = formatearMoneda(total);
+        doc.text(totalFormateado, 185, totalY + 10, { align: 'right' });
         
         return totalY;
     };
@@ -258,8 +295,8 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFont('helvetica', 'normal');
         doc.text('Documento generado automáticamente - Delicias Darsy', 20, pageHeight - 10);
         
-        const { fecha, hora } = obtenerFechaHoraServidor();
-        doc.text(`Fecha: ${fecha} - `, 20, pageHeight - 5);
+        const { fecha, hora } = obtenerFechaHoraColombia();
+        doc.text(`Generado: ${fecha} - ${hora}`, 20, pageHeight - 5);
 
         crearLogo(doc, 180, pageHeight - 10, EMPRESA_CONFIG.logoFooterSize);
     };
@@ -272,7 +309,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         }, 0);
     };
 
-    // Generar PDF para previsualización
     const generarPDFPreview = async (compra) => {
         try {
             setLoading(true);
@@ -300,7 +336,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
             crearObservaciones(doc, compraCompleta.observaciones, totalY);
             crearFooter(doc);
 
-            // Convertir a data URL para previsualización
             const pdfBlob = doc.output('datauristring');
             setPdfDataUrl(pdfBlob);
             
@@ -314,27 +349,26 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         }
     };
 
-    // Función para descargar el PDF
-const handleDownload = async () => {
-    try {
-        setLoading(true);
-        setError(null);
-        if (!compraData || !compraData.insumos || compraData.insumos.length === 0) {
-            throw new Error('No hay insumos para generar el PDF');
+    const handleDownload = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            if (!compraData || !compraData.insumos || compraData.insumos.length === 0) {
+                throw new Error('No hay insumos para generar el PDF');
+            }
+            const doc = await generarPDFPreview(compraData);
+            const { fecha } = obtenerFechaHoraColombia();
+            const nombreArchivo = `compra-${compraData.id || Date.now()}-${fecha.replace(/\//g, '-')}.pdf`;
+            doc.save(nombreArchivo);
+            if (onDownload) onDownload();
+        } catch (error) {
+            console.error('Error al descargar PDF:', error);
+            setError('Error al descargar el PDF');
+        } finally {
+            setLoading(false);
         }
-        const doc = await generarPDFPreview(compraData);
-        const { fecha } = obtenerFechaHoraServidor();
-        const nombreArchivo = `compra-${compraData.id || Date.now()}-${fecha.replace(/\//g, '-')}.pdf`;
-        doc.save(nombreArchivo);
-        if (onDownload) onDownload();  // Notify parent after PDF is saved
-    } catch (error) {
-        console.error('Error al descargar PDF:', error);
-        setError('Error al descargar el PDF');
-    } finally {
-        setLoading(false);
-    }
-};
-    // Generar PDF cuando se abre el modal
+    };
+
     useEffect(() => {
         if (visible && compraData) {
             generarPDFPreview(compraData);
@@ -374,7 +408,6 @@ const handleDownload = async () => {
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header con botones */}
                     <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -436,7 +469,6 @@ const handleDownload = async () => {
                         </div>
                     </div>
 
-                    {/* Contenido del PDF - ÁREA GRANDE */}
                     <div style={{
                         flex: 1,
                         display: 'flex',

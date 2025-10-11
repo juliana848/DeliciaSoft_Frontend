@@ -1,3 +1,5 @@
+import { obtenerFechaColombia } from '../pages/Compras/comprasCrud/Utils/fechaUtils';
+
 const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/compra";
 
 class CompraApiService {
@@ -113,7 +115,8 @@ class CompraApiService {
       });
       if (response.status === 404) throw new Error("Compra no encontrada");
       const data = await this.handleResponse(response);
-      console.log('Compra obtenida:', data);
+      console.log('Compra obtenida desde API:', data);
+      console.log('Proveedor en respuesta:', data.proveedor || data.Proveedor);
       return this.transformarCompraDesdeAPI(data);
     } catch (error) {
       console.error('Error en obtenerCompraPorId:', error);
@@ -191,7 +194,7 @@ class CompraApiService {
   transformarCompraParaAPI(compra) {
     return {
       idproveedor: compra.idProveedor,
-      fecharegistro: compra.fechaRegistro || new Date().toISOString().split('T')[0],
+      fecharegistro: compra.fechaRegistro || obtenerFechaColombia(),
       fechacompra: compra.fechaCompra,
       subtotal: parseFloat(compra.subtotal) || 0,
       iva: parseFloat(compra.iva) || 0,
@@ -227,22 +230,37 @@ class CompraApiService {
     };
     
     console.log('Estado transformado final:', resultado.estado, typeof resultado.estado);
+    console.log('Proveedor transformado:', resultado.proveedor);
     return resultado;
   }
 
+  // ✅ CORRECCIÓN AQUÍ - Agregar todos los campos del proveedor incluido documento
   transformarProveedorDesdeAPI(proveedor) {
     if (!proveedor) return null;
+    
+    console.log('Transformando proveedor:', proveedor);
     
     return {
       id: proveedor.idproveedor || proveedor.id,
       idproveedor: proveedor.idproveedor || proveedor.id,
+      idProveedor: proveedor.idproveedor || proveedor.id,
       nombre: proveedor.nombreproveedor || 
               proveedor.nombre || 
               proveedor.nombreempresa ||
               proveedor.nombreCategoria || 
               proveedor.nombre_proveedor,
       nombreproveedor: proveedor.nombreproveedor || proveedor.nombre,
-      nombreempresa: proveedor.nombreempresa
+      nombreempresa: proveedor.nombreempresa,
+      // ✅ AGREGADO: Incluir documento/NIT
+      documento: proveedor.documento || 
+                 proveedor.nit || 
+                 proveedor.documentoproveedor ||
+                 proveedor.documentoProveedor ||
+                 '',
+      nit: proveedor.nit || proveedor.documento || '',
+      telefono: proveedor.telefono || '',
+      email: proveedor.email || proveedor.correo || '',
+      direccion: proveedor.direccion || ''
     };
   }
 

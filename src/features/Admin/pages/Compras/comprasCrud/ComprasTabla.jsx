@@ -10,13 +10,16 @@ import PDFPreview from '../../PDFPreview.jsx';
 import CompraForm from './CompraForm.jsx';
 import ProveedorModal from './ProveedorModal.jsx';
 import CompraActions from './CompraActions.jsx';
-import LoadingSpinner from '../../../components/LoadingSpinner.jsx'; // ✅ NUEVO
+import LoadingSpinner from '../../../components/LoadingSpinner.jsx';
 import { useCompras } from './Hooks/useCompras.jsx';
 import { useProveedores } from './Hooks/useProveedor.jsx';
 import { useNotification } from './Hooks/useNotification.jsx';
 import compraApiService from '../../../services/compras_services.js';
 import './styles/CompraStyles.css';
 import compraValidationService from '../../../services/compras_validation_services';
+import { obtenerFechaColombia } from '../comprasCrud/Utils/fechaUtils.js';
+
+
 export default function ComprasTable() {
     const [filtro, setFiltro] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -47,13 +50,13 @@ export default function ComprasTable() {
         insumos: ''
     });
 
-    const obtenerFechaActual = () => new Date().toISOString().split('T')[0];
+    const obtenerFechaActual = () => obtenerFechaColombia();
 
     const [compraData, setCompraData] = useState({
         proveedor: '',
         idProveedor: null,
         fechaCompra: '',
-        fechaRegistro: obtenerFechaActual(),
+        fechaRegistro: obtenerFechaColombia(),
         observaciones: ''
     });
 
@@ -105,7 +108,10 @@ export default function ComprasTable() {
 
     // Cargar datos iniciales
     useEffect(() => {
+        let isMounted = true;
+
         const cargarDatos = async () => {
+            if (!isMounted) return;
             setMensajeCarga('Cargando datos...');
             setCargando(true);
             try {
@@ -113,12 +119,23 @@ export default function ComprasTable() {
                     cargarCompras(),
                     cargarProveedores()
                 ]);
+            } catch (error) {
+                console.error('Error al cargar datos:', error);
+                if (isMounted) {
+                    showNotification('Error al cargar los datos', 'error');
+                }
             } finally {
-                setCargando(false);
+                if (isMounted) {
+                    setCargando(false);
+                }
             }
         };
-        
+
         cargarDatos();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     function transformarInsumosDesdeAPI(apiInsumos) {
@@ -136,42 +153,43 @@ export default function ComprasTable() {
         }));
     }
 
-    const abrirPDFPreview = async (compra) => {
-        try {
-            setMensajeCarga('Preparando PDF...');
-            setCargando(true);
-            const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
+   const abrirPDFPreview = async (compra) => {
+    try {
+        setMensajeCarga('Preparando PDF...');
+        setCargando(true);
+        const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
 
-            if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
-                showNotification('No se puede generar PDF: La compra no tiene insumos registrados', 'error');
-                return;
-            }
-
-            const datosCompra = {
-                id: compraCompleta.id,
-                proveedor: compraCompleta.proveedor?.nombre || 'N/A',
-                fecha_compra: compraCompleta.fechaCompra,
-                fecha_registro: compraCompleta.fechaRegistro,
-                observaciones: compraCompleta.observaciones || '',
-                insumos: compraCompleta.detalles.map(detalle => ({
-                    nombre: detalle.insumo?.nombre || 'N/A',
-                    cantidad: detalle.cantidad,
-                    precio: detalle.precioUnitario,
-                    precioUnitario: detalle.precioUnitario,
-                    unidad_medida: detalle.insumo?.unidad || 'N/A'
-                }))
-            };
-
-            setCompraPdf(datosCompra);
-            setPdfPreviewVisible(true);
-
-        } catch (error) {
-            console.error('Error al preparar PDF:', error);
-            showNotification('Error al preparar la visualización: ' + error.message, 'error');
-        } finally {
-            setCargando(false);
+        if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
+            showNotification('No se puede generar PDF: La compra no tiene insumos registrados', 'error');
+            return;
         }
-    };
+
+        const datosCompra = {
+            id: compraCompleta.id,
+            proveedor: compraCompleta.proveedor?.nombre || 'N/A',
+            documento_proveedor: compraCompleta.proveedor?.documento || compraCompleta.proveedor?.nit || 'N/A', // ✅ AGREGADO
+            fecha_compra: compraCompleta.fechaCompra,
+            fecha_registro: compraCompleta.fechaRegistro,
+            observaciones: compraCompleta.observaciones || '',
+            insumos: compraCompleta.detalles.map(detalle => ({
+                nombre: detalle.insumo?.nombre || 'N/A',
+                cantidad: detalle.cantidad,
+                precio: detalle.precioUnitario,
+                precioUnitario: detalle.precioUnitario,
+                unidad_medida: detalle.insumo?.unidad || 'N/A'
+            }))
+        };
+
+        setCompraPdf(datosCompra);
+        setPdfPreviewVisible(true);
+
+    } catch (error) {
+        console.error('Error al preparar PDF:', error);
+        showNotification('Error al preparar la visualización: ' + error.message, 'error');
+    } finally {
+        setCargando(false);
+    }
+};
 
     const cerrarPDFPreview = () => {
         setPdfPreviewVisible(false);
@@ -205,7 +223,7 @@ export default function ComprasTable() {
             proveedor: "",
             idProveedor: null,
             fechaCompra: "",
-            fechaRegistro: obtenerFechaActual(),
+            fechaRegistro: obtenerFechaColombia(), // ✅ Cambio aquí
             observaciones: "",
         });
         setInsumosSeleccionados([]);
@@ -218,58 +236,59 @@ export default function ComprasTable() {
         });
     };
 
-  const anularCompra = async () => {
-    try {
-        if (!compraSeleccionada || !compraSeleccionada.id) {
-            showNotification("No se ha seleccionado una compra válida", "error");
-            return;
-        }
+    const anularCompra = async () => {
+        try {
+            if (!compraSeleccionada || !compraSeleccionada.id) {
+                showNotification("No se ha seleccionado una compra válida", "error");
+                return;
+            }
 
-        setMensajeCarga('Validando compra...');
-        setCargando(true);
-        
-        // Validar antes de anular
-        const validacion = await compraValidationService.validarAnulacionCompra(compraSeleccionada.id);
-        
-        // Si no puede anular, mostrar error y detener
-        if (!validacion.puedeAnular) {
-            setCargando(false);
+            setMensajeCarga('Validando compra...');
+            setCargando(true);
+            
+            // Validar antes de anular
+            const validacion = await compraValidationService.validarAnulacionCompra(compraSeleccionada.id);
+            
+            // Si no puede anular, mostrar error y detener
+            if (!validacion.puedeAnular) {
+                setCargando(false);
+                setModalVisible(false);
+                
+                let mensajeDetallado = validacion.mensaje + '\n\n';
+                
+                validacion.detalles
+                    .filter(d => !d.puedeAnular)
+                    .forEach(d => {
+                        mensajeDetallado += `${d.nombreInsumo}:\n`;
+                        mensajeDetallado += `  Stock actual: ${d.stockActual}\n`;
+                        mensajeDetallado += `  Cantidad en compra: ${d.cantidadCompra}\n`;
+                        mensajeDetallado += `  Quedaría: ${d.stockDespuesAnulacion}\n`;
+                        mensajeDetallado += `  Necesario en producción: ${d.usoEnProduccion}\n\n`;
+                    });
+                
+                showNotification(mensajeDetallado, 'error');
+                return;
+            }
+
+            // Si puede anular, proceder
+            setMensajeCarga('Anulando compra...');
+            await anularCompraHook(compraSeleccionada.id);
+            
+            // Cambiar a vista anuladas
+            setMostrarAnuladas(true);
+            
+            await cargarCompras();
+            showNotification("Compra anulada correctamente", "success");
             setModalVisible(false);
             
-            let mensajeDetallado = validacion.mensaje + '\n\n';
-            
-            validacion.detalles
-                .filter(d => !d.puedeAnular)
-                .forEach(d => {
-                    mensajeDetallado += `${d.nombreInsumo}:\n`;
-                    mensajeDetallado += `  Stock actual: ${d.stockActual}\n`;
-                    mensajeDetallado += `  Cantidad en compra: ${d.cantidadCompra}\n`;
-                    mensajeDetallado += `  Quedaría: ${d.stockDespuesAnulacion}\n`;
-                    mensajeDetallado += `  Necesario en producción: ${d.usoEnProduccion}\n\n`;
-                });
-            
-            showNotification(mensajeDetallado, 'error');
-            return;
+        } catch (error) {
+            console.error("Error al anular compra:", error);
+            showNotification("Error al anular la compra: " + error.message, "error");
+        } finally {
+            setCargando(false);
         }
+    };
 
-        // Si puede anular, proceder
-        setMensajeCarga('Anulando compra...');
-        await anularCompraHook(compraSeleccionada.id);
-        
-        // Cambiar a vista anuladas
-        setMostrarAnuladas(true);
-        
-        await cargarCompras();
-        showNotification("Compra anulada correctamente", "success");
-        setModalVisible(false);
-        
-    } catch (error) {
-        console.error("Error al anular compra:", error);
-        showNotification("Error al anular la compra: " + error.message, "error");
-    } finally {
-        setCargando(false);
-    }
-};
     const reactivarCompra = async (compra) => {
         try {
             setMensajeCarga('Reactivando compra...');
@@ -336,7 +355,7 @@ export default function ComprasTable() {
                 proveedor: "",
                 idProveedor: null,
                 fechaCompra: "",
-                fechaRegistro: new Date().toISOString().split("T")[0],
+                fechaRegistro: obtenerFechaColombia(), 
                 observaciones: "",
             });
             setCompraSeleccionada(null);
@@ -395,13 +414,19 @@ export default function ComprasTable() {
         });
     };
 
-    const comprasFiltradas = filtrarCompras(compras, filtro).filter(c => {
-        if (mostrarAnuladas) {
-            return c.estado === false;
-        } else {
-            return c.estado === true || c.estado === undefined;
-        }
-    });
+    const comprasFiltradas = filtrarCompras(compras, filtro)
+        .sort((a, b) => {
+            const fechaA = new Date(a.fechaCompra || a.fechacompra).getTime();
+            const fechaB = new Date(b.fechaCompra || b.fechacompra).getTime();
+            return fechaB - fechaA;
+        })
+        .filter(c => {
+            if (mostrarAnuladas) {
+                return c.estado === false;
+            } else {
+                return c.estado === true || c.estado === undefined;
+            }
+        });
 
     const guardarCompra = async (compraData, insumosSeleccionados) => {
         try {
@@ -519,7 +544,7 @@ export default function ComprasTable() {
                         }}
                     >
                         <Column 
-                            header="N°" 
+                            header="Nº" 
                             body={(r, { rowIndex }) => rowIndex + 1} 
                             style={{ 
                                 width: '60px', 

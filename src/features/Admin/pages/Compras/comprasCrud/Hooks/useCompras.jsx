@@ -8,12 +8,11 @@ export const useCompras = () => {
         try {
             console.log('=== CARGANDO COMPRAS ===');
             const comprasAPI = await compraApiService.obtenerCompras();
-            console.log('Compras obtenidas de la API:', comprasAPI);
-            
+            console.log('Compras obtenidas:', comprasAPI.length);
             setCompras(comprasAPI);
         } catch (error) {
             console.error('Error al cargar compras:', error);
-            throw new Error('Error al cargar las compras: ' + error.message);
+            throw error;
         }
     };
 
@@ -37,11 +36,6 @@ export const useCompras = () => {
             const resInsumos = await fetch("https://deliciasoft-backend.onrender.com/api/insumos");
             const listaInsumosRaw = await resInsumos.json();
             const listaInsumos = listaInsumosRaw.map(transformarInsumoDesdeAPI);
-
-            const stockActual = {};
-            listaInsumos.forEach((i) => {
-                stockActual[i.idinsumo] = i.cantidad;
-            });
 
             const stockCompra = {};
             detalles.forEach((d) => {
@@ -72,9 +66,8 @@ export const useCompras = () => {
                     body: JSON.stringify(payload),
                 });
             }
-
         } catch (error) {
-            console.error("Error actualizando stock de insumos:", error);
+            console.error("Error actualizando stock:", error);
             throw error;
         }
     };
@@ -112,10 +105,9 @@ export const useCompras = () => {
 
             const compraCreada = await compraApiService.crearCompra(nuevaCompraData);
             await actualizarStockInsumos(detalles);
-
             return compraCreada;
         } catch (error) {
-            console.error("Error al guardar la compra:", error);
+            console.error("Error al guardar compra:", error);
             throw error;
         }
     };
@@ -124,7 +116,7 @@ export const useCompras = () => {
         try {
             await compraApiService.cambiarEstadoCompra(compraId, false);
         } catch (error) {
-            console.error("Error al anular compra:", error);
+            console.error("Error al anular:", error);
             throw error;
         }
     };
@@ -142,7 +134,7 @@ export const useCompras = () => {
             const resultado = await compraApiService.cambiarEstadoCompra(compra.id, true);
             return resultado;
         } catch (error) {
-            console.error("Error al reactivar compra:", error);
+            console.error("Error al reactivar:", error);
             throw error;
         }
     };
@@ -154,4 +146,4 @@ export const useCompras = () => {
         anularCompra,
         reactivarCompra
     };
-};  
+};

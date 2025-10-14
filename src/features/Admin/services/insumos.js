@@ -36,7 +36,7 @@ class InsumoApiService {
     return response.json();
   }
 
-  // FUNCIÓN PARA CREAR CATÁLOGOS
+  // FUNCIÓN PARA CREAR CATÁLOGOS (mantenida para compatibilidad)
   async crearCatalogo(tipoCatalogo, datosCatalogo) {
     try {
       console.log('CREANDO CATÁLOGO');
@@ -46,7 +46,6 @@ class InsumoApiService {
       let url;
       let datosAPI;
 
-      // Seleccionar URL y preparar datos según el tipo
       switch (tipoCatalogo.toLowerCase()) {
         case 'adicion':
         case 'adiciones':
@@ -107,6 +106,67 @@ class InsumoApiService {
     } catch (error) {
       console.error('Error en crearCatalogo:', error);
       throw error;
+    }
+  }
+
+  // ⭐ NUEVA FUNCIÓN: Crear catálogo automáticamente después de crear insumo
+  async crearCatalogoAutomatico(insumoId, datosCatalogo) {
+    try {
+      console.log('🎯 CREANDO CATÁLOGO AUTOMÁTICO');
+      console.log('ID Insumo:', insumoId);
+      console.log('Datos catálogo:', JSON.stringify(datosCatalogo, null, 2));
+
+      const { tipo, nombre, precioadicion, estado } = datosCatalogo;
+
+      // Preparar datos para enviar
+      const datosParaEnviar = {
+        idinsumos: parseInt(insumoId),
+        nombre: nombre.trim(),
+        precioadicion: parseFloat(precioadicion),
+        estado: Boolean(estado)
+      };
+
+      // Determinar URL según el tipo
+      let url;
+      switch (tipo.toLowerCase()) {
+        case 'adicion':
+          url = CATALOGO_ADICIONES_URL;
+          break;
+        case 'sabor':
+          url = CATALOGO_SABORES_URL;
+          break;
+        case 'relleno':
+          url = CATALOGO_RELLENOS_URL;
+          break;
+        default:
+          throw new Error(`Tipo de catálogo no válido: ${tipo}`);
+      }
+
+      console.log('Enviando a:', url);
+      console.log('Datos:', JSON.stringify(datosParaEnviar, null, 2));
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: this.baseHeaders,
+        body: JSON.stringify(datosParaEnviar),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error al crear catálogo:', errorText);
+        throw new Error(`Error al crear catálogo: ${response.status} - ${errorText}`);
+      }
+
+      const resultado = await response.json();
+      console.log('✅ Catálogo creado exitosamente:', resultado);
+      
+      return resultado;
+    } catch (error) {
+      console.error('❌ Error en crearCatalogoAutomatico:', error);
+      // No lanzamos el error para que no falle toda la operación
+      // Solo registramos el error
+      console.warn('⚠️ El insumo se creó pero el catálogo falló. Puedes agregarlo manualmente después.');
+      return null;
     }
   }
 
@@ -329,7 +389,6 @@ class InsumoApiService {
         throw new Error('No se pudieron obtener las categorías disponibles');
       }
 
-      // Verificar categoría
       const categoriaExiste = categorias.some(c => parseInt(c.idcategoriainsumos || c.id) === idCategoriaInsumos);
       if (!categoriaExiste) {
         const categoriasDisponibles = categorias.map(
@@ -338,7 +397,6 @@ class InsumoApiService {
         throw new Error(`La categoría ID ${idCategoriaInsumos} no existe. IDs disponibles: ${categoriasDisponibles}`);
       }
 
-      // Verificar unidad de medida
       const unidadExiste = unidades.some(u => parseInt(u.idunidadmedida) === idUnidadMedida);
       if (!unidadExiste) {
         const unidadesDisponibles = unidades.map(u => `${u.idunidadmedida} (${u.unidadmedida})`).join(', ');
@@ -413,10 +471,18 @@ class InsumoApiService {
     }
   }
 
+  // ⭐ FUNCIÓN MODIFICADA: Ahora maneja la creación automática de catálogos
   async crearInsumo(insumoData) {
     try {
-      console.log('INICIANDO CREACIÓN DE INSUMO');
+      console.log('🚀 INICIANDO CREACIÓN DE INSUMO');
       console.log('Datos originales recibidos:', JSON.stringify(insumoData, null, 2));
+
+      // Guardar datos del catálogo antes de la transformación
+      const datosCatalogo = insumoData.datosCatalogo;
+      console.log('Datos del catálogo detectados:', datosCatalogo ? 'Sí' : 'No');
+      if (datosCatalogo) {
+        console.log('Tipo de catálogo:', datosCatalogo.tipo);
+      }
 
       this.limpiarCache();
 
@@ -428,7 +494,7 @@ class InsumoApiService {
       console.log('Verificando foreign keys...');
       await this.verificarIDsValidos(insumoAPI);
 
-      console.log('Enviando datos al servidor...');
+      console.log('📤 Enviando datos del insumo al servidor...');
       const response = await fetch(BASE_URL, {
         method: "POST",
         headers: this.baseHeaders,
@@ -453,12 +519,24 @@ class InsumoApiService {
         throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json();
-      console.log('Insumo creado exitosamente:', data);
+      const insumoCreado = await response.json();
+      console.log('✅ Insumo creado exitosamente:', insumoCreado);
+
+      // ⭐ SI HAY DATOS DE CATÁLOGO, CREAR EN LA TABLA CORRESPONDIENTE
+      if (datosCatalogo && insumoCreado.idinsumo) {
+        console.log('🎯 Creando entrada en catálogo...');
+        try {
+          await this.crearCatalogoAutomatico(insumoCreado.idinsumo, datosCatalogo);
+          console.log('✅ Catálogo creado exitosamente');
+        } catch (catalogoError) {
+          console.error('⚠️ Error al crear catálogo (el insumo fue creado):', catalogoError);
+          // No lanzamos el error para que no falle toda la operación
+        }
+      }
       
-      return this.transformarInsumoDesdeAPI(data);
+      return this.transformarInsumoDesdeAPI(insumoCreado);
     } catch (error) {
-      console.error('ERROR EN CREACIÓN DE INSUMO');
+      console.error('❌ ERROR EN CREACIÓN DE INSUMO');
       console.error('Mensaje:', error.message);
       throw error;
     }
@@ -470,21 +548,17 @@ class InsumoApiService {
       console.log("ID del insumo:", id);
       console.log("Datos recibidos del frontend:", JSON.stringify(insumoData, null, 2));
 
-      // Mantener todo igual, pero con la cantidad nueva
       const insumoAPI = this.transformarInsumoParaAPI({
         ...insumoData,
         cantidad: Number(insumoData.cantidad) || 0,
       });
 
       console.log("Datos después de transformación:", JSON.stringify(insumoAPI, null, 2));
-      console.log("Precio en datos transformados:", insumoAPI.precio);
-      console.log("Stock mínimo en datos transformados:", insumoAPI.stockminimo);
 
       await this.verificarIDsValidos(insumoAPI);
       this.validarDatosInsumo(insumoAPI);
 
       console.log("Enviando PUT request a:", `${BASE_URL}/${id}`);
-      console.log("Body del request:", JSON.stringify(insumoAPI, null, 2));
 
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
@@ -494,7 +568,6 @@ class InsumoApiService {
 
       console.log("Response status:", response.status);
       const responseText = await response.text();
-      console.log("Response raw text:", responseText);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
@@ -502,7 +575,6 @@ class InsumoApiService {
 
       const data = JSON.parse(responseText);
       console.log("Respuesta del servidor:", JSON.stringify(data, null, 2));
-      console.log("Precio en respuesta:", data.precio);
 
       const resultado = this.transformarInsumoDesdeAPI(data);
       console.log("Resultado final transformado:", JSON.stringify(resultado, null, 2));
@@ -514,47 +586,44 @@ class InsumoApiService {
     }
   }
 
-  transformarInsumoParaAPI(insumo) {
-    console.log("TRANSFORMANDO INSUMO PARA API");
-    console.log("Datos originales:", JSON.stringify(insumo, null, 2));
+ // Modificar la función transformarInsumoParaAPI en insumos.js
 
-    const transformed = {
-      idinsumo: insumo.id || insumo.idinsumo || insumo.idInsumo, // Aseguramos ID
-      nombreinsumo: insumo.nombreInsumo ? String(insumo.nombreInsumo).trim() : "",
-      idcategoriainsumos: insumo.idCategoriaInsumos ? parseInt(insumo.idCategoriaInsumos) : null,
-      idunidadmedida: insumo.idUnidadMedida ? parseInt(insumo.idUnidadMedida) : null,
-      cantidad:
-        insumo.cantidad !== undefined && insumo.cantidad !== null && insumo.cantidad !== ""
-          ? parseFloat(insumo.cantidad)
-          : 0,
-      // PRECIO - Con múltiples variantes de nombre
-      precio: 
-        insumo.precio !== undefined && insumo.precio !== null && insumo.precio !== ""
-        ? parseFloat(insumo.precio)
-        : 0, 
-      // STOCK MÍNIMO - Manejar tanto stockMinimo como stockminimo
-      stockminimo: 
-        (insumo.stockMinimo !== undefined && insumo.stockMinimo !== null && insumo.stockMinimo !== "")
-          ? parseInt(insumo.stockMinimo)
-          : (insumo.stockminimo !== undefined && insumo.stockminimo !== null && insumo.stockminimo !== "")
-          ? parseInt(insumo.stockminimo)
-          : 5,
-      estado: insumo.estado !== undefined ? Boolean(insumo.estado) : true,
-    };
+transformarInsumoParaAPI(insumo) {
+  console.log("TRANSFORMANDO INSUMO PARA API");
+  console.log("Datos originales:", JSON.stringify(insumo, null, 2));
 
-    // Mantener la imagen si existe
-    if (insumo.idImagen && String(insumo.idImagen).trim() !== "") {
-      transformed.idimagen = String(insumo.idImagen).trim();
-      console.log("Imagen incluida en datos API, longitud:", transformed.idimagen.length);
-    } else {
-      console.log("Sin imagen proporcionada");
-    }
+  const transformed = {
+    idinsumo: insumo.id || insumo.idinsumo || insumo.idInsumo,
+    nombreinsumo: insumo.nombreInsumo ? String(insumo.nombreInsumo).trim() : "",
+    idcategoriainsumos: insumo.idCategoriaInsumos ? parseInt(insumo.idCategoriaInsumos) : null,
+    idunidadmedida: insumo.idUnidadMedida ? parseInt(insumo.idUnidadMedida) : null,
+    cantidad:
+      insumo.cantidad !== undefined && insumo.cantidad !== null && insumo.cantidad !== ""
+        ? parseFloat(insumo.cantidad)
+        : 0,
+    precio: 
+      insumo.precio !== undefined && insumo.precio !== null && insumo.precio !== ""
+      ? parseFloat(insumo.precio)
+      : 0,
+    stockminimo: 
+      (insumo.stockMinimo !== undefined && insumo.stockMinimo !== null && insumo.stockMinimo !== "")
+        ? parseInt(insumo.stockMinimo)
+        : (insumo.stockminimo !== undefined && insumo.stockminimo !== null && insumo.stockminimo !== "")
+        ? parseInt(insumo.stockminimo)
+        : 5,
+    estado: insumo.estado !== undefined ? Boolean(insumo.estado) : true,
+  };
 
-    console.log("Datos transformados:", JSON.stringify(transformed, null, 2));
-
-    return transformed;
+  // ⭐ AGREGAR ID DE IMAGEN SI EXISTE
+  if (insumo.idImagen && insumo.idImagen !== null && insumo.idImagen !== "") {
+    transformed.idimagen = parseInt(insumo.idImagen);
+    console.log("ID de imagen incluido:", transformed.idimagen);
   }
 
+  console.log("Datos transformados:", JSON.stringify(transformed, null, 2));
+
+  return transformed;
+}
   async eliminarInsumo(id) {
     try {
       const response = await fetch(`${BASE_URL}/${id}`, {
@@ -570,56 +639,55 @@ class InsumoApiService {
     }
   }
 
-async cambiarEstadoInsumo(id, nuevoEstado) {
-  try {
-    console.log(`Cambiando estado del insumo ${id} a:`, nuevoEstado);
-    
-    // Obtener insumo actual desde el backend
-    const response = await fetch(`${BASE_URL}/${id}`, {
-      method: "GET",
-      headers: this.baseHeaders,
-    });
+  async cambiarEstadoInsumo(id, nuevoEstado) {
+    try {
+      console.log(`Cambiando estado del insumo ${id} a:`, nuevoEstado);
+      
+      const response = await fetch(`${BASE_URL}/${id}`, {
+        method: "GET",
+        headers: this.baseHeaders,
+      });
 
-    if (!response.ok) {
-      throw new Error(`No se pudo obtener el insumo: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`No se pudo obtener el insumo: ${response.status}`);
+      }
+
+      const insumoActual = await response.json();
+      console.log('Insumo actual obtenido:', insumoActual);
+
+      const datosActualizados = {
+        nombreinsumo: insumoActual.nombreinsumo,
+        idcategoriainsumos: insumoActual.idcategoriainsumos,
+        idunidadmedida: insumoActual.idunidadmedida,
+        estado: nuevoEstado,
+        cantidad: parseFloat(insumoActual.cantidad || 0),
+        precio: parseFloat(insumoActual.precio || 0),
+        stockminimo: parseInt(insumoActual.stockminimo || 5)
+      };
+
+      console.log('Enviando actualización:', datosActualizados);
+
+      const updateResponse = await fetch(`${BASE_URL}/${id}`, {
+        method: "PUT",
+        headers: this.baseHeaders,
+        body: JSON.stringify(datosActualizados),
+      });
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        console.error('Error del servidor:', errorText);
+        throw new Error(`Error al cambiar estado: ${updateResponse.status}`);
+      }
+
+      const data = await updateResponse.json();
+      console.log('Estado cambiado exitosamente:', data);
+      return this.transformarInsumoDesdeAPI(data);
+    } catch (error) {
+      console.error(`Error al cambiar estado del insumo ${id}:`, error);
+      throw error;
     }
-
-    const insumoActual = await response.json();
-    console.log('Insumo actual obtenido:', insumoActual);
-
-    // Enviar actualización solo con los campos necesarios
-    const datosActualizados = {
-      nombreinsumo: insumoActual.nombreinsumo,
-      idcategoriainsumos: insumoActual.idcategoriainsumos,
-      idunidadmedida: insumoActual.idunidadmedida,
-      estado: nuevoEstado,
-      cantidad: parseFloat(insumoActual.cantidad || 0),
-      precio: parseFloat(insumoActual.precio || 0),
-      stockminimo: parseInt(insumoActual.stockminimo || 5)
-    };
-
-    console.log('Enviando actualización:', datosActualizados);
-
-    const updateResponse = await fetch(`${BASE_URL}/${id}`, {
-      method: "PUT",
-      headers: this.baseHeaders,
-      body: JSON.stringify(datosActualizados),
-    });
-
-    if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
-      console.error('Error del servidor:', errorText);
-      throw new Error(`Error al cambiar estado: ${updateResponse.status}`);
-    }
-
-    const data = await updateResponse.json();
-    console.log('Estado cambiado exitosamente:', data);
-    return this.transformarInsumoDesdeAPI(data);
-  } catch (error) {
-    console.error(`Error al cambiar estado del insumo ${id}:`, error);
-    throw error;
   }
-}
+
   validarDatosInsumo(insumo) {
     const errores = [];
     
@@ -655,7 +723,6 @@ async cambiarEstadoInsumo(id, nuevoEstado) {
       }
     }
 
-    // VALIDAR PRECIO - MEJORADO
     console.log('Validando precio:', insumo.precio);
     if (insumo.precio !== undefined && insumo.precio !== null && insumo.precio !== "") {
       const precio = parseFloat(insumo.precio);
@@ -665,7 +732,6 @@ async cambiarEstadoInsumo(id, nuevoEstado) {
       }
     }
 
-    // VALIDAR STOCK MÍNIMO - MEJORADO
     console.log('Validando stock mínimo:', insumo.stockminimo);
     if (insumo.stockminimo !== undefined && insumo.stockminimo !== null && insumo.stockminimo !== "") {
       const stockMinimo = parseInt(insumo.stockminimo);
@@ -691,7 +757,6 @@ async cambiarEstadoInsumo(id, nuevoEstado) {
       idCategoriaInsumos: insumo.idcategoriainsumos,
       idUnidadMedida: insumo.idunidadmedida,
       cantidad: insumo.cantidad,
-      // 🔹 INCLUIR PRECIO Y STOCK MÍNIMO
       precio: insumo.precio,
       stockMinimo: insumo.stockminimo || insumo.stockMinimo || 5,
       estado: insumo.estado,

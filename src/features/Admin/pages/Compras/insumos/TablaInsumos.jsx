@@ -8,10 +8,9 @@ import Notification from "../../../components/Notification";
 import ModalGenerico from "./modalgenerico";
 import ModalInsumo from "./modalesInsumo";
 import AgregarCategoria from "./agregarCategoria";
-import ModalCatalogo from "./modalCatalogo";
-import SelectorCatalogo from "./modalSelector";
 import IndicadorStock from "./insicadorStock";
 import IndicadorStockMin from "./indicadorStockMin";
+import NotificationBell from "../../../components/NotificationBell";
 import insumoApiService from "../../../services/insumos";
 import categoriaInsumoApiService from "../../../services/categoriainsumos";
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -28,16 +27,9 @@ export default function TablaInsumos() {
     tipo: "success",
   });
 
-  // Estados para modales
   const [modal, setModal] = useState({ visible: false, tipo: "", insumo: null });
   const [modalAgregarCategoria, setModalAgregarCategoria] = useState(false);
-  const [modalCatalogo, setModalCatalogo] = useState(false);
-  const [modalSelector, setModalSelector] = useState(false);
   const [showStockInfo, setShowStockInfo] = useState(false);
-  
-  // Estado para el insumo seleccionado para catálogo
-  const [insumoParaCatalogo, setInsumoParaCatalogo] = useState(null);
-  const [tipoCatalogo, setTipoCatalogo] = useState('');
 
   useEffect(() => {
     cargarDatos();
@@ -66,45 +58,43 @@ export default function TablaInsumos() {
 
   const hideNotification = () => setNotification({ visible: false });
 
- // Función para cambiar estado con validación de stock
-const toggleEstado = async (id) => {
-  try {
-    const insumo = insumos.find((i) => (i.id || i.idinsumo) === id);
-    if (!insumo) {
-      console.error('Insumo no encontrado:', id);
-      showNotification("Insumo no encontrado", "error");
-      return;
-    }
+  const toggleEstado = async (id) => {
+    try {
+      const insumo = insumos.find((i) => (i.id || i.idinsumo) === id);
+      if (!insumo) {
+        console.error('Insumo no encontrado:', id);
+        showNotification("Insumo no encontrado", "error");
+        return;
+      }
 
-    const nuevoEstado = !insumo.estado;
-    
-    // Validar que no se pueda deshabilitar si hay stock disponible
-    if (!nuevoEstado && parseFloat(insumo.cantidad) > 0) {
-      showNotification(
-        `No se puede deshabilitar este insumo porque tiene ${insumo.cantidad} unidades en stock. Para deshabilitarlo, primero debe reducir el stock a 0.`,
-        "error"
+      const nuevoEstado = !insumo.estado;
+      
+      if (!nuevoEstado && parseFloat(insumo.cantidad) > 0) {
+        showNotification(
+          `No se puede deshabilitar este insumo porque tiene ${insumo.cantidad} unidades en stock. Para deshabilitarlo, primero debe reducir el stock a 0.`,
+          "error"
+        );
+        return;
+      }
+      
+      console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
+      
+      await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
+
+      setInsumos(
+        insumos.map((i) => {
+          const currentId = i.id || i.idinsumo;
+          return currentId === id ? { ...i, estado: nuevoEstado } : i;
+        })
       );
-      return;
+      
+      showNotification(`Insumo ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      showNotification("Error cambiando estado: " + error.message, "error");
     }
-    
-    console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
-    
-    await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
+  };
 
-    // Actualizar el estado local
-    setInsumos(
-      insumos.map((i) => {
-        const currentId = i.id || i.idinsumo;
-        return currentId === id ? { ...i, estado: nuevoEstado } : i;
-      })
-    );
-    
-    showNotification(`Insumo ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
-  } catch (error) {
-    console.error('Error al cambiar estado:', error);
-    showNotification("Error cambiando estado: " + error.message, "error");
-  }
-};
   const abrirModal = (tipo, insumo = null) => {
     setModal({ visible: true, tipo, insumo });
   };
@@ -115,54 +105,6 @@ const toggleEstado = async (id) => {
 
   const toggleStockInfo = () => {
     setShowStockInfo((prev) => !prev);
-  };
-
-  // Función para abrir selector de catálogo
-  const abrirModalSelectorCatalogo = (insumo) => {
-    console.log('Abriendo selector de catálogo para:', insumo);
-    setInsumoParaCatalogo(insumo);
-    setModalSelector(true);
-  };
-
-  const cerrarModalSelector = () => {
-    setModalSelector(false);
-    setInsumoParaCatalogo(null);
-  };
-
-  const seleccionarTipoCatalogo = (tipo) => {
-    setTipoCatalogo(tipo);
-    setModalSelector(false);
-    setModalCatalogo(true);
-  };
-
-  const cerrarModalCatalogo = () => {
-    setModalCatalogo(false);
-    setTipoCatalogo('');
-    setInsumoParaCatalogo(null);
-  };
-
-  // Función para determinar si es categoría especial (corregida)
-  const esCategoriaEspecial = (categoriaId, categoriaNombre) => {
-    // Primero intentar por nombre si está disponible
-    if (categoriaNombre) {
-      const especiales = ['toppings', 'adiciones', 'sabores', 'rellenos', 'relleno', 'sabor', 'adicion'];
-      return especiales.some(especial => 
-        categoriaNombre.toLowerCase().includes(especial)
-      );
-    }
-    
-    // Si no hay nombre, buscar por ID en la lista de categorías
-    if (categoriaId && categorias.length > 0) {
-      const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
-      if (categoria) {
-        const especiales = ['toppings', 'adiciones', 'sabores', 'rellenos', 'relleno', 'sabor', 'adicion'];
-        return especiales.some(especial => 
-          categoria.nombreCategoria?.toLowerCase().includes(especial)
-        );
-      }
-    }
-    
-    return false;
   };
 
   const insumosFiltrados = insumos.filter((i) => {
@@ -176,7 +118,6 @@ const toggleEstado = async (id) => {
     );
   });
 
-  // Función helper para obtener el ID del insumo
   const getInsumoId = (rowData) => {
     return rowData.id || rowData.idinsumo;
   };
@@ -198,18 +139,21 @@ const toggleEstado = async (id) => {
         onClose={hideNotification}
       />
 
-      <div className="admin-toolbar">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', justifyContent: 'space-between' }}>
         <button
           className="admin-button pink"
           onClick={() => abrirModal("agregar")}
         >
           + Agregar
         </button>
-        <SearchBar
-          value={filtro}
-          onChange={setFiltro}
-          placeholder="Buscar por nombre, categoría, cantidad, estado..."
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <NotificationBell insumos={insumos} />
+          <SearchBar
+            value={filtro}
+            onChange={setFiltro}
+            placeholder="Buscar por nombre, categoría, cantidad, estado..."
+          />
+        </div>
       </div>
 
       <div
@@ -221,8 +165,7 @@ const toggleEstado = async (id) => {
         }}
       >
         <div style={{ fontSize: "14px", color: "#666" }}>
-          📊 {insumos.length} insumos | 📂 {categorias.length} categorías | 📏{" "}
-          {unidades.length} unidades
+          📊 {insumos.length} insumos | 📁 {categorias.length} categorías | 📏 {unidades.length} unidades
         </div>
         <button
           className="admin-button info-button"
@@ -276,7 +219,7 @@ const toggleEstado = async (id) => {
         className="admin-table"
       >
         <Column
-          header="N°"
+          header="Nº"
           body={(rowData, { rowIndex }) => rowIndex + 1}
           style={{ width: "3rem", textAlign: "center" }}
         />
@@ -355,70 +298,11 @@ const toggleEstado = async (id) => {
               >
                 🗑️
               </button>
-
-              {/* Botón Catálogo corregido */}
-              {rowData.estado &&
-                esCategoriaEspecial(
-                  rowData.idCategoriaInsumos || rowData.idcategoriainsumos,
-                  rowData.nombreCategoria || rowData.categoriainsumos?.nombrecategoria
-                ) && (
-                  <button
-                    className="catalog-button"
-                    title="Agregar Catálogo"
-                    onClick={() => abrirModalSelectorCatalogo(rowData)}
-                    // style={{
-                    //   backgroundColor: "#6c5ce7",
-                    //   color: "white",
-                    //   border: "none",
-                    //   borderRadius: "6px",
-                    //   padding: "8px 12px",
-                    //   fontSize: "12px",
-                    //   fontWeight: "500",
-                    //   cursor: "pointer",
-                    //   display: "flex",
-                    //   alignItems: "center",
-                    //   gap: "4px",
-                    //   transition: "all 0.2s ease",
-                    //   boxShadow: "0 2px 4px rgba(108, 92, 231, 0.3)",
-                    //   minHeight: "32px",
-                    // }}
-                    // onMouseEnter={(e) => {
-                    //   e.target.style.backgroundColor = "#5f3dc4";
-                    //   e.target.style.transform = "translateY(-1px)";
-                    //   e.target.style.boxShadow = "0 4px 8px rgba(108, 92, 231, 0.4)";
-                    // }}
-                    // onMouseLeave={(e) => {
-                    //   e.target.style.backgroundColor = "#6c5ce7";
-                    //   e.target.style.transform = "translateY(0)";
-                    //   e.target.style.boxShadow = "0 2px 4px rgba(108, 92, 231, 0.3)";
-                    // }}
-                  >
-                    <button
-                    className={`admin-button purple ${
-                      !rowData.estado ? "disabled" : ""
-                    }`}
-                    title="Copiar"
-                    onClick={() => rowData.estado && copiar(rowData)} // 👈 tu función aquí
-                    disabled={!rowData.estado}
-                    style={{
-                      backgroundColor: "#6c5ce7",
-                      opacity: !rowData.estado ? 0.5 : 1,
-                      cursor: !rowData.estado ? "not-allowed" : "pointer",
-                      
-                    }}
-                  >
-                    📋
-                  </button>
-
-                    {/* <span>Catálogo</span> */}
-                  </button>
-                )}
             </div>
           )}
         />
       </DataTable>
 
-      {/* MODALES CORREGIDOS */}
       {modal.visible && (
         <ModalInsumo
           modal={modal}
@@ -436,26 +320,6 @@ const toggleEstado = async (id) => {
           cerrar={() => setModalAgregarCategoria(false)}
           showNotification={showNotification}
           cargarCategorias={cargarDatos}
-        />
-      )}
-
-      {/* Props corregidas para SelectorCatalogo */}
-      {modalSelector && (
-        <SelectorCatalogo
-          modalSelectorVisible={modalSelector}
-          cerrarModalSelector={cerrarModalSelector}
-          insumoParaCatalogo={insumoParaCatalogo}
-          seleccionarTipoCatalogo={seleccionarTipoCatalogo}
-        />
-      )}
-
-      {modalCatalogo && (
-        <ModalCatalogo
-          visible={modalCatalogo}
-          cerrar={cerrarModalCatalogo}
-          tipoCatalogo={tipoCatalogo}
-          insumoParaCatalogo={insumoParaCatalogo}
-          showNotification={showNotification}
         />
       )}
 

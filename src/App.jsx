@@ -34,7 +34,7 @@ import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
 import ProveedoresTable from './features/Admin/pages/Compras/proveedores/ProveedoresTable.jsx';
 // import ProveedorTable from './features/Admin/pages/Compras/proveedores.jsx';
-import Dashboard from './features/Admin/pages/Dashboard'
+import Dashboard from './features/Admin/pages/Dashboard/Dashboard.jsx'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';

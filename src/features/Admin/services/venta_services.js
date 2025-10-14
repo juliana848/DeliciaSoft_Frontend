@@ -143,45 +143,79 @@ class VentaApiService {
         };
     }
 
-    transformarVentaCompletaDesdeAPI(ventaApi) {
-        if (!ventaApi) return null;
+   transformarVentaCompletaDesdeAPI(ventaApi) {
+    if (!ventaApi) return null;
+    
+    let subtotal = 0;
+    let iva = 0;
+    if (ventaApi.detalleventa && ventaApi.detalleventa.length > 0) {
+        subtotal = ventaApi.detalleventa.reduce((acc, item) => acc + parseFloat(item.subtotal || 0), 0);
+        iva = ventaApi.detalleventa.reduce((acc, item) => acc + parseFloat(item.iva || 0), 0);
+    }
+    
+    return {
+        idVenta: ventaApi.idventa,
+        fechaVenta: ventaApi.fechaventa,
+        nombreCliente: ventaApi.clienteData ? `${ventaApi.clienteData.nombre} ${ventaApi.clienteData.apellido}` : 'N/A',
+        nombreSede: ventaApi.sede ? ventaApi.sede.nombre : 'N/A',
+        metodoPago: ventaApi.metodopago,
+        tipoVenta: ventaApi.tipoventa,
+        idEstadoVenta: ventaApi.estadoVentaId,
+        nombreEstado: ventaApi.estadoVenta?.nombre_estado || 'N/A',
+        total: parseFloat(ventaApi.total),
+        subtotal: subtotal,
+        iva: iva,
+        detalleVenta: this.transformarDetalleVentaDesdeAPI(ventaApi.detalleventa),
+        abonos: this.transformarAbonosDesdeAPI(ventaApi.abonos)
+    };
+}
+
+// ✅ ACTUALIZAR ESTA FUNCIÓN PARA INCLUIR CATEGORÍAS
+transformarDetalleVentaDesdeAPI(detalleApi) {
+    if (!detalleApi || !Array.isArray(detalleApi)) return [];
+    
+    return detalleApi.map(item => {
+        // ✅ EXTRAER CATEGORÍA DE MÚLTIPLES FORMAS
+        let categoria = 'Otros';
         
-        let subtotal = 0;
-        let iva = 0;
-        if (ventaApi.detalleventa && ventaApi.detalleventa.length > 0) {
-            subtotal = ventaApi.detalleventa.reduce((acc, item) => acc + parseFloat(item.subtotal || 0), 0);
-            iva = ventaApi.detalleventa.reduce((acc, item) => acc + parseFloat(item.iva || 0), 0);
+        // Método 1: De productogeneral.categoriaproducto
+        if (item.productogeneral?.categoriaproducto?.nombrecategoria) {
+            categoria = item.productogeneral.categoriaproducto.nombrecategoria;
+        }
+        // Método 2: De productogeneral.categoria (campo directo)
+        else if (item.productogeneral?.categoria) {
+            categoria = typeof item.productogeneral.categoria === 'string' 
+                ? item.productogeneral.categoria 
+                : item.productogeneral.categoria.nombrecategoria || item.productogeneral.categoria.nombre;
+        }
+        // Método 3: Campo directo en el detalle
+        else if (item.categoria) {
+            categoria = typeof item.categoria === 'string'
+                ? item.categoria
+                : item.categoria.nombrecategoria || item.categoria.nombre;
         }
         
-        return {
-            idVenta: ventaApi.idventa,
-            fechaVenta: ventaApi.fechaventa,
-            nombreCliente: ventaApi.clienteData ? `${ventaApi.clienteData.nombre} ${ventaApi.clienteData.apellido}` : 'N/A',
-            nombreSede: ventaApi.sede ? ventaApi.sede.nombre : 'N/A',
-            metodoPago: ventaApi.metodopago,
-            tipoVenta: ventaApi.tipoventa,
-            idEstadoVenta: ventaApi.estadoVentaId,
-            nombreEstado: ventaApi.estadoVenta?.nombre_estado || 'N/A',
-            total: parseFloat(ventaApi.total),
-            subtotal: subtotal,
-            iva: iva,
-            detalleVenta: this.transformarDetalleVentaDesdeAPI(ventaApi.detalleventa),
-            abonos: this.transformarAbonosDesdeAPI(ventaApi.abonos)
-        };
-    }
-
-    transformarDetalleVentaDesdeAPI(detalleApi) {
-        if (!detalleApi || !Array.isArray(detalleApi)) return [];
+        console.log(`🏷️ Categoría detectada: ${categoria} para producto ${item.productogeneral?.nombreproducto || 'N/A'}`);
         
-        return detalleApi.map(item => ({
+        return {
             iddetalleventa: item.iddetalleventa,
             idventa: item.idventa,
             idproductogeneral: item.idproductogeneral,
             cantidad: item.cantidad,
-            nombreProducto: item.productogeneral?.nombre || 'Producto N/A',
+            nombreProducto: item.productogeneral?.nombreproducto || item.productogeneral?.nombre || 'Producto N/A',
             precioUnitario: parseFloat(item.preciounitario || 0),
             subtotal: parseFloat(item.subtotal || 0),
             iva: parseFloat(item.iva || 0),
+            // ✅ INCLUIR CATEGORÍA EN EL DETALLE
+            categoria: categoria,
+            // ✅ INCLUIR PRODUCTO COMPLETO CON CATEGORÍA
+            productogeneral: {
+                idproductogeneral: item.productogeneral?.idproductogeneral,
+                nombreproducto: item.productogeneral?.nombreproducto,
+                nombre: item.productogeneral?.nombre,
+                categoria: categoria, // Campo directo para fácil acceso
+                categoriaproducto: item.productogeneral?.categoriaproducto // Objeto completo si existe
+            },
             adiciones: item.detalleadiciones?.map(da => ({
                 id: da.catalogoadiciones?.idadiciones || da.idadiciones,
                 nombre: da.catalogoadiciones?.nombre || 'Adición N/A',
@@ -200,8 +234,9 @@ class VentaApiService {
                 precio: parseFloat(dr.catalogosabor?.precio || 0),
                 cantidad: dr.cantidadadicionada || 1
             })) || []
-        }));
-    }
+        };
+    });
+}
 
    transformarAbonosDesdeAPI(abonosApi) {
     if (!abonosApi || !Array.isArray(abonosApi)) return [];

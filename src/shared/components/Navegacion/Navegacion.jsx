@@ -45,6 +45,21 @@ const Navegacion = ({ isAuthenticated = false }) => {
       : `${names[0].charAt(0)}${names[0].charAt(1) || ''}`.toUpperCase();
   };
 
+  // Función para abrir login en nueva ventana
+  const abrirLoginNuevaVentana = (e) => {
+    e.preventDefault();
+    const width = 900;
+    const height = 650;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(
+      '/iniciar-sesion',
+      'Login',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+  };
+
   return (
     <nav className={`cliente-nav-container ${scrolled ? 'scrolled' : ''}`}>
       <div className="cliente-nav-content">
@@ -179,9 +194,13 @@ const Navegacion = ({ isAuthenticated = false }) => {
               )}
             </div>
           ) : (
-            <Link to="/iniciar-sesion" className="cliente-nav-button">
+            <button 
+              onClick={abrirLoginNuevaVentana}
+              className="cliente-nav-button"
+              style={{ cursor: 'pointer' }}
+            >
               INICIAR SESIÓN
-            </Link>
+            </button>
           )}
         </div>
         
@@ -224,9 +243,13 @@ const Navegacion = ({ isAuthenticated = false }) => {
             <LogoutButton className="cliente-nav-button" />
           </>
         ) : (
-          <Link to="/iniciar-sesion" className="cliente-nav-button">
+          <button 
+            onClick={abrirLoginNuevaVentana}
+            className="cliente-nav-button"
+            style={{ cursor: 'pointer' }}
+          >
             INICIAR SESIÓN
-          </Link>
+          </button>
         )}
       </div>
     </nav>

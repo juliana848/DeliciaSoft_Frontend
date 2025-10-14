@@ -14,7 +14,6 @@ export default function VentasAgregarAbonoModal({
     const [previewImage, setPreviewImage] = useState(null);
     const [faltaPorPagar, setFaltaPorPagar] = useState(0);
 
-    // Calcular cuánto falta por pagar
     useEffect(() => {
         if (ventaSeleccionada) {
             const totalVenta = ventaSeleccionada.total || 0;
@@ -28,45 +27,35 @@ export default function VentasAgregarAbonoModal({
 
     if (!visible) return null;
 
-    // Función local para manejar el upload de imagen
     const handleLocalImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
-            console.log('Archivo seleccionado:', file.name, file.type, file.size);
-            
-            // Validar tipo de archivo
             if (!file.type.startsWith('image/')) {
                 alert('Por favor selecciona solo archivos de imagen');
                 return;
             }
 
-            // Validar tamaño (máximo 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert('La imagen es muy grande. Máximo 5MB permitido');
                 return;
             }
 
-            // Crear preview
             const reader = new FileReader();
             reader.onload = (e) => {
                 setPreviewImage(e.target.result);
             };
             reader.readAsDataURL(file);
 
-            // Llamar función padre para guardar el archivo
             handleImageUpload(e);
         }
     };
 
-    // Función para limpiar la imagen
     const limpiarImagen = () => {
         setPreviewImage(null);
-        // Limpiar el input de archivo
         const fileInput = document.getElementById('comprobante');
         if (fileInput) {
             fileInput.value = '';
         }
-        // Crear evento sintético para limpiar el archivo
         const fakeEvent = {
             target: {
                 files: []
@@ -75,11 +64,9 @@ export default function VentasAgregarAbonoModal({
         handleImageUpload(fakeEvent);
     };
 
-    // Función para manejar cambios en el monto con validación
     const handleMontoChange = (e) => {
         const valor = parseFloat(e.target.value) || 0;
         
-        // Validar que no exceda lo que falta por pagar
         if (valor > faltaPorPagar) {
             e.target.value = faltaPorPagar;
             alert(`El monto no puede ser mayor a lo que falta por pagar: $${faltaPorPagar.toLocaleString()}`);
@@ -88,12 +75,10 @@ export default function VentasAgregarAbonoModal({
         handleAbonoChange(e);
     };
 
-    // Función para manejar el envío del formulario
     const handleSubmit = (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Validación adicional antes del envío
         const montoIngresado = parseFloat(abonoData.total_pagado) || 0;
         if (montoIngresado > faltaPorPagar) {
             alert(`El monto no puede ser mayor a lo que falta por pagar: $${faltaPorPagar.toLocaleString()}`);
@@ -103,7 +88,6 @@ export default function VentasAgregarAbonoModal({
         agregarAbono();
     };
 
-    // Función para manejar el cierre
     const handleClose = () => {
         setPreviewImage(null);
         onClose();
@@ -111,26 +95,36 @@ export default function VentasAgregarAbonoModal({
 
     return (
         <Modal visible={visible} onClose={handleClose}>
-            <div className="abono-modal-container">
-                {/* Header del modal */}
-                <div className="modal-header-section">
-                    <h2 className="modal-title">Agregar Abono</h2>
-                    <div className="venta-info-badge">
-                        Venta #{ventaSeleccionada?.idVenta} - {ventaSeleccionada?.nombreCliente}
+            <div className="agregar-abono-container">
+                {/* Header con información */}
+                <div className="header-info">
+                    <div className="info-badge">
+                        <span className="badge-icon">💰</span>
+                        <span>Venta #{ventaSeleccionada?.idVenta}</span>
+                    </div>
+                    <div className="info-badge">
+                        <span className="badge-icon">👤</span>
+                        <span>{ventaSeleccionada?.nombreCliente}</span>
                     </div>
                 </div>
 
-                {/* Información de la venta */}
-                <div className="venta-summary-card">
-                    <div className="summary-grid">
+                {/* Card principal */}
+                <div className="form-card">
+                    <h2 className="section-title">
+                        <span className="title-icon">💵</span>
+                        Agregar Abono
+                    </h2>
+
+                    {/* Resumen de la venta */}
+                    <div className="venta-summary">
                         <div className="summary-item">
-                            <span className="summary-label">Total Venta:</span>
+                            <span className="summary-label">Total Venta</span>
                             <span className="summary-value total-venta">
                                 ${(ventaSeleccionada?.total || 0).toLocaleString()}
                             </span>
                         </div>
                         <div className="summary-item">
-                            <span className="summary-label">Total Pagado:</span>
+                            <span className="summary-label">Total Pagado</span>
                             <span className="summary-value pagado">
                                 ${((ventaSeleccionada?.abonos || [])
                                     .reduce((sum, abono) => {
@@ -140,336 +134,366 @@ export default function VentasAgregarAbonoModal({
                             </span>
                         </div>
                         <div className="summary-item destacado">
-                            <span className="summary-label">Falta por Pagar:</span>
+                            <span className="summary-label">Falta por Pagar</span>
                             <span className="summary-value pendiente">
                                 ${faltaPorPagar.toLocaleString()}
                             </span>
                         </div>
                     </div>
-                </div>
 
-                {/* Formulario */}
-                <div className="abono-form">
-                    {/* Fila 1: Método de pago y Monto */}
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label className="form-label">
-                                Método de Pago <span className="required">*</span>
-                            </label>
-                            <select
-                                name="metodo_pago"
-                                value={abonoData.metodo_pago}
-                                onChange={handleAbonoChange}
-                                className={`form-control ${erroresValidacion.metodo_pago ? 'error' : ''}`}
-                                required
-                            >
-                                <option value="">Seleccione método</option>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="transferencia">Transferencia</option>
-                                <option value="otro">Otro</option>
-                            </select>
-                            {erroresValidacion.metodo_pago && (
-                                <span className="error-text">{erroresValidacion.metodo_pago}</span>
-                            )}
-                        </div>
+                    <div className="section-divider"></div>
 
-                        <div className="form-group">
-                            <label className="form-label">
-                                Monto a Pagar <span className="required">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="total_pagado"
-                                min="0"
-                                max={faltaPorPagar}
-                                step="0.01"
-                                value={abonoData.total_pagado}
-                                onChange={handleMontoChange}
-                                className={`form-control ${erroresValidacion.total_pagado ? 'error' : ''}`}
-                                placeholder="0.00"
-                                required
-                            />
-                            {erroresValidacion.total_pagado && (
-                                <span className="error-text">{erroresValidacion.total_pagado}</span>
-                            )}
-                            <div className="input-help">
-                                Máximo: ${faltaPorPagar.toLocaleString()}
+                    {/* Formulario */}
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-grid">
+                            <div className="field-group">
+                                <label className="field-label">
+                                    Método de Pago <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <select
+                                    name="metodo_pago"
+                                    value={abonoData.metodo_pago}
+                                    onChange={handleAbonoChange}
+                                    className={`form-input ${erroresValidacion.metodo_pago ? 'error' : ''}`}
+                                    required
+                                >
+                                    <option value="">Seleccione método</option>
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="transferencia">Transferencia</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                {erroresValidacion.metodo_pago && (
+                                    <span className="error-message">{erroresValidacion.metodo_pago}</span>
+                                )}
+                            </div>
+
+                            <div className="field-group">
+                                <label className="field-label">
+                                    Monto a Pagar <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    name="total_pagado"
+                                    min="0"
+                                    max={faltaPorPagar}
+                                    step="0.01"
+                                    value={abonoData.total_pagado}
+                                    onChange={handleMontoChange}
+                                    className={`form-input ${erroresValidacion.total_pagado ? 'error' : ''}`}
+                                    placeholder="0.00"
+                                    required
+                                />
+                                {erroresValidacion.total_pagado && (
+                                    <span className="error-message">{erroresValidacion.total_pagado}</span>
+                                )}
+                                <div className="input-help">
+                                    Máximo: ${faltaPorPagar.toLocaleString()}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Mostrar sede si es efectivo */}
-                    {abonoData.metodo_pago === 'efectivo' && (
-                        <div className="sede-info-card">
-                            <div className="sede-icon">💵</div>
-                            <div className="sede-text">
-                                <strong>Pago en efectivo</strong>
-                                <br />
-                                Sede de pago: <span className="sede-name">{ventaSeleccionada?.nombreSede || 'N/A'}</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Fila 2: Fecha */}
-                    <div className="form-group">
-                        <label className="form-label">Fecha del Abono</label>
-                        <input
-                            type="date"
-                            name="fecha"
-                            value={abonoData.fecha}
-                            onChange={handleAbonoChange}
-                            className="form-control"
-                            max={new Date().toISOString().split('T')[0]}
-                        />
-                    </div>
-
-                    {/* Comprobante */}
-                    <div className="form-group">
-                        <label className="form-label">Comprobante de Pago</label>
-                        <div className="file-upload-section">
-                            <input
-                                id="comprobante"
-                                type="file"
-                                accept="image/*"
-                                onChange={handleLocalImageUpload}
-                                className="file-input"
-                            />
-                            <label htmlFor="comprobante" className="file-input-label">
-                                <div className="file-input-content">
-                                    <div className="upload-icon">📎</div>
-                                    <div className="upload-text">
-                                        <span>Seleccionar imagen</span>
-                                        <small>JPG, PNG, GIF - Máx. 5MB</small>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-
-                        {/* Preview de imagen */}
-                        {previewImage && (
-                            <div className="image-preview-section">
-                                <div className="preview-header">
-                                    <span className="preview-title">Vista previa:</span>
-                                    <button 
-                                        type="button"
-                                        onClick={limpiarImagen}
-                                        className="remove-image-btn"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                                <div className="preview-container">
-                                    <img 
-                                        src={previewImage} 
-                                        alt="Vista previa del comprobante" 
-                                        className="preview-image"
-                                    />
+                        {/* Mostrar sede si es efectivo */}
+                        {abonoData.metodo_pago === 'efectivo' && (
+                            <div className="sede-info-alert">
+                                <div className="alert-icon">💵</div>
+                                <div className="alert-content">
+                                    <strong>Pago en efectivo</strong>
+                                    <br />
+                                    Sede de pago: <span className="sede-name">{ventaSeleccionada?.nombreSede || 'N/A'}</span>
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Botones de acción */}
-                    <div className="modal-actions">
-                        <button 
-                            type="button" 
-                            className="btn-secondary" 
-                            onClick={handleClose}
-                        >
-                            Cancelar
-                        </button>
-                        <button 
-                            type="button" 
-                            className="btn-primary"
-                            onClick={handleSubmit}
-                            disabled={!abonoData.metodo_pago || !abonoData.total_pagado || faltaPorPagar <= 0}
-                        >
-                            {faltaPorPagar <= 0 ? '✓ Venta Pagada' : 'Guardar Abono'}
-                        </button>
-                    </div>
+                        <div className="field-group">
+                            <label className="field-label">Fecha del Abono</label>
+                            <input
+                                type="date"
+                                name="fecha"
+                                value={abonoData.fecha}
+                                onChange={handleAbonoChange}
+                                className="form-input"
+                                max={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+
+                        <div className="field-group">
+                            <label className="field-label">Comprobante de Pago</label>
+                            <div className="file-upload-wrapper">
+                                <input
+                                    id="comprobante"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLocalImageUpload}
+                                    className="file-input-hidden"
+                                />
+                                <label htmlFor="comprobante" className="file-upload-label">
+                                    <div className="upload-content">
+                                        <div className="upload-icon">📎</div>
+                                        <div className="upload-text">
+                                            <span>Seleccionar imagen</span>
+                                            <small>JPG, PNG, GIF - Máx. 5MB</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {previewImage && (
+                                <div className="preview-section">
+                                    <div className="preview-header">
+                                        <span className="preview-label">Vista previa</span>
+                                        <button 
+                                            type="button"
+                                            onClick={limpiarImagen}
+                                            className="remove-preview-btn"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <div className="preview-image-container">
+                                        <img 
+                                            src={previewImage} 
+                                            alt="Vista previa del comprobante" 
+                                            className="preview-image"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </form>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="action-buttons">
+                    <button 
+                        type="button" 
+                        className="btn btn-cancel" 
+                        onClick={handleClose}
+                    >
+                        <span className="btn-icon">✕</span>
+                        Cancelar
+                    </button>
+                    <button 
+                        type="button" 
+                        className="btn btn-save"
+                        onClick={handleSubmit}
+                        disabled={!abonoData.metodo_pago || !abonoData.total_pagado || faltaPorPagar <= 0}
+                    >
+                        <span className="btn-icon">{faltaPorPagar <= 0 ? '✓' : '💾'}</span>
+                        {faltaPorPagar <= 0 ? 'Venta Pagada' : 'Guardar Abono'}
+                    </button>
                 </div>
             </div>
 
             <style jsx>{`
-                .abono-modal-container {
-                    max-width: 700px;
-                    width: 100%;
+                .agregar-abono-container {
+                    max-width: 900px;
+                    width: 90vw;
                     max-height: 90vh;
                     overflow-y: auto;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                 }
 
-                /* Header */
-                .modal-header-section {
-                    text-align: center;
+                /* Header Info */
+                .header-info {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
                     margin-bottom: 24px;
-                    padding-bottom: 16px;
-                    border-bottom: 2px solid #e9ecef;
                 }
 
-                .modal-title {
-                    font-size: 24px;
-                    font-weight: 600;
-                    color: #2c3e50;
-                    margin: 0 0 8px 0;
-                }
-
-                .venta-info-badge {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
+                .info-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                    color: #374151;
                     padding: 8px 16px;
                     border-radius: 20px;
                     font-size: 14px;
                     font-weight: 500;
-                    display: inline-block;
+                    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.1);
+                    border: 1px solid #d1d5db;
                 }
 
-                /* Resumen de venta */
-                .venta-summary-card {
-                    background: #f8f9fa;
-                    border: 1px solid #dee2e6;
-                    border-radius: 12px;
-                    padding: 20px;
+                .badge-icon {
+                    font-size: 16px;
+                }
+
+                /* Form Card */
+                .form-card {
+                    background: white;
+                    border-radius: 16px;
+                    padding: 24px;
                     margin-bottom: 24px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                    border: 1px solid #e5e7eb;
                 }
 
-                .summary-grid {
+                .section-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 24px;
+                    padding-bottom: 12px;
+                    border-bottom: 2px solid #e5e7eb;
+                }
+
+                .title-icon {
+                    font-size: 24px;
+                }
+
+                /* Venta Summary */
+                .venta-summary {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 16px;
+                    margin-bottom: 20px;
                 }
 
                 .summary-item {
+                    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+                    padding: 14px;
+                    border-radius: 12px;
+                    border: 1px solid #e5e7eb;
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 6px;
+                    transition: all 0.2s ease;
                 }
 
                 .summary-item.destacado {
-                    background: white;
-                    padding: 12px;
-                    border-radius: 8px;
-                    border: 2px solid #007bff;
+                    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+                    border: 2px solid #ec4899;
+                    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+                }
+
+                .summary-item:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
                 }
 
                 .summary-label {
                     font-size: 13px;
-                    color: #6c757d;
                     font-weight: 500;
+                    color: #6b7280;
                 }
 
                 .summary-value {
-                    font-size: 16px;
-                    font-weight: 600;
+                    font-size: 18px;
+                    font-weight: 700;
                 }
 
                 .summary-value.total-venta {
-                    color: #495057;
+                    color: #374151;
                 }
 
                 .summary-value.pagado {
-                    color: #28a745;
+                    color: #10b981;
                 }
 
                 .summary-value.pendiente {
-                    color: #007bff;
-                    font-size: 18px;
+                    color: #ec4899;
+                    font-size: 20px;
                 }
 
-                /* Formulario */
-                .abono-form {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
+                /* Section Divider */
+                .section-divider {
+                    height: 2px;
+                    background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+                    margin: 24px 0;
                 }
 
-                .form-row {
+                /* Form Grid */
+                .form-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 16px;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 24px;
+                    margin-bottom: 20px;
                 }
 
-                .form-group {
+                .field-group {
                     display: flex;
                     flex-direction: column;
-                    gap: 6px;
+                    gap: 8px;
                 }
 
-                .form-label {
-                    font-size: 14px;
+                .field-label {
                     font-weight: 600;
                     color: #374151;
-                    margin-bottom: 4px;
-                }
-
-                .required {
-                    color: #dc3545;
-                }
-
-                .form-control {
-                    padding: 12px 16px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
                     font-size: 14px;
+                }
+
+                .form-input {
+                    padding: 12px 16px;
+                    border: 2px solid #d1d5db;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    transition: all 0.2s ease;
                     background: white;
-                    transition: all 0.3s ease;
+                    color: #374151;
                 }
 
-                .form-control:focus {
+                .form-input:focus {
                     outline: none;
-                    border-color: #007bff;
-                    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                    border-color: #ec4899;
+                    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
                 }
 
-                .form-control.error {
-                    border-color: #dc3545;
+                .form-input.error {
+                    border-color: #ef4444;
+                    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
                 }
 
-                .error-text {
-                    color: #dc3545;
+                .error-message {
+                    color: #ef4444;
                     font-size: 12px;
-                    margin-top: 4px;
+                    font-weight: 500;
                 }
 
                 .input-help {
-                    color: #6c757d;
+                    color: #6b7280;
                     font-size: 12px;
                     font-style: italic;
                 }
 
-                /* Sede info card */
-                .sede-info-card {
+                /* Sede Info Alert */
+                .sede-info-alert {
                     display: flex;
                     align-items: center;
                     gap: 12px;
-                    background: #e8f4fd;
-                    border: 2px solid #007bff;
-                    border-radius: 10px;
+                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    border: 2px solid #3b82f6;
+                    border-radius: 12px;
                     padding: 16px;
-                    margin: 8px 0;
+                    margin: 20px 0;
                 }
 
-                .sede-icon {
+                .alert-icon {
                     font-size: 24px;
                 }
 
-                .sede-text {
+                .alert-content {
                     font-size: 14px;
-                    color: #374151;
-                    line-height: 1.4;
+                    color: #1e40af;
+                    line-height: 1.5;
                 }
 
                 .sede-name {
-                    color: #007bff;
-                    font-weight: 600;
+                    font-weight: 700;
+                    color: #1e3a8a;
                 }
 
-                /* File upload */
-                .file-upload-section {
+                /* File Upload */
+                .file-upload-wrapper {
                     position: relative;
                 }
 
-                .file-input {
+                .file-input-hidden {
                     position: absolute;
                     opacity: 0;
                     width: 100%;
@@ -477,23 +501,24 @@ export default function VentasAgregarAbonoModal({
                     cursor: pointer;
                 }
 
-                .file-input-label {
+                .file-upload-label {
                     display: block;
-                    border: 2px dashed #cbd5e0;
-                    border-radius: 10px;
-                    padding: 20px;
+                    border: 2px dashed #d1d5db;
+                    border-radius: 12px;
+                    padding: 24px;
                     text-align: center;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    background: #fafafa;
+                    transition: all 0.2s ease;
+                    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
                 }
 
-                .file-input-label:hover {
-                    border-color: #007bff;
-                    background: #f0f8ff;
+                .file-upload-label:hover {
+                    border-color: #ec4899;
+                    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+                    transform: translateY(-2px);
                 }
 
-                .file-input-content {
+                .upload-content {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -501,27 +526,27 @@ export default function VentasAgregarAbonoModal({
                 }
 
                 .upload-icon {
-                    font-size: 24px;
-                    color: #6c757d;
+                    font-size: 32px;
+                    color: #6b7280;
                 }
 
                 .upload-text span {
                     display: block;
                     font-size: 14px;
-                    font-weight: 500;
+                    font-weight: 600;
                     color: #374151;
                 }
 
                 .upload-text small {
-                    color: #6c757d;
+                    color: #9ca3af;
                     font-size: 12px;
                 }
 
-                /* Image preview */
-                .image-preview-section {
+                /* Preview Section */
+                .preview-section {
                     margin-top: 16px;
-                    border: 1px solid #e1e5e9;
-                    border-radius: 10px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
                     overflow: hidden;
                     background: white;
                 }
@@ -531,124 +556,137 @@ export default function VentasAgregarAbonoModal({
                     justify-content: space-between;
                     align-items: center;
                     padding: 12px 16px;
-                    background: #f8f9fa;
-                    border-bottom: 1px solid #e1e5e9;
+                    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+                    border-bottom: 1px solid #e5e7eb;
                 }
 
-                .preview-title {
+                .preview-label {
                     font-size: 13px;
                     font-weight: 600;
                     color: #374151;
                 }
 
-                .remove-image-btn {
-                    background: #dc3545;
-                    color: white;
+                .remove-preview-btn {
+                    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+                    color: #dc2626;
                     border: none;
                     border-radius: 50%;
-                    width: 24px;
-                    height: 24px;
+                    width: 28px;
+                    height: 28px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    font-size: 12px;
-                    transition: background-color 0.2s;
+                    font-size: 14px;
+                    font-weight: bold;
+                    transition: all 0.2s;
                 }
 
-                .remove-image-btn:hover {
-                    background: #c82333;
+                .remove-preview-btn:hover {
+                    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+                    transform: scale(1.1);
                 }
 
-                .preview-container {
+                .preview-image-container {
                     padding: 16px;
                     text-align: center;
+                    background: #fafafa;
                 }
 
                 .preview-image {
                     max-width: 100%;
-                    max-height: 200px;
-                    border-radius: 8px;
-                    border: 1px solid #e1e5e9;
+                    max-height: 300px;
+                    border-radius: 10px;
+                    border: 2px solid #e5e7eb;
                     object-fit: contain;
                 }
 
-                /* Botones de acción */
-                .modal-actions {
+                /* Action Buttons */
+                .action-buttons {
                     display: flex;
+                    justify-content: space-between;
                     gap: 12px;
-                    justify-content: flex-end;
-                    margin-top: 24px;
-                    padding-top: 20px;
-                    border-top: 1px solid #e9ecef;
                 }
 
-                .btn-secondary,
-                .btn-primary {
-                    padding: 12px 24px;
+                .btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    padding: 14px 32px;
                     border: none;
-                    border-radius: 8px;
-                    font-size: 14px;
+                    border-radius: 10px;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    min-width: 120px;
+                    transition: all 0.2s ease;
+                    font-size: 15px;
+                    flex: 1;
                 }
 
-                .btn-secondary {
-                    background: #6c757d;
+                .btn-cancel {
+                    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                    color: #6b7280;
+                    border: 2px solid #d1d5db;
+                }
+
+                .btn-cancel:hover {
+                    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+                    color: #374151;
+                    transform: translateY(-1px);
+                }
+
+                .btn-save {
+                    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
                     color: white;
+                    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
                 }
 
-                .btn-secondary:hover {
-                    background: #5a6268;
+                .btn-save:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
                 }
 
-                .btn-primary {
-                    background: #28a745;
-                    color: white;
-                }
-
-                .btn-primary:hover:not(:disabled) {
-                    background: #218838;
-                }
-
-                .btn-primary:disabled {
-                    background: #6c757d;
-                    cursor: not-allowed;
+                .btn-save:disabled {
                     opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                    background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+                }
+
+                .btn-icon {
+                    font-size: 18px;
                 }
 
                 /* Responsive */
                 @media (max-width: 768px) {
-                    .abono-modal-container {
-                        max-width: 95vw;
-                        margin: 10px;
+                    .agregar-abono-container {
+                        padding: 16px;
                     }
-                    
-                    .form-row {
+
+                    .form-grid {
                         grid-template-columns: 1fr;
-                        gap: 12px;
                     }
-                    
-                    .summary-grid {
+
+                    .venta-summary {
                         grid-template-columns: 1fr;
-                        gap: 12px;
                     }
-                    
-                    .modal-actions {
+
+                    .action-buttons {
                         flex-direction: column;
                     }
-                    
-                    .btn-secondary,
-                    .btn-primary {
+
+                    .btn {
                         width: 100%;
                     }
-                    
-                    .sede-info-card {
+
+                    .sede-info-alert {
                         flex-direction: column;
                         text-align: center;
-                        gap: 8px;
+                    }
+
+                    .preview-image {
+                        max-height: 150px;
                     }
                 }
             `}</style>

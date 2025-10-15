@@ -1,17 +1,18 @@
-// VentasListar.jsx
-import React from 'react';
+// VentasListar.jsx - Con Previsualización PDF y carga completa de datos
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
 import AppNotification from '../../components/Notification';
 import { Tag } from 'primereact/tag';
 import SearchBar from '../../components/SearchBar';
+import ventaApiService from '../../services/venta_services';
 import '../../adminStyles.css';
+import PDFPreviewVentas from './PDFPreviewVentas';
 
 export default function VentasListar({
     ventasFiltradas,
     abrirModal,
-    generarPDFVenta,
     setVentaSeleccionada,
     setMostrarModalAbonos,
     manejarCambioEstado,
@@ -25,8 +26,12 @@ export default function VentasListar({
     setFiltro,
     setMostrarAgregarVenta
 }) {
+    // Estado para controlar la previsualización del PDF
+    const [mostrarPreviewPDF, setMostrarPreviewPDF] = useState(false);
+    const [ventaParaPDF, setVentaParaPDF] = useState(null);
+    const [loadingPDF, setLoadingPDF] = useState(false);
 
-    // NUEVA FUNCIÓN para formatear valores a moneda
+    // Función para formatear valores a moneda
     const formatearMoneda = (valor) => {
         const numero = parseFloat(valor || 0);
         return numero.toLocaleString('es-CO', {
@@ -124,6 +129,41 @@ export default function VentasListar({
         }
     };
 
+    // Función para abrir el preview del PDF - CORREGIDA
+    const abrirPreviewPDF = async (venta) => {
+        console.log('🔍 Abriendo preview para venta:', venta);
+        setLoadingPDF(true);
+        
+        try {
+            // Obtener datos completos de la venta incluyendo detalleVenta
+            console.log('📡 Solicitando datos completos de venta ID:', venta.idVenta);
+            const ventaCompleta = await ventaApiService.obtenerVentaPorId(venta.idVenta);
+            console.log('✅ Venta completa obtenida:', ventaCompleta);
+            
+            // Verificar que tenga productos
+            if (!ventaCompleta.detalleVenta || ventaCompleta.detalleVenta.length === 0) {
+                console.error('❌ La venta no tiene productos:', ventaCompleta);
+                alert('Esta venta no tiene productos registrados para generar el PDF');
+                return;
+            }
+            
+            console.log('📄 Productos encontrados:', ventaCompleta.detalleVenta.length);
+            setVentaParaPDF(ventaCompleta);
+            setMostrarPreviewPDF(true);
+        } catch (error) {
+            console.error('❌ Error al obtener datos completos de la venta:', error);
+            alert('No se pudo cargar la información completa de la venta: ' + error.message);
+        } finally {
+            setLoadingPDF(false);
+        }
+    };
+
+    // Función para cerrar el preview
+    const cerrarPreviewPDF = () => {
+        setMostrarPreviewPDF(false);
+        setVentaParaPDF(null);
+    };
+
     const actionBodyTemplate = (rowData) => {
         const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
         const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa;
@@ -149,9 +189,14 @@ export default function VentasListar({
                 <button
                     className="admin-button blue"
                     title="Descargar PDF"
-                    onClick={() => generarPDFVenta(rowData)}
+                    onClick={() => abrirPreviewPDF(rowData)}
+                    disabled={loadingPDF}
+                    style={{ 
+                        opacity: loadingPDF ? 0.6 : 1,
+                        cursor: loadingPDF ? 'wait' : 'pointer'
+                    }}
                 >
-                    ⬇️
+                    {loadingPDF ? '⏳' : '⬇️'}
                 </button>
                {rowData.tipoVenta === 'pedido' && isAnulable && (
                     <button
@@ -236,7 +281,6 @@ export default function VentasListar({
                     body={estadoBodyTemplate}
                     style={{ minWidth: '110px', maxWidth: '130px' }}
                 ></Column>
-                {/* MODIFICACIÓN: Se agrega el `body` para dar formato de moneda */}
                 <Column 
                     field="total" 
                     header="Total"
@@ -244,6 +288,18 @@ export default function VentasListar({
                 ></Column>
                 <Column header="Acciones" body={actionBodyTemplate}></Column>
             </DataTable>
+
+            {/* Modal de previsualización del PDF */}
+            {mostrarPreviewPDF && ventaParaPDF && (
+                <PDFPreviewVentas
+                    visible={mostrarPreviewPDF}
+                    onClose={cerrarPreviewPDF}
+                    ventaData={ventaParaPDF}
+                    onDownload={() => {
+                        console.log('PDF descargado exitosamente');
+                    }}
+                />
+            )}
 
             <style jsx>{`
                 .estado-dropdown {

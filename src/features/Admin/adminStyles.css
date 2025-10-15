@@ -100,9 +100,19 @@
     color: white;
 }
 
-.p-inputswitch {
-    vertical-align: middle;
+.p-inputswitch .p-inputswitch-slider {
+  background-color: #d6d6d6 !important;
 }
+
+.p-inputswitch.p-highlight .p-inputswitch-slider,
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background-color: #d81b60 !important;
+}
+
+.p-inputswitch .p-inputswitch-slider:before {
+  background-color: white !important;
+}
+
 
 .admin-button {
     border: none;
@@ -246,11 +256,13 @@
 
 .search-input {
     padding: 8px 12px;
-    border: 2px solid #f48fb1;
+    border: 2px solid #ec407a; /* borde rosado más fuerte */
     border-radius: 10px;
     width: 250px;
     font-size: 14px;
     outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 5px rgba(244, 143, 177, 0.6); /* brillo rosado permanente */
 }
 
 .mensaje-exito {

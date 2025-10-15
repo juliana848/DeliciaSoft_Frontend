@@ -10,10 +10,11 @@ import ModalInsumo from "./modalesInsumo";
 import AgregarCategoria from "./agregarCategoria";
 import IndicadorStock from "./insicadorStock";
 import IndicadorStockMin from "./indicadorStockMin";
-import NotificationBell from "../../../components/NotificationBell";
+// import NotificationBell from "../../../components/NotificationBell"; // DESHABILITADO
 import insumoApiService from "../../../services/insumos";
 import categoriaInsumoApiService from "../../../services/categoriainsumos";
 import LoadingSpinner from '../../../components/LoadingSpinner';
+import '../comprasCrud/styles/ComprasTable.css'
 
 export default function TablaInsumos() {
   const [insumos, setInsumos] = useState([]);
@@ -146,14 +147,11 @@ export default function TablaInsumos() {
         >
           + Agregar
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <NotificationBell insumos={insumos} />
-          <SearchBar
-            value={filtro}
-            onChange={setFiltro}
-            placeholder="Buscar por nombre, categoría, cantidad, estado..."
-          />
-        </div>
+        <SearchBar
+          value={filtro}
+          onChange={setFiltro}
+          placeholder="Buscar por nombre, categoría, cantidad, estado..."
+        />
       </div>
 
       <div

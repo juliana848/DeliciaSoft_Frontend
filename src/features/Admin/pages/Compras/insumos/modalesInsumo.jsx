@@ -7,6 +7,7 @@ import imagenesApiService from "../../../services/imagenes";
 import SearchableSelect from "./SearchableSelect";
 import StyledSelect from "./StyledSelect";
 
+
 export default function ModalInsumo({
   modal,
   cerrar,

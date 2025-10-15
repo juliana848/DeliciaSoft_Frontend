@@ -1,0 +1,22 @@
+/* Solo cambio de color de botones a gris con difuminado */
+
+.admin-tab-static {
+  background: linear-gradient(to bottom, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%) !important;
+  color: #1f2937 !important;
+}
+
+.admin-tab {
+  background: linear-gradient(to bottom, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%) !important;
+  color: #1f2937 !important;
+}
+
+.admin-tab:hover {
+  background: linear-gradient(to bottom, #d1d5db 0%, #e5e7eb 50%, #d1d5db 100%) !important;
+  color: #111827 !important;
+}
+
+.admin-tab.active {
+  background: linear-gradient(to bottom, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%) !important;
+  border-bottom: 3px solid #ec4899 !important;
+  color: #111827 !important;
+}

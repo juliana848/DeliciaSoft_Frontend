@@ -470,7 +470,7 @@ useEffect(() => {
                     onClick={onCancelar}
                     disabled={cargando}
                 >
-                    {modalTipo === 'ver' ? 'Cerrar' : 'Cancelar'}
+                    {modalTipo === 'ver' ? 'Cerrar' : '❌ Cancelar'}
                 </button>
                 {modalTipo !== 'ver' && onGuardar && (
                     <button 

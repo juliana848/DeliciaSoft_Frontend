@@ -196,7 +196,6 @@ export const CustomLegend = ({ obtenerDatosTorta }) => (
   </div>
 );
 
-// Componente del gráfico de torta
 export const TortaComponent = React.memo(({ 
   expanded = false, 
   periodoTorta, 

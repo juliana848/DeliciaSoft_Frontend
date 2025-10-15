@@ -14,7 +14,8 @@ export const styles = {
     fontSize: '24px',
     fontWeight: 'bold',
     marginBottom: '15px',
-    color: '#333'
+    color: '#333',
+    marginTop: '10px'
   },
   mainContent: {
     display: 'flex',
@@ -24,49 +25,68 @@ export const styles = {
     alignItems: 'flex-start'
   },
   leftSection: {
-    flex: '2',
-    minWidth: '400px',
-    maxWidth: 'calc(100% - 370px)'
+    flex: '1.8',
+    minWidth: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+    marginTop:'45px'
   },
   rightSection: {
     flex: '1',
-    minWidth: '350px',
-    maxWidth: '350px'
+    minWidth: '400px',
+    maxWidth: '450px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
   },
   statsRow: {
     display: 'flex',
     gap: '15px',
     marginBottom: '20px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    alignItems: 'stretch'
   },
   statCard: {
     background: 'white',
     borderRadius: '10px',
-    padding: '18px',
+    padding: '25px',
     flex: '1',
-    minWidth: '180px',
+    minWidth: '220px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    position: 'relative'
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between'
   },
   statTitle: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: '#666',
-    marginBottom: '10px',
-    fontWeight: '400'
+    marginBottom: '8px',
+    fontWeight: '400',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   },
   statValue: {
-    fontSize: '24px',
+    fontSize: '32px',
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: '10px'
+    marginBottom: '12px',
+    lineHeight: '1'
   },
   statChange: {
-    fontSize: '12px',
-    fontWeight: '400',
+    fontSize: '13px',
+    fontWeight: '500',
     display: 'flex',
     alignItems: 'center',
     gap: '5px',
-    color: '#666'
+    color: '#666',
+    marginBottom: '8px'
+  },
+  statSubInfo: {
+    fontSize: '11px',
+    color: '#999',
+    marginTop: '5px'
   },
   statProgress: {
     position: 'absolute',
@@ -92,15 +112,19 @@ export const styles = {
     borderRadius: '10px',
     padding: '20px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: 'fit-content',
-    marginBottom: '20px'
+    height: '320px',
+    display: 'flex',
+    flexDirection: 'column'
   },
   tortaCard: {
     background: 'white',
     borderRadius: '10px',
     padding: '20px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: 'fit-content'
+    height: '320px',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden'
   },
   tortaCardExpanded: {
     position: 'fixed',
@@ -133,6 +157,7 @@ export const styles = {
     marginBottom: '15px',
     flexWrap: 'wrap',
     gap: '10px'
+
   },
   tortaHeader: {
     display: 'flex',
@@ -173,8 +198,8 @@ export const styles = {
   sedeFilterCard: {
     background: 'white',
     borderRadius: '10px',
-    padding: '18px',
-    minWidth: '180px',
+    padding: '25px',
+    minWidth: '220px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
     display: 'flex',
     flexDirection: 'column',
@@ -187,9 +212,10 @@ export const styles = {
     flexWrap: 'wrap'
   },
   ventasList: {
-    maxHeight: '300px',
+    flex: 1,
     overflowY: 'auto',
-    paddingRight: '5px'
+    paddingRight: '5px',
+    minHeight: '220px'
   },
   ventaItem: {
     display: 'flex',
@@ -247,8 +273,11 @@ export const styles = {
   chartCard: {
     background: 'white',
     borderRadius: '10px',
-    padding: '20px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+    padding: '25px',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+    height: '420px',
+    display: 'flex',
+    flexDirection: 'column'
   },
   chartHeader: {
     display: 'flex',
@@ -374,7 +403,7 @@ export const styles = {
     fontSize: '24px',
     cursor: 'pointer',
     color: '#666'
-  }
+  },
 };
 
 export const globalStyles = `

@@ -270,7 +270,7 @@ const ProductosDestacados = () => {
                   <div className="d-flex justify-content-between align-items-center">
                     {/* Contenedor de precio centrado */}
                     <div className="d-flex align-items-center gap-2">
-                      <i className="fas fa-dollar-sign text-success" style={{fontSize: '18px'}}></i>
+                      
                       <div className="product-price fw-bold">
                         {formatearPrecio(producto.precio || producto.precioproducto)}
                       </div>

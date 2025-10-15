@@ -10,32 +10,40 @@
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
+  padding-top: 0; /* Sin padding - elementos fijos independientes */
 }
 
 .main-content.with-sidebar {
-  margin-left: 250px;
+  margin-left: 280px;
 }
 
 .main-content.full-width {
   margin-left: 0;
+  padding-top: 0; /* Sin header en páginas públicas */
 }
 
 .content-wrapper {
   flex: 1;
   padding: 2rem;
   background: #f8f9fa;
-  min-height: calc(100vh - 4rem);
+  min-height: calc(100vh - 70px);
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .main-content.with-sidebar {
     margin-left: 0;
-    margin-top: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 60px; /* Header más pequeño en móvil */
   }
   
   .content-wrapper {
     padding: 1rem;
+    min-height: calc(100vh - 60px);
   }
 }
 
@@ -46,4 +54,10 @@
 
 .layout-container * {
   transition: all 0.3s ease;
+}
+
+/* Asegurar que el header nunca se mueva */
+.admin-header-fixed {
+  position: fixed !important;
+  top: 0 !important;
 }

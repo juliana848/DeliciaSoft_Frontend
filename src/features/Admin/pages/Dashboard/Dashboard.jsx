@@ -255,7 +255,7 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-  
+
   // Cargar ventas en tiempo real con imágenes
   const cargarVentasEnTiempoReal = async () => {
     try {
@@ -276,6 +276,10 @@ const Dashboard = () => {
 
             const productoInfo = await productosApiService.obtenerProductoPorId(detalle.idproductogeneral);
 
+            // ✅ USAR LA MISMA CONVERSIÓN QUE EN HELPERS
+            const fechaStr = venta.fechaVenta;
+            const fechaColombia = convertirFechaAColombiaDesdeString(fechaStr);
+
             return {
               idVenta: venta.idVenta,
               producto: productoInfo.nombre || productoInfo.nombreproducto || 'Producto N/A',
@@ -283,7 +287,8 @@ const Dashboard = () => {
               precio: parseFloat(detalle.subtotal || '0'),
               imagen: productoInfo.urlimagen || productoInfo.imagenes?.urlimg || '',
               sede: venta.nombreSede || 'Sede principal',
-              timestamp: new Date(venta.fechaVenta)
+              timestamp: fechaColombia,
+              fechaOriginal: venta.fechaVenta
             };
           } catch (error) {
             console.error(`Error al procesar venta ${venta.idVenta}:`, error);
@@ -329,7 +334,7 @@ const Dashboard = () => {
     }));
   }, [periodoSeleccionado, datosVentas, datosCompras]);
 
-  // ✅ CALCULAR TOTALES DIARIOS CORREGIDO
+  // ✅ CALCULAR TOTALES DIARIOS - USANDO LA MISMA LÓGICA QUE EL GRÁFICO
   const calcularTotalesDiarios = useMemo(() => {
     const ahora = new Date();
     const hoy = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
@@ -342,12 +347,18 @@ const Dashboard = () => {
     console.log('🔢 Total ventas disponibles:', ventasRealTime.length);
     console.log('🏢 Sede seleccionada:', sedeSeleccionadaTotales);
     
-    // Filtrar ventas del día actual
-    const todasLasVentas = datosVentas.diarios?.flatMap(v => v.detalleVenta || []) || [];
-    const ventasDiarias = todasLasVentas.filter(venta => {
-      const fechaVenta = new Date(venta.fechaVenta || venta.timestamp);
+    // ✅ Filtrar ventas del día actual USANDO LA MISMA LÓGICA
+    const ventasDiarias = ventasRealTime.filter(venta => {
+      if (!venta.timestamp) return false;
+      
+      const fechaVenta = venta.timestamp;
       const esHoy = fechaVenta >= hoy && fechaVenta <= finHoy;
       const cumpleSede = sedeSeleccionadaTotales === 'todas' || venta.sede === sedeSeleccionadaTotales;
+      
+      if (esHoy) {
+        console.log(`✅ Venta del día: ${venta.producto} - ${venta.precio} - ${fechaVenta.toLocaleString('es-CO')}`);
+      }
+      
       return esHoy && cumpleSede;
     });
 
@@ -396,7 +407,7 @@ const Dashboard = () => {
       <style>{globalStyles}</style>
       
       <div style={styles.container}>
-        <h1 style={styles.header}>Dashboard</h1>
+        <h1 style={styles.header}>Gestión De Dashboard</h1>
         
         {loading ? (
           <LoadingSpinner />
@@ -415,7 +426,8 @@ const Dashboard = () => {
                     titulo={`Ventas de Hoy ${sedeSeleccionadaTotales !== 'todas' ? `(${sedeSeleccionadaTotales})` : '(Todas las sedes)'}`}
                     valor={calcularTotalesDiarios.ventas} 
                     porcentaje={calcularTotalesDiarios.porcentajeVentas} 
-                    tipo="ventas" 
+                    tipo="ventas"
+                    cantidadTransacciones={calcularTotalesDiarios.cantidadVentas}
                   />
                   <StatCard 
                     titulo="Compras de Hoy" 
@@ -424,8 +436,8 @@ const Dashboard = () => {
                     tipo="compras" 
                   />
                   <div style={styles.sedeFilterCard}>
-                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                      Filtrar totales por sede
+                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '500' }}>
+                      🏢 Filtrar por sede
                     </div>
                     <select 
                       style={styles.sedeSelector} 
@@ -439,9 +451,6 @@ const Dashboard = () => {
                         </option>
                       ))}
                     </select>
-                    <div style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>
-                      {calcularTotalesDiarios.cantidadVentas} ventas realizadas hoy
-                    </div>
                   </div>
                 </div>
 
@@ -492,7 +501,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   
-                  <ResponsiveContainer width="100%" height={250}>
+                  <ResponsiveContainer width="100%" height={230}>
                     {obtenerDatosCalculados.length === 0 ? (
                       <NoData mensaje="No hay datos de ventas o compras para mostrar" />
                     ) : (

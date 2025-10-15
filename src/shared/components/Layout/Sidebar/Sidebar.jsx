@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import LogoutButton from '../LogoutButton/LogoutButton';
 import './Sidebar.css';
 
 const Sidebar = ({ userRole = 'admin' }) => {
@@ -402,9 +401,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
         className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
         onClick={handleOverlayClick}
       ></div>
-
-      {/* Botón de cerrar sesión fijo en esquina superior derecha */}
-      <LogoutButton className="logout-button-fixed" showText={true} />
       
       <div className={`sidebar ${sidebarOpen ? 'active' : ''}`}>
         <div className="sidebar-header">

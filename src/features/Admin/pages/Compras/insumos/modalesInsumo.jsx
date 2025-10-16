@@ -7,7 +7,6 @@ import imagenesApiService from "../../../services/imagenes";
 import SearchableSelect from "./SearchableSelect";
 import StyledSelect from "./StyledSelect";
 
-
 export default function ModalInsumo({
   modal,
   cerrar,
@@ -28,8 +27,7 @@ export default function ModalInsumo({
     imagen: null,
     imagenPreview: null,
     idImagenExistente: null,
-    // Campos adicionales para catálogos múltiples
-    catalogosSeleccionados: [], // ['adicion', 'sabor', 'relleno']
+    catalogosSeleccionados: [],
     nombreCatalogo: "",
     precioadicion: "",
     estadoCatalogo: true,
@@ -38,14 +36,12 @@ export default function ModalInsumo({
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Opciones de catálogos disponibles
   const opcionesCatalogos = [
     { label: '🍰 Adiciones/Toppings', value: 'adicion' },
     { label: '🎨 Sabores', value: 'sabor' },
-    { label: '🥐 Rellenos', value: 'relleno' }
+    { label: '🥧 Rellenos', value: 'relleno' }
   ];
 
-  // Función para determinar si es categoría especial
   const esCategoriaEspecial = (categoriaId) => {
     if (!categoriaId || categorias.length === 0) return false;
     
@@ -101,7 +97,6 @@ export default function ModalInsumo({
     setForm((prev) => {
       const newForm = { ...prev, [name]: value };
       
-      // Si cambia el nombre del insumo, actualizar también nombreCatalogo
       if (name === "nombreInsumo" && esCategoriaEspecial(prev.idCategoriaInsumos)) {
         newForm.nombreCatalogo = value;
       }
@@ -110,29 +105,7 @@ export default function ModalInsumo({
     });
   };
 
-  // 🔥 FUNCIÓN PARA SUBIR IMAGEN A CLOUDINARY
-  const subirImagenCloudinary = async (file) => {
-    try {
-      setSubiendoImagen(true);
-      console.log('📤 Subiendo imagen a Cloudinary...');
-      
-      // Usar el servicio de imágenes
-      const resultado = await imagenesApiService.subirImagen(file, form.nombreInsumo);
-      
-      console.log('✅ Imagen subida exitosamente:', resultado);
-      
-      // Retornar el ID de la imagen
-      return resultado.idimagen;
-      
-    } catch (error) {
-      console.error('❌ Error al subir imagen:', error);
-      throw new Error(`No se pudo subir la imagen: ${error.message}`);
-    } finally {
-      setSubiendoImagen(false);
-    }
-  };
-
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
@@ -140,12 +113,11 @@ export default function ModalInsumo({
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification("La imagen no debe superar los 5MB", "error");
+      if (file.size > 10 * 1024 * 1024) {
+        showNotification("La imagen no debe superar los 10MB", "error");
         return;
       }
 
-      // Crear preview local
       const reader = new FileReader();
       reader.onloadend = () => {
         setForm(prev => ({
@@ -216,20 +188,8 @@ export default function ModalInsumo({
         return;
       }
 
-      // Validar imagen obligatoria SOLO para categorías especiales
       const esEspecial = esCategoriaEspecial(form.idCategoriaInsumos);
       
-      // ⚠️ TEMPORAL: Hacer la imagen opcional hasta configurar el backend
-      if (esEspecial && !form.imagen && !form.imagenPreview) {
-        const confirmar = window.confirm(
-          "⚠️ No has seleccionado una imagen.\n\n" +
-          "Para categorías especiales (Adiciones, Sabores, Rellenos) se recomienda agregar una imagen.\n\n" +
-          "¿Deseas continuar sin imagen?"
-        );
-        if (!confirmar) return;
-      }
-
-      // Validar campos de catálogo si es categoría especial
       if (esEspecial) {
         if (form.catalogosSeleccionados.length === 0) {
           showNotification("Debes seleccionar al menos un tipo de catálogo", "error");
@@ -254,65 +214,66 @@ export default function ModalInsumo({
         return;
       }
 
-      // 🔥 SUBIR IMAGEN A CLOUDINARY DIRECTAMENTE
+      // PASO 1: SUBIR IMAGEN SI EXISTE
       let idImagenParaGuardar = form.idImagenExistente;
       
-      if (esEspecial && form.imagen) {
+      if (form.imagen) {
         try {
-          showNotification("☁️ Subiendo imagen a Cloudinary...", "info");
+          setSubiendoImagen(true);
+          showNotification("Subiendo imagen...", "info");
+          console.log('Subiendo imagen:', form.imagen.name);
           
-          const resultado = await subirImagenCloudinary(form.imagen);
-          idImagenParaGuardar = resultado.idimagen;
+          const resultadoImagen = await imagenesApiService.subirImagen(
+            form.imagen, 
+            form.nombreInsumo
+          );
           
-          console.log('✅ Imagen procesada:', resultado);
-          showNotification("✅ Imagen subida correctamente", "success");
+          idImagenParaGuardar = resultadoImagen.idimagen;
+          console.log('Imagen subida, ID:', idImagenParaGuardar);
+          showNotification("Imagen subida correctamente", "success");
           
         } catch (error) {
-          console.error('❌ Error al subir imagen:', error);
-          
-          showNotification(
-            "❌ Error al subir imagen: " + error.message + 
-            "\n\nVerifica la configuración de Cloudinary en imagenes.js", 
-            "error"
-          );
+          console.error('Error al subir imagen:', error);
+          showNotification("Error al subir imagen: " + error.message, "error");
           
           const continuar = window.confirm(
-            "⚠️ No se pudo subir la imagen.\n\n" +
-            "¿Deseas guardar el insumo sin imagen?\n" +
-            "(Podrás agregar la imagen después editando el insumo)"
+            "No se pudo subir la imagen.\n\n¿Deseas guardar el insumo sin imagen?"
           );
-          
           if (!continuar) return;
           idImagenParaGuardar = null;
+        } finally {
+          setSubiendoImagen(false);
         }
       }
 
+      // PASO 2: PREPARAR DATOS DEL INSUMO
       const datosEnvio = {
-        ...form,
+        nombreInsumo: form.nombreInsumo.trim(),
         idCategoriaInsumos: parseInt(form.idCategoriaInsumos),
         idUnidadMedida: parseInt(form.idUnidadMedida),
         cantidad: parseFloat(form.cantidad),
         stockMinimo: parseInt(form.stockMinimo),
         precio: parseFloat(form.precio),
+        estado: form.estado,
       };
 
-      // 🔥 AGREGAR ID DE IMAGEN SI EXISTE
+      // Agregar imagen si existe
       if (idImagenParaGuardar) {
         datosEnvio.idImagen = parseInt(idImagenParaGuardar);
+        console.log('Agregando idImagen:', datosEnvio.idImagen);
       }
 
-      // 🔥 Si es categoría especial, agregar datos de MÚLTIPLES catálogos
+      // PASO 3: AGREGAR CATÁLOGOS SI ES CATEGORÍA ESPECIAL
       if (esEspecial && form.catalogosSeleccionados.length > 0) {
-        datosEnvio.catalogos = form.catalogosSeleccionados.map(tipo => ({
-          tipo: tipo, // 'adicion', 'sabor', 'relleno'
-          nombre: form.nombreCatalogo.trim(),
-          precioadicion: parseFloat(form.precioadicion),
-          estado: form.estadoCatalogo
-        }));
+        datosEnvio.catalogosSeleccionados = form.catalogosSeleccionados;
+        datosEnvio.nombreCatalogo = form.nombreCatalogo.trim();
+        datosEnvio.precioadicion = parseFloat(form.precioadicion);
+        datosEnvio.estadoCatalogo = form.estadoCatalogo;
       }
 
-      console.log('📦 Datos a enviar:', datosEnvio);
+      console.log('Datos finales a enviar:', JSON.stringify(datosEnvio, null, 2));
 
+      // PASO 4: GUARDAR INSUMO
       if (modal.tipo === "agregar") {
         await insumoApiService.crearInsumo(datosEnvio);
         const catalogosTexto = form.catalogosSeleccionados.length > 0 
@@ -327,6 +288,7 @@ export default function ModalInsumo({
       
       await cargarInsumos();
       cerrar();
+
     } catch (error) {
       console.error("Error al guardar:", error);
       showNotification("Error al guardar: " + error.message, "error");
@@ -339,8 +301,7 @@ export default function ModalInsumo({
       
       if (cantidadActual > 0) {
         showNotification(
-          `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. ` +
-          `Para eliminarlo, primero debe reducir el stock a 0.`,
+          `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. Para eliminarlo, primero debe reducir el stock a 0.`,
           "error"
         );
         return;
@@ -636,7 +597,6 @@ export default function ModalInsumo({
               </div>
             </label>
 
-            {/* Sección de imagen - SOLO para categorías especiales */}
             {mostrarCampoImagen && (
               <div style={{ gridColumn: "1 / -1", marginTop: "10px" }}>
                 <label>
@@ -694,7 +654,6 @@ export default function ModalInsumo({
               </div>
             )}
 
-            {/* CAMPOS DEL CATÁLOGO CON SELECCIÓN MÚLTIPLE */}
             {mostrarCamposCatalogo && (
               <>
                 <div style={{ 
@@ -717,7 +676,6 @@ export default function ModalInsumo({
                   </h3>
                   
                   <div className="modal-form-grid">
-                    {/* 🔥 SELECTOR MÚLTIPLE DE CATÁLOGOS MEJORADO */}
                     <div style={{ gridColumn: "1 / -1" }}>
                       <label style={{ 
                         display: 'block', 
@@ -732,7 +690,7 @@ export default function ModalInsumo({
                         value={form.catalogosSeleccionados}
                         options={opcionesCatalogos}
                         onChange={(e) => setForm({ ...form, catalogosSeleccionados: e.value })}
-                        placeholder="🔍 Selecciona los catálogos donde deseas agregar este insumo"
+                        placeholder="📦 Selecciona los catálogos donde deseas agregar este insumo"
                         display="chip"
                         className="w-full"
                         panelStyle={{
@@ -859,7 +817,6 @@ export default function ModalInsumo({
                       </span>
                     </div>
 
-                    {/* Mostrar resumen de catálogos seleccionados */}
                     {form.catalogosSeleccionados.length > 0 && (
                       <div style={{
                         gridColumn: "1 / -1",

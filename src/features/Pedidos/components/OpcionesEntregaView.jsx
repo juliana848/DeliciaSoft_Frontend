@@ -281,6 +281,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
   const fechaMaximaString = fechaMaxima.toISOString().split('T')[0];
 
   return (
+
     <div className="opciones-entrega-container">
       {/* Contenedor de alertas */}
       <div className="alertas-container">
@@ -310,7 +311,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
         </div>
 
         <div className="ubicaciones-container">
-          <h3 className="subsection-title">Nuestros Carritos Móviles</h3>
+          <h3 className="subsection-title">Selecciona dónde recogerás tu pedido</h3>
           
           {cargandoSedes ? (
             <div className="loading-container">
@@ -469,7 +470,9 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
         </div>
       </div>
     </div>
+    
   );
 };
+
 
 export default OpcionesEntregaView;

@@ -21,7 +21,7 @@ const Login = () => {
     return (
         <div className="login-wrapper">
             <div className="containerlog" id="container" ref={containerRef}>
-                <RegisterForm />
+                <RegisterForm onCambiarALogin={handleLoginClick} />
                 <LoginForm />
                 <TogglePanel onSignIn={handleLoginClick} onSignUp={handleRegisterClick} />
             </div>

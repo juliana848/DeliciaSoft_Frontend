@@ -303,14 +303,109 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
   }
 };
 
-  return (
+return (
     <div className="opciones-pago-view">
       {procesandoPedido && (
-        <div className="loading-overlay">
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-            <p>Procesando pedido...</p>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            marginBottom: '2rem',
+            animation: 'float 3s ease-in-out infinite'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              border: '8px solid #f3f3f3',
+              borderTop: '8px solid #e91e63',
+              borderRadius: '50%',
+              animation: 'spin 1.5s linear infinite'
+            }} />
           </div>
+          
+          <p style={{
+            color: '#e91e63',
+            fontSize: '24px',
+            fontWeight: '700',
+            marginBottom: '1rem',
+            fontFamily: 'Arial, sans-serif',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}>
+            Procesando tu pedido...
+          </p>
+          
+          <p style={{
+            color: '#6c757d',
+            fontSize: '16px',
+            fontWeight: '500',
+            textAlign: 'center',
+            maxWidth: '400px'
+          }}>
+            Por favor espera mientras confirmamos tu pedido
+          </p>
+          
+          <div style={{
+            width: '300px',
+            height: '8px',
+            backgroundColor: 'rgba(240, 240, 240, 0.8)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            position: 'relative',
+            marginTop: '2rem'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              height: '100%',
+              width: '50%',
+              background: 'linear-gradient(90deg, #f48fb1, #ec407a, #ff69b4, #ec407a, #f48fb1)',
+              backgroundSize: '200% 100%',
+              borderRadius: '20px',
+              animation: 'loadingBar 2s ease-in-out infinite, shimmer 3s linear infinite'
+            }}/>
+          </div>
+
+          <style>
+            {`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              
+              @keyframes loadingBar {
+                0% { left: -50%; }
+                50% { left: 100%; }
+                100% { left: -50%; }
+              }
+              
+              @keyframes shimmer {
+                0% { background-position: 0% 0%; }
+                100% { background-position: 200% 0%; }
+              }
+              
+              @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-15px); }
+              }
+              
+              @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+              }
+            `}
+          </style>
         </div>
       )}
 
@@ -346,16 +441,27 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
       )}
 
       <div className="pago-contenido">
-        <div className="seccion-header">
-          <h2 className="seccion-title">💳 Opciones de Pago</h2>
-          <div className="numero-pedido">
-            <span>📋 Número de Pedido: <strong>{numeroPedido}</strong></span>
-          </div>
-          <div className="alert-info">
-            <span className="alert-icon">ℹ️</span>
-            <span>Los productos personalizados requieren un abono del 50% para iniciar la producción</span>
-          </div>
-        </div>
+ <div className="seccion-header">
+  <h2 className="seccion-title">💳 Opciones de Pago</h2>
+  <div className="numero-pedido">
+    <span>📋 Número de Pedido: <strong>{numeroPedido}</strong></span>
+  </div>
+  <div style={{
+    background: '#fce4ec',
+    padding: '12px 20px',
+    borderRadius: '12px',
+    border: '2px solid #e91e63',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginTop: '15px',
+    fontSize: '15px',
+    boxShadow: '0 2px 8px rgba(233, 30, 99, 0.2)'
+  }}>
+    <span style={{ fontSize: '20px' }}>ℹ️</span>
+    <span style={{ color: '#c2185b', fontWeight: '600' }}>Los productos personalizados requieren un abono del 50% para iniciar la producción</span>
+  </div>
+</div>
 
         <div className="resumen-pago">
           <h3 className="resumen-title">📋 Resumen del Pedido</h3>

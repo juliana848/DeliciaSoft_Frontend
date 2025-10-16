@@ -552,84 +552,80 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
           )}
         </div>
 
-        {/* Resumen de totales */}
-        <div style={{
-          background: '#f8f9fa',
-          borderRadius: '15px',
-          padding: '20px',
-          marginBottom: '30px',
-          border: '1px solid #e9ecef'
-        }}>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: '#495057',
-            marginBottom: '15px'
-          }}>
-            💰 Resumen de Costos
-          </h3>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-              borderBottom: '1px solid #dee2e6'
-            }}>
-              <span>Productos ({productos.reduce((sum, p) => sum + (p.cantidad || 1), 0)} unidades):</span>
-              <span>${productos.reduce((sum, p) => sum + (p.precio * (p.cantidad || 1)), 0).toLocaleString()}</span>
-            </div>
-            
-            {pedido && pedido.toppings && pedido.toppings.length > 0 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '8px 0',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <span>Toppings ({pedido.toppings.length}):</span>
-                <span>${pedido.toppings.reduce((sum, t) => sum + (t.precio || 0), 0).toLocaleString()}</span>
-              </div>
-            )}
-            
-            {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '8px 0',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <span>Adiciones ({pedido.adiciones.length}):</span>
-                <span>${pedido.adiciones.reduce((sum, a) => sum + a.precio, 0).toLocaleString()}</span>
-              </div>
-            )}
-            
-            {pedido && pedido.salsas && pedido.salsas.length > 0 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '8px 0',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <span>Salsas ({pedido.salsas.length}):</span>
-                <span>${pedido.salsas.reduce((sum, s) => sum + s.precio, 0).toLocaleString()}</span>
-              </div>
-            )}
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            paddingTop: '15px',
-            borderTop: '2px solid #dee2e6',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#e91e63'
-          }}>
-            <span>Total del Pedido:</span>
-            <span>${totalPedido.toLocaleString()}</span>
-          </div>
-        </div>
+     {/* Resumen de totales */}
+<div style={{
+  background: '#f8f9fa',
+  borderRadius: '15px',
+  padding: '20px',
+  marginBottom: '30px',
+  border: '1px solid #e9ecef'
+}}>
+  <h3 style={{
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: '15px'
+  }}>
+    💰 Resumen de Costos
+  </h3>
+  
+  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+    <tbody>
+      <tr style={{ borderBottom: '1px solid #dee2e6' }}>
+        <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
+          Productos ({productos.reduce((sum, p) => sum + (p.cantidad || 1), 0)} unidades):
+        </td>
+        <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
+          ${productos.reduce((sum, p) => sum + (p.precio * (p.cantidad || 1)), 0).toLocaleString()}
+        </td>
+      </tr>
+      
+      {pedido && pedido.toppings && pedido.toppings.length > 0 && (
+        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
+            Toppings ({pedido.toppings.length}):
+          </td>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
+            ${pedido.toppings.reduce((sum, t) => sum + (t.precio || 0), 0).toLocaleString()}
+          </td>
+        </tr>
+      )}
+      
+      {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
+        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
+            Adiciones ({pedido.adiciones.length}):
+          </td>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
+            ${pedido.adiciones.reduce((sum, a) => sum + a.precio, 0).toLocaleString()}
+          </td>
+        </tr>
+      )}
+      
+      {pedido && pedido.salsas && pedido.salsas.length > 0 && (
+        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
+            Salsas ({pedido.salsas.length}):
+          </td>
+          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
+            ${pedido.salsas.reduce((sum, s) => sum + s.precio, 0).toLocaleString()}
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+  
+  <div style={{
+    paddingTop: '15px',
+    borderTop: '2px solid #dee2e6',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  }}>
+    <strong style={{ fontSize: '18px', color: '#e91e63' }}>Total del Pedido:</strong>
+    <strong style={{ fontSize: '18px', color: '#e91e63' }}>${totalPedido.toLocaleString()}</strong>
+  </div>
+</div>
 
         {/* Comentarios */}
         <div style={{

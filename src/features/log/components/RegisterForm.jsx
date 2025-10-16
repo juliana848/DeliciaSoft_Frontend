@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../Admin/services/authService';
 import './RegisterForm.css';
 
-const RegisterForm = () => {
+const RegisterForm = ({ onCambiarALogin }) => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -99,7 +99,6 @@ const RegisterForm = () => {
           return false;
         }
       } else if (field === 'documento') {
-        // Verificar documento duplicado
         const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/clientes');
         if (response.ok) {
           const clientes = await response.json();
@@ -111,7 +110,6 @@ const RegisterForm = () => {
           }
         }
       } else if (field === 'contacto') {
-        // Verificar celular duplicado
         const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/clientes');
         if (response.ok) {
           const clientes = await response.json();
@@ -129,7 +127,7 @@ const RegisterForm = () => {
     } catch (error) {
       console.error(`Error validando duplicado ${field}:`, error);
       setDuplicateErrors(prev => ({ ...prev, [field]: '' }));
-      return true; // En caso de error de red, permitir continuar
+      return true;
     } finally {
       setIsValidatingDuplicates(false);
     }
@@ -193,7 +191,6 @@ const RegisterForm = () => {
         break;
       
       case 'password':
-        // Solo validar si el usuario ha interactuado con el campo
         if (!hasUserInteracted.password && !value) {
           return '';
         }
@@ -211,7 +208,6 @@ const RegisterForm = () => {
         break;
       
       case 'confirmPassword':
-        // Solo validar si el usuario ha interactuado con el campo
         if (!hasUserInteracted.confirmPassword && !value) {
           return '';
         }
@@ -226,36 +222,25 @@ const RegisterForm = () => {
     return error;
   };
 
-  // Función para prevenir espacios en campos específicos
-  const preventSpaces = (fieldName, value) => {
-    if (['nombre', 'apellido', 'correo', 'documento', 'contacto'].includes(fieldName)) {
-      return value.replace(/\s/g, '');
-    }
-    return value;
-  };
-
   const handleChange = async (e) => {
     let { name, value } = e.target;
     
-    // Marcar interacción del usuario con campos de contraseña
     if (name === 'password' || name === 'confirmPassword') {
       setHasUserInteracted(prev => ({ ...prev, [name]: true }));
     }
     
-    // APLICAR LÍMITES PRIMERO - MUY IMPORTANTE
     if (name === 'documento') {
-      value = value.replace(/\D/g, '').substring(0, 10); // Solo números, máximo 10
+      value = value.replace(/\D/g, '').substring(0, 10);
     } else if (name === 'contacto') {
-      value = value.replace(/\D/g, '').substring(0, 15); // Solo números, máximo 15
+      value = value.replace(/\D/g, '').substring(0, 15);
     } else if (name === 'nombre' || name === 'apellido') {
-      value = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '').substring(0, 10); // Solo letras, máximo 10
+      value = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '').substring(0, 10);
     } else if (name === 'correo') {
-      value = value.replace(/\s/g, '').substring(0, 100); // Sin espacios, máximo 100
+      value = value.replace(/\s/g, '').substring(0, 100);
     } else if (name === 'password') {
-      value = value.substring(0, 50); // Solo límite de longitud para password
+      value = value.substring(0, 50);
     }
     
-    // Prevenir espacios en otros campos (excepto password)
     if (['nombre', 'apellido', 'correo', 'documento', 'contacto'].includes(name)) {
       value = value.replace(/\s/g, '');
     }
@@ -265,14 +250,12 @@ const RegisterForm = () => {
       [name]: value,
     }));
 
-    // Validar campo en tiempo real
     const error = validateField(name, value);
     setFieldErrors(prev => ({
       ...prev,
       [name]: error
     }));
 
-    // Validar confirmación de contraseña cuando cambie la contraseña
     if (name === 'password' && formData.confirmPassword && hasUserInteracted.confirmPassword) {
       const confirmError = validateField('confirmPassword', formData.confirmPassword);
       setFieldErrors(prev => ({
@@ -281,11 +264,10 @@ const RegisterForm = () => {
       }));
     }
 
-    // Validar duplicados para campos específicos con debounce de 1 segundo
     if (['correo', 'documento', 'contacto'].includes(name) && value.trim()) {
       setTimeout(() => {
         validateDuplicates(name, value);
-      }, 1000); // Debounce de 1 segundo
+      }, 1000);
     }
   };
 
@@ -306,12 +288,10 @@ const RegisterForm = () => {
         break;
       case 4:
         fieldsToValidate = ['password', 'confirmPassword'];
-        // Marcar interacción para activar validaciones
         setHasUserInteracted({ password: true, confirmPassword: true });
         break;
     }
 
-    // Validar campos básicos
     fieldsToValidate.forEach(field => {
       const error = validateField(field, formData[field]);
       if (error) {
@@ -320,7 +300,6 @@ const RegisterForm = () => {
       }
     });
 
-    // Validar duplicados para el paso 1 y 3
     if (currentStep === 1 && formData.documento) {
       const isDocumentValid = await validateDuplicates('documento', formData.documento);
       if (!isDocumentValid || duplicateErrors.documento) {
@@ -357,7 +336,6 @@ const RegisterForm = () => {
     } else {
       let errorMessage = 'Por favor, completa correctamente todos los campos del paso actual.';
       
-      // Mensajes específicos para duplicados
       if (duplicateErrors.documento) {
         errorMessage = 'Ya existe una cuenta con este documento. Inicia sesión en su lugar.';
       } else if (duplicateErrors.correo) {
@@ -379,7 +357,6 @@ const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Marcar interacción con campos de contraseña antes de validar
     setHasUserInteracted({ password: true, confirmPassword: true });
 
     const isStepValid = await validateCurrentStep();
@@ -389,7 +366,6 @@ const RegisterForm = () => {
       return;
     }
 
-    // Validación final de todos los campos
     const allFields = Object.keys(formData);
     let hasErrors = false;
     const finalErrors = {};
@@ -408,7 +384,6 @@ const RegisterForm = () => {
       return;
     }
 
-    // Verificar que no haya errores de duplicados
     if (Object.values(duplicateErrors).some(error => error !== '')) {
       showCustomAlert('error', 'Por favor, corrige los campos duplicados antes de continuar.');
       return;
@@ -417,14 +392,12 @@ const RegisterForm = () => {
     setIsLoading(true);
 
     try {
-      // Ejecutar reCAPTCHA
       const token = await executeRecaptcha();
       if (!token) {
         showCustomAlert('error', 'Error de verificación de seguridad. Inténtalo nuevamente.');
         return;
       }
 
-      // Registrar cliente usando el servicio con el endpoint correcto y reCAPTCHA
       const dataWithRecaptcha = {
         ...formData,
         recaptchaToken: token
@@ -433,11 +406,15 @@ const RegisterForm = () => {
       const result = await authService.registrarCliente(dataWithRecaptcha);
 
       if (result.success) {
-        showCustomAlert('success', '¡Registro exitoso!');
+        showCustomAlert('success', '¡Registro exitoso! Ahora puedes iniciar sesión.');
 
-        // Recargar página después de 2 segundos
+        // Después de 2 segundos, cambiar al formulario de login
         setTimeout(() => {
-          window.location.reload();
+          if (onCambiarALogin) {
+            onCambiarALogin(); // Llamar a la función para cambiar a login
+          } else {
+            window.location.reload(); // Fallback
+          }
         }, 2000);
       } else {
         showCustomAlert('error', result.message || 'Error al registrar usuario');
@@ -451,7 +428,6 @@ const RegisterForm = () => {
     }
   };
 
-  // Función para obtener el ícono de validación MEJORADO
   const getValidationIcon = (fieldName) => {
     const hasError = fieldErrors[fieldName] || duplicateErrors[fieldName];
     const hasValue = formData[fieldName];
@@ -480,12 +456,10 @@ const RegisterForm = () => {
     }
   };
 
-  // Función para obtener el mensaje de error completo (incluyendo duplicados)
   const getFieldError = (fieldName) => {
     return fieldErrors[fieldName] || duplicateErrors[fieldName] || '';
   };
 
-  // Función para verificar si la contraseña cumple con los requisitos
   const getPasswordRequirementStatus = () => {
     const password = formData.password;
     return {
@@ -531,7 +505,7 @@ const RegisterForm = () => {
                   className={getFieldError('documento') ? 'error' : ''}
                   disabled={isLoading}
                 />
-{getValidationIcon('documento')}
+                {getValidationIcon('documento')}
               </div>
               <small className="char-counter">{formData.documento.length}/{fieldLimits.documento}</small>
               {getFieldError('documento') && <span className="error-message">{getFieldError('documento')}</span>}
@@ -594,7 +568,7 @@ const RegisterForm = () => {
                   className={getFieldError('correo') ? 'error' : ''}
                   disabled={isLoading}
                 />
-{getValidationIcon('correo')}
+                {getValidationIcon('correo')}
               </div>
               <small className="char-counter">{formData.correo.length}/{fieldLimits.correo}</small>
               {getFieldError('correo') && <span className="error-message">{getFieldError('correo')}</span>}
@@ -611,7 +585,7 @@ const RegisterForm = () => {
                   className={getFieldError('contacto') ? 'error' : ''}
                   disabled={isLoading}
                 />
-{getValidationIcon('contacto')}
+                {getValidationIcon('contacto')}
               </div>
               <small className="char-counter">{formData.contacto.length}/{fieldLimits.contacto}</small>
               {getFieldError('contacto') && <span className="error-message">{getFieldError('contacto')}</span>}
@@ -647,7 +621,6 @@ const RegisterForm = () => {
               <small className="char-counter">{formData.password.length}/{fieldLimits.password}</small>
               {getFieldError('password') && <span className="error-message">{getFieldError('password')}</span>}
               
-              {/* Indicadores dinámicos solo cuando hay texto */}
               {formData.password && (
                 <div className="password-requirements-inline">
                   <small style={{ color: requirements.length ? '#10b981' : '#ef4444' }}>
@@ -712,7 +685,6 @@ const RegisterForm = () => {
 
   return (
     <div className="form-container sign-up">
-      {/* Alerta personalizada */}
       {showAlert.show && (
         <div className="custom-alert" data-type={showAlert.type}>
           {showAlert.message}
@@ -720,7 +692,6 @@ const RegisterForm = () => {
       )}
 
       <form className="login-form" onSubmit={handleSubmit}>
-        {/* Indicador de progreso con clase específica */}
         <div className="registro-step-indicator">
           <div className="registro-progress-bar">
             <div 
@@ -731,7 +702,6 @@ const RegisterForm = () => {
           <span className="registro-step-text">Paso {currentStep} de 4</span>
         </div>
 
-        {/* Título del paso actual */}
         <div className="registro-step-title">
           {currentStep === 1 && "Tipo y Número de Documento"}
           {currentStep === 2 && "Información Personal"}
@@ -739,10 +709,8 @@ const RegisterForm = () => {
           {currentStep === 4 && "Contraseña"}
         </div>
 
-        {/* Campos del paso actual */}
         {renderStep()}
 
-        {/* Botones de navegación */}
         <div className="form-navigation">
           {currentStep > 1 && (
             <button 
@@ -762,7 +730,7 @@ const RegisterForm = () => {
               onClick={handleNext}
               disabled={isLoading}
             >
-              'Siguiente →'
+              Siguiente →
             </button>
           ) : (
             <button 

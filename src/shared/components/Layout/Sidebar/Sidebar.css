@@ -1,6 +1,6 @@
-/* Sidebar Styles - Diseño Mejorado con Negro y Rosa */
+/* Sidebar Styles - Diseño Optimizado y Compacto */
 .sidebar {
-  width: 280px;
+  width: 220px;
   height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border-right: 1px solid #e5e7eb;
@@ -16,7 +16,7 @@
 }
 
 .sidebar-header {
-  padding: 25px 20px 30px 20px;
+  padding: 15px 15px 18px 15px;
   border-bottom: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
   text-align: center;
@@ -28,26 +28,26 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   position: relative;
 }
 
 .sidebar-logo {
-  width: 120px;
-  height: 120px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  border: 4px solid #ff69b4;
-  padding: 8px;
+  border: 2px solid #ff69b4;
+  padding: 4px;
   background: linear-gradient(135deg, #ffffff, #fef7ff);
   object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sidebar-logo:hover {
   transform: scale(1.05);
-  box-shadow: 0 12px 35px rgba(255, 105, 180, 0.3);
+  box-shadow: 0 6px 16px rgba(255, 105, 180, 0.3);
 }
 
 .logo-text {
@@ -59,52 +59,52 @@
 .logo-container h6 {
   color: #1f2937;
   font-weight: 700;
-  margin: 8px 0 0 0;
-  font-size: 18px;
+  margin: 4px 0 0 0;
+  font-size: 13px;
   line-height: 1.2;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .logo-container small {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 2px;
   opacity: 0.8;
 }
 
 /* Botón de cerrar sesión removido del sidebar - ahora estará fuera */
 .top-logout-btn {
-  display: none; /* Lo ocultamos del sidebar */
+  display: none;
 }
 
 /* Navigation Styles */
 .sidebar-nav {
   flex: 1;
-  padding: 20px 15px;
+  padding: 12px 10px;
   overflow-y: auto;
 }
 
 .nav-item {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 16px 18px;
+  padding: 9px 11px;
   color: #374151;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   width: 100%;
   text-decoration: none;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 0;
   border: none;
   background: transparent;
-  height: 52px;
+  height: 36px;
   box-sizing: border-box;
   transition: all 0.3s ease;
   position: relative;
@@ -121,13 +121,13 @@
   background: linear-gradient(135deg, rgba(255, 105, 180, 0.1), rgba(255, 105, 180, 0.05));
   opacity: 0;
   transition: opacity 0.3s ease;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .nav-content {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
   height: 100%;
   min-height: unset;
@@ -139,8 +139,8 @@
   background: linear-gradient(135deg, rgba(255, 105, 180, 0.15), rgba(255, 105, 180, 0.1));
   color: #1f2937;
   text-decoration: none;
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
 }
 
 .nav-link:hover::before {
@@ -151,7 +151,7 @@
   background: linear-gradient(135deg, #ff69b4, #ff1493);
   color: white;
   font-weight: 600;
-  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+  box-shadow: 0 3px 12px rgba(255, 105, 180, 0.3);
   transform: translateX(2px);
 }
 
@@ -161,9 +161,9 @@
 }
 
 .nav-icon {
-  font-size: 20px;
-  width: 22px;
-  height: 22px;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
   line-height: 1;
   color: #1f2937;
   display: flex;
@@ -188,16 +188,16 @@
 }
 
 .nav-arrow {
-  font-size: 14px;
+  font-size: 12px;
   transition: transform 0.3s ease, color 0.3s ease;
   color: #6b7280;
-  margin-left: 8px;
+  margin-left: 4px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: rgba(107, 114, 128, 0.1);
 }
@@ -215,57 +215,57 @@
 
 /* Submenu Styles */
 .submenu {
-  padding-left: 18px;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  padding-left: 14px;
+  margin-top: 3px;
+  margin-bottom: 3px;
   animation: slideDown 0.3s ease forwards;
 }
 
 .submenu-link {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
-  font-size: 14px;
+  padding: 8px 11px;
+  font-size: 12px;
   color: #374151;
   background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-  border-radius: 10px;
-  margin-bottom: 4px;
+  border-radius: 7px;
+  margin-bottom: 3px;
   font-weight: 500;
   text-decoration: none;
-  height: 46px;
+  height: 34px;
   box-sizing: border-box;
-  transition: all 0.1s ease; /* Transición más rápida */
+  transition: all 0.1s ease;
   border-left: 3px solid transparent;
 }
 
 .submenu-link .nav-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   height: 100%;
-  transition: color 0.1s ease; /* Transición más rápida */
+  transition: color 0.1s ease;
 }
 
 .submenu-icon {
-  font-size: 16px;
-  width: 18px;
-  height: 18px;
+  font-size: 14px;
+  width: 15px;
+  height: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #1f2937;
   margin: 0;
-  transition: all 0.1s ease; /* Transición más rápida */
+  transition: all 0.1s ease;
 }
 
 .submenu-link:hover {
   background: linear-gradient(135deg, rgba(255, 105, 180, 0.1), rgba(255, 105, 180, 0.05));
   color: #1f2937;
   text-decoration: none;
-  transform: translateX(6px);
+  transform: translateX(4px);
   border-left-color: #ff69b4;
-  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.15);
+  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.15);
 }
 
 .submenu-link:hover .submenu-icon {
@@ -275,21 +275,21 @@
 
 .submenu-link.active {
   background: linear-gradient(135deg, #ff69b4, #ff1493);
-  color: white !important; /* Forzar color blanco inmediato */
+  color: white !important;
   font-weight: 600;
   border-left-color: #ff1493;
-  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.25);
-  transition: all 0s; /* Sin transición para cambio inmediato */
+  box-shadow: 0 3px 10px rgba(255, 105, 180, 0.25);
+  transition: all 0s;
 }
 
 .submenu-link.active .nav-content {
-  color: white !important; /* Forzar color blanco inmediato */
+  color: white !important;
 }
 
 .submenu-link.active .submenu-icon,
 .submenu-link.active .nav-text {
-  color: white !important; /* Forzar color blanco inmediato */
-  transition: color 0s; /* Sin transición para cambio inmediato */
+  color: white !important;
+  transition: color 0s;
 }
 
 @keyframes slideDown {
@@ -307,7 +307,7 @@
 
 /* Footer Styles */
 .sidebar-footer {
-  padding: 20px 15px 25px 15px;
+  padding: 12px 10px 15px 10px;
   border-top: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
 }
@@ -315,25 +315,25 @@
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-  padding: 16px;
-  border-radius: 12px;
-  height: 70px;
+  padding: 10px;
+  border-radius: 8px;
+  height: 52px;
   box-sizing: border-box;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .user-avatar {
-  width: 42px;
-  height: 42px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 3px solid #ff69b4;
+  border: 2px solid #ff69b4;
   background: white;
   object-fit: cover;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.2);
 }
 
 .user-details {
@@ -347,15 +347,15 @@
   display: block;
   font-weight: 600;
   color: #1f2937;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.2;
   margin: 0;
 }
 
 .user-id {
   color: #6b7280;
-  font-size: 12px;
-  margin: 3px 0 0 0;
+  font-size: 10px;
+  margin: 2px 0 0 0;
   opacity: 0.8;
 }
 
@@ -374,30 +374,30 @@
 /* Botón de cerrar sesión fijo en esquina superior derecha */
 .logout-button-fixed {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 12px;
+  right: 12px;
   z-index: 1001;
   background: linear-gradient(135deg, #ff69b4, #ff1493);
   border: none;
   color: white;
   cursor: pointer;
-  padding: 12px 20px;
-  border-radius: 25px;
+  padding: 7px 14px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.25);
   backdrop-filter: blur(10px);
 }
 
 .logout-button-fixed:hover {
   background: linear-gradient(135deg, #ff1493, #dc143c);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+  box-shadow: 0 3px 12px rgba(255, 105, 180, 0.4);
 }
 
 .logout-button-fixed:active {
@@ -405,35 +405,35 @@
 }
 
 .logout-button-fixed i {
-  font-size: 16px;
+  font-size: 13px;
 }
 
 /* Botón hamburguesa */
 .sidebar-toggle {
   display: none;
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 12px;
+  left: 12px;
   z-index: 1002;
   background: linear-gradient(135deg, #ff69b4, #ff1493);
   border: none;
   color: white;
   cursor: pointer;
-  padding: 12px;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
+  padding: 8px;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+  font-size: 18px;
+  box-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
   transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
   background: linear-gradient(135deg, #ff1493, #dc143c);
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+  box-shadow: 0 3px 12px rgba(255, 105, 180, 0.4);
 }
 
 .sidebar-toggle i {
@@ -481,7 +481,7 @@
   }
 
   .logout-button-fixed {
-    left: 80px;
+    left: 55px;
     right: auto;
   }
 }
@@ -489,7 +489,7 @@
 /* Responsive Design para Móviles */
 @media (max-width: 768px) {
   .sidebar {
-    width: 280px;
+    width: 220px;
     height: 100vh;
     position: fixed;
     left: 0;
@@ -497,62 +497,69 @@
   }
 
   .sidebar-header {
-    padding: 20px 15px 25px 15px;
+    padding: 12px 10px 15px 10px;
   }
 
   .sidebar-logo {
-    width: 100px;
-    height: 100px;
+    width: 55px;
+    height: 55px;
   }
 
   .logo-container h6 {
-    font-size: 16px;
+    font-size: 12px;
+  }
+
+  .logo-container small {
+    font-size: 10px;
   }
 
   .sidebar-nav {
-    padding: 15px 10px;
-    max-height: calc(100vh - 280px);
+    padding: 10px 8px;
+    max-height: calc(100vh - 220px);
   }
 
   .nav-link {
-    padding: 14px 16px;
-    font-size: 15px;
-    height: 48px;
+    padding: 8px 10px;
+    font-size: 12px;
+    height: 34px;
   }
 
   .submenu-link {
-    padding: 12px 14px;
-    font-size: 14px;
-    height: 42px;
+    padding: 7px 10px;
+    font-size: 11px;
+    height: 32px;
   }
 
   .logout-button-fixed {
-    top: 20px !important;
-    left: 80px !important;
+    top: 12px !important;
+    left: 55px !important;
     right: auto !important;
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 6px 12px;
+    font-size: 11px;
   }
 
   .sidebar-toggle {
-    top: 20px;
-    left: 20px;
+    top: 12px;
+    left: 12px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
   }
 }
 
 /* Scrollbar personalizado */
 .sidebar-nav::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #ff69b4, #ff1493);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {

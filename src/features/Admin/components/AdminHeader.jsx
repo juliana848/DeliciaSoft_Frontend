@@ -40,29 +40,29 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
     const toast = document.createElement('div');
     toast.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 15px;
+      right: 15px;
       background: linear-gradient(135deg, #ff69b4, #ff1493);
       color: white;
-      padding: 20px 25px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
       z-index: 10001;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-weight: 600;
-      font-size: 14px;
-      max-width: 350px;
+      font-size: 12px;
+      max-width: 300px;
       animation: slideInToast 0.4s ease forwards;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
     `;
     
     toast.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 24px;">✨</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 18px;">✨</span>
         <div>
-          <div style="font-weight: 700; margin-bottom: 4px;">${title}</div>
-          <div style="font-weight: 500; opacity: 0.9; font-size: 13px;">${message}</div>
+          <div style="font-weight: 700; margin-bottom: 2px; font-size: 13px;">${title}</div>
+          <div style="font-weight: 500; opacity: 0.9; font-size: 11px;">${message}</div>
         </div>
       </div>
     `;
@@ -115,55 +115,59 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
         rel="stylesheet"
       />
 
-      {/* Campanita de notificaciones - Fija arriba derecha */}
+      {/* Header Container - NO FIXED */}
       <div style={{
-        position: 'fixed',
-        top: '20px',
-        right: '220px',
-        zIndex: 1001
+        position: 'absolute',
+        top: '0',
+        right: '0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '10px 15px',
+        zIndex: 100
+        
       }}>
-        <NotificationBell insumos={insumos} pedidos={pedidos} />
+        {/* Campanita de notificaciones */}
+        <div>
+          <NotificationBell insumos={insumos} pedidos={pedidos} />
+        </div>
+        
+        {/* Botón de cerrar sesión */}
+        <button 
+          onClick={handleLogout}
+          style={{
+            background: 'linear-gradient(135deg, #ff69b4, #ff1493)',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            padding: '7px 13px',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: '600',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 2px 8px rgba(255, 105, 180, 0.3)',
+            height: '32px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, #ff1493, #dc143c)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 105, 180, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, #ff69b4, #ff1493)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 105, 180, 0.3)';
+          }}
+          title="Cerrar sesión"
+        >
+          <i className="bi bi-box-arrow-right" style={{ fontSize: '13px' }}></i>
+          <span>Cerrar Sesión</span>
+        </button>
       </div>
-      
-      {/* Botón de cerrar sesión - Fijo arriba derecha */}
-      <button 
-        onClick={handleLogout}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '30px',
-          background: 'linear-gradient(135deg, #ff69b4, #ff1493)',
-          border: 'none',
-          color: 'white',
-          cursor: 'pointer',
-          padding: '12px 24px',
-          borderRadius: '25px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontSize: '14px',
-          fontWeight: '600',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          transition: 'all 0.3s ease',
-          boxShadow: '0 4px 15px rgba(255, 105, 180, 0.3)',
-          height: '44px',
-          zIndex: 1001
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, #ff1493, #dc143c)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 105, 180, 0.4)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, #ff69b4, #ff1493)';
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 105, 180, 0.3)';
-        }}
-        title="Cerrar sesión"
-      >
-        <i className="bi bi-box-arrow-right" style={{ fontSize: '18px' }}></i>
-        <span>Cerrar Sesión</span>
-      </button>
 
       {/* Modal de Confirmación */}
       {showConfirmModal && (
@@ -183,12 +187,12 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #ffffff 0%, #fef7ff 100%)',
-            borderRadius: '24px',
-            padding: '2.5rem',
-            maxWidth: '450px',
+            borderRadius: '18px',
+            padding: '1.8rem',
+            maxWidth: '380px',
             width: '90%',
             textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(255, 105, 180, 0.3), 0 0 0 1px rgba(255, 105, 180, 0.1)',
+            boxShadow: '0 14px 42px rgba(255, 105, 180, 0.3), 0 0 0 1px rgba(255, 105, 180, 0.1)',
             border: '2px solid #ff69b4',
             animation: 'slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
             position: 'relative',
@@ -199,8 +203,8 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
               zIndex: 2
             }}>
               <div style={{
-                fontSize: '4rem',
-                marginBottom: '1.5rem',
+                fontSize: '3rem',
+                marginBottom: '1rem',
                 background: 'linear-gradient(135deg, #ff69b4, #ff1493)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -212,27 +216,26 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
               </div>
               <h3 style={{
                 color: '#1f2937',
-                marginBottom: '1rem',
+                marginBottom: '0.7rem',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 fontWeight: '700',
-                fontSize: '1.5rem',
+                fontSize: '1.2rem',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
               }}>
                 ¿Estás seguro que deseas cerrar sesión?
               </h3>
               <p style={{
                 color: '#374151',
-                marginBottom: '2rem',
-                lineHeight: '1.6',
-                fontSize: '1rem',
+                marginBottom: '1.3rem',
+                lineHeight: '1.4',
+                fontSize: '0.88rem',
                 opacity: '0.9'
               }}>
-                Tendrás que iniciar sesión nuevamente para acceder a tu perfil. 
-                Todos tus datos estarán seguros y te estaremos esperando.
+                Tendrás que iniciar sesión nuevamente para acceder a tu perfil.
               </p>
               <div style={{
                 display: 'flex',
-                gap: '1rem',
+                gap: '0.7rem',
                 justifyContent: 'center',
                 flexWrap: 'wrap'
               }}>
@@ -242,29 +245,29 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
                     background: 'linear-gradient(135deg, #6b7280, #374151)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '25px',
-                    padding: '1rem 1.8rem',
+                    borderRadius: '18px',
+                    padding: '0.7rem 1.3rem',
                     cursor: 'pointer',
-                    fontSize: '0.95rem',
+                    fontSize: '0.85rem',
                     fontWeight: '600',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(107, 114, 128, 0.3)'
+                    gap: '5px',
+                    boxShadow: '0 3px 10px rgba(107, 114, 128, 0.3)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #374151, #1f2937)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(107, 114, 128, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(107, 114, 128, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #6b7280, #374151)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(107, 114, 128, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 3px 10px rgba(107, 114, 128, 0.3)';
                   }}
                 >
-                  <i className="bi bi-x-circle"></i>
+                  <i className="bi bi-x-circle" style={{ fontSize: '15px' }}></i>
                   <span>Cancelar</span>
                 </button>
                 <button
@@ -273,29 +276,29 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
                     background: 'linear-gradient(135deg, #ff69b4, #ff1493)',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '25px',
-                    padding: '1rem 1.8rem',
+                    borderRadius: '18px',
+                    padding: '0.7rem 1.3rem',
                     cursor: 'pointer',
-                    fontSize: '0.95rem',
+                    fontSize: '0.85rem',
                     fontWeight: '600',
                     transition: 'all 0.3s ease',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 15px rgba(255, 105, 180, 0.3)'
+                    gap: '5px',
+                    boxShadow: '0 3px 10px rgba(255, 105, 180, 0.3)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #ff1493, #dc143c)';
                     e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                    e.currentTarget.style.boxShadow = '0 6px 25px rgba(255, 105, 180, 0.5)';
+                    e.currentTarget.style.boxShadow = '0 5px 18px rgba(255, 105, 180, 0.5)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(135deg, #ff69b4, #ff1493)';
                     e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 105, 180, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 3px 10px rgba(255, 105, 180, 0.3)';
                   }}
                 >
-                  <i className="bi bi-box-arrow-right"></i>
+                  <i className="bi bi-box-arrow-right" style={{ fontSize: '15px' }}></i>
                   <span>Cerrar Sesión</span>
                 </button>
               </div>
@@ -318,7 +321,7 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
         @keyframes slideUpModal {
           from { 
             opacity: 0;
-            transform: translateY(50px) scale(0.9);
+            transform: translateY(40px) scale(0.9);
           }
           to { 
             opacity: 1;
@@ -331,12 +334,10 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
             transform: translateY(0); 
           }
           50% { 
-            transform: translateY(-8px); 
+            transform: translateY(-6px); 
           }
         }
 
-        /* Header siempre fijo - sin contenedor visible */
-        
         /* Responsive para tablets */
         @media (max-width: 1024px) {
           /* Ajustar posiciones en tablet */
@@ -344,7 +345,15 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
 
         /* Responsive para móviles */
         @media (max-width: 768px) {
-          /* Botón más pequeño en móvil */
+          button[title="Cerrar sesión"] {
+            padding: 6px 11px !important;
+            font-size: 11px !important;
+            height: 30px !important;
+          }
+          
+          button[title="Cerrar sesión"] i {
+            font-size: 12px !important;
+          }
         }
       `}</style>
     </>

@@ -2,14 +2,15 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #fdf2f8;
+  background-color: #ffffff;
   font-family: 'Arial', sans-serif;
 }
 
 .page-content {
-  max-width: 1200px;
-  padding: 2rem 1rem;
+  max-width: 1100px;
+  padding: 2.5rem 1.5rem;
   margin: 0 auto;
+  width: 100%;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.5s ease;
@@ -21,12 +22,22 @@
 }
 
 .page-title {
-  font-size: 2.25rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: #ec4899;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 0.75rem;
   position: relative;
+}
+
+.page-subtitle {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+  max-width: 550px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .page-title::after {
@@ -37,219 +48,403 @@
   transform: translateX(-50%);
   width: 100px;
   height: 3px;
-  background: linear-gradient(90deg, #ec4899, #f472b6);
+  background: linear-gradient(90deg, #ec4899, #fbbf24);
   border-radius: 3px;
 }
 
-/* Diseño de la línea zigzag */
-.zigzag-timeline {
+/* Carrusel Timeline */
+.timeline-carousel-wrapper {
   position: relative;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 1.5rem 0;
 }
 
-/* Línea central vertical */
-.center-line {
+.timeline-carousel-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.timeline-carousel {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+
+.timeline-slide {
+  min-width: 100%;
+  padding: 1rem;
+}
+
+/* Card compacta y balanceada */
+.timeline-card {
+  background: linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.12);
+  border: 2px solid #fbcfe8;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-card::before {
+  content: '';
   position: absolute;
   top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  background-color: #ec4899;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ec4899, #fbbf24, #ec4899);
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease infinite;
 }
 
-/* Títulos de los elementos */
-.zigzag-title {
-  position: absolute;
-  margin: 0;
-  color: #ec4899;
-  font-size: 1.25rem;
-  font-weight: 600;
-  top: 10px;
-  z-index: 12;
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-.title-left {
-  right: 52%;
-  margin-right: 50px;
-  text-align: right;
-}
-
-.title-right {
-  left: 52%;
-  margin-left: 50px;
-  text-align: left;
-}
-
-/* Elementos a los lados del zigzag */
-.zigzag-item {
-  position: relative;
-  margin-bottom: 120px;
-  width: 100%;
-}
-
-.zigzag-item:last-child {
-  margin-bottom: 0;
-}
-
-.left-item {
-  padding-right: calc(50% + 30px);
-}
-
-.right-item {
-  padding-left: calc(50% + 30px);
+.card-header {
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-/* Marcadores circulares con números */
-.zigzag-marker {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  background-color: #ec4899;
+.card-number {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #ec4899, #be185d);
   border-radius: 50%;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  font-size: 1.3rem;
   font-weight: bold;
-  z-index: 10;
-  box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+  flex-shrink: 0;
 }
 
-.marker-1 {
-  top: 0;
+.card-title {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
 }
 
-.marker-2 {
-  top: 220px;
+.card-content {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
-.marker-3 {
-  top: 440px;
+.card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-/* Contenido de cada elemento */
-.zigzag-content {
-  background-color: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  max-width: 380px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.card-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Logo compacto */
+.logo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: white;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
 }
 
-/* Estilos para el círculo del logo */
 .logo-circle {
   border: 3px solid #fbcfe8;
-  padding: 5px;
+  padding: 6px;
   border-radius: 50%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  background: white;
+  box-shadow: 0 3px 8px rgba(236, 72, 153, 0.15);
 }
 
 .logo-image {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.item-info {
+.contact-info {
   text-align: center;
-  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .social-handle {
   color: #ec4899;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
   margin-bottom: 0.25rem;
 }
 
 .phone-number {
   color: #6b7280;
+  font-size: 0.9rem;
 }
 
-/* Contenedor de imágenes */
-.image-container {
-  width: 100%;
-  height: 200px;
-  border-radius: 8px;
+/* Sección de texto compacta */
+.text-section {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.text-section h3 {
+  color: #ec4899;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.text-section h3::before {
+  content: '✨';
+  font-size: 1.2rem;
+}
+
+.text-section p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.text-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0 0;
+}
+
+.text-section li {
+  color: #4b5563;
+  padding: 0.4rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  font-size: 0.85rem;
+}
+
+.text-section li::before {
+  content: '🍰';
+  position: absolute;
+  left: 0;
+  font-size: 0.9rem;
+}
+
+/* Galería optimizada */
+.image-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.gallery-item {
+  border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  height: 140px;
 }
 
-.item-image {
+.gallery-item.featured {
+  grid-column: span 2;
+  height: 180px;
+}
+
+.gallery-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.item-image:hover {
+.gallery-item:hover .gallery-image {
   transform: scale(1.05);
 }
 
-/* Botón rosa */
+/* Botón compacto */
 .pink-button {
-  background-color: #ec4899;
+  background: linear-gradient(135deg, #ec4899, #be185d);
   color: white;
   font-weight: 600;
-  padding: 0.5rem 1.5rem;
-  border-radius: 9999px;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(236, 72, 153, 0.25);
+  box-shadow: 0 3px 12px rgba(236, 72, 153, 0.25);
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .pink-button:hover {
-  background-color: #be185d;
   transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(236, 72, 153, 0.3);
+  box-shadow: 0 5px 16px rgba(236, 72, 153, 0.35);
 }
 
-/* Diseño responsivo */
+.pink-button::after {
+  content: '→';
+  transition: transform 0.3s ease;
+}
+
+.pink-button:hover::after {
+  transform: translateX(3px);
+}
+
+/* Controles del carrusel */
+.carousel-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.carousel-button {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(236, 72, 153, 0.25);
+}
+
+.carousel-button:hover {
+  transform: scale(1.08);
+  box-shadow: 0 5px 16px rgba(236, 72, 153, 0.35);
+}
+
+.carousel-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.carousel-dot.active {
+  background: #ec4899;
+  width: 26px;
+  border-radius: 5px;
+}
+
+/* Estadísticas compactas */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, #fdf2f8, #ffffff);
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 2px solid #fbcfe8;
+}
+
+.stat-number {
+  color: #ec4899;
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: block;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .center-line {
-    left: 40px;
+  .page-title {
+    font-size: 1.7rem;
   }
-  
-  .zigzag-marker {
-    left: 40px;
+
+  .page-subtitle {
+    font-size: 0.9rem;
   }
-  
-  .zigzag-title {
-    position: relative;
-    left: auto;
-    right: auto;
-    margin: 0 0 15px 70px;
-    text-align: left;
+
+  .card-content {
+    grid-template-columns: 1fr;
   }
-  
-  .title-left, .title-right {
-    margin-left: 70px;
-    margin-right: 0;
+
+  .image-gallery {
+    grid-template-columns: 1fr;
   }
-  
-  .zigzag-item {
-    padding-left: 80px;
-    padding-right: 0;
+
+  .gallery-item.featured {
+    grid-column: span 1;
   }
-  
-  .left-item, .right-item {
-    padding-left: 80px;
-    padding-right: 0;
-    display: block;
+
+  .card-header {
+    flex-direction: row;
   }
-  
-  .zigzag-content {
-    max-width: none;
+
+  .card-title {
+    font-size: 1.3rem;
+  }
+
+  .timeline-card {
+    padding: 1.5rem;
+  }
+
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .timeline-slide {
+    padding: 0.5rem;
+  }
+
+  .timeline-card {
+    padding: 1.25rem;
   }
 }

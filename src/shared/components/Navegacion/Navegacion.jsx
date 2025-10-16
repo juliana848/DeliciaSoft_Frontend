@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LogoutButton from '../Layout/LogoutButton/LogoutButton';
 import './navegacion.css';
 
@@ -7,11 +7,13 @@ const Navegacion = ({ isAuthenticated = false }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isAuthenticatedState, setIsAuthenticatedState] = useState(isAuthenticated);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Obtener datos del usuario
-  const userEmail = localStorage.getItem('userEmail') || 'usuario@email.com';
-  const userName = localStorage.getItem('userName') || 'Usuario';
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || 'usuario@email.com');
+  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Usuario');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +27,54 @@ const Navegacion = ({ isAuthenticated = false }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Escuchar cambios en el localStorage para actualizar el estado de autenticación
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const authToken = localStorage.getItem('authToken');
+      const email = localStorage.getItem('userEmail');
+      const name = localStorage.getItem('userName');
+      
+      setIsAuthenticatedState(!!authToken);
+      if (email) setUserEmail(email);
+      if (name) setUserName(name);
+    };
+
+    // Verificar estado inicial
+    checkAuthStatus();
+
+    // Escuchar evento personalizado desde la ventana de login
+    const handleLoginSuccess = (event) => {
+      console.log('🎉 Login exitoso detectado en ventana principal');
+      checkAuthStatus();
+      
+      // Si viene desde contacto, redirigir
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        setTimeout(() => {
+          navigate(redirectPath);
+          window.location.reload(); // Recargar para actualizar todos los componentes
+        }, 500);
+      } else {
+        // Recargar la página para actualizar todos los componentes
+        window.location.reload();
+      }
+    };
+
+    // Escuchar cambios en localStorage desde otras pestañas/ventanas
+    window.addEventListener('storage', checkAuthStatus);
+    window.addEventListener('loginSuccess', handleLoginSuccess);
+
+    // Verificar periódicamente si el usuario ha iniciado sesión
+    const interval = setInterval(checkAuthStatus, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkAuthStatus);
+      window.removeEventListener('loginSuccess', handleLoginSuccess);
+      clearInterval(interval);
+    };
+  }, [navigate]);
 
   const toggleMenu = () => {
     setMenuAbierto(!menuAbierto);
@@ -53,11 +103,32 @@ const Navegacion = ({ isAuthenticated = false }) => {
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
     
-    window.open(
+    const loginWindow = window.open(
       '/iniciar-sesion',
       'Login',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
+
+    // Verificar si la ventana se abrió correctamente
+    if (loginWindow) {
+      // Guardar referencia a la ventana principal en la ventana de login
+      loginWindow.opener = window;
+      
+      // Verificar periódicamente si la ventana se cerró y si hay cambios en auth
+      const checkInterval = setInterval(() => {
+        if (loginWindow.closed) {
+          console.log('Ventana de login cerrada, verificando autenticación...');
+          clearInterval(checkInterval);
+          
+          // Verificar si el usuario inició sesión
+          const authToken = localStorage.getItem('authToken');
+          if (authToken) {
+            console.log('Usuario autenticado, recargando página...');
+            window.location.reload();
+          }
+        }
+      }, 500);
+    }
   };
 
   return (
@@ -90,50 +161,18 @@ const Navegacion = ({ isAuthenticated = false }) => {
             CONTÁCTENOS
           </Link>
           
-          {isAuthenticated ? (
+          {isAuthenticatedState ? (
             <div className="user-menu-container" style={{ position: 'relative' }}>
               <button 
                 className="user-avatar-btn"
                 onClick={toggleUserMenu}
-                style={{
-                  background: 'linear-gradient(135deg, #FFCC00, #ff1493)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '40px',
-                  height: '40px',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-                onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
                 title={`Perfil de ${userName}`}
               >
                 {getInitials()}
               </button>
               
               {showUserMenu && (
-                <div 
-                  className="user-dropdown-menu"
-                  style={{
-                    position: 'absolute',
-                    top: '50px',
-                    right: '0',
-                    background: 'white',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                    padding: '1rem',
-                    minWidth: '220px',
-                    zIndex: 1000,
-                    border: '2px solid #FFCC00'
-                  }}
-                >
+                <div className="user-dropdown-menu">
                   <div style={{
                     padding: '0.5rem 0',
                     borderBottom: '1px solid #e9ecef',
@@ -160,26 +199,6 @@ const Navegacion = ({ isAuthenticated = false }) => {
                     to="/perfil" 
                     className="user-menu-item"
                     onClick={() => setShowUserMenu(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem',
-                      color: '#333',
-                      textDecoration: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      marginBottom: '0.5rem'
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.background = '#f8f9fa';
-                      e.target.style.color = '#ff1493';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.background = 'transparent';
-                      e.target.style.color = '#333';
-                    }}
                   >
                     👤 Mi Perfil
                   </Link>
@@ -231,7 +250,7 @@ const Navegacion = ({ isAuthenticated = false }) => {
           CONTÁCTENOS
         </Link>
         
-        {isAuthenticated ? (
+        {isAuthenticatedState ? (
           <>
             <Link to="/perfil" className="cliente-nav-link" style={{ 
               borderTop: '1px solid #e9ecef', 

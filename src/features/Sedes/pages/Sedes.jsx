@@ -1,91 +1,144 @@
 import React, { useState, useEffect } from 'react';
 import './Sedes.css';
-import { MapPin, Phone, Clock, Home } from 'lucide-react';
+import { MapPin, Phone, Clock, Home, Navigation, Maximize2 } from 'lucide-react';
+import sedeApiService from '../../Admin/services/sedes_services';
 
 function Sedes() {
-  const [ubicacion, setUbicacion] = useState(null);
-  const [sedeMostrandoMapa, setSedeMostrandoMapa] = useState(null);
-  const [imagenes, setImagenes] = useState({});
+  const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sedeSeleccionada, setSedeSeleccionada] = useState(null);
+  const [mostrarMapa, setMostrarMapa] = useState({});
 
-  // Cargar las imágenes desde la API al montar el componente
   useEffect(() => {
-    const cargarImagenes = async () => {
-      try {
-        const response = await fetch('https://deliciasoft-backend.onrender.com/api/imagenes');
-        const data = await response.json();
-        
-        // Mapear las imágenes por ID para fácil acceso
-        const imagenesMap = {};
-        data.forEach(imagen => {
-          imagenesMap[imagen.idimagen] = imagen.urlimg;
-        });
-        
-        setImagenes(imagenesMap);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error al cargar las imágenes:', error);
-        setLoading(false);
-      }
-    };
-
-    cargarImagenes();
+    cargarSedes();
   }, []);
 
-  const abrirMapa = (sedeId) => {
-    if (sedeMostrandoMapa === sedeId) {
-      setSedeMostrandoMapa(null);
-      return;
-    }
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setUbicacion({ lat: latitude, lng: longitude });
-          setSedeMostrandoMapa(sedeId);
-
-          const anchor = document.getElementById(`mapa-${sedeId}`);
-          if (anchor) {
-            setTimeout(() => {
-              anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-          }
-        },
-        (err) => {
-          console.error('Error de geolocalización', err);
-          alert('No se pudo obtener tu ubicación.');
-        }
-      );
-    } else {
-      alert('Tu navegador no soporta geolocalización.');
+  const cargarSedes = async () => {
+    try {
+      setLoading(true);
+      const sedesData = await sedeApiService.obtenerSedes();
+      const sedesActivas = sedesData.filter(sede => sede.estado || sede.activo);
+      setSedes(sedesActivas);
+      setError(null);
+    } catch (err) {
+      console.error('Error al cargar sedes:', err);
+      setError('No se pudieron cargar las sedes. Por favor, intenta más tarde.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderMapa = (sedeId) => {
-    if (sedeMostrandoMapa === sedeId && ubicacion) {
+  const geocodificarDireccion = async (direccion) => {
+    try {
+      const direccionCompleta = `${direccion}, Medellín, Colombia`;
+      const encodedAddress = encodeURIComponent(direccionCompleta);
+      
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`
+      );
+      
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+      }
+      
+      return { lat: 6.2442, lng: -75.5812 };
+    } catch (error) {
+      console.error('Error en geocodificación:', error);
+      return { lat: 6.2442, lng: -75.5812 };
+    }
+  };
+
+  const toggleMapa = async (sede, e) => {
+    if (e) e.stopPropagation();
+    const sedeId = sede.id;
+    setMostrarMapa(prev => ({
+      ...prev,
+      [sedeId]: !prev[sedeId]
+    }));
+  };
+
+  const abrirModalMapa = (sede, e) => {
+    if (e) e.stopPropagation();
+    setSedeSeleccionada(sede);
+  };
+
+  const cerrarModal = () => {
+    setSedeSeleccionada(null);
+  };
+
+  const abrirEnGoogleMaps = (direccion) => {
+    const direccionEncoded = encodeURIComponent(`${direccion}, Medellín, Colombia`);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${direccionEncoded}`, '_blank');
+  };
+
+  const MapaEmbed = ({ direccion, esModal = false }) => {
+    const [coords, setCoords] = useState(null);
+
+    useEffect(() => {
+      geocodificarDireccion(direccion).then(setCoords);
+    }, [direccion]);
+
+    if (!coords) {
       return (
-        <div id={`mapa-${sedeId}`} className="mapa-container">
-          <iframe
-            title="Mapa"
-            width="100%"
-            height="300"
-            style={{ border: '2px solid #ff69b4', borderRadius: '10px', marginTop: '1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
-            loading="lazy"
-            allowFullScreen
-            src={`https://maps.google.com/maps?q=${ubicacion.lat},${ubicacion.lng}&z=15&output=embed`}
-          ></iframe>
+        <div className="mapa-loading">
+          <div className="mapa-spinner"></div>
         </div>
       );
     }
-    return null;
+
+    return (
+      <div className="mapa-iframe-container">
+        <iframe
+          title="Mapa de ubicación"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          loading="lazy"
+          allowFullScreen
+          src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=16&output=embed`}
+        />
+      </div>
+    );
   };
 
   if (loading) {
     return (
       <div className="sedes-container">
         <h2 className="sedes-titulo">NUESTRAS SEDES</h2>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          Cargando imágenes...
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Cargando sedes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="sedes-container">
+        <h2 className="sedes-titulo">NUESTRAS SEDES</h2>
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+          <button className="retry-button" onClick={cargarSedes}>
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (sedes.length === 0) {
+    return (
+      <div className="sedes-container">
+        <h2 className="sedes-titulo">NUESTRAS SEDES</h2>
+        <div className="no-sedes-container">
+          <p>No hay sedes disponibles en este momento.</p>
         </div>
       </div>
     );
@@ -94,47 +147,122 @@ function Sedes() {
   return (
     <div className="sedes-container">
       <h2 className="sedes-titulo">NUESTRAS SEDES</h2>
+      
       <div className="sedes-grid">
-        <div className="sede">
-          <h3 className="sede-nombre">SAN PABLO</h3>
-          <img 
-            src={imagenes[4] || 'https://via.placeholder.com/300x200?text=Imagen+no+disponible'} 
-            alt="San Pablo" 
-            className="sede-imagen"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/300x200?text=Error+al+cargar+imagen';
-            }}
-          />
-          <ul className="sede-info">
-            <li><MapPin size={18} /> Cra.37 # 97-27</li>
-            <li><Phone size={18} /> 321 3098504</li>
-            <li><Clock size={18} /> Lunes a viernes de 10:30am - 05:30pm</li>
-            <li><Home size={18} /> Medellín - Antioquia</li>
-          </ul>
-          <button className="sede-boton" onClick={() => abrirMapa('sanPablo')}>Mapa</button>
-          {renderMapa('sanPablo')}
-        </div>
+        {sedes.map((sede) => (
+          <div key={sede.id} className="sede-card">
+            <div className="sede-header">
+              <h3 className="sede-nombre">{sede.nombre}</h3>
+            </div>
+            
+            <div className="sede-visual-container">
+              {!mostrarMapa[sede.id] ? (
+                <div className="imagen-container">
+                  <img 
+                    src={sede.imagenUrl || 'https://via.placeholder.com/400x280/FFB6D9/FFFFFF?text=Sin+Imagen'} 
+                    alt={sede.nombre}
+                    className="sede-imagen"
+                    onClick={() => abrirModalMapa(sede)}
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/400x280/FFB6D9/FFFFFF?text=Imagen+no+disponible';
+                    }}
+                  />
+                  <div className="imagen-overlay">
+                    <button 
+                      className="ver-mapa-overlay-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMapa(sede, e);
+                      }}
+                    >
+                      <MapPin size={18} />
+                      Ver Mapa
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mapa-wrapper" onClick={() => abrirModalMapa(sede)}>
+                  <MapaEmbed direccion={sede.Direccion || sede.direccion} />
+                  <button 
+                    className="ampliar-mapa-icono"
+                    onClick={(e) => abrirModalMapa(sede, e)}
+                    title="Ampliar mapa"
+                  >
+                    <Maximize2 size={18} />
+                  </button>
+                  <button 
+                    className="ver-imagen-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMapa(sede, e);
+                    }}
+                  >
+                    Ver Imagen
+                  </button>
+                </div>
+              )}
+            </div>
 
-        <div className="sede">
-          <h3 className="sede-nombre">SAN BENITO</h3>
-          <img 
-            src={imagenes[2] || 'https://via.placeholder.com/300x200?text=Imagen+no+disponible'} 
-            alt="San Benito" 
-            className="sede-imagen"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/300x200?text=Error+al+cargar+imagen';
-            }}
-          />
-          <ul className="sede-info">
-            <li><MapPin size={18} /> Cra.37 # 97-27</li>
-            <li><Phone size={18} /> 321 3098504</li>
-            <li><Clock size={18} /> Lunes a viernes de 10:30am - 05:30pm</li>
-            <li><Home size={18} /> Medellín - Antioquia</li>
-          </ul>
-          <button className="sede-boton" onClick={() => abrirMapa('sanBenito')}>Mapa</button>
-          {renderMapa('sanBenito')}
-        </div>
+            <div className="sede-info-container">
+              <ul className="sede-info">
+                <li>
+                  <MapPin size={16} className="icon" />
+                  <span>{sede.Direccion || sede.direccion}</span>
+                </li>
+                <li>
+                  <Phone size={16} className="icon" />
+                  <span>{sedeApiService.formatearTelefono(sede.Telefono || sede.telefono)}</span>
+                </li>
+                <li>
+                  <Clock size={16} className="icon" />
+                  <span>Lunes a viernes 10:30am - 05:30pm</span>
+                </li>
+                <li>
+                  <Home size={16} className="icon" />
+                  <span>Medellín - Antioquia</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Modal compacto y centrado */}
+      {sedeSeleccionada && (
+        <div className="modal-overlay-compact" onClick={cerrarModal}>
+          <div className="modal-mapa-compact" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-compact">
+              <div className="modal-info-compact">
+                <h3 className="modal-titulo-compact">{sedeSeleccionada.nombre}</h3>
+                <p className="modal-direccion-compact">
+                  <MapPin size={14} />
+                  {sedeSeleccionada.Direccion || sedeSeleccionada.direccion}
+                </p>
+              </div>
+              <button className="modal-cerrar-btn-compact" onClick={cerrarModal}>
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body-compact">
+              <MapaEmbed 
+                direccion={sedeSeleccionada.Direccion || sedeSeleccionada.direccion}
+                esModal={true}
+              />
+            </div>
+
+            <div className="modal-footer-compact">
+              <button 
+                className="modal-google-maps-btn-compact"
+                onClick={() => abrirEnGoogleMaps(sedeSeleccionada.Direccion || sedeSeleccionada.direccion)}
+              >
+                <Navigation size={16} />
+                Abrir en Google Maps
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

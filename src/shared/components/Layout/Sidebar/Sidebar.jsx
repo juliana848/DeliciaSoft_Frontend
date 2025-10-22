@@ -45,6 +45,12 @@ const Sidebar = ({ userRole = 'admin' }) => {
           path: '/admin/pages/Roles', 
           icon: 'bi bi-person-badge-fill',
           permission: 'Roles'
+        },
+        { 
+          title: 'Sedes', 
+          path: '/admin/pages/Sede', 
+          icon: 'bi bi-geo-alt-fill',
+          permission: 'Sedes'
         }
       ]
     },
@@ -66,12 +72,6 @@ const Sidebar = ({ userRole = 'admin' }) => {
           path: '/admin/pages/Clientes', 
           icon: 'bi bi-person-hearts',
           permission: 'Cliente'
-        },
-        { 
-          title: 'Sedes', 
-          path: '/admin/pages/Sede', 
-          icon: 'bi bi-geo-alt-fill',
-          permission: 'Sedes'
         },
         { 
           title: 'Ventas', 

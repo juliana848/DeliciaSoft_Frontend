@@ -1,0 +1,328 @@
+/* ============================================
+   ESTILOS PARA MODALES DE INSUMOS
+   Archivo: Agrega estos estilos a tu adminStyles.css
+   ============================================ */
+
+/* Grid de 2 columnas para formularios en modales */
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  width: 100%;
+}
+
+/* Labels y sus inputs */
+.modal-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Inputs dentro del modal */
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #ec4899;
+}
+
+.modal-input:disabled,
+.modal-input:read-only {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #6b7280;
+}
+
+/* Input con error */
+.modal-input.input-invalid {
+  border-color: #ef4444;
+}
+
+/* Textarea */
+.modal-input.textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Botones del modal */
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.modal-btn.save-btn {
+  background-color: #ec4899;
+  color: white;
+}
+
+.modal-btn.save-btn:hover:not(:disabled) {
+  background-color: #db2777;
+}
+
+.modal-btn.cancel-btn {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.modal-btn.cancel-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Footer del modal */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Título del modal */
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ec4899;
+}
+
+/* Body del modal */
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Scrollbar personalizado para el modal */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #ec4899;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #db2777;
+}
+
+/* Mensajes de error */
+.error-message {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Responsive: 1 columna en pantallas pequeñas */
+@media (max-width: 768px) {
+  .modal-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Los elementos que tienen gridColumn "1 / -1" mantienen su ancho completo */
+  .modal-form-grid > div[style*="gridColumn"],
+  .modal-form-grid > label[style*="gridColumn"] {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Ajustes para elementos que deben ocupar todo el ancho */
+.modal-form-grid > div[style*="gridColumn: 1 / -1"],
+.modal-form-grid > label[style*="gridColumn: 1 / -1"] {
+  grid-column: 1 / -1;
+}
+
+/* Estilo para inputs con iconos (como el precio con $) */
+.modal-input-with-icon {
+  position: relative;
+}
+
+.modal-input-with-icon input {
+  padding-left: 30px;
+}
+
+.modal-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* Estilos para las secciones de catálogos */
+.catalogo-section {
+  grid-column: 1 / -1;
+  background-color: #fce4ec;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border: 2px solid #ec4899;
+}
+
+.catalogo-section h3 {
+  margin: 0 0 15px 0;
+  color: #ec4899;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estilos para badges de estado */
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.estado-badge.activo {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.estado-badge.inactivo {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Estilos para preview de imágenes */
+.image-preview-container {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.image-preview-container h4 {
+  margin: 0 0 10px 0;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.image-preview {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para la lista de catálogos en ver */
+.catalogos-list {
+  grid-column: 1 / -1;
+  background-color: #fdf2f8;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border: 2px solid #ec4899;
+}
+
+.catalogos-list h4 {
+  margin: 0 0 15px 0;
+  color: #ec4899;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.catalogo-item {
+  background-color: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #fbcfe8;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.catalogo-item:last-child {
+  margin-bottom: 0;
+}
+
+.catalogo-icon {
+  font-size: 20px;
+}
+
+.catalogo-info strong {
+  display: block;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.catalogo-tipo {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.catalogo-precio {
+  text-align: right;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-body > * {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Mejoras de accesibilidad */
+.modal-input:focus-visible {
+  outline: 2px solid #ec4899;
+  outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 2px solid #ec4899;
+  outline-offset: 2px;
+}

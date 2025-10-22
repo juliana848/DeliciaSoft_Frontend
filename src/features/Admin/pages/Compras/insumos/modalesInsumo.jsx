@@ -6,6 +6,8 @@ import insumoApiService from "../../../services/insumos";
 import imagenesApiService from "../../../services/imagenes";
 import SearchableSelect from "./SearchableSelect";
 import StyledSelect from "./StyledSelect";
+import './styles.css'
+
 
 export default function ModalInsumo({
   modal,
@@ -34,6 +36,8 @@ export default function ModalInsumo({
   });
 
   const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [catalogosExistentes, setCatalogosExistentes] = useState([]);
+  const [cargandoCatalogos, setCargandoCatalogos] = useState(false);
   const fileInputRef = useRef(null);
 
   const opcionesCatalogos = [
@@ -54,43 +58,138 @@ export default function ModalInsumo({
     );
   };
 
-  useEffect(() => {
-    if (modal.tipo === "editar" && modal.insumo) {
-      setForm({
-        nombreInsumo: modal.insumo.nombreInsumo || modal.insumo.nombreinsumo || "",
-        idCategoriaInsumos: modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos || "",
-        cantidad: modal.insumo.cantidad || "",
-        idUnidadMedida: modal.insumo.idUnidadMedida || modal.insumo.idunidadmedida || "",
-        stockMinimo: modal.insumo.stockMinimo || 5,
-        precio: modal.insumo.precio || "",
-        estado: modal.insumo.estado !== undefined ? modal.insumo.estado : true,
-        imagen: null,
-        imagenPreview: modal.insumo.idImagen || null,
-        idImagenExistente: modal.insumo.idImagen || null,
-        catalogosSeleccionados: [],
-        nombreCatalogo: modal.insumo.nombreInsumo || modal.insumo.nombreinsumo || "",
-        precioadicion: "",
-        estadoCatalogo: true,
-      });
-    } else if (modal.tipo === "agregar") {
-      setForm({
-        nombreInsumo: "",
-        idCategoriaInsumos: "",
-        cantidad: "",
-        idUnidadMedida: "",
-        stockMinimo: 5,
-        precio: "",
-        estado: true,
-        imagen: null,
-        imagenPreview: null,
-        idImagenExistente: null,
-        catalogosSeleccionados: [],
-        nombreCatalogo: "",
-        precioadicion: "",
-        estadoCatalogo: true,
-      });
+  // FUNCIÓN PARA CARGAR LA IMAGEN DESDE LA API
+  const cargarImagenDesdeAPI = async (idImagen) => {
+    if (!idImagen) return null;
+    
+    try {
+      console.log('📥 Cargando imagen con ID:', idImagen);
+      const imagenData = await imagenesApiService.obtenerImagenPorId(idImagen);
+      console.log('✅ Imagen obtenida:', imagenData);
+      return imagenData.urlimg || null;
+    } catch (error) {
+      console.error('❌ Error al cargar imagen:', error);
+      return null;
     }
-  }, [modal]);
+  };
+
+  // FUNCIÓN PARA CARGAR CATÁLOGOS EXISTENTES
+  const cargarCatalogosDelInsumo = async (insumoId) => {
+    setCargandoCatalogos(true);
+    const catalogos = [];
+    
+    try {
+      // Intentar cargar de cada tipo de catálogo
+      const tipos = ['adicion', 'sabor', 'relleno'];
+      
+      for (const tipo of tipos) {
+        try {
+          const catalogosTipo = await insumoApiService.obtenerCatalogos(tipo);
+          const catalogosDelInsumo = catalogosTipo.filter(cat => 
+            parseInt(cat.idinsumos) === parseInt(insumoId)
+          );
+          
+          catalogosDelInsumo.forEach(cat => {
+            catalogos.push({
+              tipo: tipo,
+              id: cat.idcatalogoadiciones || cat.idcatalogosabor || cat.idcatalogorrelleno,
+              nombre: cat.nombre,
+              precio: cat.precioadicion,
+              estado: cat.estado
+            });
+          });
+        } catch (error) {
+          console.log(`No se encontraron catálogos de tipo ${tipo}:`, error);
+        }
+      }
+      
+      console.log('📦 Catálogos encontrados:', catalogos);
+      setCatalogosExistentes(catalogos);
+      
+    } catch (error) {
+      console.error('Error al cargar catálogos:', error);
+    } finally {
+      setCargandoCatalogos(false);
+    }
+  };
+
+  // USEEFFECT CORREGIDO - Carga todos los datos incluyendo imagen
+  useEffect(() => {
+    const cargarDatosModal = async () => {
+      if (modal.tipo === "editar" && modal.insumo) {
+        const insumoId = modal.insumo.id || modal.insumo.idinsumo;
+        
+        // Cargar imagen si existe
+        let urlImagen = null;
+        if (modal.insumo.idImagen || modal.insumo.idimagen) {
+          const idImagen = modal.insumo.idImagen || modal.insumo.idimagen;
+          urlImagen = await cargarImagenDesdeAPI(idImagen);
+        }
+        
+        // Cargar catálogos si es categoría especial
+        if (esCategoriaEspecial(modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos)) {
+          await cargarCatalogosDelInsumo(insumoId);
+        }
+        
+        setForm({
+          nombreInsumo: modal.insumo.nombreInsumo || modal.insumo.nombreinsumo || "",
+          idCategoriaInsumos: modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos || "",
+          cantidad: modal.insumo.cantidad || "",
+          idUnidadMedida: modal.insumo.idUnidadMedida || modal.insumo.idunidadmedida || "",
+          stockMinimo: modal.insumo.stockMinimo || modal.insumo.stockminimo || 5,
+          precio: modal.insumo.precio || "",
+          estado: modal.insumo.estado !== undefined ? modal.insumo.estado : true,
+          imagen: null,
+          imagenPreview: urlImagen,
+          idImagenExistente: modal.insumo.idImagen || modal.insumo.idimagen || null,
+          catalogosSeleccionados: [],
+          nombreCatalogo: modal.insumo.nombreInsumo || modal.insumo.nombreinsumo || "",
+          precioadicion: "",
+          estadoCatalogo: true,
+        });
+      } else if (modal.tipo === "ver" && modal.insumo) {
+        const insumoId = modal.insumo.id || modal.insumo.idinsumo;
+        
+        // Cargar imagen si existe
+        let urlImagen = null;
+        if (modal.insumo.idImagen || modal.insumo.idimagen) {
+          const idImagen = modal.insumo.idImagen || modal.insumo.idimagen;
+          urlImagen = await cargarImagenDesdeAPI(idImagen);
+        }
+        
+        // Cargar catálogos si es categoría especial
+        if (esCategoriaEspecial(modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos)) {
+          await cargarCatalogosDelInsumo(insumoId);
+        }
+        
+        setForm(prev => ({
+          ...prev,
+          imagenPreview: urlImagen,
+          idImagenExistente: modal.insumo.idImagen || modal.insumo.idimagen || null
+        }));
+      } else if (modal.tipo === "agregar") {
+        setForm({
+          nombreInsumo: "",
+          idCategoriaInsumos: "",
+          cantidad: "",
+          idUnidadMedida: "",
+          stockMinimo: 5,
+          precio: "",
+          estado: true,
+          imagen: null,
+          imagenPreview: null,
+          idImagenExistente: null,
+          catalogosSeleccionados: [],
+          nombreCatalogo: "",
+          precioadicion: "",
+          estadoCatalogo: true,
+        });
+        setCatalogosExistentes([]);
+      }
+    };
+    
+    cargarDatosModal();
+  }, [modal, categorias]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -190,7 +289,7 @@ export default function ModalInsumo({
 
       const esEspecial = esCategoriaEspecial(form.idCategoriaInsumos);
       
-      if (esEspecial) {
+      if (esEspecial && modal.tipo === "agregar") {
         if (form.catalogosSeleccionados.length === 0) {
           showNotification("Debes seleccionar al menos un tipo de catálogo", "error");
           return;
@@ -217,28 +316,29 @@ export default function ModalInsumo({
       // PASO 1: SUBIR IMAGEN SI EXISTE
       let idImagenParaGuardar = form.idImagenExistente;
       
-      if (form.imagen) {
+      if (form.imagen && form.imagen instanceof File) {
         try {
           setSubiendoImagen(true);
-          showNotification("Subiendo imagen...", "info");
-          console.log('Subiendo imagen:', form.imagen.name);
+          showNotification("📤 Subiendo imagen a Cloudinary...", "info");
           
           const resultadoImagen = await imagenesApiService.subirImagen(
             form.imagen, 
-            form.nombreInsumo
+            `Insumo: ${form.nombreInsumo}`
           );
           
           idImagenParaGuardar = resultadoImagen.idimagen;
-          console.log('Imagen subida, ID:', idImagenParaGuardar);
-          showNotification("Imagen subida correctamente", "success");
+          showNotification("✅ Imagen subida correctamente", "success");
           
         } catch (error) {
-          console.error('Error al subir imagen:', error);
+          console.error('❌ Error al subir imagen:', error);
+          setSubiendoImagen(false);
+          
           showNotification("Error al subir imagen: " + error.message, "error");
           
           const continuar = window.confirm(
             "No se pudo subir la imagen.\n\n¿Deseas guardar el insumo sin imagen?"
           );
+          
           if (!continuar) return;
           idImagenParaGuardar = null;
         } finally {
@@ -257,21 +357,17 @@ export default function ModalInsumo({
         estado: form.estado,
       };
 
-      // Agregar imagen si existe
-      if (idImagenParaGuardar) {
+      if (idImagenParaGuardar && !isNaN(parseInt(idImagenParaGuardar))) {
         datosEnvio.idImagen = parseInt(idImagenParaGuardar);
-        console.log('Agregando idImagen:', datosEnvio.idImagen);
       }
 
-      // PASO 3: AGREGAR CATÁLOGOS SI ES CATEGORÍA ESPECIAL
-      if (esEspecial && form.catalogosSeleccionados.length > 0) {
+      // PASO 3: AGREGAR CATÁLOGOS SI ES CATEGORÍA ESPECIAL (solo al crear)
+      if (esEspecial && modal.tipo === "agregar" && form.catalogosSeleccionados.length > 0) {
         datosEnvio.catalogosSeleccionados = form.catalogosSeleccionados;
         datosEnvio.nombreCatalogo = form.nombreCatalogo.trim();
         datosEnvio.precioadicion = parseFloat(form.precioadicion);
         datosEnvio.estadoCatalogo = form.estadoCatalogo;
       }
-
-      console.log('Datos finales a enviar:', JSON.stringify(datosEnvio, null, 2));
 
       // PASO 4: GUARDAR INSUMO
       if (modal.tipo === "agregar") {
@@ -279,19 +375,19 @@ export default function ModalInsumo({
         const catalogosTexto = form.catalogosSeleccionados.length > 0 
           ? ` y agregado a ${form.catalogosSeleccionados.length} catálogo(s)` 
           : "";
-        showNotification("Insumo agregado exitosamente" + catalogosTexto);
+        showNotification("✅ Insumo agregado exitosamente" + catalogosTexto, "success");
       } else if (modal.tipo === "editar") {
         const insumoId = modal.insumo.id || modal.insumo.idinsumo;
         await insumoApiService.actualizarInsumo(insumoId, datosEnvio);
-        showNotification("Insumo actualizado exitosamente");
+        showNotification("✅ Insumo actualizado exitosamente", "success");
       }
       
       await cargarInsumos();
       cerrar();
 
     } catch (error) {
-      console.error("Error al guardar:", error);
-      showNotification("Error al guardar: " + error.message, "error");
+      console.error("❌ Error al guardar insumo:", error);
+      showNotification("Error al guardar: " + (error.message || "Error desconocido"), "error");
     }
   };
 
@@ -301,7 +397,7 @@ export default function ModalInsumo({
       
       if (cantidadActual > 0) {
         showNotification(
-          `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock. Para eliminarlo, primero debe reducir el stock a 0.`,
+          `No se puede eliminar este insumo porque tiene ${cantidadActual} unidades en stock.`,
           "error"
         );
         return;
@@ -314,27 +410,13 @@ export default function ModalInsumo({
       cerrar();
     } catch (error) {
       console.error("Error al eliminar:", error);
-      
-      let mensajeError = "Error al eliminar el insumo";
-      
-      if (error.message?.includes("asociado") || 
-          error.message?.includes("referencia") || 
-          error.message?.includes("constraint") ||
-          error.message?.includes("foreign key") ||
-          error.status === 409) {
-        mensajeError = "No se puede eliminar este insumo porque está siendo usado en productos, recetas o pedidos. Primero debe desvincularlo de esos registros.";
-      } else if (error.status === 404) {
-        mensajeError = "El insumo no existe o ya fue eliminado";
-      } else if (error.message) {
-        mensajeError = error.message;
-      }
-      
-      showNotification(mensajeError, "error");
+      showNotification("Error al eliminar el insumo: " + error.message, "error");
     }
   };
 
   const mostrarCamposCatalogo = modal.tipo !== "ver" && esCategoriaEspecial(form.idCategoriaInsumos);
   const mostrarCampoImagen = mostrarCamposCatalogo;
+  const esEspecialVer = modal.tipo === "ver" && esCategoriaEspecial(modal.insumo?.idCategoriaInsumos || modal.insumo?.idcategoriainsumos);
 
   return (
     <Modal visible={modal.visible} onClose={cerrar}>
@@ -361,7 +443,6 @@ export default function ModalInsumo({
                 value={modal.insumo?.nombreInsumo || modal.insumo?.nombreinsumo || ""} 
                 readOnly 
                 className="modal-input"
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
             </label>
             
@@ -370,14 +451,12 @@ export default function ModalInsumo({
               <input 
                 value={
                   modal.insumo?.nombreCategoria || 
-                  modal.insumo?.categoria ||
                   modal.insumo?.categoriainsumos?.nombrecategoria ||
                   (categorias.find(cat => cat.id === parseInt(modal.insumo?.idCategoriaInsumos || modal.insumo?.idcategoriainsumos))?.nombreCategoria) ||
                   "Sin categoría"
                 } 
                 readOnly 
                 className="modal-input"
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
             </label>
             
@@ -388,7 +467,6 @@ export default function ModalInsumo({
                 value={modal.insumo?.cantidad || 0} 
                 readOnly 
                 className="modal-input"
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
             </label>
             
@@ -397,14 +475,12 @@ export default function ModalInsumo({
               <input 
                 value={
                   modal.insumo?.nombreUnidadMedida ||
-                  modal.insumo?.unidad ||
                   modal.insumo?.unidadmedida?.unidadmedida ||
                   (unidades.find(uni => uni.idunidadmedida === parseInt(modal.insumo?.idUnidadMedida || modal.insumo?.idunidadmedida))?.unidadmedida) ||
                   "Sin unidad"
                 } 
                 readOnly 
                 className="modal-input"
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
             </label>
             
@@ -412,58 +488,107 @@ export default function ModalInsumo({
               Stock Mínimo
               <input 
                 type="number" 
-                value={modal.insumo?.stockMinimo || 5} 
+                value={modal.insumo?.stockMinimo || modal.insumo?.stockminimo || 5} 
                 readOnly 
                 className="modal-input"
-                style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
               />
             </label>
             
             <label>
               Precio
-              <div style={{ position: "relative" }}>
-                <span style={{
-                  position: "absolute",
-                  left: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#6c757d"
-                }}>$</span>
-                <input 
-                  type="text"
-                  value={modal.insumo?.precio ? new Intl.NumberFormat('es-CO', {
-                    style: 'currency',
-                    currency: 'COP',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  }).format(modal.insumo.precio) : '$0'} 
-                  readOnly 
-                  className="modal-input"
-                  style={{ 
-                    backgroundColor: "#f5f5f5", 
-                    cursor: "not-allowed",
-                    paddingLeft: "25px"
-                  }}
-                />
-              </div>
+              <input 
+                type="text"
+                value={modal.insumo?.precio ? new Intl.NumberFormat('es-CO', {
+                  style: 'currency',
+                  currency: 'COP',
+                  minimumFractionDigits: 0
+                }).format(modal.insumo.precio) : '$0'} 
+                readOnly 
+                className="modal-input"
+              />
             </label>
 
+            {/* IMAGEN EN VER */}
             {form.imagenPreview && (
-              <div style={{ 
-                gridColumn: "1 / -1",
-                textAlign: "center",
-                marginTop: "10px"
-              }}>
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", marginTop: "15px" }}>
+                <h4 style={{ margin: "0 0 10px 0" }}>Imagen del insumo:</h4>
                 <img 
                   src={form.imagenPreview} 
                   alt="Insumo" 
                   style={{ 
-                    maxWidth: "200px", 
-                    maxHeight: "200px",
+                    maxWidth: "300px", 
+                    maxHeight: "300px",
                     borderRadius: "8px",
-                    border: "2px solid #ddd"
+                    border: "2px solid #ddd",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
                   }} 
                 />
+              </div>
+            )}
+
+            {/* CATÁLOGOS EN VER */}
+            {esEspecialVer && catalogosExistentes.length > 0 && (
+              <div style={{ 
+                gridColumn: "1 / -1",
+                backgroundColor: "#fdf2f8",
+                padding: "15px",
+                borderRadius: "8px",
+                marginTop: "15px",
+                border: "2px solid #ec4899"
+              }}>
+                <h4 style={{ margin: "0 0 15px 0", color: "#ec4899", fontWeight: "600" }}>
+                  📦 Catálogos asociados ({catalogosExistentes.length})
+                </h4>
+                <div style={{ 
+                  display: "grid",
+                  gap: "10px"
+                }}>
+                  {catalogosExistentes.map((cat, index) => (
+                    <div 
+                      key={index}
+                      style={{
+                        backgroundColor: "white",
+                        padding: "12px",
+                        borderRadius: "6px",
+                        border: "1px solid #fbcfe8",
+                        display: "grid",
+                        gridTemplateColumns: "auto 1fr auto auto",
+                        gap: "10px",
+                        alignItems: "center"
+                      }}
+                    >
+                      <span style={{ fontSize: "20px" }}>
+                        {cat.tipo === 'adicion' && '🍰'}
+                        {cat.tipo === 'sabor' && '🎨'}
+                        {cat.tipo === 'relleno' && '🥧'}
+                      </span>
+                      <div>
+                        <strong>{cat.nombre}</strong>
+                        <div style={{ fontSize: "12px", color: "#666" }}>
+                          Tipo: {cat.tipo}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <strong>${new Intl.NumberFormat('es-CO').format(cat.precio)}</strong>
+                      </div>
+                      <span style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        backgroundColor: cat.estado ? "#dcfce7" : "#fee2e2",
+                        color: cat.estado ? "#166534" : "#991b1b"
+                      }}>
+                        {cat.estado ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {esEspecialVer && cargandoCatalogos && (
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "20px" }}>
+                <p>⏳ Cargando catálogos...</p>
               </div>
             )}
             
@@ -472,12 +597,10 @@ export default function ModalInsumo({
               display: "flex", 
               alignItems: "center", 
               gap: "10px",
-              marginTop: "10px"
+              marginTop: "15px"
             }}>
               <span>Estado:</span>
               <div style={{
-                display: "inline-flex",
-                alignItems: "center",
                 padding: "6px 12px",
                 borderRadius: "12px",
                 backgroundColor: modal.insumo?.estado ? "#e8f5e9" : "#ffebee",

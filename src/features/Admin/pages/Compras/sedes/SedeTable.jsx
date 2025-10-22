@@ -2,6 +2,7 @@ import React from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
+import './sedeStyles.css'
 
 export default function SedeTable({
   sedes,
@@ -61,7 +62,7 @@ export default function SedeTable({
     />
   );
 
-  return (
+   return (
     <DataTable
       value={sedes}
       className="admin-table"
@@ -74,6 +75,8 @@ export default function SedeTable({
       loadingIcon="pi pi-spinner pi-spin"
       scrollable
       scrollHeight="500px"
+      size="small"
+      stripedRows
     >
       <Column
         header="N°"

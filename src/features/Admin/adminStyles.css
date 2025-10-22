@@ -20,22 +20,22 @@
     font-size: 0.875rem;
     padding: 8px 10px;
 }
-
-/* ⚖️ Ajuste fino: un poco más ancha y desplazada ligeramente a la izquierda */
+/* ⚙️ Ajuste del contenedor principal de contenido (tabla incluida) */
 .admin-content-wrapper {
-  width: calc(180% - 180px) !important;   /* 🔹 más ancha (usa más del viewport) */
-  margin-left: 100px !important;          /* 🔹 acerca la tabla al menú lateral */
-  margin-right: auto !important;
-  padding: 0 35px !important;             /* 🔹 mantiene espacio proporcional */
+  width: calc(200vw - 240px) !important; /* 🔹 ocupa todo el ancho menos el sidebar */
+  margin-left: 240px !important;         /* 🔹 alinea con el borde derecho del sidebar */
+  padding: 0 40px !important;            /* 🔹 espacio proporcional a ambos lados */
   box-sizing: border-box;
 }
 
+/* 📋 Ajuste de la tabla */
 .p-datatable.admin-table {
   width: 100% !important;
-  margin: 0 auto !important;
   max-width: 100%;
+  margin: 0 auto !important;
 }
 
+/* 🔧 Toolbar superior */
 .admin-toolbar {
   width: 100%;
   margin: 0 auto 1rem auto;

@@ -344,4 +344,46 @@ datalist option:last-child {
         padding: 6px 8px;
         font-size: 12px;
     }
+
+    .action-icon-btn {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-icon-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.action-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.view-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.reactivate-btn {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.pdf-btn {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
 }

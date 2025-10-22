@@ -1,11 +1,12 @@
-// AgregarSalsasModal.jsx
+// AgregarSalsasModal.jsx - CON LÍMITES DE CONFIGURACIÓN
 import React, { useState } from 'react';
 
-const SalsaCard = ({ salsa, selected, onToggle }) => {
+const SalsaCard = ({ salsa, selected, onToggle, disabled }) => {
   return (
     <div
-      className={`salsa-modal-card ${selected ? 'salsa-modal-card-selected' : ''}`}
-      onClick={onToggle}
+      className={`salsa-modal-card ${selected ? 'salsa-modal-card-selected' : ''} ${disabled ? 'salsa-modal-card-disabled' : ''}`}
+      onClick={() => !disabled && onToggle()}
+      style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <img src={salsa.imagen} alt={salsa.nombre} />
       <h4>{salsa.nombre}</h4>
@@ -14,42 +15,40 @@ const SalsaCard = ({ salsa, selected, onToggle }) => {
   );
 };
 
-const AgregarSalsasModal = ({ onClose, onAgregar }) => {
+const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
   const [selectedSalsas, setSelectedSalsas] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for dropdown visibility
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const salsasData = [
- {
-    id: 601,
-    nombre: 'Salsa de chocolate',
-    unidad: 'ml',
-    precio: 0,
-    imagen: 'https://i.ytimg.com/vi/GeEQmg3S0hE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC91Ih-VqEsWH2Pi5R1qAjAaSytaA',
-    category: 'Chocolate'
-  },
-  {
-    id: 602,
-    nombre: 'Salsa de fresa',
-    unidad: 'ml',
-    precio: 0,
-    imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVT8vaCx4lA7Qf9XFLhQQZSxBmGnyZXs3shQ&s',
-    category: 'Fresa'
-  },
-  {
-    id: 603,
-    nombre: 'Caramelo líquido',
-    unidad: 'ml',
-    precio: 0,
-    imagen: 'https://www.infobae.com/new-resizer/YONmsTYkM3W9btYcQ0Nym1YilLk=/arc-anglerfish-arc2-prod-infobae/public/VMZ5SC5UCJDZVHXFQBV3RIXCEU.jpg',
-    category: 'Caramelo'
-  },
-];
-
-  const categoriasData = [
-    'Todos', 'Chocolate', 'Fresa', 'Caramelo'
+    {
+      id: 601,
+      nombre: 'Salsa de chocolate',
+      unidad: 'ml',
+      precio: 0,
+      imagen: 'https://i.ytimg.com/vi/GeEQmg3S0hE/hq720.jpg',
+      category: 'Chocolate'
+    },
+    {
+      id: 602,
+      nombre: 'Salsa de fresa',
+      unidad: 'ml',
+      precio: 0,
+      imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVT8vaCx4lA7Qf9XFLhQQZSxBmGnyZXs3shQ&s',
+      category: 'Fresa'
+    },
+    {
+      id: 603,
+      nombre: 'Caramelo líquido',
+      unidad: 'ml',
+      precio: 0,
+      imagen: 'https://www.infobae.com/new-resizer/YONmsTYkM3W9btYcQ0Nym1YilLk=/arc-anglerfish-arc2-prod-infobae/public/VMZ5SC5UCJDZVHXFQBV3RIXCEU.jpg',
+      category: 'Caramelo'
+    },
   ];
+
+  const categoriasData = ['Todos', 'Chocolate', 'Fresa', 'Caramelo'];
 
   const filteredSalsas = salsasData.filter(salsa =>
     salsa.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -57,16 +56,32 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
   );
 
   const toggleSalsa = (salsa) => {
-    setSelectedSalsas(prev =>
-      prev.some(i => i.id === salsa.id)
-        ? prev.filter(i => i.id !== salsa.id)
-        : [...prev, { ...salsa, cantidad: 1 }]
-    );
+    setSelectedSalsas(prev => {
+      const existe = prev.some(i => i.id === salsa.id);
+      
+      if (existe) {
+        // Si ya está seleccionado, quitarlo
+        return prev.filter(i => i.id !== salsa.id);
+      } else {
+        // Verificar límite antes de agregar
+        if (limiteMaximo !== null && prev.length >= limiteMaximo) {
+          alert(`⚠️ Solo puedes seleccionar máximo ${limiteMaximo} salsa${limiteMaximo > 1 ? 's' : ''}`);
+          return prev;
+        }
+        return [...prev, { ...salsa, cantidad: 1 }];
+      }
+    });
   };
 
   const handleAgregar = () => {
     onAgregar(selectedSalsas);
     onClose();
+  };
+
+  // Determinar si una salsa debe estar deshabilitada
+  const esSalsaDisabled = (salsa) => {
+    const yaSeleccionado = selectedSalsas.some(i => i.id === salsa.id);
+    return !yaSeleccionado && limiteMaximo !== null && selectedSalsas.length >= limiteMaximo;
   };
 
   return (
@@ -85,11 +100,13 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
           }
 
           .salsa-modal-container {
-            background: #fff0f5; /* Adiciones background */
+            background: #fff0f5;
             border-radius: 20px;
             padding: 25px;
             width: 90%;
             max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             animation: fadeIn 0.3s ease-in-out;
           }
@@ -106,10 +123,37 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
             border: none;
             font-size: 28px;
             cursor: pointer;
-            color: #d63384; /* Adiciones close button color */
+            color: #d63384;
           }
 
-          .salsa-modal-search-container { /* New class for search and filter */
+          .limite-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #2196f3;
+          }
+
+          .limite-info-text {
+            font-size: 14px;
+            color: #1565c0;
+            font-weight: 600;
+          }
+
+          .limite-contador {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0d47a1;
+          }
+
+          .limite-contador.limite-alcanzado {
+            color: #d32f2f;
+          }
+
+          .salsa-modal-search-container {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -118,14 +162,14 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
           }
 
           .salsa-modal-search-container input {
-            flex-grow: 1; /* Allows input to take available space */
+            flex-grow: 1;
             padding: 10px;
             border-radius: 10px;
-            border: 2px solid #ffb6c1; /* Adiciones border color */
+            border: 2px solid #ffb6c1;
             font-size: 16px;
           }
 
-          .salsa-modal-filter-btn { /* New button style */
+          .salsa-modal-filter-btn {
             padding: 10px 15px;
             border: none;
             border-radius: 10px;
@@ -142,7 +186,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
             background-color: #d63384;
           }
 
-          .salsa-modal-categories-dropdown { /* New dropdown style */
+          .salsa-modal-categories-dropdown {
             position: absolute;
             top: 100%;
             right: 0;
@@ -196,14 +240,19 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
             border: 3px solid transparent;
           }
 
-          .salsa-modal-card:hover {
+          .salsa-modal-card:hover:not(.salsa-modal-card-disabled) {
             transform: translateY(-4px);
-            border-color: #ff69b4; /* Adiciones hover border */
+            border-color: #ff69b4;
           }
 
           .salsa-modal-card-selected {
-            border-color: #d63384; /* Adiciones selected border */
-            background: #ffe4ec; /* Adiciones selected background */
+            border-color: #d63384;
+            background: #ffe4ec;
+          }
+
+          .salsa-modal-card-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
           }
 
           .salsa-modal-card img {
@@ -216,7 +265,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
 
           .salsa-modal-card h4 {
             font-size: 16px;
-            color: #d63384; /* Adiciones h4 color */
+            color: #d63384;
             margin: 0;
           }
 
@@ -236,13 +285,18 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
           }
 
           .salsa-modal-btn-cancel {
-            background-color: #f8d7da; /* Adiciones cancel button background */
-            color: #721c24; /* Adiciones cancel button color */
+            background-color: #f8d7da;
+            color: #721c24;
           }
 
           .salsa-modal-btn-add {
-            background-color: #ff69b4; /* Adiciones add button background */
+            background-color: #ff69b4;
             color: white;
+          }
+
+          .salsa-modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
           }
 
           @keyframes fadeIn {
@@ -256,7 +310,19 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
           <button onClick={onClose} className="salsa-modal-close-btn">&times;</button>
         </div>
 
-        <div className="salsa-modal-search-container"> {/* Updated class */}
+        {/* Mostrar límite si existe */}
+        {limiteMaximo !== null && limiteMaximo > 0 && (
+          <div className="limite-info">
+            <span className="limite-info-text">
+              📊 Límite de salsas configurado
+            </span>
+            <span className={`limite-contador ${selectedSalsas.length >= limiteMaximo ? 'limite-alcanzado' : ''}`}>
+              {selectedSalsas.length} / {limiteMaximo}
+            </span>
+          </div>
+        )}
+
+        <div className="salsa-modal-search-container">
           <input
             type="text"
             placeholder="Buscar salsa..."
@@ -278,7 +344,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
                   className={`salsa-modal-category-btn ${selectedCategory === category ? 'selected' : ''}`}
                   onClick={() => {
                     setSelectedCategory(category);
-                    setShowCategoryDropdown(false); // Close dropdown after selection
+                    setShowCategoryDropdown(false);
                   }}
                 >
                   {category}
@@ -295,6 +361,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
               salsa={salsa}
               selected={selectedSalsas.some(i => i.id === salsa.id)}
               onToggle={() => toggleSalsa(salsa)}
+              disabled={esSalsaDisabled(salsa)}
             />
           ))}
         </div>
@@ -303,7 +370,11 @@ const AgregarSalsasModal = ({ onClose, onAgregar }) => {
           <button className="salsa-modal-btn salsa-modal-btn-cancel" onClick={onClose}>
             Cancelar
           </button>
-          <button className="salsa-modal-btn salsa-modal-btn-add" onClick={handleAgregar}>
+          <button 
+            className="salsa-modal-btn salsa-modal-btn-add" 
+            onClick={handleAgregar}
+            disabled={selectedSalsas.length === 0}
+          >
             Agregar ({selectedSalsas.length})
           </button>
         </div>

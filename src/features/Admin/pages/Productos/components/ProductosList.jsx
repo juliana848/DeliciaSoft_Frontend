@@ -7,6 +7,8 @@ import Notification from "../../../components/Notification";
 import productosApiService from "../../../services/productos_services";
 import "../../../adminStyles.css";
 import LoadingSpinner from '../../../components/LoadingSpinner';
+import ConfiguracionProducto from "./ConfiguracionProducto";
+
 
 const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
   const [productos, setProductos] = useState([]);
@@ -17,6 +19,20 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     tipo: "success",
   });
   const [loading, setLoading] = useState(true);
+
+  const [productoAConfigurar, setProductoAConfigurar] = useState(null);
+  const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
+
+  const handleConfiguracion = (producto) => {
+    setProductoAConfigurar(producto);
+    setMostrarConfiguracion(true);
+  };
+
+  const handleCloseConfiguracion = () => {
+    setProductoAConfigurar(null);
+    setMostrarConfiguracion(false);
+  };
+
 
   const formatearPrecio = (precio) =>
     new Intl.NumberFormat("es-CO", {
@@ -247,6 +263,23 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
               >
                 🗑️
               </button>
+              <button
+              onClick={() => handleConfiguracion(row)}
+              className="btn-small"
+              style={{
+                background: "#8b5cf6",
+                color: "white",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "0.875rem"
+              }}
+              title="Configurar personalización"
+            >
+              ⚙️
+            </button>
+
             </div>
           )}
           style={{ width: '180px' }}
@@ -254,6 +287,43 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
           bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
       </DataTable>
+      {mostrarConfiguracion && productoAConfigurar && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px",
+          overflowY: "auto"
+        }}>
+          <div style={{
+            background: "white",
+            borderRadius: "12px",
+            maxWidth: "800px",
+            width: "100%",
+            maxHeight: "90vh",
+            overflowY: "auto"
+          }}>
+            <ConfiguracionProducto
+              idProducto={productoAConfigurar.id || productoAConfigurar.idproductogeneral}
+              nombreProducto={productoAConfigurar.nombre || productoAConfigurar.nombreproducto}
+              onSave={(config) => {
+                handleCloseConfiguracion();
+                // Opcional: recargar lista de productos
+                // cargarProductos();
+              }}
+              onCancel={handleCloseConfiguracion}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 });

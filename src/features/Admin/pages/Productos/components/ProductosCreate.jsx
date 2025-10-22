@@ -1,6 +1,7 @@
 // src/features/Admin/pages/Productos/ProductosCreate.jsx
 import React, { useState, useEffect } from "react";
 import SeleccionarRecetaModal from "./components_recetas/SeleccionarRecetaModal";
+import ConfiguracionProducto from "./ConfiguracionProducto";
 import productoApiService from "../../../services/productos_services";
 import Notification from "../../../components/Notification";
 import "./css/productoscss.css"; 
@@ -8,6 +9,9 @@ import ModalCategoria from "./ModalCategoria";
 import categoriaProductoApiService from "../../../services/categoriaProductosService";
 
 export default function ProductosCreate({ onSave, onCancel }) {
+  const [paso, setPaso] = useState(1); // 1: Crear Producto, 2: Configurar
+  const [productoCreado, setProductoCreado] = useState(null);
+  
   const [formData, setFormData] = useState({
     nombreproducto: "",
     precioproducto: "",
@@ -19,8 +23,6 @@ export default function ProductosCreate({ onSave, onCancel }) {
     imagenPreview: null,
   });
 
-
-  
   const [categorias, setCategorias] = useState([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function ProductosCreate({ onSave, onCancel }) {
     const cargarCategorias = async () => {
       try {
         const response = await fetch(
-          "https://deliciasoft-backend.onrender.com/api/categorias-productos"
+          "https://deliciasoft-backend-i6g9.onrender.com/api/categorias-productos"
         );
         if (!response.ok) throw new Error("No se pudo obtener las categorías");
         const data = await response.json();
@@ -121,29 +123,18 @@ export default function ProductosCreate({ onSave, onCancel }) {
 
   const guardarCategoria = async (nuevaCategoria) => {
     try {
-      // Usamos el servicio correcto de categorías
       const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria);
-
-      // Actualizamos la lista de categorías
       setCategorias((prev) => [...prev, categoriaCreada]);
-
-      // Seleccionamos la nueva categoría en el formulario
       setFormData((prev) => ({
         ...prev,
         idcategoriaproducto: categoriaCreada.idcategoriaproducto,
       }));
-
-      // Notificación de éxito
       showNotification("Categoría creada correctamente", "success");
-
-      // Cerramos el modal
       cerrarModalCategoria();
     } catch (error) {
-      // console.error('Error al crear categoría:', error);
       throw error;
     }
   };
-
 
   const validateForm = () => {
     const errores = {};
@@ -190,8 +181,22 @@ export default function ProductosCreate({ onSave, onCancel }) {
       };
 
       const productoCreado = await productoApiService.crearProducto(payload);
+      setProductoCreado(productoCreado);
       showNotification("Producto creado exitosamente", "success");
-      if (onSave) onSave(productoCreado);
+      
+      // Preguntar si desea configurar personalización
+      setTimeout(() => {
+        const configurar = window.confirm(
+          "¿Desea configurar las opciones de personalización para este producto?"
+        );
+        
+        if (configurar) {
+          setPaso(2); // Ir al paso de configuración
+        } else {
+          if (onSave) onSave(productoCreado);
+        }
+      }, 1000);
+      
     } catch (error) {
       showNotification("Error al crear producto: " + error.message, "error");
     } finally {
@@ -199,6 +204,32 @@ export default function ProductosCreate({ onSave, onCancel }) {
     }
   };
 
+  // Handler para guardar configuración
+  const handleSaveConfiguracion = (configuracion) => {
+    showNotification("¡Producto y configuración guardados exitosamente!", "success");
+    setTimeout(() => {
+      if (onSave) onSave(productoCreado);
+    }, 1500);
+  };
+
+  // Handler para saltar configuración
+  const handleSkipConfiguracion = () => {
+    if (onSave) onSave(productoCreado);
+  };
+
+  // Si estamos en el paso 2, mostrar el componente de configuración
+  if (paso === 2 && productoCreado) {
+    return (
+      <ConfiguracionProducto
+        idProducto={productoCreado.id || productoCreado.idproductogeneral}
+        nombreProducto={productoCreado.nombre || productoCreado.nombreproducto}
+        onSave={handleSaveConfiguracion}
+        onCancel={handleSkipConfiguracion}
+      />
+    );
+  }
+
+  // Paso 1: Formulario de creación de producto
   return (
     <div className="compra-form-container">
       <Notification
@@ -384,7 +415,6 @@ export default function ProductosCreate({ onSave, onCancel }) {
         />
       )}
 
-      {/* Modal Categoría */}
       {modalCategoriaVisible && (
         <ModalCategoria
           visible={modalCategoriaVisible}

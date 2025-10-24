@@ -336,19 +336,24 @@ export default function Usuarios() {
         </Modal>
       )}
 
-      {/* Modal Confirmar Eliminación */}
-      {modalTipo === 'eliminar' && modalVisible && (
-        <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title modal-title-compact">Confirmar Eliminación</h2>
-          <div className="modal-body modal-body-compact">
-            <p>¿Está seguro de que desea eliminar al usuario <strong>{usuarioSeleccionado?.nombres} {usuarioSeleccionado?.apellidos}</strong>?</p>
-          </div>
-          <div className="modal-footer">
-            <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-            <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
-          </div>
-        </Modal>
-      )}
+{modalTipo === 'eliminar' && modalVisible && (
+  <Modal visible={modalVisible} onClose={cerrarModal}>
+    <div className="flex flex-col gap-1.5 p-2.5">
+      <h2 className="text-lg font-semibold text-gray-800 m-0 pb-1 border-b-2" style={{ borderColor: '#d81b60' }}>
+        Confirmar Eliminación
+      </h2>
+      <p className="text-sm text-gray-700 mt-1">
+        ¿Está seguro de que desea eliminar al usuario{' '}
+        <strong>{usuarioSeleccionado?.nombres} {usuarioSeleccionado?.apellidos}</strong>?
+      </p>
+      <div className="flex justify-end gap-3 mt-2">
+        <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+        <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+      </div>
+    </div>
+  </Modal>
+)}
+
     </div>
   );
 }

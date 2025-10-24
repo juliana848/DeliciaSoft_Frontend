@@ -23,36 +23,39 @@ class ImagenesApiService {
         throw new Error('La imagen no debe superar 10MB');
       }
 
-      // Crear FormData - IMPORTANTE: verifica qué nombre espera tu backend
+      // Crear FormData
       const formData = new FormData();
-      
-      // Prueba estos nombres de campo si 'image' no funciona:
-      // formData.append('image', file, file.name);    // Opción 1
-      // formData.append('file', file, file.name);     // Opción 2
-      // formData.append('archivo', file, file.name);  // Opción 3
-      
-      formData.append('image', file, file.name); // Nombre por defecto
+      // IMPORTANTE: Tu backend acepta 'image' o 'imagen'
+      formData.append('image', file);
       
       if (descripcion) {
         formData.append('descripcion', descripcion);
       }
 
-      // Log para debug
-      console.log('📡 Enviando a:', BASE_URL);
-      console.log('FormData entries:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
+      // CORRECCIÓN PRINCIPAL: La URL debe ser /api/imagenes/upload
+      const uploadURL = `${BASE_URL}/upload`;
+      console.log('📡 Enviando a:', uploadURL);
 
-      const response = await fetch(BASE_URL, {
+      // Timeout de 60 segundos (tu backend tiene timeout de 60s)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      const response = await fetch(uploadURL, {
         method: 'POST',
         body: formData,
-        // IMPORTANTE: NO incluir headers para Content-Type
-        // El navegador los añade automáticamente con boundary correcto
+        signal: controller.signal
+        // NO incluir Content-Type, el navegador lo maneja automáticamente con boundary
       });
+
+      clearTimeout(timeoutId);
 
       console.log('📥 Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Verificar errores HTTP
+      if (response.status === 404) {
+        throw new Error('❌ ENDPOINT NO ENCONTRADO: La ruta /api/imagenes/upload no existe en el servidor');
+      }
 
       // Leer la respuesta
       const contentType = response.headers.get('content-type');
@@ -63,37 +66,58 @@ class ImagenesApiService {
       } else {
         const text = await response.text();
         console.error('Respuesta no JSON:', text);
+        
+        if (text.includes('<!DOCTYPE html>')) {
+          throw new Error('El servidor devolvió HTML. Posible error: ruta incorrecta o servidor caído.');
+        }
+        
         throw new Error(`Respuesta inesperada del servidor: ${text.substring(0, 200)}`);
       }
 
       if (!response.ok) {
         console.error('❌ Error del backend:', data);
+        
+        // Manejar errores específicos del backend
+        if (data.error === 'LIMIT_FILE_SIZE') {
+          throw new Error('La imagen es demasiado grande. Tamaño máximo: 10MB');
+        }
+        
+        if (data.error === 'INVALID_FILE_TYPE') {
+          throw new Error('Tipo de archivo no permitido. Solo JPG, PNG, GIF y WebP');
+        }
+        
         throw new Error(data.message || data.error || `Error ${response.status}`);
       }
 
       console.log('✅ Respuesta exitosa:', data);
 
-      // Validar estructura de respuesta
+      // Validar estructura de respuesta según tu backend
       if (!data.imagen || !data.imagen.idimagen) {
         console.error('⚠️ Estructura inesperada:', data);
         throw new Error('El backend no retornó un idimagen válido');
       }
 
+      // Retornar en el formato esperado
       return {
         idimagen: data.imagen.idimagen,
-        url: data.imagen.urlimg || ''
+        url: data.imagen.urlimg || '',
+        cloudinary: data.cloudinary || null
       };
 
     } catch (error) {
       console.error('❌ Error completo:', error);
       
       // Mensajes de error más descriptivos
+      if (error.name === 'AbortError') {
+        throw new Error('⏱️ La petición tardó demasiado (más de 60 segundos). El servidor puede estar lento o la imagen es muy grande.');
+      }
+      
       if (error.message.includes('Failed to fetch')) {
-        throw new Error('No se pudo conectar al servidor. Verifica tu conexión a internet.');
+        throw new Error('🔌 No se pudo conectar al servidor. Verifica:\n1. Tu conexión a internet\n2. Que el backend esté funcionando en Render\n3. Que no haya problemas de CORS');
       }
       
       if (error.message.includes('NetworkError')) {
-        throw new Error('Error de red. El servidor podría estar inaccesible.');
+        throw new Error('🌐 Error de red. El servidor podría estar inaccesible o hay problemas de CORS.');
       }
       
       throw error;
@@ -132,6 +156,30 @@ class ImagenesApiService {
     } catch (error) {
       console.error(`Error al eliminar imagen ${id}:`, error);
       throw error;
+    }
+  }
+
+  async validarConfiguracion() {
+    try {
+      const response = await fetch(`${BASE_URL}/validate-config`);
+      if (!response.ok) {
+        throw new Error('No se pudo validar la configuración de Cloudinary');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error al validar configuración:', error);
+      throw error;
+    }
+  }
+
+  async obtenerEstadisticas() {
+    try {
+      const response = await fetch(`${BASE_URL}/estadisticas`);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error al obtener estadísticas:', error);
+      return null;
     }
   }
 }

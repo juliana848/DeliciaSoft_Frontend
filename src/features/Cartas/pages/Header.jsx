@@ -6,16 +6,18 @@ function Header() {
 
   // Traer imágenes desde la API
   useEffect(() => {
-    fetch("https://deliciasoft-backend.onrender.com/api/imagenes")
+    fetch("https://deliciasoft-backend-i6g9.onrender.com/api/imagenes")
       .then((res) => res.json())
       .then((data) => {
         let arr = [];
         if (Array.isArray(data)) {
-          arr = data.map((item) => item.urlimg);
+          // Saltar las primeras 4 y tomar las siguientes 10 (posiciones 4-13)
+          arr = data.slice(4, 12).map((item) => item.urlimg);
         } else if (data.urlimg) {
           arr = [data.urlimg];
         } else if (data.imagenes) {
-          arr = data.imagenes.map((item) => item.urlimg);
+          // Saltar las primeras 4 y tomar las siguientes 10 (posiciones 4-13)
+          arr = data.imagenes.slice(4, 12).map((item) => item.urlimg);
         }
         setImages(arr);
       })
@@ -61,27 +63,33 @@ function Header() {
           <div className="relative group">
             {/* Card + imagen */}
             <div className="bg-white rounded-3xl p-3 shadow-xl">
-              {images.length > 0 && (
+              {images.length > 0 ? (
                 <img
                   src={images[currentImageIndex]}
                   alt="Productos artesanales"
                   className="w-full h-80 object-cover rounded-3xl transform group-hover:scale-105 transition-all duration-500"
                 />
+              ) : (
+                <div className="w-full h-80 bg-gray-200 rounded-3xl flex items-center justify-center">
+                  <p className="text-gray-500">Cargando productos...</p>
+                </div>
               )}
 
               {/* Indicadores */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                {images.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      index === currentImageIndex
-                        ? "bg-pink-500 w-6"
-                        : "bg-pink-200"
-                    }`}
-                  />
-                ))}
-              </div>
+              {images.length > 1 && (
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                  {images.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentImageIndex
+                          ? "bg-pink-500 w-6"
+                          : "bg-pink-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Elementos flotantes alrededor */}

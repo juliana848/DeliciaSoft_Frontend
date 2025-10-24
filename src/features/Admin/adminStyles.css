@@ -20,6 +20,30 @@
     font-size: 0.875rem;
     padding: 8px 10px;
 }
+/* ⚙️ Ajuste del contenedor principal de contenido (tabla incluida) */
+.admin-content-wrapper {
+  width: calc(200vw - 240px) !important; /* 🔹 ocupa todo el ancho menos el sidebar */
+  margin-left: 240px !important;         /* 🔹 alinea con el borde derecho del sidebar */
+  padding: 0 40px !important;            /* 🔹 espacio proporcional a ambos lados */
+  box-sizing: border-box;
+}
+
+/* 📋 Ajuste de la tabla */
+.p-datatable.admin-table {
+  width: 100% !important;
+  max-width: 100%;
+  margin: 0 auto !important;
+}
+
+/* 🔧 Toolbar superior */
+.admin-toolbar {
+  width: 100%;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 
 /* 🎚️ Encabezado gris difuminado */
 .p-datatable.admin-table .p-datatable-thead > tr > th {
@@ -108,10 +132,30 @@
     background-color: #e53935;
     color: white;
 }
+/* 🔧 Ajustes de tamaño sin cambiar colores ni estilos */
 
+/* Botón AGREGAR */
+.admin-button.pink {
+    transform: scale(1);       /* Reduce todo el tamaño un 25% */
+    transform-origin: center;     /* Centra la escala */
+}
+
+/* Buscador */
+.search-input {
+    transform: scale(1);        /* Reduce tamaño visual */
+    transform-origin: right center; /* Mantiene alineación a la derecha */
+}
+
+/* Switch de cambio de estado */
+.p-inputswitch {
+    transform: scale(0.8);        /* 🔹 Mismo diseño, solo más pequeño */
+    transform-origin: center;
+}
 .p-inputswitch .p-inputswitch-slider {
   background-color: #d6d6d6 !important;
 }
+
+
 
 .p-inputswitch.p-highlight .p-inputswitch-slider,
 .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
@@ -293,19 +337,21 @@
     100% { opacity: 0; }
 }
 
+
 .admin-button.pink {
     background-color: #e91e63;
     color: white;
     border: none;
     border-radius: 4px;
-    width: 15%;
-    height: 40px;
-    padding: 1.5rem 1rem;
+    padding: 6px 12px; /* 🔹 Mucho más pequeño */
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(233, 30, 99, 0.4);
     transition: background-color 0.3s ease;
-    box-shadow: 0 2px 5px rgba(233, 30, 99, 0.4);
 }
+
+
 
 .admin-button.pink:hover {
     background-color: #c2185b;
@@ -2183,13 +2229,15 @@
 }
 
 .search-input {
-    padding: clamp(6px, 1vw, 8px) clamp(8px, 1.5vw, 12px);
-    border: 2px solid #f48fb1;
-    border-radius: 10px;
-    width: min(250px, 100%);
-    font-size: clamp(12px, 1.5vw, 14px);
-    outline: none;
+    padding: 4px 8px;
+    border: 2px solid #ec407a; /* mantengo tu color rosado */
+    border-radius: 8px;
+    width: 180px; /* 🔹 Más angosto */
+    font-size: 13px;
+    box-shadow: 0 0 3px rgba(244, 143, 177, 0.5); /* mantengo brillo rosa */
 }
+
+
 
 /* Título de sección adaptativo */
 .admin-section-title {

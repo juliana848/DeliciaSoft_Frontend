@@ -114,32 +114,48 @@ const Navegacion = ({ isAuthenticated = false }) => {
 
   const abrirLoginNuevaVentana = (e) => {
     e.preventDefault();
-    const width = 900;
-    const height = 650;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
     
-    const loginWindow = window.open(
-      '/iniciar-sesion',
-      'Login',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-
-    if (loginWindow) {
-      loginWindow.opener = window;
-      
-      const checkInterval = setInterval(() => {
-        if (loginWindow.closed) {
-          console.log('Ventana de login cerrada, verificando autenticación...');
-          clearInterval(checkInterval);
+    // Guardar la URL actual para sincronización
+    localStorage.setItem('loginOpenerUrl', window.location.pathname);
+    
+    // Abrir en nueva pestaña (no ventana emergente)
+    const loginTab = window.open('/iniciar-sesion', '_blank');
+    
+    if (loginTab) {
+      // Escuchar cambios en el localStorage para sincronizar
+      const handleStorageChange = (event) => {
+        if (event.key === 'authToken' && event.newValue) {
+          console.log('✅ Login detectado en otra pestaña, sincronizando...');
           
-          const authToken = localStorage.getItem('authToken');
-          if (authToken) {
-            console.log('Usuario autenticado, recargando página...');
+          // Pequeño delay para asegurar que todos los datos estén guardados
+          setTimeout(() => {
+            const userRole = localStorage.getItem('userRole');
+            const redirectPath = localStorage.getItem('redirectAfterLogin');
+            
+            if (redirectPath) {
+              localStorage.removeItem('redirectAfterLogin');
+              navigate(redirectPath);
+            } else if (userRole === 'admin') {
+              navigate('/admin/pages/Dashboard');
+            } else {
+              navigate('/');
+            }
+            
+            // Recargar para actualizar el estado de autenticación
             window.location.reload();
-          }
+          }, 500);
+          
+          // Remover el listener
+          window.removeEventListener('storage', handleStorageChange);
         }
-      }, 500);
+      };
+      
+      window.addEventListener('storage', handleStorageChange);
+      
+      // Limpiar el listener después de 5 minutos (por seguridad)
+      setTimeout(() => {
+        window.removeEventListener('storage', handleStorageChange);
+      }, 300000);
     }
   };
 

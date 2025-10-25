@@ -42,7 +42,7 @@ const LogoutButton = ({ className = "logout-btn", showText = false, isDropdown =
       showCustomToast(`¡Hasta luego ${userName}!`, 'Has cerrado sesión exitosamente', 'success');
     }, 100);
     
-    navigate('/iniciar-sesion');
+    navigate('/');
     
     setTimeout(() => {
       window.location.reload();

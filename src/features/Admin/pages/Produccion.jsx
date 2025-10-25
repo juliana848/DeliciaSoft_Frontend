@@ -6,6 +6,7 @@ import './Produccion/components/Css/Produccion.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
+import Tooltip from '../components/Tooltip';
 import FormCrearProduccion from './Produccion/components/FormCrearProduccion';
 import ModalVisualizarProduccion from './Produccion/components/ModalVisualizarProduccion';
 import ModalEliminarProduccion from './Produccion/components/ModalEliminarProduccion';
@@ -244,8 +245,12 @@ export default function Produccion() {
                   <Column field="numeroPedido" header="N° Pedido" />
                   <Column header="Acción" body={(rowData) => (
                     <>
-                      <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
-                      <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
+                      <Tooltip text="Visualizar">
+                        <button className="admin-button gray" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+                      </Tooltip>
+                      <Tooltip text="Eliminar">
+                        <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
+                      </Tooltip>
                     </>
                   )} />
                 </DataTable>
@@ -257,8 +262,12 @@ export default function Produccion() {
                   <Column header="Estado Producción" body={(rowData) => renderEstadoSelect(rowData, 'estadoProduccion')} />
                   <Column header="Acción" body={(rowData) => (
                     <>
-                      <button className="admin-button gray" title="Visualizar" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
-                      <button className="admin-button red" title="Eliminar" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
+                      <Tooltip text="Visualizar">
+                        <button className="admin-button gray" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
+                      </Tooltip>
+                      <Tooltip text="Eliminar">
+                        <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
+                      </Tooltip>
                     </>
                   )} />
                 </DataTable>

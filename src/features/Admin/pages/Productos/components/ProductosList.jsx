@@ -4,6 +4,7 @@ import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
 import SearchBar from "../../../components/SearchBar";
 import Notification from "../../../components/Notification";
+import Tooltip from "../../../components/Tooltip";
 import productosApiService from "../../../services/productos_services";
 import "../../../adminStyles.css";
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -242,43 +243,50 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
           header="Acción"
           body={(row) => (
             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-              <button
-                className="admin-button gray"
-                onClick={() => onView(row)}
-                title="Ver detalles"
-              >
-                👁
-              </button>
-              <button
-                className="admin-button yellow"
-                onClick={() => onEdit(row)}
-                title="Editar"
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                onClick={() => onDelete(row)}
-                title="Eliminar"
-              >
-                🗑️
-              </button>
-              <button
-              onClick={() => handleConfiguracion(row)}
-              className="btn-small"
-              style={{
-                background: "#8b5cf6",
-                color: "white",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.875rem"
-              }}
-              title="Configurar personalización"
-            >
-              ⚙️
-            </button>
+              <Tooltip text="visualizar">
+                <button
+                  className="admin-button gray"
+                  onClick={() => onView(row)}
+                >
+                  👁
+                </button>
+              </Tooltip>
+              
+              <Tooltip text="Editar">
+                <button
+                  className="admin-button yellow"
+                  onClick={() => onEdit(row)}
+                >
+                  ✏️
+                </button>
+              </Tooltip>
+              
+              <Tooltip text="Eliminar">
+                <button
+                  className="admin-button red"
+                  onClick={() => onDelete(row)}
+                >
+                  🗑️
+                </button>
+              </Tooltip>
+              
+              <Tooltip text="Configurar personalización">
+                <button
+                  onClick={() => handleConfiguracion(row)}
+                  className="btn-small"
+                  style={{
+                    background: "#8b5cf6",
+                    color: "white",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  ⚙️
+                </button>
+              </Tooltip>
 
             </div>
           )}

@@ -32,7 +32,7 @@ const LoginForm = () => {
   };
 
   const manejarCodigoGenerado = (codigo) => {
-    console.log('📝 Código recibido en LoginForm:', codigo);
+    console.log('🔑 Código recibido en LoginForm:', codigo);
     setCodigoGenerado(codigo);
     setMostrarModalCorreo(false);
     setMostrarModalCodigo(true);
@@ -62,6 +62,7 @@ const LoginForm = () => {
     console.log('Tipo de usuario:', userType);
 
     const redirectPath = localStorage.getItem('redirectAfterLogin');
+    const openerUrl = localStorage.getItem('loginOpenerUrl');
     
     localStorage.setItem('authToken', 'jwt-token-' + Date.now());
     localStorage.setItem('userRole', userType);
@@ -78,6 +79,32 @@ const LoginForm = () => {
     
     localStorage.setItem('user', JSON.stringify(userForContact));
     
+    // Si se abrió desde otra pestaña, cerrar esta y dejar que la original se sincronice
+    if (openerUrl && window.opener === null) {
+      localStorage.removeItem('loginOpenerUrl');
+      showCustomAlert('success', 'Inicio de sesión exitoso. Cerrando pestaña...');
+      
+      setTimeout(() => {
+        if (redirectPath === '/contactenos') {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate('/contactenos');
+          setTimeout(() => window.close(), 1000);
+        } else if (redirectPath) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectPath);
+          setTimeout(() => window.close(), 1000);
+        } else if (userType === 'admin') {
+          navigate('/admin/pages/Dashboard');
+          setTimeout(() => window.close(), 1000);
+        } else {
+          navigate('/');
+          setTimeout(() => window.close(), 1000);
+        }
+      }, 1500);
+      return;
+    }
+    
+    // Flujo normal cuando NO se abrió en nueva pestaña
     if (redirectPath === '/contactenos') {
       localStorage.removeItem('redirectAfterLogin');
       sessionStorage.setItem('fromLogin', 'true');

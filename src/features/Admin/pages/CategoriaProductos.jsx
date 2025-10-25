@@ -6,6 +6,7 @@ import '../adminStyles.css';
 import Modal from '../components/modal';
 import SearchBar from '../components/SearchBar';
 import Notification from '../components/Notification';
+import Tooltip from '../components/Tooltip';
 import categoriaProductoApiService from '../services/categoriaProductosService';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -23,21 +24,15 @@ export default function CategoriaProductos() {
   const [previewImagen, setPreviewImagen] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Cargar categorías al montar el componente
   useEffect(() => {
     cargarCategorias();
   }, []);
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
 
   const cargarCategorias = async () => {
     try {
       setLoading(true);
       const categoriasObtenidas = await categoriaProductoApiService.obtenerCategorias();
       
-      // Mapear los datos de la API al formato esperado por el componente
       const categoriasMapeadas = categoriasObtenidas.map(categoria => ({
         id: categoria.idcategoriaproducto,
         nombre: categoria.nombrecategoria,
@@ -56,18 +51,15 @@ export default function CategoriaProductos() {
 
   const toggleActivo = async (categoria) => {
     try {
-      // Actualizar el estado local inmediatamente
       const updated = categorias.map(cat =>
         cat.id === categoria.id ? { ...cat, activo: !cat.activo } : cat
       );
       setCategorias(updated);
       
-      // Llamar al servicio en segundo plano
       await categoriaProductoApiService.toggleEstadoCategoria(categoria.id);
       
       showNotification(`Categoría ${categoria.activo ? 'desactivada' : 'activada'} exitosamente`);
     } catch (error) {
-      // Revertir el cambio si hay error
       const reverted = categorias.map(cat =>
         cat.id === categoria.id ? { ...cat, activo: categoria.activo } : cat
       );
@@ -88,12 +80,10 @@ export default function CategoriaProductos() {
     const file = e.target.files[0];
     if (file) {
       try {
-        // Validar archivo
         categoriaProductoApiService.validarArchivoImagen(file);
         
         setArchivoImagen(file);
         
-        // Crear preview
         const reader = new FileReader();
         reader.onload = (e) => {
           setPreviewImagen(e.target.result);
@@ -188,7 +178,6 @@ export default function CategoriaProductos() {
         archivoImagen
       );
       
-      // Actualizar el estado local
       const updated = categorias.map(cat =>
         cat.id === categoriaSeleccionada.id
           ? { 
@@ -210,7 +199,6 @@ export default function CategoriaProductos() {
 
   const confirmarEliminar = async () => {
     try {
-      // Verificar si la categoría tiene productos asociados
       const tieneProductos = await categoriaProductoApiService.categoriaTieneProductos(categoriaSeleccionada.id);
       
       if (tieneProductos) {
@@ -220,7 +208,6 @@ export default function CategoriaProductos() {
 
       await categoriaProductoApiService.eliminarCategoria(categoriaSeleccionada.id);
       
-      // Actualizar el estado local
       const updated = categorias.filter(cat => cat.id !== categoriaSeleccionada.id);
       setCategorias(updated);
       
@@ -243,7 +230,6 @@ export default function CategoriaProductos() {
 
       const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria, archivoImagen);
       
-      // Agregar la nueva categoría al inicio del estado local
       const categoriaMapeada = {
         id: categoriaCreada.idcategoriaproducto,
         nombre: categoriaCreada.nombrecategoria,
@@ -261,7 +247,6 @@ export default function CategoriaProductos() {
     }
   };
 
-  // Template para mostrar imagen en la tabla
   const imagenBodyTemplate = (rowData) => {
     if (rowData.imagen) {
       return (
@@ -300,6 +285,10 @@ export default function CategoriaProductos() {
     cat.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
     cat.descripcion.toLowerCase().includes(filtro.toLowerCase())
   );
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="admin-wrapper">
@@ -384,30 +373,43 @@ export default function CategoriaProductos() {
           header="Acción"
           body={(rowData) => (
             <>
-              <button
-                className="admin-button gray"
-                title="Visualizar"
-                onClick={() => abrirModal('visualizar', rowData)}
-                disabled={loading}
-              >
-                👁
-              </button>
-              <button
-                className={`admin-button ${rowData.activo ? 'yellow' : 'yellow-disabled'}`}
-                title="Editar"
-                onClick={() => rowData.activo && abrirModal('editar', rowData)}
-                disabled={!rowData.activo || loading}
-              >
-                ✏️
-              </button>
-              <button
-                className={`admin-button ${rowData.activo ? 'red' : 'red-disabled'}`}
-                title="Eliminar"
-                onClick={() => rowData.activo && abrirModal('eliminar', rowData)}
-                disabled={!rowData.activo || loading}
-              >
-                🗑️
-              </button>
+              <Tooltip text="Visualizar">
+                <button
+                  className="admin-button gray"
+                  onClick={() => abrirModal('visualizar', rowData)}
+                  disabled={loading}
+                >
+                  👁
+                </button>
+              </Tooltip>
+              
+              <Tooltip text={rowData.activo ? "Editar" : "Categoría inactiva"}>
+                <button
+                  className={`admin-button ${rowData.activo ? 'yellow' : 'yellow-disabled'}`}
+                  onClick={() => rowData.activo && abrirModal('editar', rowData)}
+                  disabled={!rowData.activo || loading}
+                  style={{
+                    opacity: rowData.activo ? 1 : 0.5,
+                    cursor: rowData.activo ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  ✏️
+                </button>
+              </Tooltip>
+              
+              <Tooltip text={rowData.activo ? "Eliminar" : "Categoría inactiva"}>
+                <button
+                  className={`admin-button ${rowData.activo ? 'red' : 'red-disabled'}`}
+                  onClick={() => rowData.activo && abrirModal('eliminar', rowData)}
+                  disabled={!rowData.activo || loading}
+                  style={{
+                    opacity: rowData.activo ? 1 : 0.5,
+                    cursor: rowData.activo ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  🗑️
+                </button>
+              </Tooltip>
             </>
           )}
           headerStyle={{ textAlign: 'right', paddingLeft:'80px'}}
@@ -416,7 +418,6 @@ export default function CategoriaProductos() {
         />
       </DataTable>
 
-      {/* Modal Agregar / Editar */}
       {(modalTipo === 'agregar' || modalTipo === 'editar') && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">
@@ -429,7 +430,6 @@ export default function CategoriaProductos() {
               gap: '1rem',
               alignItems: 'start'
             }}>
-              {/* Columna izquierda: Nombre */}
               <div>
                 <label>
                   Nombre:
@@ -445,7 +445,6 @@ export default function CategoriaProductos() {
                 </label>
               </div>
 
-              {/* Columna derecha: Descripción */}
               <div>
                 <label>
                   Descripción:
@@ -462,7 +461,6 @@ export default function CategoriaProductos() {
               </div>
             </div>
 
-            {/* Imagen debajo */}
             <div style={{ marginTop: '1rem' }}>
               <label>
                 Imagen (opcional):
@@ -479,7 +477,6 @@ export default function CategoriaProductos() {
                 </small>
               </label>
 
-              {/* Preview de imagen */}
               {previewImagen && (
                 <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <img
@@ -549,7 +546,6 @@ export default function CategoriaProductos() {
         </Modal>
       )}
 
-      {/* Modal Visualizar */}
       {modalTipo === 'visualizar' && categoriaSeleccionada && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Detalles de la Categoría</h2>
@@ -560,7 +556,6 @@ export default function CategoriaProductos() {
               gap: '1rem',
               alignItems: 'start'
             }}>
-              {/* Columna izquierda: Nombre */}
               <div>
                 <label>
                   Nombre:
@@ -574,7 +569,6 @@ export default function CategoriaProductos() {
                 </label>
               </div>
 
-              {/* Columna derecha: Descripción */}
               <div>
                 <label>
                   Descripción:
@@ -589,7 +583,6 @@ export default function CategoriaProductos() {
               </div>
             </div>
 
-            {/* Imagen debajo */}
             <div style={{ marginTop: '1rem' }}>
               <label>Imagen:</label>
               {previewImagen ? (
@@ -641,7 +634,6 @@ export default function CategoriaProductos() {
         </Modal>
       )}
 
-      {/* Modal Eliminar */}
       {modalTipo === 'eliminar' && categoriaSeleccionada && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Eliminar Categoría</h2>

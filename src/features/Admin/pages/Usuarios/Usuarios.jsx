@@ -6,6 +6,7 @@ import '../../adminStyles.css';
 import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
+import Tooltip from '../../components/Tooltip';
 import UsuariosForm from './components/UsuariosForm';
 import usuarioApiService from '../../services/usuarios_services';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -212,7 +213,7 @@ export default function Usuarios() {
   );
 
   if (loading) {
-  return <LoadingSpinner />;
+    return <LoadingSpinner />;
   }
 
   return (
@@ -287,33 +288,64 @@ export default function Usuarios() {
         <Column
           header="Acciones"
           headerStyle={{ paddingLeft: '3rem' }}
-          body={(rowData) => (
-            <>
-              <button 
-                className="admin-button gray" 
-                title="Visualizar" 
-                onClick={() => abrirModal('visualizar', rowData)}
-              >
-                👁
-              </button>
-              <button
-                className={`admin-button yellow ${!rowData.activo ? 'disabled' : ''}`}
-                title={!rowData.activo ? "Usuario desactivado" : "Editar"}
-                onClick={() => abrirModal('editar', rowData)}
-                disabled={!rowData.activo}
-              >
-                ✏️
-              </button>
-              <button
-                className={`admin-button red ${!rowData.activo ? 'disabled' : ''}`}
-                title={!rowData.activo ? "Usuario desactivado" : "Eliminar"}
-                onClick={() => abrirModal('eliminar', rowData)}
-                disabled={!rowData.activo}
-              >
-                🗑️
-              </button>
-            </>
-          )}
+          body={(rowData) => {
+            const esAdmin = rowData.rol_nombre === 'Administrador';
+            const puedeEditar = rowData.activo;
+            const puedeEliminar = rowData.activo && !esAdmin;
+            
+            // Determinar el texto del tooltip
+            const getTooltipEditar = () => {
+              if (!rowData.activo) return "Usuario desactivado";
+              return "Editar";
+            };
+            
+            const getTooltipEliminar = () => {
+              if (esAdmin) return "No se puede eliminar un Administrador";
+              if (!rowData.activo) return "Usuario desactivado";
+              return "Eliminar";
+            };
+            
+            return (
+              <>
+                <Tooltip text="Visualizar" position="top">
+                  <button 
+                    className="admin-button gray" 
+                    onClick={() => abrirModal('visualizar', rowData)}
+                  >
+                    👁
+                  </button>
+                </Tooltip>
+                
+                <Tooltip text={getTooltipEditar()} position="top">
+                  <button
+                    className={`admin-button yellow ${!puedeEditar ? 'disabled' : ''}`}
+                    onClick={() => abrirModal('editar', rowData)}
+                    disabled={!puedeEditar}
+                    style={{
+                      opacity: puedeEditar ? 1 : 0.5,
+                      cursor: puedeEditar ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    ✏️
+                  </button>
+                </Tooltip>
+                
+                <Tooltip text={getTooltipEliminar()} position="top">
+                  <button
+                    className={`admin-button red ${!puedeEliminar ? 'disabled' : ''}`}
+                    onClick={() => abrirModal('eliminar', rowData)}
+                    disabled={!puedeEliminar}
+                    style={{
+                      opacity: puedeEliminar ? 1 : 0.5,
+                      cursor: puedeEliminar ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </Tooltip>
+              </>
+            );
+          }}
         />
       </DataTable>
 
@@ -336,24 +368,23 @@ export default function Usuarios() {
         </Modal>
       )}
 
-{modalTipo === 'eliminar' && modalVisible && (
-  <Modal visible={modalVisible} onClose={cerrarModal}>
-    <div className="flex flex-col gap-1.5 p-2.5">
-      <h2 className="text-lg font-semibold text-gray-800 m-0 pb-1 border-b-2" style={{ borderColor: '#d81b60' }}>
-        Confirmar Eliminación
-      </h2>
-      <p className="text-sm text-gray-700 mt-1">
-        ¿Está seguro de que desea eliminar al usuario{' '}
-        <strong>{usuarioSeleccionado?.nombres} {usuarioSeleccionado?.apellidos}</strong>?
-      </p>
-      <div className="flex justify-end gap-3 mt-2">
-        <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
-        <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
-      </div>
-    </div>
-  </Modal>
-)}
-
+      {modalTipo === 'eliminar' && modalVisible && (
+        <Modal visible={modalVisible} onClose={cerrarModal}>
+          <div className="flex flex-col gap-1.5 p-2.5">
+            <h2 className="text-lg font-semibold text-gray-800 m-0 pb-1 border-b-2" style={{ borderColor: '#d81b60' }}>
+              Confirmar Eliminación
+            </h2>
+            <p className="text-sm text-gray-700 mt-1">
+              ¿Está seguro de que desea eliminar al usuario{' '}
+              <strong>{usuarioSeleccionado?.nombres} {usuarioSeleccionado?.apellidos}</strong>?
+            </p>
+            <div className="flex justify-end gap-3 mt-2">
+              <button className="modal-btn cancel-btn" onClick={cerrarModal}>Cancelar</button>
+              <button className="modal-btn save-btn" onClick={confirmarEliminar}>Eliminar</button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

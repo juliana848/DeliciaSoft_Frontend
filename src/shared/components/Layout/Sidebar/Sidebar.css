@@ -325,15 +325,26 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+
 .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   border: 2px solid #ff69b4;
-  background: white;
-  object-fit: cover;
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(255, 105, 180, 0.4);
 }
 
 .user-details {

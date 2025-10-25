@@ -37,6 +37,7 @@
 
 /* 🔧 Toolbar superior */
 .admin-toolbar {
+  
   width: 100%;
   margin: 0 auto 1rem auto;
   display: flex;
@@ -1203,13 +1204,13 @@
 .admin-section-title {
   background: linear-gradient(
     to right,
-    #E5E7EB 0%,    
-    #ECEFF1 25%,   
-    #F3F4F6 50%,   
-    #ECEFF1 75%,   
-    #E5E7EB 100%
+    #FFFFFF 0%,    
+    #FFF5F8 25%,
+    #FFFFFF 50%,   
+    #FFF5F8 75%,   
+    #FFFFFF 100%
   );
-  color: #1F2937 !important; /* 💬 Gris oscuro igual que la tabla */
+  color: #D81B60 !important;
   font-family: 'Fredoka', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
@@ -1217,17 +1218,14 @@
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   width: fit-content;
-  margin-bottom: -0.1rem;
+  margin-bottom: 0 !important;  /* ✅ ESTO QUITA EL ESPACIO */
   user-select: none;
-  
-  /* 🩶 Bordes y sombras suaves */
-  border: 1px solid #D1D5DB;
+  border: 2px solid #F8BBD0;
+  border-bottom: none;  /* ✅ QUITA EL BORDE DE ABAJO */
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    inset 0 -1px 0 rgba(209, 213, 219, 0.6),
-    inset 1px 0 0 rgba(209, 213, 219, 0.25),
-    inset -1px 0 0 rgba(209, 213, 219, 0.25);
-  transition: background 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+    0 3px 8px rgba(233, 30, 99, 0.15),
+    inset 0 -1px 0 rgba(248, 187, 208, 0.4);
+  transition: all 0.25s ease-in-out;
 }
 
 /* 🩶 Hover sutil */
@@ -1361,32 +1359,36 @@
 }
 
 .filter-buttons-container {
-    display: flex;
-    margin-bottom: -1px;
+  display: flex;
+  margin-bottom: -2px;  /* ✅ Para pegar con la tabla */
+  flex-wrap: wrap;
+  gap: 0;
+  background-color: transparent;
+  padding-left: 0;
+  align-items: flex-end;
 }
 
 .filter-tab {
   background: linear-gradient(
     to bottom,
-    #F3F4F6 0%,   /* gris muy claro */
-    #E5E7EB 100%  /* gris un poco más oscuro */
+    #FFEAF1 0%,   /* Rosa muy claro */
+    #FFF6FA 50%,
+    #FFFFFF 100%
   );
-  color: #1F2937; /* gris oscuro del texto */
-  border: 1px solid #D1D5DB;
-  padding: 8px 15px;
+  color: #D81B60 !important; /* Texto rosado */
+  border: 2px solid #F8BBD0 !important; /* Borde rosita claro */
+  border-bottom: 3px solid #F8BBD0 !important; /* Línea inferior igual */
+  padding: 10px 20px !important;
+  border-radius: 10px 10px 0 0 !important;
   cursor: pointer;
-  margin-left: 0;
-  border-radius: 5px 5px 0 0;
-  position: relative;
-  top: 1px;
-  transition: all 0.2s ease-in-out;
   font-weight: 600;
-  margin-right: 2px;
-  box-shadow:
-    inset 0 -1px 0 rgba(209, 213, 219, 0.6),
-    inset 1px 0 0 rgba(209, 213, 219, 0.3),
-    inset -1px 0 0 rgba(209, 213, 219, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  margin-right: 3px;
+  margin-left: 0 !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(233, 30, 99, 0.15);
+  position: relative;
+  top: 0;
 }
 
 /* Hover sutil */
@@ -1402,19 +1404,22 @@
   transform: translateY(-1px);
 }
 
-/* Pestaña activa (opcional, para marcar la seleccionada) */
-.filter-tab.active {
+.filter-tab.active,
+.filter-tab.filter-tab-active {
   background: linear-gradient(
     to bottom,
-    #E5E7EB 0%,
-    #F3F4F6 100%
-  );
-  border-bottom: 1px solid transparent;
-  box-shadow:
-    inset 0 -2px 4px rgba(209, 213, 219, 0.8),
-    0 2px 6px rgba(0, 0, 0, 0.05);
+    #FFB6D9 0%,   /* Rosa intenso arriba */
+    #FFD4E4 50%,
+    #FFF0F5 100%
+  ) !important;
+  border: 2px solid #F8BBD0 !important; /* Borde rosita igual */
+  border-bottom: 4px solid #E91E63 !important; /* 💗 Línea rosa fuerte abajo */
+  color: #880E4F !important;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(233, 30, 99, 0.35);
+  transform: translateY(-1px);
+  z-index: 5;
 }
-
 
 .filter-tab:last-child {
     margin-right: 0;
@@ -1551,6 +1556,9 @@
 
 
 .admin-section-header {
+  margin-bottom: -2px !important;
+  padding-bottom: 0 !important;
+  line-height: 1 !important;
     display: flex;
     align-items: flex-end;
     gap: 10px;
@@ -1713,6 +1721,11 @@
 }
 
 .admin-section-title {
+  margin-bottom: -2px !important;
+  margin-top: 0 !important;
+  padding-bottom: 0.6rem !important;
+  line-height: 1.2 !important;
+  border-bottom: none !important;
   background-color: #000;
   color: #fff;
   font-family: 'Fredoka', sans-serif;
@@ -1969,13 +1982,15 @@
 
 /* Estilos generales para la tabla de PrimeReact */
 .p-datatable.admin-table {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-collapse: collapse;
-    font-size: clamp(0.65rem, 1.2vw, 0.75rem);
-    table-layout: fixed;
-    margin: 0;
-    transform: none;
+  margin-top: 0 !important;  /* ✅ PEGA LA TABLA AL TÍTULO */
+  box-shadow: 
+    0 4px 12px rgba(233, 30, 99, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 0 8px 8px 8px;  /* ✅ Redondea solo 3 esquinas */
+  overflow: hidden;
+  background: white;
+  border: 2px solid #F8BBD0;
+  border-top-left-radius: 0;  /* ✅ Esquina superior izquierda recta para pegar con el título */
 }
 
 .p-datatable.admin-table .p-datatable-wrapper {
@@ -2004,62 +2019,79 @@
 
 /* Encabezado gris difuminado */
 .p-datatable.admin-table .p-datatable-thead > tr > th {
-    background: linear-gradient(
-        to right,
-        #E5E7EB 0%,    
-        #ECEFF1 25%,   
-        #F3F4F6 50%,   
-        #ECEFF1 75%,   
-        #E5E7EB 100%
-    );
-    border: 1px solid #D1D5DB;
-    color: #1F2937;
-    text-align: center;
-    padding: clamp(5px, 0.8vw, 8px);
-    font-weight: 600;
-    border-radius: 6px;
-    box-shadow:
-        inset 0 -1px 0 rgba(209, 213, 219, 0.7),
-        inset 1px 0 0 rgba(209, 213, 219, 0.3),
-        inset -1px 0 0 rgba(209, 213, 219, 0.3);
-    transition: background 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+  background: linear-gradient(
+    to right,
+    #FFFFFF 0%,      /* 🤍 Blanco puro */
+    #FFF5F8 25%,     /* 💗 Blanco con toque rosa muy suave */
+    #FFFFFF 50%,     
+    #FFF5F8 75%,     
+    #FFFFFF 100%
+  );
+
+  border: 1px solid #F8BBD0;  /* 💗 Borde rosa pastel */
+  color: #D81B60;  /* 💗 Texto rosa fuerte */
+  text-align: center;
+  padding: 10px;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow:
+    0 3px 8px rgba(233, 30, 99, 0.15),  /* 💗 Sombra rosa suave */
+    inset 0 -1px 0 rgba(248, 187, 208, 0.4);
+  transition: all 0.25s ease-in-out;
 }
 
 .p-datatable.admin-table .p-datatable-thead > tr > th:hover {
-    background: linear-gradient(
-        to right,
-        #E2E8F0 0%,
-        #ECEFF1 20%,
-        #F3F4F6 50%,
-        #ECEFF1 80%,
-        #E2E8F0 100%
-    );
-    box-shadow:
-        inset 0 -1px 0 rgba(156, 163, 175, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(
+    to right,
+    #FFF5F8 0%,
+    #FFE4EC 20%,     /* 💗 Rosa muy claro */
+    #FFF5F8 50%,
+    #FFE4EC 80%,
+    #FFF5F8 100%
+  );
+  box-shadow:
+    0 5px 12px rgba(233, 30, 99, 0.25),  /* 💗 Sombra rosa más intensa */
+    inset 0 -1px 0 rgba(233, 30, 99, 0.3);
+  transform: translateY(-1px);
 }
 
 .p-datatable.admin-table .p-datatable-tbody > tr > td {
-    padding: clamp(5px, 0.8vw, 7px);
-    text-align: center;
-    border-bottom: 1px solid rgba(209, 213, 219, 0.4); 
-    border-left: 1px solid rgba(209, 213, 219, 0.4); 
-    border-right: 1px solid rgba(209, 213, 219, 0.4);
-    color: #1F2937;
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(248, 187, 208, 0.3);  /* 💗 Borde rosa muy suave */
+  border-left: 1px solid rgba(248, 187, 208, 0.3); 
+  border-right: 1px solid rgba(248, 187, 208, 0.3);
+  color: #333;
+  background-color: #FFFFFF;  /* 🤍 Blanco puro para todas las filas */
 }
 
 .p-datatable.admin-table .p-datatable-tbody > tr:nth-child(odd) {
-    background-color: #FFFFFF; 
+  background-color: #FFFFFF;  /* 🤍 Blanco */
 }
 
 .p-datatable.admin-table .p-datatable-tbody > tr:nth-child(even) {
-    background-color: #F3F4F6; 
+  background-color: #FFFFFF;  /* 🤍 También blanco, sin gris */
 }
 
 .p-datatable.admin-table .p-datatable-tbody > tr:hover > td {
-    background-color: #E5E7EB; 
-    transition: background-color 0.2s ease-in-out;
+  background-color: #FFF0F5;  /* 💗 Rosa lavanda muy suave al hover */
+  box-shadow: 0 2px 6px rgba(233, 30, 99, 0.1);  /* 💗 Sombra rosa suave */
+  transition: all 0.2s ease-in-out;
 }
+
+.p-datatable.admin-table {
+  margin-top: -15px !important;  /* ✅ SUBE LA TABLA */
+  padding-top: 0 !important;
+  box-shadow: 
+    0 4px 12px rgba(233, 30, 99, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 0 8px 8px 8px;
+  overflow: hidden;
+  background: white;
+  border: 2px solid #F8BBD0;
+  border-top-left-radius: 0;
+}
+
 
 /* Botones de acciones con tamaño fluido */
 .admin-button {
@@ -2239,51 +2271,48 @@
 
 
 
-/* Título de sección adaptativo */
 .admin-section-title {
-    background: linear-gradient(
-        to right,
-        #E5E7EB 0%,    
-        #ECEFF1 25%,   
-        #F3F4F6 50%,   
-        #ECEFF1 75%,   
-        #E5E7EB 100%
-    );
-    color: #1F2937 !important;
-    font-family: 'Fredoka', sans-serif;
-    font-size: clamp(0.95rem, 2vw, 1.3rem);
-    font-weight: 600;
-    padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.7rem, 1.2vw, 1rem);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    width: fit-content;
-    max-width: 100%;
-    margin-bottom: -0.1rem;
-    margin-left: 0;
-    margin-right: 0;
-    user-select: none;
-    border: 1px solid #D1D5DB;
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.05),
-        inset 0 -1px 0 rgba(209, 213, 219, 0.6),
-        inset 1px 0 0 rgba(209, 213, 219, 0.25),
-        inset -1px 0 0 rgba(209, 213, 219, 0.25);
-    transition: background 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+  background: linear-gradient(
+    to right,
+    #FFFFFF 0%,    
+    #FFF5F8 25%,
+    #FFFFFF 50%,   
+    #FFF5F8 75%,   
+    #FFFFFF 100%
+  );
+  color: #D81B60 !important;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  width: fit-content;
+  margin-bottom: -2px !important;  /* ✅ NEGATIVO para subir */
+  margin-top: 0 !important;
+  user-select: none;
+  border: 2px solid #F8BBD0;
+  border-bottom: none;
+  position: relative;  /* ✅ NUEVO */
+  z-index: 10;  /* ✅ NUEVO - para que quede encima */
+  box-shadow:
+    0 3px 8px rgba(233, 30, 99, 0.15),
+    inset 0 -1px 0 rgba(248, 187, 208, 0.4);
+  transition: all 0.25s ease-in-out;
 }
 
 .admin-section-title:hover {
-    background: linear-gradient(
-        to right,
-        #E2E8F0 0%,
-        #ECEFF1 20%,
-        #F3F4F6 50%,
-        #ECEFF1 80%,
-        #E2E8F0 100%
-    );
-    box-shadow:
-        0 3px 6px rgba(0, 0, 0, 0.08),
-        inset 0 -1px 0 rgba(156, 163, 175, 0.5);
-    transform: translateY(-1px);
+  background: linear-gradient(
+    to right,
+    #FFF5F8 0%,
+    #FFE4EC 20%,
+    #FFF5F8 50%,
+    #FFE4EC 80%,
+    #FFF5F8 100%
+  );
+  box-shadow:
+    0 5px 12px rgba(233, 30, 99, 0.25);
+  transform: translateY(-1px);
 }
 
 .admin-toolbar {
@@ -2302,6 +2331,11 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 0 !important;  /* ✅ SIN ESPACIO */
+    padding-bottom: 0 !important;
 }
 
 /* Formularios y grids responsivos */
@@ -2350,69 +2384,94 @@
 
 /* Contenedor de filtros responsivo */
 .ventas-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: 1px solid #ddd;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: none;
+  flex-wrap: wrap;
+  gap: 0;
 }
 
 .filter-buttons-container {
-    display: flex;
-    margin-bottom: -1px;
-    flex-wrap: wrap;
-    gap: 2px;
+  display: flex;
+  margin-bottom: 0 !important;  /* ✅ Sin espacio abajo */
+  margin-top: -15px !important;  /* ✅ SUBE LAS PESTAÑAS */
+  flex-wrap: wrap;
+  gap: 0;
+  background-color: transparent;
+  padding-left: 0;
+  align-items: flex-end;
+  position: relative;
+  z-index: 5;
 }
 
 .filter-tab {
-    background: linear-gradient(
-        to bottom,
-        #F3F4F6 0%,
-        #E5E7EB 100%
-    );
-    color: #1F2937;
-    border: 1px solid #D1D5DB;
-    padding: clamp(6px, 1vw, 8px) clamp(10px, 1.5vw, 15px);
-    cursor: pointer;
-    border-radius: 5px 5px 0 0;
-    position: relative;
-    top: 1px;
-    transition: all 0.2s ease-in-out;
-    font-weight: 600;
-    font-size: clamp(11px, 1.5vw, 14px);
-    box-shadow:
-        inset 0 -1px 0 rgba(209, 213, 219, 0.6),
-        inset 1px 0 0 rgba(209, 213, 219, 0.3),
-        inset -1px 0 0 rgba(209, 213, 219, 0.3),
-        0 2px 4px rgba(0, 0, 0, 0.05);
-    white-space: nowrap;
+  background: linear-gradient(
+    to bottom,
+    #FFFFFF 0%,      /* 🤍 Blanco */
+    #FFF5F8 50%,     /* 💗 Blanco con toque rosa */
+    #FFFFFF 100%
+  );
+  color: #D81B60;  /* 💗 Texto rosa */
+  border: 2px solid #F8BBD0;  /* 💗 Borde rosa pastel */
+  padding: clamp(8px, 1vw, 10px) clamp(15px, 2vw, 20px);
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;  /* Redondeado arriba */
+  position: relative;
+  top: 2px;
+  transition: all 0.3s ease-in-out;
+  font-weight: 600;
+  font-size: clamp(13px, 1.5vw, 15px);
+  margin-right: 4px;
+  box-shadow: 0 3px 8px rgba(233, 30, 99, 0.15);  /* 💗 Sombra rosa suave */
+  white-space: nowrap;
+  border-bottom: none;  /* Sin borde abajo */
 }
 
 .filter-tab:hover {
-    background: linear-gradient(
-        to bottom,
-        #E2E8F0 0%,
-        #F3F4F6 100%
-    );
-    box-shadow:
-        0 3px 6px rgba(0, 0, 0, 0.08),
-        inset 0 -1px 0 rgba(156, 163, 175, 0.5);
-    transform: translateY(-1px);
+  background: linear-gradient(
+    to bottom,
+    #FFF5F8 0%,
+    #FFE4EC 50%,     /* 💗 Rosa más visible */
+    #FFF5F8 100%
+  );
+  box-shadow: 0 5px 12px rgba(233, 30, 99, 0.25);
+  transform: translateY(-2px);
 }
 
-.filter-tab.active {
-    background: linear-gradient(
-        to bottom,
-        #E5E7EB 0%,
-        #F3F4F6 100%
-    );
-    border-bottom: 1px solid transparent;
-    box-shadow:
-        inset 0 -2px 4px rgba(209, 213, 219, 0.8),
-        0 2px 6px rgba(0, 0, 0, 0.05);
+/* Pestaña ACTIVA (la seleccionada) */
+.filter-tab.active,
+.filter-tab.filter-tab-active {
+  background: linear-gradient(
+    to bottom,
+    #FFE4EC 0%,      /* 💗 Rosa claro */
+    #FFF0F5 50%,
+    #FFFFFF 100%
+  );
+  border-bottom: 3px solid #E91E63;  /* 💗 Borde rosa fuerte abajo */
+  color: #C2185B;  /* 💗 Rosa más oscuro */
+  font-weight: 700;
+  box-shadow: 
+    0 6px 15px rgba(233, 30, 99, 0.3),
+    inset 0 2px 4px rgba(233, 30, 99, 0.1);
+  z-index: 10;
+  top: 0;
+}
+
+/* Pestañas inactivas (no seleccionadas) */
+.filter-tab:not(.active):not(.filter-tab-active) {
+  background: linear-gradient(
+    to bottom,
+    #FFFFFF 0%,      /* 🤍 Blanco puro */
+    #FFFFFF 50%,     
+    #FFFFFF 100%
+  );
+  color: #D81B60;  /* 💗 Rosa del texto */
+  border: 2px solid #F8BBD0;
+  opacity: 1;       /* ✅ Nada de transparencia gris */
+  filter: none;     /* ✅ Sin filtros grises */
 }
 
 /* Responsive breakpoints específicos */

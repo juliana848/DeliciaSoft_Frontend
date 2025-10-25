@@ -4,11 +4,10 @@ import { CartContext } from "../../Cartas/pages/CartContext";
 import categoriaProductoApiService from '../../Admin/services/categoriaProductosService';
 import productoApiService from '../../Admin/services/productos_services';
 
-const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccionados = [], onActualizarCantidad, onEliminarProducto }) => {
+const ProductosView = () => {
   const [categoriaActiva, setCategoriaActiva] = useState(null);
   const [modalDetalle, setModalDetalle] = useState(null);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   
   // Nuevos estados para datos de la API
@@ -20,12 +19,9 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
   const navigate = useNavigate();
   const { 
     carrito, 
+    agregarProducto,
     actualizarCantidadCarrito, 
-    eliminarDelCarrito,
-    productosSeleccionados: productosDelContexto,
-    agregarProductoSeleccionado,
-    actualizarCantidadSeleccionado,
-    eliminarProductoSeleccionado
+    eliminarDelCarrito
   } = useContext(CartContext);
 
   // Cargar datos de la API al montar el componente
@@ -42,7 +38,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
             console.log('Productos recuperados:', productos);
             
             productos.forEach(producto => {
-                agregarProductoSeleccionado(producto);
+                agregarProducto(producto);
             });
             
             localStorage.removeItem('productosTemporales');
@@ -111,7 +107,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     if (nombre.includes('bebida')) return '🥤';
     if (nombre.includes('helado')) return '🍦';
     
-    return '🍰'; // Icono por defecto
+    return '🰀'; // Icono por defecto
   };
 
   // Función para agrupar productos por categoría
@@ -137,7 +133,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           descripcion: producto.descripcion || 'Descripción no disponible',
           categoria: categoriaId,
           estado: producto.estado,
-          cantidad: producto.cantidad
+          cantidad: 1
         };
 
         productosAgrupados[categoriaId].push(productoTransformado);
@@ -163,62 +159,8 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
 
   const seleccionarProducto = (producto) => {
     const productoConCantidad = { ...producto, cantidad: 1 };
-    agregarProductoSeleccionado(productoConCantidad);
-    showCustomAlert('success', `${producto.nombre} ha sido agregado al pedido!`);
-    setTimeout(() => {
-        const resumenElement = document.getElementById('resumen-pedido');
-        if (resumenElement) {
-            resumenElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 100);
-  };
-
-  const actualizarCantidadUnificada = (productoId, nuevaCantidad) => {
-      const enProductosSeleccionados = productosSeleccionados.find(p => p.id === productoId);
-      const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
-      
-      if (enProductosSeleccionados) {
-          if (nuevaCantidad <= 0) {
-              onEliminarProducto(productoId);
-              eliminarProductoSeleccionado(productoId);
-              showCustomAlert('error', `Producto eliminado del pedido.`);
-          } else {
-              onActualizarCantidad(productoId, nuevaCantidad);
-              actualizarCantidadSeleccionado(productoId, nuevaCantidad);
-              showCustomAlert('success', `Cantidad actualizada.`);
-          }
-      } else if (enProductosContexto) {
-          if (nuevaCantidad <= 0) {
-              eliminarProductoSeleccionado(productoId);
-              showCustomAlert('error', `Producto eliminado del pedido.`);
-          } else {
-              actualizarCantidadSeleccionado(productoId, nuevaCantidad);
-              showCustomAlert('success', `Cantidad actualizada.`);
-          }
-      } else {
-          if (nuevaCantidad <= 0) {
-              eliminarDelCarrito(productoId);
-              showCustomAlert('error', `Producto eliminado del pedido.`);
-          } else {
-              actualizarCantidadCarrito(productoId, nuevaCantidad);
-              showCustomAlert('success', `Cantidad actualizada.`);
-          }
-      }
-  };
-
-  const eliminarProductoUnificado = (productoId) => {
-      const enProductosSeleccionados = productosSeleccionados.find(p => p.id === productoId);
-      const enProductosContexto = productosDelContexto.find(p => p.id === productoId);
-      
-      if (enProductosSeleccionados) {
-          onEliminarProducto(productoId);
-          eliminarProductoSeleccionado(productoId);
-      } else if (enProductosContexto) {
-          eliminarProductoSeleccionado(productoId);
-      } else {
-          eliminarDelCarrito(productoId);
-      }
-      showCustomAlert('error', `Producto eliminado del pedido.`);
+    agregarProducto(productoConCantidad);
+    showCustomAlert('success', `${producto.nombre} agregado al carrito!`);
   };
 
   const abrirModal = (producto) => {
@@ -229,86 +171,14 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
     setModalDetalle(null);
   };
 
-  const continuar = () => {
-    console.log('=== INICIANDO FUNCIÓN CONTINUAR ===');
-    const todosLosProductos = obtenerTodosLosProductos();
-    console.log('Todos los productos obtenidos:', todosLosProductos);
-    
-    const cantidadTotal = todosLosProductos.reduce((total, producto) => total + (producto.cantidad || 1), 0);
-    console.log('Cantidad total calculada:', cantidadTotal);
-    
-    if (cantidadTotal < 10) {
-        showCustomAlert('error', `Necesitas al menos 10 productos en total. Tienes ${cantidadTotal} productos.`);
-        return;
-    }
-
-    if (cantidadTotal > 100) {
-        showCustomAlert('error', `Máximo 100 productos permitidos. Tienes ${cantidadTotal} productos.`);
-        return;
-    }
-
-    if (!isUserAuthenticated()) {
-        console.log('Usuario no autenticado');
-        setShowAuthAlert(true);
-        return;
-    }
-
-    console.log('Todo correcto, mostrando confirmación');
-    setShowConfirmation(true);
-  };
-
-  const handleConfirmContinue = () => {
-    setShowConfirmation(false);
-    onSiguiente();
-  };
-
-  const handleCancelContinue = () => {
-    setShowConfirmation(false);
-  };
-
   const handleGoToLogin = () => {
     setShowAuthAlert(false);
-    const todosLosProductos = obtenerTodosLosProductos();
-    localStorage.setItem('productosTemporales', JSON.stringify(todosLosProductos));
+    localStorage.setItem('productosTemporales', JSON.stringify(carrito));
     navigate('/iniciar-sesion');
   };
 
   const handleCancelLogin = () => {
     setShowAuthAlert(false);
-  };
-
-  const calcularTotal = () => {
-      const totalProductosSeleccionados = productosSeleccionados.reduce((total, producto) => 
-          total + (producto.precio * producto.cantidad), 0
-      );
-      
-      const totalCarrito = carrito.reduce((total, producto) => 
-          total + (producto.precio * producto.cantidad), 0
-      );
-      
-      const totalProductosContexto = productosDelContexto.reduce((total, producto) => 
-          total + (producto.precio * producto.cantidad), 0
-      );
-      
-      return totalProductosSeleccionados + totalCarrito + totalProductosContexto;
-  };
-
-  const obtenerTodosLosProductos = () => {
-    const todosLosProductos = [...productosDelContexto, ...carrito];
-    
-    const productosAgrupados = todosLosProductos.reduce((acc, producto) => {
-        const productoExistente = acc.find(p => p.id === producto.id);
-        
-        if (productoExistente) {
-            productoExistente.cantidad += producto.cantidad;
-        } else {
-            acc.push({ ...producto });
-        }
-        
-        return acc;
-    }, []);
-    
-    return productosAgrupados;
   };
 
   // Mostrar loading
@@ -421,10 +291,10 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-          Selección de Productos
+          Nuestros Productos
         </h1>
         <p style={{ color: '#7f8c8d', fontSize: '16px' }}>
-          Elige tus productos favoritos
+          Explora y agrega tus favoritos al carrito
         </p>
       </div>
 
@@ -485,7 +355,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           </div>
         ) : (
           productosCategoria.map(producto => {
-            const yaSeleccionado = obtenerTodosLosProductos().find(p => p.id === producto.id);
+            const yaEnCarrito = carrito.find(p => p.id === producto.id);
 
             return (
               <div
@@ -494,22 +364,24 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                   backgroundColor: 'white',
                   borderRadius: '20px',
                   overflow: 'hidden',
-                  boxShadow: yaSeleccionado ? '0 8px 25px rgba(233,30,99,0.2)' : '0 4px 20px rgba(0,0,0,0.1)',
+                  boxShadow: yaEnCarrito ? '0 8px 25px rgba(233,30,99,0.2)' : '0 4px 20px rgba(0,0,0,0.1)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
-                  border: yaSeleccionado ? '2px solid #e91e63' : '2px solid transparent',
-                  transform: yaSeleccionado ? 'translateY(-5px)' : 'none'
+                  border: yaEnCarrito ? '2px solid #e91e63' : '2px solid transparent',
+                  transform: yaEnCarrito ? 'translateY(-5px)' : 'none'
                 }}
-                onClick={() => seleccionarProducto(producto)}
               >
-                <div style={{ 
-                  height: '200px', 
-                  backgroundImage: `url(${producto.imagen})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  position: 'relative'
-                }}>
-                  {yaSeleccionado && (
+                <div 
+                  style={{ 
+                    height: '200px', 
+                    backgroundImage: `url(${producto.imagen})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    position: 'relative'
+                  }}
+                  onClick={() => abrirModal(producto)}
+                >
+                  {yaEnCarrito && (
                     <div style={{
                       position: 'absolute',
                       top: '10px',
@@ -559,7 +431,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                       fontWeight: '500',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
-                      backgroundColor: yaSeleccionado ? '#4caf50' : '#e91e63',
+                      backgroundColor: yaEnCarrito ? '#4caf50' : '#e91e63',
                       color: 'white'
                     }}
                     onClick={(e) => {
@@ -567,7 +439,7 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
                       seleccionarProducto(producto);
                     }}
                   >
-                    {yaSeleccionado ? 'Seleccionado' : 'Seleccionar'}
+                    {yaEnCarrito ? `En carrito (${yaEnCarrito.cantidad})` : 'Agregar al carrito'}
                   </button>
                 </div>
               </div>
@@ -575,143 +447,6 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
           })
         )}
       </div>
-
-      {/* Resumen */}
-      {(productosSeleccionados.length > 0 || carrito.length > 0 || productosDelContexto.length > 0) && (
-        <div id="resumen-pedido" style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          padding: '25px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: 'bold', 
-            color: '#2c3e50',
-            marginBottom: '20px',
-            margin: '0 0 20px 0'
-          }}>
-            Resumen de Pedido ({obtenerTodosLosProductos().length + carrito.length} productos)
-          </h3>
-          
-          <div style={{ marginBottom: '20px' }}>
-            {obtenerTodosLosProductos().map(producto => (
-              <div
-                key={`producto-${producto.id}`}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '15px 0',
-                  borderBottom: '1px solid #ecf0f1'
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: '14px', color: '#2c3e50', fontWeight: '500' }}>
-                    {producto.nombre}
-                  </span>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px' }}>
-                    ${producto.precio.toLocaleString()}
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <button
-                    onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad - 1)}
-                    style={{
-                      padding: '5px 10px',
-                      border: 'none',
-                      borderRadius: '5px',
-                      backgroundColor: '#e74c3c',
-                      color: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    -
-                  </button>
-                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>{producto.cantidad}</span>
-                  <button
-                    onClick={() => actualizarCantidadUnificada(producto.id, producto.cantidad + 1)}
-                    style={{
-                      padding: '5px 10px',
-                      border: 'none',
-                      borderRadius: '5px',
-                      backgroundColor: '#2ecc71',
-                      color: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => eliminarProductoUnificado(producto.id)}
-                    style={{
-                      padding: '8px 16px',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      backgroundColor: '#e74c3c',
-                      color: 'white',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                  <button
-                    onClick={() => abrirModal(producto)}
-                    style={{
-                      padding: '8px 16px',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      backgroundColor: '#3498db',
-                      color: 'white',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    Ver detalles
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: '20px',
-            borderTop: '2px solid #ecf0f1'
-          }}>
-            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
-              Total: ${calcularTotal().toLocaleString()}
-            </div>
-            
-            <button
-              onClick={continuar}
-              style={{
-                padding: '15px 30px',
-                border: 'none',
-                borderRadius: '25px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
-                color: 'white',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
-              }}
-            >
-              Continuar con Personalización →
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Modal de detalles */}
       {modalDetalle && (
@@ -791,79 +526,33 @@ const ProductosView = ({ onProductoSeleccionado, onSiguiente, productosSeleccion
               fontSize: '16px', 
               color: '#7f8c8d',
               lineHeight: '1.5',
-              margin: 0
+              marginBottom: '20px',
+              margin: '0 0 20px 0'
             }}>
               {modalDetalle.descripcion}
             </p>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Dialog */}
-      {showConfirmation && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1001
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '30px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
-          }}>
-            <h3 style={{ 
-              fontSize: '20px', 
-              fontWeight: 'bold', 
-              color: '#2c3e50',
-              marginBottom: '20px'
-            }}>
-              ¿Estás seguro que seleccionaste todo lo que deseas?
-            </h3>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <button
-                onClick={handleCancelContinue}
-                style={{
-                  padding: '12px 25px',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  backgroundColor: '#e74c3c',
-                  color: 'white',
-                  transition: 'background-color 0.3s ease'
-                }}
-              >
-                No, volver
-              </button>
-              <button
-                onClick={handleConfirmContinue}
-                style={{
-                  padding: '12px 25px',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  backgroundColor: '#2ecc71',
-                  color: 'white',
-                  transition: 'background-color 0.3s ease'
-                }}
-              >
-                Sí, continuar
-              </button>
-            </div>
+            
+            <button
+              onClick={() => {
+                seleccionarProducto(modalDetalle);
+                cerrarModal();
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                background: 'linear-gradient(45deg, #e91e63, #ff6b9d)',
+                color: 'white',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
+              }}
+            >
+              Agregar al carrito
+            </button>
           </div>
         </div>
       )}

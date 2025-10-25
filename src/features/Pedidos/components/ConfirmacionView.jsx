@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { CartContext } from "../../Cartas/pages/CartContext";
+import './ConfirmacionView.css';
 
 const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarProducto, onActualizarCantidad }) => {
   const [comentarios, setComentarios] = useState('');
@@ -7,25 +8,68 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
   const [mostrarDetalles, setMostrarDetalles] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [personalizacionesProductos, setPersonalizacionesProductos] = useState({});
 
-  // Obtener productos del contexto como fallback
-  const { productosSeleccionados: productosDelContexto } = useContext(CartContext);
+  // 🎯 OBTENER PRODUCTOS DEL CONTEXTO
+  const { carrito } = useContext(CartContext);
 
-  // Función para obtener todos los productos (prioritizando los del pedido principal)
-  const obtenerTodosLosProductos = () => {
-    if (pedido && pedido.productos && pedido.productos.length > 0) {
-      return pedido.productos;
+  useEffect(() => {
+    console.log('🔍 ConfirmacionView - Verificando productos...');
+    console.log('Productos del pedido prop:', pedido?.productos);
+    console.log('Productos del carrito context:', carrito);
+
+    // Cargar personalizaciones
+    const personalizacionesStorage = localStorage.getItem('personalizacionesPedido');
+    if (personalizacionesStorage) {
+      try {
+        const personalizaciones = JSON.parse(personalizacionesStorage);
+        setPersonalizacionesProductos(personalizaciones);
+        console.log('✅ Personalizaciones cargadas:', personalizaciones);
+      } catch (error) {
+        console.error('Error al cargar personalizaciones:', error);
+      }
     }
-    // Fallback al contexto si no hay productos en el pedido principal
-    return productosDelContexto || [];
-  };
+  }, [pedido, carrito]);
 
-  // Función para mostrar alertas
   const mostrarAlerta = (tipo, mensaje) => {
     setAlerta({ mostrar: true, tipo, mensaje });
     setTimeout(() => {
       setAlerta({ mostrar: false, tipo: '', mensaje: '' });
     }, 3000);
+  };
+
+  // 🎯 FUNCIÓN CLAVE: Obtener productos de múltiples fuentes
+  const obtenerTodosLosProductos = () => {
+    console.log('📦 Obteniendo productos...');
+    
+    // Prioridad 1: Productos del pedido
+    if (pedido?.productos && Array.isArray(pedido.productos) && pedido.productos.length > 0) {
+      console.log('✅ Usando productos del pedido prop');
+      return pedido.productos;
+    }
+    
+    // Prioridad 2: Productos del carrito context
+    if (carrito && Array.isArray(carrito) && carrito.length > 0) {
+      console.log('✅ Usando productos del carrito context');
+      return carrito;
+    }
+    
+    // Prioridad 3: Recuperar de localStorage como último recurso
+    try {
+      const carritoStorage = localStorage.getItem('carritoParaPersonalizar');
+      if (carritoStorage) {
+        const productosStorage = JSON.parse(carritoStorage);
+        if (productosStorage && productosStorage.length > 0) {
+          console.log('✅ Usando productos de localStorage');
+          return productosStorage;
+        }
+      }
+    } catch (error) {
+      console.error('Error al recuperar carrito de localStorage:', error);
+    }
+    
+    console.warn('⚠️ No se encontraron productos en ninguna fuente');
+    return [];
   };
 
   const toggleDetalles = (productId) => {
@@ -78,11 +122,10 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
     const productos = obtenerTodosLosProductos();
     
     if (productos.length === 0) {
-      mostrarAlerta('error', '❌ No hay productos en el pedido. Agrega al menos un producto.');
+      mostrarAlerta('error', '❌ No hay productos en el pedido. Por favor regresa y agrega productos.');
       return false;
     }
 
-    // Calcular cantidad total
     const cantidadTotal = productos.reduce((total, producto) => total + (producto.cantidad || 1), 0);
     
     if (cantidadTotal < 10) {
@@ -110,31 +153,41 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
     const productos = obtenerTodosLosProductos();
     let totalCalculado = 0;
     
-    // Sumar productos
+    // Sumar productos base
     totalCalculado += productos.reduce((sum, producto) => 
       sum + (producto.precio * (producto.cantidad || 1)), 0
     );
     
-    // Sumar toppings (si existen)
-    if (pedido && pedido.toppings) {
-      totalCalculado += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
-    }
-    
-    // Sumar adiciones (si existen)
-    if (pedido && pedido.adiciones) {
-      totalCalculado += pedido.adiciones.reduce((sum, adicion) => sum + (adicion.precio || 0), 0);
-    }
-    
-    // Sumar salsas (si existen)
-    if (pedido && pedido.salsas) {
-      totalCalculado += pedido.salsas.reduce((sum, salsa) => sum + (salsa.precio || 0), 0);
-    }
+    // Sumar personalizaciones
+    productos.forEach(producto => {
+      const personalizacionProducto = personalizacionesProductos[producto.id];
+      if (personalizacionProducto) {
+        for (let unidad = 1; unidad <= (producto.cantidad || 1); unidad++) {
+          const personalizacionUnidad = personalizacionProducto[unidad];
+          if (personalizacionUnidad) {
+            if (personalizacionUnidad.rellenos) {
+              totalCalculado += personalizacionUnidad.rellenos.reduce((sum, item) => sum + (item.precio || 0), 0);
+            }
+            if (personalizacionUnidad.adiciones) {
+              totalCalculado += personalizacionUnidad.adiciones.reduce((sum, item) => sum + (item.precio || 0), 0);
+            }
+            if (personalizacionUnidad.sabores) {
+              totalCalculado += personalizacionUnidad.sabores.reduce((sum, item) => sum + (item.precio || 0), 0);
+            }
+          }
+        }
+      }
+    });
     
     return totalCalculado;
   };
 
   const productos = obtenerTodosLosProductos();
   const totalPedido = calcularTotalPedido();
+
+  console.log('📊 Estado actual en render:');
+  console.log('- Productos encontrados:', productos.length);
+  console.log('- Total calculado:', totalPedido);
 
   return (
     <div style={{
@@ -146,7 +199,6 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
       justifyContent: 'center',
       alignItems: 'flex-start'
     }}>
-      {/* Alerta dinámica */}
       {alerta.mostrar && (
         <div
           style={{
@@ -279,355 +331,231 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {productos.map((producto) => (
-                <div key={producto.id} style={{
-                  background: '#ffffff',
-                  borderRadius: '15px',
-                  boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
-                  border: '1px solid #f0f2f5',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    padding: '15px 20px',
-                    borderBottom: '1px solid #f0f2f5',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '10px'
+              {productos.map((producto) => {
+                const personalizacionProducto = personalizacionesProductos[producto.id];
+                
+                return (
+                  <div key={producto.id} style={{
+                    background: '#ffffff',
+                    borderRadius: '15px',
+                    boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
+                    border: '1px solid #f0f2f5',
+                    overflow: 'hidden'
                   }}>
-                    <div style={{ flexGrow: 1 }}>
-                      <h4 style={{
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: '#343a40',
-                        margin: '0 0 5px 0'
-                      }}>
-                        {producto.nombre}
-                      </h4>
-                      <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                        Cantidad: <span style={{ fontWeight: '600' }}>{producto.cantidad || 1}</span>
-                        <span style={{ margin: '0 8px' }}>•</span>
-                        Precio unitario: <span style={{ fontWeight: '600' }}>${producto.precio.toLocaleString()}</span>
-                        <span style={{ margin: '0 8px' }}>•</span>
-                        Subtotal: <span style={{ fontWeight: '600', color: '#e91e63' }}>
-                          ${(producto.precio * (producto.cantidad || 1)).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      {/* Controles de cantidad */}
-                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <button
-                          onClick={() => actualizarCantidadProducto(producto.id, (producto.cantidad || 1) - 1)}
-                          style={{
-                            padding: '5px 10px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            backgroundColor: '#e74c3c',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          -
-                        </button>
-                        <span style={{ 
-                          padding: '5px 10px', 
-                          fontSize: '14px', 
-                          fontWeight: 'bold',
-                          minWidth: '30px',
-                          textAlign: 'center'
+                    <div style={{
+                      padding: '15px 20px',
+                      borderBottom: '1px solid #f0f2f5',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '10px'
+                    }}>
+                      <div style={{ flexGrow: 1 }}>
+                        <h4 style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          color: '#343a40',
+                          margin: '0 0 5px 0'
                         }}>
-                          {producto.cantidad || 1}
-                        </span>
+                          {producto.nombre}
+                        </h4>
+                        <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                          Cantidad: <span style={{ fontWeight: '600' }}>{producto.cantidad || 1}</span>
+                          <span style={{ margin: '0 8px' }}>•</span>
+                          Precio unitario: <span style={{ fontWeight: '600' }}>${producto.precio.toLocaleString()}</span>
+                          <span style={{ margin: '0 8px' }}>•</span>
+                          Subtotal: <span style={{ fontWeight: '600', color: '#e91e63' }}>
+                            ${(producto.precio * (producto.cantidad || 1)).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <button
-                          onClick={() => actualizarCantidadProducto(producto.id, (producto.cantidad || 1) + 1)}
+                          onClick={() => toggleDetalles(producto.id)}
                           style={{
-                            padding: '5px 10px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            backgroundColor: '#2ecc71',
-                            color: 'white',
+                            padding: '8px 15px',
+                            border: '1px solid #ced4da',
+                            borderRadius: '10px',
+                            background: '#f8f9fa',
+                            color: '#6c757d',
                             cursor: 'pointer',
                             fontSize: '14px',
-                            fontWeight: 'bold'
+                            fontWeight: '600',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
                           }}
                         >
-                          +
+                          <span style={{ fontSize: '16px' }}>👁️</span>
+                          {mostrarDetalles[producto.id] ? 'Ocultar' : 'Ver personalizaciones'}
                         </button>
                       </div>
-                      
-                      <button
-                        onClick={() => toggleDetalles(producto.id)}
-                        style={{
-                          padding: '8px 15px',
-                          border: '1px solid #ced4da',
-                          borderRadius: '10px',
-                          background: '#f8f9fa',
-                          color: '#6c757d',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          transition: 'all 0.3s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        <span style={{ fontSize: '16px' }}>👁️</span>
-                        {mostrarDetalles[producto.id] ? 'Ocultar' : 'Ver detalles'}
-                      </button>
-                      <button
-                        onClick={() => eliminarProducto(producto.id)}
-                        title="Eliminar producto"
-                        style={{
-                          padding: '8px 15px',
-                          border: 'none',
-                          borderRadius: '10px',
-                          background: 'linear-gradient(45deg, #dc3545, #e85a67)',
-                          color: 'white',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          transition: 'all 0.3s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        <span style={{ fontSize: '16px' }}>🗑️</span>
-                        Eliminar
-                      </button>
                     </div>
+
+                    {mostrarDetalles[producto.id] && (
+                      <div style={{ padding: '20px', background: '#f8f9fa', borderTop: '1px solid #eee' }}>
+                        {personalizacionProducto ? (
+                          <>
+                            <h5 style={{
+                              fontSize: '16px',
+                              fontWeight: '600',
+                              color: '#495057',
+                              marginBottom: '15px'
+                            }}>
+                              🎨 Personalizaciones por Unidad
+                            </h5>
+                            
+                            {Object.keys(personalizacionProducto).map((unidad) => {
+                              const personalizacionUnidad = personalizacionProducto[unidad];
+                              const tienePersonalizacion = 
+                                (personalizacionUnidad.rellenos?.length > 0) ||
+                                (personalizacionUnidad.adiciones?.length > 0) ||
+                                (personalizacionUnidad.sabores?.length > 0);
+
+                              if (!tienePersonalizacion) return null;
+
+                              return (
+                                <div key={unidad} style={{
+                                  background: 'white',
+                                  padding: '15px',
+                                  borderRadius: '10px',
+                                  marginBottom: '10px',
+                                  border: '2px solid #e91e63'
+                                }}>
+                                  <h6 style={{
+                                    fontSize: '14px',
+                                    fontWeight: '700',
+                                    color: '#e91e63',
+                                    marginBottom: '10px'
+                                  }}>
+                                    Unidad {unidad} de {producto.cantidad}
+                                  </h6>
+
+                                  {personalizacionUnidad.rellenos?.length > 0 && (
+                                    <div style={{ marginBottom: '10px' }}>
+                                      <strong style={{ fontSize: '13px', color: '#495057' }}>🥧 Rellenos:</strong>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
+                                        {personalizacionUnidad.rellenos.map((item, idx) => (
+                                          <span key={idx} style={{
+                                            padding: '4px 8px',
+                                            background: '#007bff',
+                                            color: 'white',
+                                            borderRadius: '12px',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                          }}>
+                                            {item.nombre} {item.precio > 0 && `(+$${item.precio.toLocaleString()})`}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {personalizacionUnidad.adiciones?.length > 0 && (
+                                    <div style={{ marginBottom: '10px' }}>
+                                      <strong style={{ fontSize: '13px', color: '#495057' }}>✨ Adiciones:</strong>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
+                                        {personalizacionUnidad.adiciones.map((item, idx) => (
+                                          <span key={idx} style={{
+                                            padding: '4px 8px',
+                                            background: '#e91e63',
+                                            color: 'white',
+                                            borderRadius: '12px',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                          }}>
+                                            {item.nombre} (+${item.precio.toLocaleString()})
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {personalizacionUnidad.sabores?.length > 0 && (
+                                    <div style={{ marginBottom: '10px' }}>
+                                      <strong style={{ fontSize: '13px', color: '#495057' }}>🎨 Sabores:</strong>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
+                                        {personalizacionUnidad.sabores.map((item, idx) => (
+                                          <span key={idx} style={{
+                                            padding: '4px 8px',
+                                            background: '#ffc107',
+                                            color: '#856404',
+                                            borderRadius: '12px',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                          }}>
+                                            {item.nombre} {item.precio > 0 && `(+$${item.precio.toLocaleString()})`}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </>
+                        ) : (
+                          <div style={{
+                            background: '#fff3cd',
+                            color: '#856404',
+                            padding: '15px',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            textAlign: 'center'
+                          }}>
+                            <span style={{ fontSize: '20px', lineHeight: 1 }}>ℹ️</span>
+                            <div>
+                              <strong>Sin personalizaciones</strong>
+                              <br />
+                              <small>Este producto se servirá en su presentación estándar.</small>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-
-                  {mostrarDetalles[producto.id] && (
-                    <div style={{ padding: '20px', background: '#f8f9fa', borderTop: '1px solid #eee' }}>
-                      {/* Mostrar toppings del pedido */}
-                      {pedido && pedido.toppings && pedido.toppings.length > 0 && (
-                        <div style={{ marginBottom: '15px' }}>
-                          <h5 style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: '#495057',
-                            marginBottom: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            🧁 Toppings Seleccionados ({pedido.toppings.length}):
-                          </h5>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {pedido.toppings.map((topping, index) => (
-                              <span key={index} style={{
-                                padding: '6px 12px',
-                                background: '#e91e63',
-                                color: 'white',
-                                borderRadius: '15px',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                              }}>
-                                {topping.nombre}
-                                {topping.precio > 0 && (
-                                  <span style={{ fontSize: '11px', opacity: 0.9 }}>
-                                    (+${topping.precio.toLocaleString()})
-                                  </span>
-                                )}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mostrar adiciones del pedido */}
-                      {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
-                        <div style={{ marginBottom: '15px' }}>
-                          <h5 style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: '#495057',
-                            marginBottom: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            ✨ Adiciones Seleccionadas ({pedido.adiciones.length}):
-                          </h5>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {pedido.adiciones.map((adicion, index) => (
-                              <span key={index} style={{
-                                padding: '6px 12px',
-                                background: '#17a2b8',
-                                color: 'white',
-                                borderRadius: '15px',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                              }}>
-                                {adicion.nombre}
-                                <span style={{ fontSize: '11px', opacity: 0.9 }}>
-                                  (+${adicion.precio.toLocaleString()})
-                                </span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mostrar salsas del pedido */}
-                      {pedido && pedido.salsas && pedido.salsas.length > 0 && (
-                        <div style={{ marginBottom: '15px' }}>
-                          <h5 style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: '#495057',
-                            marginBottom: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            🍯 Salsas Seleccionadas ({pedido.salsas.length}):
-                          </h5>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {pedido.salsas.map((salsa, index) => (
-                              <span key={index} style={{
-                                padding: '6px 12px',
-                                background: '#007bff',
-                                color: 'white',
-                                borderRadius: '15px',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                              }}>
-                                {salsa.nombre}
-                                <span style={{ fontSize: '11px', opacity: 0.9 }}>
-                                  (+${salsa.precio.toLocaleString()})
-                                </span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mensaje cuando no hay extras */}
-                      {(!pedido || 
-                        (!pedido.toppings || pedido.toppings.length === 0) &&
-                        (!pedido.adiciones || pedido.adiciones.length === 0) &&
-                        (!pedido.salsas || pedido.salsas.length === 0)
-                      ) && (
-                        <div style={{
-                          background: '#fff3cd',
-                          color: '#856404',
-                          padding: '15px',
-                          borderRadius: '10px',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          textAlign: 'center'
-                        }}>
-                          <span style={{ fontSize: '20px', lineHeight: 1 }}>ℹ️</span>
-                          <div>
-                            <strong>Sin extras seleccionados</strong>
-                            <br />
-                            <small>Este producto se servirá en su presentación estándar.</small>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-     {/* Resumen de totales */}
-<div style={{
-  background: '#f8f9fa',
-  borderRadius: '15px',
-  padding: '20px',
-  marginBottom: '30px',
-  border: '1px solid #e9ecef'
-}}>
-  <h3 style={{
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#495057',
-    marginBottom: '15px'
-  }}>
-    💰 Resumen de Costos
-  </h3>
-  
-  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
-    <tbody>
-      <tr style={{ borderBottom: '1px solid #dee2e6' }}>
-        <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
-          Productos ({productos.reduce((sum, p) => sum + (p.cantidad || 1), 0)} unidades):
-        </td>
-        <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
-          ${productos.reduce((sum, p) => sum + (p.precio * (p.cantidad || 1)), 0).toLocaleString()}
-        </td>
-      </tr>
-      
-      {pedido && pedido.toppings && pedido.toppings.length > 0 && (
-        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
-            Toppings ({pedido.toppings.length}):
-          </td>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
-            ${pedido.toppings.reduce((sum, t) => sum + (t.precio || 0), 0).toLocaleString()}
-          </td>
-        </tr>
-      )}
-      
-      {pedido && pedido.adiciones && pedido.adiciones.length > 0 && (
-        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
-            Adiciones ({pedido.adiciones.length}):
-          </td>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
-            ${pedido.adiciones.reduce((sum, a) => sum + a.precio, 0).toLocaleString()}
-          </td>
-        </tr>
-      )}
-      
-      {pedido && pedido.salsas && pedido.salsas.length > 0 && (
-        <tr style={{ borderBottom: '1px solid #dee2e6' }}>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057' }}>
-            Salsas ({pedido.salsas.length}):
-          </td>
-          <td style={{ padding: '8px 0', fontSize: '14px', color: '#495057', textAlign: 'right' }}>
-            ${pedido.salsas.reduce((sum, s) => sum + s.precio, 0).toLocaleString()}
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-  
-  <div style={{
-    paddingTop: '15px',
-    borderTop: '2px solid #dee2e6',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  }}>
-    <strong style={{ fontSize: '18px', color: '#e91e63' }}>Total del Pedido:</strong>
-    <strong style={{ fontSize: '18px', color: '#e91e63' }}>${totalPedido.toLocaleString()}</strong>
-  </div>
-</div>
+        <div style={{
+          background: '#f8f9fa',
+          borderRadius: '15px',
+          padding: '20px',
+          marginBottom: '30px',
+          border: '1px solid #e9ecef'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#495057',
+            marginBottom: '15px'
+          }}>
+            💰 Resumen de Costos
+          </h3>
+          
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            paddingTop: '15px',
+            borderTop: '2px solid #dee2e6',
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#e91e63'
+          }}>
+            <span>Total del Pedido:</span>
+            <span>${totalPedido.toLocaleString()}</span>
+          </div>
+        </div>
 
-        {/* Comentarios */}
         <div style={{
           background: '#f8f9fa',
           borderRadius: '15px',
@@ -679,7 +607,6 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
           </small>
         </div>
 
-        {/* Botones de navegación */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -714,18 +641,17 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
               padding: '12px 25px',
               border: 'none',
               borderRadius: '10px',
-              background: 'linear-gradient(45deg, #e91e63, #f06292)',
+              background: productos.length > 0 ? 'linear-gradient(45deg, #e91e63, #f06292)' : '#6c757d',
               color: 'white',
-              cursor: 'pointer',
+              cursor: productos.length > 0 ? 'pointer' : 'not-allowed',
               fontSize: '16px',
               fontWeight: '600',
               transition: 'all 0.3s ease',
-              boxShadow: '0 4px 10px rgba(233, 30, 99, 0.3)',
+              boxShadow: productos.length > 0 ? '0 4px 10px rgba(233, 30, 99, 0.3)' : 'none',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: productos.length === 0 ? 0.7 : 1,
-              pointerEvents: productos.length === 0 ? 'none' : 'auto'
+              opacity: productos.length === 0 ? 0.7 : 1
             }}
           >
             Continuar al Pago
@@ -734,106 +660,6 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && productToDelete && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '15px',
-            padding: '30px',
-            width: '90%',
-            maxWidth: '450px',
-            boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
-            textAlign: 'center',
-            animation: 'fadeInUp 0.3s ease-out',
-            position: 'relative'
-          }}>
-            <button
-              onClick={cancelDeletion}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#adb5bd'
-              }}
-            >
-              &times;
-            </button>
-            <div style={{ fontSize: '60px', marginBottom: '20px', lineHeight: '1' }}>
-              🗑️
-            </div>
-            <h3 style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#495057',
-              marginBottom: '15px'
-            }}>
-              ¿Eliminar Producto?
-            </h3>
-            <p style={{
-              color: '#6c757d',
-              fontSize: '16px',
-              marginBottom: '30px'
-            }}>
-              Estás a punto de eliminar el producto <strong style={{color: '#e91e63'}}>"{productToDelete.nombre}"</strong> del pedido.
-              Esta acción no se puede deshacer.
-              ¿Estás seguro de que quieres continuar?
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-              <button
-                onClick={cancelDeletion}
-                style={{
-                  padding: '12px 25px',
-                  border: '2px solid #6c757d',
-                  borderRadius: '10px',
-                  background: 'white',
-                  color: '#6c757d',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDeletion}
-                style={{
-                  padding: '12px 25px',
-                  border: 'none',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(45deg, #dc3545, #e85a67)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 10px rgba(220, 53, 69, 0.3)'
-                }}
-              >
-                Sí, Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CSS Animations */}
       <style>
         {`
           @keyframes slideInRight {
@@ -843,17 +669,6 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
             }
             to {
               transform: translateX(0);
-              opacity: 1;
-            }
-          }
-          
-          @keyframes fadeInUp {
-            from {
-              transform: translateY(20px);
-              opacity: 0;
-            }
-            to {
-              transform: translateY(0);
               opacity: 1;
             }
           }

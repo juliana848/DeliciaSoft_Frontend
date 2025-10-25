@@ -67,6 +67,7 @@
   width: 100%;
 }
 
+/* Botón de iniciar sesión para cliente */
 .cliente-nav-button {
   background-color: #ec4899;
   color: white;
@@ -75,6 +76,10 @@
   border-radius: 9999px;
   text-decoration: none;
   transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.875rem;
 }
 
 .cliente-nav-button:hover {
@@ -93,6 +98,13 @@
   border: none;
   cursor: pointer;
   color: #111827;
+  padding: 0.5rem;
+}
+
+.cliente-nav-mobile-button i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cliente-nav-mobile-menu {
@@ -103,35 +115,96 @@
   border-top: 1px solid #e5e7eb;
 }
 
-/* Estilos para el menú de usuario */
+/* Estilos para el ícono del carrito */
+.cart-icon-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  color: #111827;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.cart-icon-link:hover {
+  color: #ec4899;
+  transform: translateY(-2px);
+}
+
+.cart-icon-link svg {
+  transition: transform 0.3s ease;
+}
+
+.cart-icon-link:hover svg {
+  transform: scale(1.1);
+}
+
+/* Badge del carrito */
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ec4899;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.1); 
+  }
+}
+
+/* Estilos para el menú de usuario - CON ÍCONO ROSITA */
 .user-menu-container {
   position: relative;
 }
 
 .user-avatar-btn {
-  background: linear-gradient(135deg, #FFCC00, #ff1493) !important;
-  border: none !important;
+  background: linear-gradient(135deg, #ff69b4, #ff1493) !important;
+  border: 2px solid #ff69b4 !important;
   border-radius: 50% !important;
-  width: 40px !important;
-  height: 40px !important;
+  width: 42px !important;
+  height: 42px !important;
   color: white !important;
-  font-size: 14px !important;
+  font-size: 24px !important;
   font-weight: bold !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   transition: all 0.3s ease !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3) !important;
+  padding: 0 !important;
 }
 
 .user-avatar-btn:hover {
-  transform: scale(1.05) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 16px rgba(255, 105, 180, 0.4) !important;
+  background: linear-gradient(135deg, #ff1493, #dc143c) !important;
+}
+
+.user-avatar-btn i {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .user-dropdown-menu {
   position: absolute;
-  top: 50px;
+  top: 55px;
   right: 0;
   background: white;
   border-radius: 12px;
@@ -139,7 +212,7 @@
   padding: 1rem;
   min-width: 220px;
   z-index: 1000;
-  border: 2px solid #FFCC00;
+  border: 2px solid #ff69b4;
   animation: slideDown 0.3s ease forwards;
 }
 
@@ -174,23 +247,34 @@
 
 .logout-dropdown-btn {
   width: 100% !important;
-  padding: 0.5rem !important;
-  background: none !important;
+  padding: 0.75rem 1rem !important;
+  background: linear-gradient(135deg, #ff69b4, #ff1493) !important;
   border: none !important;
-  color: #dc2626 !important;
+  color: white !important;
   font-size: 14px !important;
+  font-weight: 600 !important;
   border-radius: 8px !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.3s ease !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   gap: 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3) !important;
 }
 
 .logout-dropdown-btn:hover {
-  background: #fee2e2 !important;
-  color: #dc2626 !important;
+  background: linear-gradient(135deg, #ff1493, #dc143c) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4) !important;
+}
+
+.logout-dropdown-btn i {
+  font-size: 16px;
+}
+
+.logout-dropdown-btn span {
+  font-weight: 600;
 }
 
 /* Animación para el menú móvil del cliente */
@@ -210,25 +294,6 @@
   animation: clienteSlideDown 0.3s ease forwards;
 }
 
-/* Estilos para dispositivos móviles - CLIENTE */
-@media (max-width: 768px) {
-  .cliente-nav-links {
-    display: none;
-  }
-  
-  .cliente-nav-mobile-button {
-    display: block;
-  }
-  
-  .cliente-nav-mobile-menu {
-    display: none;
-  }
-  
-  .cliente-nav-mobile-menu.visible {
-    display: flex;
-  }
-}
-
 /* Estilos para el enlace activo del cliente */
 .cliente-nav-link.active {
   color: #ec4899;
@@ -241,4 +306,170 @@
 /* Estilos específicos para el scrolled del cliente */
 .cliente-nav-container.scrolled {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Animación suave para el badge del carrito */
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cart-badge {
+  animation: bounceIn 0.3s ease-out;
+}
+
+/* Estilos para dispositivos móviles - CLIENTE */
+@media (max-width: 1024px) {
+  .cliente-nav-content {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Ocultar links de navegación en tablet/móvil */
+  .cliente-nav-links > .cliente-nav-link {
+    display: none !important;
+  }
+  
+  /* Mantener visible carrito, perfil y login */
+  .cliente-nav-links {
+    display: flex !important;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  /* Mostrar botón hamburguesa */
+  .cliente-nav-mobile-button {
+    display: flex;
+    order: -1;
+  }
+  
+  .cliente-nav-mobile-menu {
+    display: none;
+  }
+  
+  .cliente-nav-mobile-menu.visible {
+    display: flex;
+  }
+  
+  .cart-icon-link {
+    padding: 0.5rem;
+  }
+  
+  .cart-icon-link svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Botón de login más pequeño en móvil */
+  .cliente-nav-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  /* Avatar más pequeño en tablet/móvil */
+  .user-avatar-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 20px !important;
+  }
+
+  .user-avatar-btn i {
+    font-size: 20px !important;
+  }
+
+  /* Dropdown del usuario en móvil */
+  .user-dropdown-menu {
+    right: 0;
+    top: 48px;
+    min-width: 200px;
+  }
+}
+
+/* Estilos para móviles pequeños */
+@media (max-width: 768px) {
+  .cliente-nav-content {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .cliente-nav-logo img {
+    height: 40px;
+    width: 40px;
+  }
+
+  .cliente-nav-links {
+    gap: 0.5rem;
+  }
+
+  .cliente-nav-mobile-button i {
+    font-size: 22px;
+  }
+
+  /* Avatar aún más pequeño en móviles */
+  .user-avatar-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+  }
+
+  .user-avatar-btn i {
+    font-size: 18px !important;
+  }
+
+  .cart-icon-link svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cliente-nav-button {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  /* Menú móvil */
+  .cliente-nav-mobile-menu {
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+
+  .cliente-nav-mobile-menu .cliente-nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Estilos para tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .cliente-nav-links {
+    gap: 1rem;
+  }
+
+  .cliente-nav-link {
+    font-size: 0.8rem;
+  }
+}
+
+/* Scrollbar personalizado para menú móvil */
+.cliente-nav-mobile-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cliente-nav-mobile-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cliente-nav-mobile-menu::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  border-radius: 2px;
+}
+
+.cliente-nav-mobile-menu::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #ff1493, #dc143c);
 }

@@ -18,14 +18,14 @@ import DetallesArroz from "./features/Cartas/pages/DetallesArrozConLeche";
 import DetallesPostres from "./features/Cartas/pages/detallePostres";
 import DetallesSandwiches from "./features/Cartas/pages/detallesSandwis";
 import DetalleChocolates from "./features/Cartas/pages/detallesChocolates";
+import { CartProvider } from './features/Cartas/pages/CartContext';
+import PersonalizacionProductosView from './features/Pedidos/components/PersonalizacionProductos';
 
 // Importar páginas de Cliente
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 
 // Importar páginas de Admin
 import ComprasTable from "./features/Admin/pages/Compras/comprasCrud/ComprasTabla.jsx";
-// import ComprasTable from './features/Admin/pages/Compras/Compras.jsx';
-// import ComprasTable from './features/Admin/pages/Compras/ComprasTable.jsx';
 import CategoriaTableDemo from './features/Admin/pages/Compras/CategoriaInsumo.jsx'
 import TablaInsumos from "./features/Admin/pages/Compras/insumos/TablaInsumos.jsx";
 import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
@@ -33,7 +33,6 @@ import Roles from './features/Admin/pages/Roles/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
 import ProveedoresTable from './features/Admin/pages/Compras/proveedores/ProveedoresTable.jsx';
-// import ProveedorTable from './features/Admin/pages/Compras/proveedores.jsx';
 import Dashboard from './features/Admin/pages/Dashboard/Dashboard.jsx'
 import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
 import Productos from './features/Admin/pages/Productos/Productos.jsx';
@@ -59,6 +58,8 @@ function AppContent() {
   const isLoginPage = location.pathname === "/iniciar-sesion";
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPerfilRoute = location.pathname === '/perfil';
+  // ✅ AGREGAR ESTA LÍNEA
+  const isPersonalizacionRoute = location.pathname === '/pedidos/personalizar';
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -74,7 +75,8 @@ function AppContent() {
   
   return (
     <div className="App">
-      {!isLoginPage && !shouldShowSidebar && !isPerfilRoute && <Navegacion isAuthenticated={isAuthenticated} />}
+      {/* ✅ ACTUALIZAR ESTA LÍNEA - agregar isPersonalizacionRoute */}
+      {!isLoginPage && !shouldShowSidebar && !isPerfilRoute && !isPersonalizacionRoute && <Navegacion isAuthenticated={isAuthenticated} />}
       
       {shouldShowSidebar ? (
         <Layout userRole={userRole} showSidebar={true}>
@@ -107,9 +109,13 @@ function AppContent() {
             <Route path="/conocenos" element={<Conocenos />} />
             <Route path="/contactenos" element={<Contactenos />} />
             <Route path="/cartas" element={<Cartas />} />
-            <Route path="/sedes" element={<Sedes />} /> {/* ESTA LÍNEA FALTABA */}
+            <Route path="/sedes" element={<Sedes />} />
             <Route path="/pedidos" element={<Pedidos />} />
-            {/* <Route path="/producto/:nombre" element={<ProductoDetalle />} /> */}
+            
+            {/* ✅✅✅ AGREGAR ESTA RUTA CRUCIAL ✅✅✅ */}
+            <Route path="/pedidos/personalizar" element={<PersonalizacionProductosView />} />
+            
+            {/* Rutas de detalles de productos */}
             <Route path="/detalle-fresas" element={<ProductoDetalle />} />
             <Route path="/detalle-obleas" element={<DetalleObleas />} />
             <Route path="/detalle-mini-donas" element={<DetalleMiniDonas />} />
@@ -119,6 +125,7 @@ function AppContent() {
             <Route path="/detalle-sandwiches" element={<DetallesSandwiches />} />
             <Route path="/detalle-chocolates" element={<DetalleChocolates />} />
 
+            {/* Ruta del perfil del cliente */}
             {isAuthenticated && userRole === 'cliente' && (
               <Route path="/perfil" element={<PerfilCliente />} />
             )}
@@ -126,16 +133,19 @@ function AppContent() {
         </>
       )}
       
-      {!isLoginPage && !shouldShowSidebar && !isPerfilRoute && <Footer />}
+      {/* ✅ ACTUALIZAR ESTA LÍNEA - agregar isPersonalizacionRoute */}
+      {!isLoginPage && !shouldShowSidebar && !isPerfilRoute && !isPersonalizacionRoute && <Footer />}
     </div>
   );
 }
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <CartProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </CartProvider>
   );
 }
 

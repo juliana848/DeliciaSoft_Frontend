@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LogoutButton from '../Layout/LogoutButton/LogoutButton';
+import { CartContext } from '../../../features/Cartas/pages/CartContext';
 import './navegacion.css';
 
 const Navegacion = ({ isAuthenticated = false }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
   const [isAuthenticatedState, setIsAuthenticatedState] = useState(isAuthenticated);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  const cartDropdownRef = useRef(null);
+  const cartButtonRef = useRef(null);
+  
+  // Obtener carrito del contexto
+  const { carrito, actualizarCantidadCarrito, eliminarDelCarrito } = useContext(CartContext);
 
   // Obtener datos del usuario
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || 'usuario@email.com');
@@ -28,6 +36,24 @@ const Navegacion = ({ isAuthenticated = false }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showCartDropdown &&
+        cartDropdownRef.current &&
+        !cartDropdownRef.current.contains(event.target) &&
+        cartButtonRef.current &&
+        !cartButtonRef.current.contains(event.target)
+      ) {
+        setShowCartDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCartDropdown]);
+
   // Escuchar cambios en el localStorage para actualizar el estado de autenticación
   useEffect(() => {
     const checkAuthStatus = () => {
@@ -40,33 +66,27 @@ const Navegacion = ({ isAuthenticated = false }) => {
       if (name) setUserName(name);
     };
 
-    // Verificar estado inicial
     checkAuthStatus();
 
-    // Escuchar evento personalizado desde la ventana de login
     const handleLoginSuccess = (event) => {
       console.log('🎉 Login exitoso detectado en ventana principal');
       checkAuthStatus();
       
-      // Si viene desde contacto, redirigir
       const redirectPath = localStorage.getItem('redirectAfterLogin');
       if (redirectPath) {
         localStorage.removeItem('redirectAfterLogin');
         setTimeout(() => {
           navigate(redirectPath);
-          window.location.reload(); // Recargar para actualizar todos los componentes
+          window.location.reload();
         }, 500);
       } else {
-        // Recargar la página para actualizar todos los componentes
         window.location.reload();
       }
     };
 
-    // Escuchar cambios en localStorage desde otras pestañas/ventanas
     window.addEventListener('storage', checkAuthStatus);
     window.addEventListener('loginSuccess', handleLoginSuccess);
 
-    // Verificar periódicamente si el usuario ha iniciado sesión
     const interval = setInterval(checkAuthStatus, 1000);
 
     return () => {
@@ -84,18 +104,14 @@ const Navegacion = ({ isAuthenticated = false }) => {
     setShowUserMenu(!showUserMenu);
   };
 
+  const toggleCartDropdown = () => {
+    setShowCartDropdown(!showCartDropdown);
+  };
+
   const isActive = (path) => {
     return location.pathname === path;
   };
 
-  const getInitials = () => {
-    const names = userName.split(' ');
-    return names.length > 1 
-      ? `${names[0].charAt(0)}${names[1].charAt(0)}`.toUpperCase()
-      : `${names[0].charAt(0)}${names[0].charAt(1) || ''}`.toUpperCase();
-  };
-
-  // Función para abrir login en nueva ventana
   const abrirLoginNuevaVentana = (e) => {
     e.preventDefault();
     const width = 900;
@@ -109,18 +125,14 @@ const Navegacion = ({ isAuthenticated = false }) => {
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
 
-    // Verificar si la ventana se abrió correctamente
     if (loginWindow) {
-      // Guardar referencia a la ventana principal en la ventana de login
       loginWindow.opener = window;
       
-      // Verificar periódicamente si la ventana se cerró y si hay cambios en auth
       const checkInterval = setInterval(() => {
         if (loginWindow.closed) {
           console.log('Ventana de login cerrada, verificando autenticación...');
           clearInterval(checkInterval);
           
-          // Verificar si el usuario inició sesión
           const authToken = localStorage.getItem('authToken');
           if (authToken) {
             console.log('Usuario autenticado, recargando página...');
@@ -131,147 +143,568 @@ const Navegacion = ({ isAuthenticated = false }) => {
     }
   };
 
+  const handleEliminarProducto = (id) => {
+    eliminarDelCarrito(id);
+  };
+
+  const handleActualizarCantidad = (id, nuevaCantidad) => {
+    if (nuevaCantidad <= 0) {
+      eliminarDelCarrito(id);
+    } else {
+      actualizarCantidadCarrito(id, nuevaCantidad);
+    }
+  };
+
+  const calcularTotal = () => {
+    return carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
+  };
+
+  const handleVerMasProductos = () => {
+    setShowCartDropdown(false);
+    navigate('/pedidos');
+  };
+
+  const handleProcederCheckout = () => {
+    const cantidadTotal = carrito.reduce((total, item) => total + item.cantidad, 0);
+    
+    console.log('🔵 Checkout desde navbar');
+    console.log('🔵 Cantidad total:', cantidadTotal);
+    console.log('🔵 Productos:', carrito);
+    
+    if (cantidadTotal < 10) {
+      alert(`⚠️ Necesitas al menos 10 productos para continuar.\nTienes: ${cantidadTotal} productos.`);
+      return;
+    }
+
+    if (cantidadTotal > 100) {
+      alert(`⚠️ Máximo 100 productos permitidos.\nTienes: ${cantidadTotal} productos.`);
+      return;
+    }
+
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      alert('⚠️ Debes iniciar sesión para continuar con tu pedido');
+      setShowCartDropdown(false);
+      navigate('/iniciar-sesion');
+      return;
+    }
+
+    localStorage.setItem('carritoParaPersonalizar', JSON.stringify(carrito));
+    console.log('✅ Carrito guardado en localStorage');
+    
+    setShowCartDropdown(false);
+    console.log('✅ Navegando a /pedidos/personalizar');
+    navigate('/pedidos/personalizar');
+  };
+
+  const cantidadTotal = carrito.reduce((total, item) => total + item.cantidad, 0);
+
   return (
-    <nav className={`cliente-nav-container ${scrolled ? 'scrolled' : ''}`}>
-      <div className="cliente-nav-content">
-        <Link to="/" className="cliente-nav-logo">
-          <img 
-            src='/imagenes/logo-delicias-darsy.png' 
-            alt="Delicias Darsy" 
-          />
-        </Link>
-        
-        <div className="cliente-nav-links">
-          <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
-            INICIO
-          </Link>
-          <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
-            CARTAS
-          </Link>
-          <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
-            PEDIDOS
-          </Link>
-          <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`}>
-            SEDES
-          </Link>
-          <Link to="/conocenos" className={`cliente-nav-link ${isActive('/conocenos') ? 'active' : ''}`}>
-            CONÓCENOS
-          </Link>
-          <Link to="/contactenos" className={`cliente-nav-link ${isActive('/contactenos') ? 'active' : ''}`}>
-            CONTÁCTENOS
+    <>
+      {/* Bootstrap Icons */}
+      <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+        rel="stylesheet"
+      />
+      
+      <nav className={`cliente-nav-container ${scrolled ? 'scrolled' : ''}`}>
+        <div className="cliente-nav-content">
+          <Link to="/" className="cliente-nav-logo">
+            <img 
+              src='/imagenes/logo-delicias-darsy.png' 
+              alt="Delicias Darsy" 
+            />
           </Link>
           
-          {isAuthenticatedState ? (
-            <div className="user-menu-container" style={{ position: 'relative' }}>
-              <button 
-                className="user-avatar-btn"
-                onClick={toggleUserMenu}
-                title={`Perfil de ${userName}`}
+          <div className="cliente-nav-links">
+            <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
+              INICIO
+            </Link>
+            <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
+              PEDIDOS
+            </Link>
+            <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`}>
+              SEDES
+            </Link>
+            <Link to="/conocenos" className={`cliente-nav-link ${isActive('/conocenos') ? 'active' : ''}`}>
+              CONÓCENOS
+            </Link>
+            <Link to="/contactenos" className={`cliente-nav-link ${isActive('/contactenos') ? 'active' : ''}`}>
+              CONTÁCTENOS
+            </Link>
+            
+            {/* Ícono del Carrito con Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                ref={cartButtonRef}
+                onClick={toggleCartDropdown}
+                className="cart-icon-link"
+                title="Ver Carrito"
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.5rem',
+                  color: '#111827',
+                  transition: 'color 0.3s ease',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#ec4899'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#111827'}
               >
-                {getInitials()}
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="28" 
+                  height="28" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                {cantidadTotal > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    backgroundColor: '#ec4899',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    animation: 'pulse 0.5s ease-in-out'
+                  }}>
+                    {cantidadTotal}
+                  </span>
+                )}
               </button>
-              
-              {showUserMenu && (
-                <div className="user-dropdown-menu">
+
+              {/* Dropdown del Carrito */}
+              {showCartDropdown && (
+                <div
+                  ref={cartDropdownRef}
+                  style={{
+                    position: 'absolute',
+                    top: '60px',
+                    right: '0',
+                    width: '400px',
+                    maxHeight: '500px',
+                    backgroundColor: 'white',
+                    borderRadius: '15px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                    zIndex: 1000,
+                    border: '2px solid #f0f2f5',
+                    animation: 'slideDown 0.3s ease forwards'
+                  }}
+                >
                   <div style={{
-                    padding: '0.5rem 0',
-                    borderBottom: '1px solid #e9ecef',
-                    marginBottom: '0.5rem'
+                    padding: '20px',
+                    borderBottom: '2px solid #f0f2f5'
                   }}>
-                    <p style={{
+                    <h3 style={{
                       margin: 0,
-                      fontWeight: 'bold',
-                      color: '#333',
-                      fontSize: '14px'
+                      fontSize: '18px',
+                      fontWeight: '700',
+                      color: '#495057'
                     }}>
-                      {userName}
-                    </p>
-                    <p style={{
-                      margin: 0,
-                      color: '#666',
-                      fontSize: '12px'
+                      🛒 Mi Carrito ({carrito.length})
+                    </h3>
+                  </div>
+
+                  {carrito.length === 0 ? (
+                    <div style={{
+                      padding: '40px 20px',
+                      textAlign: 'center'
                     }}>
-                      {userEmail}
-                    </p>
-                  </div>
-                  
-                  <Link 
-                    to="/perfil" 
-                    className="user-menu-item"
-                    onClick={() => setShowUserMenu(false)}
-                  >
-                    👤 Mi Perfil
-                  </Link>
-                  
-                  <div style={{
-                    borderTop: '1px solid #e9ecef',
-                    paddingTop: '0.5rem'
-                  }}>
-                    <LogoutButton className="logout-dropdown-btn" />
-                  </div>
+                      <div style={{ fontSize: '60px', marginBottom: '15px' }}>🛒</div>
+                      <p style={{ color: '#6c757d', marginBottom: '20px' }}>
+                        Tu carrito está vacío
+                      </p>
+                      <button
+                        onClick={handleVerMasProductos}
+                        style={{
+                          padding: '10px 20px',
+                          border: 'none',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(45deg, #e91e63, #f06292)',
+                          color: 'white',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Ver Productos
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{
+                        maxHeight: '300px',
+                        overflowY: 'auto',
+                        padding: '15px'
+                      }}>
+                        {carrito.map((producto) => (
+                          <div
+                            key={producto.id}
+                            style={{
+                              display: 'flex',
+                              gap: '12px',
+                              padding: '12px',
+                              marginBottom: '10px',
+                              background: '#f8f9fa',
+                              borderRadius: '10px',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <div style={{
+                              width: '60px',
+                              height: '60px',
+                              borderRadius: '8px',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                              backgroundImage: `url(${producto.imagen})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center'
+                            }} />
+
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h4 style={{
+                                margin: '0 0 5px 0',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#343a40',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {producto.nombre}
+                              </h4>
+                              <p style={{
+                                margin: '0 0 8px 0',
+                                fontSize: '13px',
+                                color: '#e91e63',
+                                fontWeight: '600'
+                              }}>
+                                ${producto.precio.toLocaleString()}
+                              </p>
+
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}>
+                                <button
+                                  onClick={() => handleActualizarCantidad(producto.id, producto.cantidad - 1)}
+                                  style={{
+                                    width: '25px',
+                                    height: '25px',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    background: '#dc3545',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  -
+                                </button>
+                                <span style={{
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                  minWidth: '25px',
+                                  textAlign: 'center'
+                                }}>
+                                  {producto.cantidad}
+                                </span>
+                                <button
+                                  onClick={() => handleActualizarCantidad(producto.id, producto.cantidad + 1)}
+                                  style={{
+                                    width: '25px',
+                                    height: '25px',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    background: '#28a745',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  +
+                                </button>
+                                <button
+                                  onClick={() => handleEliminarProducto(producto.id)}
+                                  style={{
+                                    marginLeft: 'auto',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#dc3545',
+                                    fontSize: '18px',
+                                    cursor: 'pointer',
+                                    padding: '0',
+                                    width: '25px',
+                                    height: '25px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  title="Eliminar"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{
+                        padding: '15px 20px',
+                        borderTop: '2px solid #f0f2f5'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: '15px',
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          color: '#495057'
+                        }}>
+                          <span>Total:</span>
+                          <span style={{ color: '#e91e63' }}>
+                            ${calcularTotal().toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div style={{
+                          display: 'flex',
+                          gap: '10px'
+                        }}>
+                          <button
+                            onClick={handleVerMasProductos}
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              border: '2px solid #e91e63',
+                              borderRadius: '10px',
+                              background: 'white',
+                              color: '#e91e63',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease'
+                            }}
+                          >
+                            Ver Más Productos
+                          </button>
+                          <button
+                            onClick={handleProcederCheckout}
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              border: 'none',
+                              borderRadius: '10px',
+                              background: 'linear-gradient(45deg, #e91e63, #f06292)',
+                              color: 'white',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 8px rgba(233,30,99,0.3)'
+                            }}
+                          >
+                            🛍️ Comprar
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
+            
+            {isAuthenticatedState ? (
+              <div className="user-menu-container" style={{ position: 'relative' }}>
+                <button 
+                  className="user-avatar-btn"
+                  onClick={toggleUserMenu}
+                  title={`Perfil de ${userName}`}
+                >
+                  <i className="bi bi-person-circle"></i>
+                </button>
+                
+                {showUserMenu && (
+                  <div className="user-dropdown-menu">
+                    <div style={{
+                      padding: '0.5rem 0',
+                      borderBottom: '1px solid #e9ecef',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontWeight: 'bold',
+                        color: '#333',
+                        fontSize: '14px'
+                      }}>
+                        {userName}
+                      </p>
+                      <p style={{
+                        margin: 0,
+                        color: '#666',
+                        fontSize: '12px'
+                      }}>
+                        {userEmail}
+                      </p>
+                    </div>
+                    
+                    <Link 
+                      to="/perfil" 
+                      className="user-menu-item"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      👤 Mi Perfil
+                    </Link>
+                    
+                    <div style={{
+                      borderTop: '1px solid #e9ecef',
+                      paddingTop: '0.5rem'
+                    }}>
+                      <LogoutButton className="logout-dropdown-btn" isDropdown={true} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                onClick={abrirLoginNuevaVentana}
+                className="cliente-nav-button"
+                style={{ cursor: 'pointer' }}
+              >
+                INICIAR SESIÓN
+              </button>
+            )}
+          </div>
+          
+          <button onClick={toggleMenu} className="cliente-nav-mobile-button">
+            <i className="bi bi-list" style={{ fontSize: '24px' }}></i>
+          </button>
+        </div>
+        
+        <div className={`cliente-nav-mobile-menu ${menuAbierto ? 'visible' : ''}`}>
+          <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
+            INICIO
+          </Link>
+          <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
+            PEDIDOS
+          </Link>
+          <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
+            SEDES
+          </Link>
+          <Link to="/conocenos" className={`cliente-nav-link ${isActive('/conocenos') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
+            CONÓCENOS
+          </Link>
+          <Link to="/contactenos" className={`cliente-nav-link ${isActive('/contactenos') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
+            CONTÁCTENOS
+          </Link>
+          
+          <Link 
+            to="/pedidos" 
+            className="cliente-nav-link"
+            onClick={() => setMenuAbierto(false)}
+            style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              borderTop: '1px solid #e9ecef',
+              paddingTop: '1rem',
+              marginTop: '0.5rem'
+            }}
+          >
+            🛒 CARRITO
+            {cantidadTotal > 0 && (
+              <span style={{
+                backgroundColor: '#ec4899',
+                color: 'white',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}>
+                {cantidadTotal}
+              </span>
+            )}
+          </Link>
+          
+          {isAuthenticatedState ? (
+            <>
+              <Link 
+                to="/perfil" 
+                className="cliente-nav-link" 
+                onClick={() => setMenuAbierto(false)}
+                style={{ 
+                  borderTop: '1px solid #e9ecef', 
+                  paddingTop: '1rem',
+                  marginTop: '0.5rem' 
+                }}
+              >
+                👤 MI PERFIL
+              </Link>
+              <div style={{ padding: '0 1rem' }}>
+                <LogoutButton className="cliente-nav-button" showText={true} />
+              </div>
+            </>
           ) : (
             <button 
               onClick={abrirLoginNuevaVentana}
               className="cliente-nav-button"
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', width: '100%' }}
             >
               INICIAR SESIÓN
             </button>
           )}
         </div>
         
-        <button onClick={toggleMenu} className="cliente-nav-mobile-button">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-      
-      <div className={`cliente-nav-mobile-menu ${menuAbierto ? 'visible' : ''}`}>
-        <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
-          INICIO
-        </Link>
-        <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
-          CARTAS
-        </Link>
-        <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
-          PEDIDOS
-        </Link>
-        <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`}>
-          SEDES
-        </Link>
-        <Link to="/conocenos" className={`cliente-nav-link ${isActive('/conocenos') ? 'active' : ''}`}>
-          CONÓCENOS
-        </Link>
-        <Link to="/contactenos" className={`cliente-nav-link ${isActive('/contactenos') ? 'active' : ''}`}>
-          CONTÁCTENOS
-        </Link>
-        
-        {isAuthenticatedState ? (
-          <>
-            <Link to="/perfil" className="cliente-nav-link" style={{ 
-              borderTop: '1px solid #e9ecef', 
-              paddingTop: '1rem',
-              marginTop: '0.5rem' 
-            }}>
-              👤 MI PERFIL
-            </Link>
-            <LogoutButton className="cliente-nav-button" />
-          </>
-        ) : (
-          <button 
-            onClick={abrirLoginNuevaVentana}
-            className="cliente-nav-button"
-            style={{ cursor: 'pointer' }}
-          >
-            INICIAR SESIÓN
-          </button>
-        )}
-      </div>
-    </nav>
+        <style jsx>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+          }
+          
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+      </nav>
+    </>
   );
 };
 

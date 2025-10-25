@@ -8,7 +8,7 @@ const HeroSection = () => {
       <div className="hero-content">
         <div className="hero-text">
           <h1 className="hero-brand">Delicias Darsy</h1>
-          <h2 className="hero-title">
+          <h2 className="heros-title">
             Endulza tus
             <br />
             momentos

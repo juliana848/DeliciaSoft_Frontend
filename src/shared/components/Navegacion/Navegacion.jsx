@@ -628,9 +628,7 @@ const Navegacion = ({ isAuthenticated = false }) => {
           <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
             INICIO
           </Link>
-
           <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
-
             PEDIDOS
           </Link>
           <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`} onClick={() => setMenuAbierto(false)}>
@@ -704,56 +702,6 @@ const Navegacion = ({ isAuthenticated = false }) => {
           )}
         </div>
         
-              <button onClick={toggleMenu} className="cliente-nav-mobile-button">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-      
-      <div className={`cliente-nav-mobile-menu ${menuAbierto ? 'visible' : ''}`}>
-        <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
-          INICIO
-        </Link>
-        {/* <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
-          CARTAS
-        </Link> */}
-        <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
-          PEDIDOS
-        </Link>
-        <Link to="/sedes" className={`cliente-nav-link ${isActive('/sedes') ? 'active' : ''}`}>
-          SEDES
-        </Link>
-        <Link to="/conocenos" className={`cliente-nav-link ${isActive('/conocenos') ? 'active' : ''}`}>
-          CONÓCENOS
-        </Link>
-        <Link to="/contactenos" className={`cliente-nav-link ${isActive('/contactenos') ? 'active' : ''}`}>
-          CONTÁCTENOS
-        </Link>
-        
-        {isAuthenticatedState ? (
-          <>
-            <Link to="/perfil" className="cliente-nav-link" style={{ 
-              borderTop: '1px solid #e9ecef', 
-              paddingTop: '1rem',
-              marginTop: '0.5rem' 
-            }}>
-              👤 MI PERFIL
-            </Link>
-            <LogoutButton className="cliente-nav-button" />
-          </>
-        ) : (
-          <button 
-            onClick={abrirLoginNuevaVentana}
-            className="cliente-nav-button"
-            style={{ cursor: 'pointer' }}
-          >
-            INICIAR SESIÓN
-          </button>
-        )}
-      </div>
-    </nav>   
-
         <style jsx>{`
           @keyframes pulse {
             0%, 100% { transform: scale(1); }

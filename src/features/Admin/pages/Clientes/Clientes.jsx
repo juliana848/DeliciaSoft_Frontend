@@ -6,6 +6,7 @@ import '../../adminStyles.css';
 import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
+import Tooltip from '../../components/Tooltip'; // 👈 Importar Tooltip
 import ClienteFormModal from './components/ClientesForm';
 import clienteApiService from '../../services/cliente_services'; 
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -20,7 +21,6 @@ export default function Clientes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Cargar clientes desde la API
   useEffect(() => {
     cargarClientes();
   }, []);
@@ -30,7 +30,6 @@ export default function Clientes() {
       setLoading(true);
       setError(null);
       const clientesData = await clienteApiService.obtenerClientes();
-      // Ordenar por ID descendente para mostrar los más recientes primero
       const clientesOrdenados = clientesData.sort((a, b) => b.idCliente - a.idCliente);
       setClientes(clientesOrdenados);
     } catch (error) {
@@ -46,7 +45,6 @@ export default function Clientes() {
     try {
       const clienteActualizado = await clienteApiService.toggleEstadoCliente(cliente.idCliente);
 
-      // Actualizar el estado local inmediatamente
       setClientes(prevClientes => {
         const nuevosClientes = prevClientes.map(c => {
           if (c.idCliente === cliente.idCliente) {
@@ -82,7 +80,6 @@ export default function Clientes() {
     setClienteSeleccionado(cliente);
     setModalVisible(true);
 
-    // Verificar si el cliente tiene ventas cuando se intenta eliminar
     if (tipo === 'eliminar' && cliente) {
       const tieneVentas = await clienteApiService.clienteTieneVentas(cliente.idCliente);
       setClienteSeleccionado({ ...cliente, tieneVentas });
@@ -101,7 +98,6 @@ export default function Clientes() {
 
       if (modalTipo === 'agregar') {
         clienteResult = await clienteApiService.crearCliente(formData);
-        // Agregar el nuevo cliente al inicio de la lista
         setClientes(prevClientes => [clienteResult, ...prevClientes]);
         showNotification('Cliente agregado exitosamente');
       } else if (modalTipo === 'editar') {
@@ -119,7 +115,6 @@ export default function Clientes() {
       console.error('Error al guardar cliente:', error);
       let mensaje = error.message;
       
-      // Detectar si el error es por duplicados
       if (mensaje.includes('Ya existe un cliente') || mensaje.includes('Ya existe un usuario')) {
         showNotification(mensaje, 'error');
       } else {
@@ -138,20 +133,16 @@ export default function Clientes() {
   };
 
   const confirmarEliminar = async () => {
-    // Llamar al servicio sin try-catch para evitar errores en consola
     const resultado = await clienteApiService.eliminarCliente(clienteSeleccionado.idCliente);
     
     cerrarModal();
     
-    // Verificar el resultado
     if (resultado.success) {
-      // Eliminación exitosa
       setClientes(prevClientes => 
         prevClientes.filter(c => c.idCliente !== clienteSeleccionado.idCliente)
       );
       showNotification('Cliente eliminado exitosamente');
     } else {
-      // No se pudo eliminar (tiene ventas asociadas u otro error)
       showNotification(resultado.message, 'error');
     }
   };
@@ -163,12 +154,10 @@ export default function Clientes() {
     cliente.numeroDocumento?.includes(filtro)
   );
 
-  // Componente de carga
-    if (loading) {
-      return <LoadingSpinner />;
-    }
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
-  // Componente de error
   if (error && clientes.length === 0) {
     return (
       <div className="admin-wrapper">
@@ -266,43 +255,47 @@ export default function Clientes() {
           headerStyle={{ paddingLeft: '3.5rem' }}
           body={(rowData) => (
             <>
-              <button 
-                className="admin-button gray" 
-                title="Visualizar" 
-                onClick={() => abrirModal('visualizar', rowData)}
-              >
-                👁
-              </button>
-              <button
-                className="admin-button yellow"
-                title="Editar"
-                onClick={() => abrirModal('editar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: rowData.estado ? 1 : 0.5, 
-                  cursor: rowData.estado ? 'pointer' : 'not-allowed' 
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                className="admin-button red"
-                title="Eliminar"
-                onClick={() => abrirModal('eliminar', rowData)}
-                disabled={!rowData.estado}
-                style={{ 
-                  opacity: rowData.estado ? 1 : 0.5, 
-                  cursor: rowData.estado ? 'pointer' : 'not-allowed' 
-                }}
-              >
-                🗑️
-              </button>
+              <Tooltip text="Visualizar" position="top">
+                <button 
+                  className="admin-button gray" 
+                  onClick={() => abrirModal('visualizar', rowData)}
+                >
+                  👁
+                </button>
+              </Tooltip>
+              
+              <Tooltip text={rowData.estado ? "Editar" : "Cliente inactivo"} position="top">
+                <button
+                  className="admin-button yellow"
+                  onClick={() => abrirModal('editar', rowData)}
+                  disabled={!rowData.estado}
+                  style={{ 
+                    opacity: rowData.estado ? 1 : 0.5, 
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed' 
+                  }}
+                >
+                  ✏️
+                </button>
+              </Tooltip>
+              
+              <Tooltip text={rowData.estado ? "Eliminar" : "Cliente inactivo"} position="top">
+                <button
+                  className="admin-button red"
+                  onClick={() => abrirModal('eliminar', rowData)}
+                  disabled={!rowData.estado}
+                  style={{ 
+                    opacity: rowData.estado ? 1 : 0.5, 
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed' 
+                  }}
+                >
+                  🗑️
+                </button>
+              </Tooltip>
             </>
           )}
         />
       </DataTable>
 
-      {/* Modal para agregar/editar/visualizar cliente */}
       {(modalTipo === 'agregar' || modalTipo === 'editar' || modalTipo === 'visualizar') && (
         <ClienteFormModal
           visible={modalVisible}
@@ -315,7 +308,6 @@ export default function Clientes() {
         />
       )}
 
-      {/* Modal Eliminar - Pregunta inicial */}
       {modalTipo === 'eliminar' && clienteSeleccionado && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title">Eliminar Cliente</h2>
@@ -336,7 +328,6 @@ export default function Clientes() {
         </Modal>
       )}
 
-      {/* Modal Confirmar Eliminación */}
       {modalTipo === 'confirmarEliminar' && clienteSeleccionado && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
           <h2 className="modal-title"> Eliminar Cliente</h2>

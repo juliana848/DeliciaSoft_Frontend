@@ -6,6 +6,7 @@ import '../../adminStyles.css';
 import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
+import Tooltip from '../../components/Tooltip';
 import RoleForm from './Components/FormRol';
 import roleApiService from '../../services/roles_services';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -312,8 +313,7 @@ export default function Roles() {
 
   // Mostrar loading mientras se cargan los datos
   if (loading) {
-  return <LoadingSpinner />;
-  
+    return <LoadingSpinner />;
   }
 
   return (
@@ -414,64 +414,70 @@ export default function Roles() {
           style={{ width: '6rem', textAlign: 'center' }}
         />
         
-       <Column
-        header="Acciones"
-        headerStyle={{ paddingLeft: '5rem' }}
-        body={(rowData) => {
-          const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
-          const puedeEditar = puedeEjecutarAccion(rowData, 'editar');
-          const puedeEliminar = puedeEjecutarAccion(rowData, 'eliminar');
-          
-          return (
-            <>
-              <button 
-                className="admin-button gray" 
-                title="Visualizar" 
-                onClick={() => abrirModal('visualizar', rowData)}
-              >
-                👁
-              </button>
-              <button
-                className={`admin-button ${puedeEditar ? 'yellow' : 'disabled'}`} 
-                title={
-                  esAdmin 
-                    ? "No disponible (rol del sistema)" 
-                    : !rowData.activo 
-                      ? "No disponible (rol inactivo)"
-                      : "Editar"
-                }
-                onClick={() => puedeEditar && abrirModal('editar', rowData)}
-                disabled={!puedeEditar}
-                style={{
-                  opacity: puedeEditar ? 1 : 0.5,
-                  cursor: puedeEditar ? 'pointer' : 'not-allowed'
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                className={`admin-button ${puedeEliminar ? 'red' : 'disabled'}`}
-                title={
-                  esAdmin 
-                    ? "No disponible (rol del sistema)" 
-                    : !rowData.activo 
-                      ? "No disponible (rol inactivo)"
-                      : "Eliminar"
-                }
-                onClick={() => puedeEliminar && abrirModal('eliminar', rowData)}
-                disabled={!puedeEliminar}
-                style={{
-                  opacity: puedeEliminar ? 1 : 0.5,
-                  cursor: puedeEliminar ? 'pointer' : 'not-allowed',
-                }}
-              >
-                🗑️
-              </button>
-            </>
-          );
-        }}
-        style={{ width: '10rem', textAlign: 'center' }}
-      />
+        <Column
+          header="Acciones"
+          headerStyle={{ paddingLeft: '5rem' }}
+          body={(rowData) => {
+            const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
+            const puedeEditar = puedeEjecutarAccion(rowData, 'editar');
+            const puedeEliminar = puedeEjecutarAccion(rowData, 'eliminar');
+            
+            // Determinar el texto del tooltip
+            const getTooltipEditar = () => {
+              if (esAdmin) return "Rol del sistema protegido";
+              if (!rowData.activo) return "Rol inactivo";
+              return "Editar";
+            };
+            
+            const getTooltipEliminar = () => {
+              if (esAdmin) return "Rol del sistema protegido";
+              if (!rowData.activo) return "Rol inactivo";
+              return "Eliminar";
+            };
+            
+            return (
+              <>
+                <Tooltip text="Visualizar" position="top">
+                  <button 
+                    className="admin-button gray" 
+                    onClick={() => abrirModal('visualizar', rowData)}
+                  >
+                    👁
+                  </button>
+                </Tooltip>
+                
+                <Tooltip text={getTooltipEditar()} position="top">
+                  <button
+                    className={`admin-button ${puedeEditar ? 'yellow' : 'disabled'}`}
+                    onClick={() => puedeEditar && abrirModal('editar', rowData)}
+                    disabled={!puedeEditar}
+                    style={{
+                      opacity: puedeEditar ? 1 : 0.5,
+                      cursor: puedeEditar ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    ✏️
+                  </button>
+                </Tooltip>
+                
+                <Tooltip text={getTooltipEliminar()} position="top">
+                  <button
+                    className={`admin-button ${puedeEliminar ? 'red' : 'disabled'}`}
+                    onClick={() => puedeEliminar && abrirModal('eliminar', rowData)}
+                    disabled={!puedeEliminar}
+                    style={{
+                      opacity: puedeEliminar ? 1 : 0.5,
+                      cursor: puedeEliminar ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </Tooltip>
+              </>
+            );
+          }}
+          style={{ width: '10rem', textAlign: 'center' }}
+        />
       </DataTable>
 
       <Modal visible={modalVisible} onClose={cerrarModal}>

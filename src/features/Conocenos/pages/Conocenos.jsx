@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../components/Modal';
 import './conocenos.css';
+import cup from "./cup.png";
+import cup2 from "./cup2.png";
 
 const Conocenos = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [modalContenido, setModalContenido] = useState(null);
   const [imagenes, setImagenes] = useState({});
   const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     setIsVisible(true);
@@ -33,200 +31,27 @@ const Conocenos = () => {
     }
   };
 
-  const abrirModal = (contenido) => {
-    setModalContenido(contenido);
-    setModalAbierto(true);
-  };
-
-  const cerrarModal = () => {
-    setModalAbierto(false);
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % 3);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + 3) % 3);
-  };
-
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-  };
-
-  const slides = [
-    {
-      id: 1,
-      number: "01",
-      title: "¿Quiénes somos?",
-      content: {
-        logo: imagenes[3],
-        socialHandle: "@delicias_Darsy",
-        phone: "321 309 65 04",
-        textTitle: "Nuestra Historia",
-        text: "En Delicias Darsy nacimos en 2015 de la pasión por endulzar la vida de las personas. Desde entonces, hemos crecido hasta convertirnos en un referente de postres artesanales en la región.",
-        highlights: [
-          "Más de 9 años de experiencia",
-          "Productos 100% artesanales",
-          "Ingredientes de primera calidad",
-          "Atención personalizada"
-        ],
-        images: [
-          imagenes[3],
-          imagenes[4],
-        ],
-        buttonText: "Conoce más sobre nosotros",
-        modalContent: {
-          title: "Nuestra Pasión por los Postres",
-          subtitle: "Una historia de amor y dedicación",
-          description: "Desde nuestros inicios en 2015, en Delicias Darsy hemos trabajado incansablemente para crear experiencias únicas a través de nuestros postres artesanales. Cada receta es elaborada con amor, dedicación y los mejores ingredientes.",
-          features: [
-            {
-              icon: "🎂",
-              title: "Tradición Familiar",
-              text: "Recetas transmitidas de generación en generación"
-            },
-            {
-              icon: "✨",
-              title: "Innovación",
-              text: "Siempre buscando nuevos sabores"
-            },
-            {
-              icon: "❤️",
-              title: "Hecho con Amor",
-              text: "Cada postre con dedicación"
-            }
-          ],
-          gallery: [
-            imagenes[3],
-            imagenes[4],
-            imagenes[5],
-            imagenes[6]
-          ].filter(Boolean)
-        }
-      }
-    },
-    {
-      id: 2,
-      number: "02",
-      title: "Nuestras Sedes",
-      content: {
-        textTitle: "Encuéntranos",
-        text: "Contamos con varias sedes estratégicamente ubicadas para que puedas disfrutar de nuestros productos frescos en un ambiente acogedor y familiar.",
-        highlights: [
-          "Ambientes cómodos y modernos",
-          "Atención de calidad",
-          "Productos siempre frescos",
-          "Fácil acceso y parqueadero"
-        ],
-        images: [
-          imagenes[4],
-          imagenes[5],
-          imagenes[6],
-        ].filter(Boolean),
-        stats: [
-          { number: "4+", label: "Sedes" },
-          { number: "10k+", label: "Clientes" },
-          { number: "9+", label: "Años" }
-        ],
-        buttonText: "Ver nuestras sedes",
-        modalContent: {
-          title: "Nuestras Sedes",
-          subtitle: "Visítanos y vive la experiencia Delicias Darsy",
-          description: "Cada una de nuestras sedes está diseñada para brindarte la mejor experiencia. Desde el momento en que entras, te recibimos con una sonrisa y el aroma delicioso de nuestros productos recién horneados.",
-          locations: [
-            {
-              name: "Sede Principal",
-              address: "Medellín, Antioquia",
-              hours: "Lun - Sáb: 8:00 AM - 8:00 PM",
-              phone: "321 309 65 04"
-            },
-            {
-              name: "Sede Centro",
-              address: "Centro comercial",
-              hours: "Lun - Dom: 10:00 AM - 9:00 PM",
-              phone: "321 309 65 04"
-            }
-          ],
-          gallery: [
-            imagenes[4],
-            imagenes[5],
-            imagenes[6],
-            imagenes[7]
-          ].filter(Boolean)
-        }
-      }
-    },
-    {
-      id: 3,
-      number: "03",
-      title: "Cotizaciones y Pedidos",
-      content: {
-        textTitle: "Pedidos Personalizados",
-        text: "Creamos el postre perfecto para tu evento especial. Trabajamos contigo para diseñar postres únicos que superen tus expectativas y hagan de tu celebración un momento inolvidable.",
-        highlights: [
-          "Diseños personalizados",
-          "Cotización sin compromiso",
-          "Entrega puntual garantizada",
-          "Asesoría personalizada"
-        ],
-        images: [
-          imagenes[5],
-          imagenes[6],
-          imagenes[7],
-        ].filter(Boolean),
-        stats: [
-          { number: "500+", label: "Eventos" },
-          { number: "100%", label: "Satisfacción" },
-          { number: "24h", label: "Respuesta" }
-        ],
-        buttonText: "Solicitar cotización",
-        modalContent: {
-          title: "Cotizaciones Personalizadas",
-          subtitle: "Tu evento merece el mejor postre",
-          description: "Nuestro equipo de expertos está listo para ayudarte a crear el postre perfecto para cualquier ocasión: bodas, cumpleaños, eventos corporativos, baby showers y mucho más.",
-          services: [
-            {
-              icon: "🎂",
-              title: "Tortas de Ocasión",
-              text: "Diseños únicos para celebraciones"
-            },
-            {
-              icon: "🧁",
-              title: "Mesas de Postres",
-              text: "Variedad para tus invitados"
-            },
-            {
-              icon: "🍪",
-              title: "Catering",
-              text: "Servicio completo para eventos"
-            }
-          ],
-          process: [
-            "Cuéntanos sobre tu evento",
-            "Diseñamos una propuesta personalizada",
-            "Aprobamos detalles y confirmamos",
-            "Entregamos en la fecha acordada"
-          ],
-          gallery: [
-            imagenes[5],
-            imagenes[6],
-            imagenes[7],
-            imagenes[8]
-          ].filter(Boolean)
-        }
-      }
-    }
-  ];
-
   if (loading) {
     return (
       <div className="conocenos-container">
+        <div className="hero-header">
+          <h1 className="hero-title">Conócenos</h1>
+          <p className="hero-subtitle">
+            Descubre nuestra historia de amor por la repostería y cómo cada postre lleva un pedacito de nuestro corazón
+          </p>
+        </div>
         <div className="page-content">
-          <h1 className="page-title">¡Conócenos somos Delicias Darsy!</h1>
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🍰</div>
-            Cargando contenido delicioso...
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#ec4899' }}>
+            <div style={{ 
+              display: 'inline-block', 
+              width: '40px', 
+              height: '40px', 
+              border: '4px solid #fbcfe8',
+              borderTop: '4px solid #ec4899',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <p style={{ marginTop: '1rem' }}>Cargando contenido...</p>
           </div>
         </div>
       </div>
@@ -235,296 +60,228 @@ const Conocenos = () => {
 
   return (
     <div className="conocenos-container">
-      <div className={`page-content ${isVisible ? 'fade-in' : ''}`}>
-        <h1 className="page-title">¡Conócenos somos Delicias Darsy!</h1>
-        <p className="page-subtitle">
-          Descubre nuestra historia, visita nuestras sedes y conoce cómo podemos hacer realidad el postre de tus sueños
-        </p>
-        
-        <div className="timeline-carousel-wrapper">
-          <div className="timeline-carousel-container">
-            <div 
-              className="timeline-carousel"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {slides.map((slide) => (
-                <div key={slide.id} className="timeline-slide">
-                  <div className="timeline-card">
-                    <div className="card-header">
-                      <div className="card-number">{slide.number}</div>
-                      <h2 className="card-title">{slide.title}</h2>
-                    </div>
-                    
-                    <div className="card-content">
-                      <div className="card-left">
-                        {slide.content.logo && (
-                          <div className="logo-section">
-                            <div className="logo-circle">
-                              <img 
-                                src={slide.content.logo} 
-                                alt="Logo Delicias Darsy" 
-                                className="logo-image"
-                                onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/110x110?text=Logo';
-                                }}
-                              />
-                            </div>
-                            {slide.content.socialHandle && (
-                              <div className="contact-info">
-                                <p className="social-handle">{slide.content.socialHandle}</p>
-                                <p className="phone-number">{slide.content.phone}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        <div className="text-section">
-                          <h3>{slide.content.textTitle}</h3>
-                          <p>{slide.content.text}</p>
-                          {slide.content.highlights && (
-                            <ul>
-                              {slide.content.highlights.map((highlight, i) => (
-                                <li key={i}>{highlight}</li>
-                              ))}
-                            </ul>
-                          )}
-                          <button 
-                            className="pink-button"
-                            onClick={() => abrirModal(
-                              <ModalContentComponent content={slide.content.modalContent} />
-                            )}
-                          >
-                            {slide.content.buttonText}
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="card-right">
-                        {slide.content.images && slide.content.images.length > 0 && (
-                          <div className="image-gallery">
-                            {slide.content.images.slice(0, 3).map((img, i) => (
-                              <div 
-                                key={i} 
-                                className={`gallery-item ${i === 0 ? 'featured' : ''}`}
-                              >
-                                <img 
-                                  src={img || `https://via.placeholder.com/300x200?text=Imagen+${i + 1}`} 
-                                  alt={`${slide.title} ${i + 1}`} 
-                                  className="gallery-image"
-                                  onError={(e) => {
-                                    e.target.src = `https://via.placeholder.com/300x200?text=Imagen+${i + 1}`;
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {slide.content.stats && (
-                          <div className="stats-section">
-                            {slide.content.stats.map((stat, i) => (
-                              <div key={i} className="stat-item">
-                                <span className="stat-number">{stat.number}</span>
-                                <span className="stat-label">{stat.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="carousel-controls">
-            <button 
-              className="carousel-button" 
-              onClick={prevSlide}
-              disabled={currentSlide === 0}
-              aria-label="Anterior"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-            
-            <div className="carousel-dots">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  className={`carousel-dot ${currentSlide === index ? 'active' : ''}`}
-                  onClick={() => goToSlide(index)}
-                  aria-label={`Ir a slide ${index + 1}`}
-                />
-              ))}
-            </div>
-            
-            <button 
-              className="carousel-button" 
-              onClick={nextSlide}
-              disabled={currentSlide === slides.length - 1}
-              aria-label="Siguiente"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-          </div>
+      {/* Hero Header */}
+      <div className="hero-header">
+      <div className="floating-decorations">
+          <img src={cup2} alt="" className="float-cupcake float-1" />
+          <img src={cup2} alt="" className="float-cupcake float-2" />
+          <img src={cup2} alt="" className="float-cupcake float-3" />
+          <img src={cup2} alt="" className="float-cupcake float-4" />
+          <img src={cup2} alt="" className="float-cupcake float-5" />
+          <img src={cup2} alt="" className="float-cupcake float-6" />
+          <img src={cup2} alt="" className="float-cupcake float-7" />
+          <img src={cup2} alt="" className="float-cupcake float-8" />
         </div>
+        <h1 className="hero-title">Conócenos</h1>
+        <p className="hero-subtitle">
+          Descubre nuestra historia de amor por la repostería y cómo cada postre lleva un pedacito de nuestro corazón
+        </p>
       </div>
 
-      {modalAbierto && (
-        <Modal onClose={cerrarModal}>
-          {modalContenido}
-        </Modal>
-      )}
-    </div>
-  );
-};
-
-// Componente para el contenido del modal
-const ModalContentComponent = ({ content }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  if (!content) return null;
-
-  const gallery = content.gallery || [];
-  const hasGallery = gallery.length > 0;
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % gallery.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
-  };
-
-  return (
-    <div>
-      <h2>{content.title}</h2>
-      {content.subtitle && (
-        <p className="modal-subtitle">{content.subtitle}</p>
-      )}
-      
-      <p style={{ marginBottom: '1.25rem' }}>
-        {content.description}
-      </p>
-
-      {hasGallery && (
-        <div className="modal-carousel">
-          <img 
-            src={gallery[currentImageIndex] || 'https://via.placeholder.com/600x240'}
-            alt={`Galería ${currentImageIndex + 1}`}
-            className="modal-carousel-image"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/600x240?text=Imagen';
-            }}
-          />
-          {gallery.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                className="modal-carousel-button prev"
-                aria-label="Imagen anterior"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-              </button>
-              <button
-                onClick={nextImage}
-                className="modal-carousel-button next"
-                aria-label="Siguiente imagen"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-              <div className="modal-carousel-dots">
-                {gallery.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`modal-carousel-dot ${currentImageIndex === index ? 'active' : ''}`}
-                    aria-label={`Ir a imagen ${index + 1}`}
+     <div className={`page-content ${isVisible ? 'fade-in' : ''}`}>
+  <div className="section-header">
+    <h2
+      style={{
+        fontSize: "2.5rem",
+        fontWeight: "700",
+        textAlign: "center",
+        color: "#2C3E50",
+        position: "relative",
+        display: "inline-block",
+        marginBottom: "1rem",
+      }}
+    >
+      Nuestra Historia
+      <span
+        style={{
+          display: "block",
+          width: "80px",
+          height: "4px",
+          background: "linear-gradient(90deg, #FF1493, #FFCC00)",
+          borderRadius: "2px",
+          margin: "0.5rem auto 0 auto",
+        }}
+      ></span>
+    </h2>
+          <div className="title-underline"></div>
+          <p className="section-subtitle">Una historia de pasión, dedicación y mucho amor por crear momentos dulces</p>
+        </div>
+        
+        <div className="zigzag-timeline">
+          <div className="center-line"></div>
+          
+          {/* 2020 - Nuestros Inicios */}
+          <div className="timeline-row">
+            <div className="timeline-left">
+              <div className="timeline-year">2020</div>
+              <h3 className="timeline-title">Nuestros Inicios</h3>
+              <div className="timeline-card">
+                <div className="card-image-container">
+                  <img 
+                    src={imagenes[3] || 'https://via.placeholder.com/270x180?text=Inicios'} 
+                    alt="Nuestros Inicios" 
+                    className="card-image"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/270x180?text=Inicios';
+                    }}
                   />
-                ))}
+                </div>
+                <p className="card-text">
+                  Hace cuatro años, en el 2020, todo empezó con ventas por pedido. Cada postre era preparado con amor desde casa, llevando dulzura directamente a nuestros primeros clientes.
+                </p>
               </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {content.features && (
-        <div className="modal-features">
-          {content.features.map((feature, index) => (
-            <div key={index} className="modal-feature-item">
-              <div className="modal-feature-icon">{feature.icon}</div>
-              <div className="modal-feature-title">{feature.title}</div>
-              <div className="modal-feature-text">{feature.text}</div>
             </div>
-          ))}
+
+            <div className="timeline-center">
+              <div className="timeline-marker">
+                <svg className="marker-icon" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="timeline-right">
+              <div className="side-card">
+                <div className="side-icon-wrapper">
+                  <svg className="side-icon" viewBox="0 0 24 24" fill="#ec4899">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </div>
+                <h4 className="side-title">Desde Casa</h4>
+                <p className="side-text">Cada postre hecho con dedicación y cariño familiar</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Feb 2023 - Primer Carrito */}
+          <div className="timeline-row">
+            <div className="timeline-left">
+              <div className="side-card">
+                <div className="side-icon-wrapper">
+                  <svg className="side-icon" viewBox="0 0 24 24" fill="#ec4899">
+                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                  </svg>
+                </div>
+                <h4 className="side-title">Primera Expansión</h4>
+                <p className="side-text">El primer paso hacia nuestro sueño de llegar a más personas</p>
+              </div>
+            </div>
+
+            <div className="timeline-center">
+              <div className="timeline-marker">
+                <svg className="marker-icon" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="timeline-right">
+              <div className="timeline-year">Feb 2023</div>
+              <h3 className="timeline-title">Primer Carrito - San Pablo</h3>
+              <div className="timeline-card">
+                <div className="card-image-container">
+                  <img 
+                    src={imagenes[4] || 'https://via.placeholder.com/270x180?text=San+Pablo'} 
+                    alt="Carrito San Pablo" 
+                    className="card-image"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/270x180?text=San+Pablo';
+                    }}
+                  />
+                </div>
+                <p className="card-text">
+                  El año pasado en febrero dimos el gran paso: colocamos nuestro primer carrito en San Pablo. Fue emocionante ver cómo la gente se acercaba a probar nuestros postres.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Jun 2023 - Segundo Carrito */}
+          <div className="timeline-row">
+            <div className="timeline-left">
+              <div className="timeline-year">Jun 2023</div>
+              <h3 className="timeline-title">Segundo Carrito - San Benito</h3>
+              <div className="timeline-card">
+                <div className="card-image-container">
+                  <img 
+                    src="https://res.cloudinary.com/dagnilue0/image/upload/v1759362122/sedes/ndt1wkrxwe083ft7qadb.jpg"
+                    alt="Carrito San Benito" 
+                    className="card-image"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/270x180?text=San+Benito';
+                    }}
+                  />
+                </div>
+                <p className="card-text">
+                  En junio del año pasado expandimos con nuestro segundo carrito en San Benito. Cada nueva ubicación nos permitía compartir nuestro amor por los postres con más familias.
+                </p>
+              </div>
+            </div>
+
+            <div className="timeline-center">
+              <div className="timeline-marker">
+                <svg className="marker-icon" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="timeline-right">
+              <div className="side-card">
+                <div className="side-icon-wrapper">
+                  <svg className="side-icon" viewBox="0 0 24 24" fill="#ec4899">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </div>
+                <h4 className="side-title">Crecimiento Continuo</h4>
+                <p className="side-text">Expandiendo la alegría a nuevos rincones de la ciudad</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 2024 - Presente */}
+          <div className="timeline-row">
+            <div className="timeline-left">
+              <div className="side-card">
+                <div className="side-icon-wrapper">
+                  <svg className="side-icon" viewBox="0 0 24 24" fill="#ec4899">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <h4 className="side-title">Nuestro Presente</h4>
+                <p className="side-text">Construyendo una comunidad dulce día a día</p>
+              </div>
+            </div>
+
+            <div className="timeline-center">
+              <div className="timeline-marker">
+                <svg className="marker-icon" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="timeline-right">
+              <div className="timeline-year">2024</div>
+              <h3 className="timeline-title">Dulces Momentos</h3>
+              <div className="timeline-card">
+                <div className="card-image-container">
+                  <img 
+                    src={imagenes[5] || 'https://via.placeholder.com/270x180?text=Presente'} 
+                    alt="Delicias Darsy Hoy" 
+                    className="card-image"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/270x180?text=Presente';
+                    }}
+                  />
+                </div>
+                <p className="card-text">
+                  Hoy seguimos creciendo y creando momentos especiales a través de nuestros postres. Cada cliente es parte de nuestra gran familia dulce. ¡Gracias por acompañarnos en este camino!
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-
-      {content.services && (
-        <>
-          <h3>Nuestros Servicios</h3>
-          <div className="modal-services">
-            {content.services.map((service, index) => (
-              <div key={index} className="modal-service-item">
-                <div className="modal-service-icon">{service.icon}</div>
-                <div>
-                  <div className="modal-service-title">{service.title}</div>
-                  <div className="modal-service-text">{service.text}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {content.locations && (
-        <>
-          <h3>Nuestras Ubicaciones</h3>
-          <div className="modal-locations">
-            {content.locations.map((location, index) => (
-              <div key={index} className="modal-location-item">
-                <div className="modal-location-title">📍 {location.name}</div>
-                <div className="modal-location-info">
-                  <strong>Dirección:</strong> {location.address}
-                </div>
-                <div className="modal-location-info">
-                  <strong>Horario:</strong> {location.hours}
-                </div>
-                <div className="modal-location-info">
-                  <strong>Teléfono:</strong> {location.phone}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {content.process && (
-        <>
-          <h3>¿Cómo Funciona?</h3>
-          <div className="modal-process">
-            {content.process.map((step, index) => (
-              <div key={index} className="modal-process-step">
-                <div className="modal-process-number">{index + 1}</div>
-                <p className="modal-process-text">{step}</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      <div className="modal-cta">
-        <p className="modal-cta-title">¿Listo para endulzar tu vida? 🍰</p>
-        <p className="modal-cta-text">Contáctanos: 321 309 65 04</p>
       </div>
     </div>
   );

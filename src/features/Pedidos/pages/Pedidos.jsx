@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { CartContext } from "../../Cartas/pages/CartContext";
+import { useLocation } from 'react-router-dom';
 import './Pedidos.css';
 import authService from '../../Admin/services/authService';
-
-// Importar servicios
 import ventaApiService from '../../Admin/services/venta_services';
 
 // Importar componentes
 import ProductosView from '../components/ProductosView';
-import ToppingsView from '../components/ToppingsView';
-import AdicionesView from '../components/AdicionesView';
-import SalsasView from '../components/SalsasView';
 import OpcionesEntregaView from '../components/OpcionesEntregaView';
 import ConfirmacionView from '../components/ConfirmacionView';
 import OpcionesPagoView from '../components/OpcionesPagoView';
 import HistorialView from '../components/HistorialView';
 
 const Pedidos = () => {
+  const location = useLocation();
   const [vistaActual, setVistaActual] = useState('productos');
   
   const [pedidoActual, setPedidoActual] = useState({
@@ -32,9 +29,7 @@ const Pedidos = () => {
   });
 
   const [tabActivo, setTabActivo] = useState('nuevo');
-  const [toppingsSeleccionados, setToppingsSeleccionados] = useState([]);
-  const [adicionesSeleccionadas, setAdicionesSeleccionadas] = useState([]);
-  const [salsasSeleccionadas, setSalsasSeleccionadas] = useState([]);
+  const [personalizacionesGuardadas, setPersonalizacionesGuardadas] = useState(null);
 
   const { 
     productosSeleccionados: productosDelContexto,
@@ -70,11 +65,28 @@ const Pedidos = () => {
         pago: null
       }
     });
-    setToppingsSeleccionados([]);
-    setAdicionesSeleccionadas([]);
-    setSalsasSeleccionadas([]);
     limpiarProductosSeleccionados();
   };
+
+  useEffect(() => {
+    // 🎯 Detectar si viene desde personalización
+    if (location.state?.vista === 'entrega') {
+      console.log('📍 Llegando desde personalización, cambiando a vista de entrega');
+      setVistaActual('entrega');
+    }
+
+    // Recuperar personalizaciones guardadas
+    const personalizacionesStorage = localStorage.getItem('personalizacionesPedido');
+    if (personalizacionesStorage) {
+      try {
+        const personalizaciones = JSON.parse(personalizacionesStorage);
+        setPersonalizacionesGuardadas(personalizaciones);
+        console.log('✅ Personalizaciones recuperadas:', personalizaciones);
+      } catch (error) {
+        console.error('Error al recuperar personalizaciones:', error);
+      }
+    }
+  }, [location]);
 
   useEffect(() => {
     if (productosDelContexto && productosDelContexto.length > 0) {
@@ -125,68 +137,35 @@ const Pedidos = () => {
   };
 
   const siguienteDesdeProductos = () => {
+    // Validar que haya productos
+    const productos = productosDelContexto || [];
+    if (productos.length === 0) {
+      alert('⚠️ Debes agregar al menos un producto al carrito');
+      return;
+    }
+
+    // Calcular cantidad total
+    const cantidadTotal = productos.reduce((sum, p) => sum + (p.cantidad || 1), 0);
+    
+    if (cantidadTotal < 10) {
+      alert(`⚠️ Necesitas al menos 10 productos. Tienes ${cantidadTotal}`);
+      return;
+    }
+
+    // Guardar productos en el pedido actual
     setPedidoActual(prev => ({
       ...prev,
-      productos: productosDelContexto || []
+      productos: productos
     }));
-    setVistaActual('toppings');
-  };
 
-  const toggleTopping = (topping) => {
-    setToppingsSeleccionados(prev => {
-      const existe = prev.find(item => item.id === topping.id);
-      if (existe) {
-        return prev.filter(item => item.id !== topping.id);
-      } else {
-        return [...prev, topping];
-      }
-    });
-  };
-
-  const toggleAdicion = (adicion) => {
-    setAdicionesSeleccionadas(prev => {
-      const existe = prev.find(item => item.id === adicion.id);
-      if (existe) {
-        return prev.filter(item => item.id !== adicion.id);
-      } else {
-        return [...prev, adicion];
-      }
-    });
-  };
-
-  const toggleSalsa = (salsa) => {
-    setSalsasSeleccionadas(prev => {
-      const existe = prev.find(item => item.id === salsa.id);
-      if (existe) {
-        return prev.filter(item => item.id !== salsa.id);
-      } else {
-        return [...prev, salsa];
-      }
-    });
-  };
-
-  const continuarDesdeToppings = () => {
-    setPedidoActual(prev => ({
-      ...prev,
-      toppings: toppingsSeleccionados
-    }));
-    setVistaActual('adiciones');
-  };
-
-  const continuarDesdeAdiciones = () => {
-    setPedidoActual(prev => ({
-      ...prev,
-      adiciones: adicionesSeleccionadas
-    }));
-    setVistaActual('salsas');
-  };
-
-  const continuarDesdeSalsas = () => {
-    setPedidoActual(prev => ({
-      ...prev,
-      salsas: salsasSeleccionadas
-    }));
-    setVistaActual('entrega');
+    // 🎯 IR DIRECTAMENTE A PERSONALIZACIÓN
+    console.log('✅ Productos validados, yendo a personalización...');
+    
+    // Guardar en localStorage para personalización
+    localStorage.setItem('carritoParaPersonalizar', JSON.stringify(productos));
+    
+    // Navegar a personalización
+    window.location.href = '/pedidos/PersonalizacionProductos';
   };
 
   const calcularTotal = () => {
@@ -223,89 +202,104 @@ const Pedidos = () => {
     setVistaActual('pago');
   };
 
- const prepararDatosVenta = async (datosPago) => {
-  const productos = pedidoActual.productos.length > 0 
-    ? pedidoActual.productos 
-    : (productosDelContexto || []);
+  const prepararDatosVenta = async (datosPago) => {
+    const productos = pedidoActual.productos.length > 0 
+      ? pedidoActual.productos 
+      : (productosDelContexto || []);
 
-  console.log('📦 Productos a enviar:', productos);
+    console.log('📦 Productos a enviar:', productos);
 
-  // 🔑 OBTENER CLIENTE AUTENTICADO
-  let clienteId = null;
-  let nombreCliente = 'Cliente Pedido Online';
-  
-  try {
-    const clienteAutenticado = await authService.obtenerDatosClienteLogueado();
-    if (clienteAutenticado && clienteAutenticado.idcliente) {
-      clienteId = clienteAutenticado.idcliente;
-      nombreCliente = `${clienteAutenticado.nombre} ${clienteAutenticado.apellido}`;
-      console.log('✅ Cliente autenticado:', nombreCliente, 'ID:', clienteId);
-    }
-  } catch (error) {
-    console.warn('⚠️ No se pudo obtener cliente autenticado, usando genérico:', error);
-  }
-
-  // Preparar productos con sus extras
-  const productosConExtras = productos.map(producto => {
-    const precioBase = producto.precio * (producto.cantidad || 1);
+    // 🔒 OBTENER CLIENTE AUTENTICADO
+    let clienteId = null;
+    let nombreCliente = 'Cliente Pedido Online';
     
-    // Calcular precio de extras
-    let precioExtras = 0;
-    if (pedidoActual.toppings?.length > 0) {
-      precioExtras += pedidoActual.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
-    }
-    if (pedidoActual.adiciones?.length > 0) {
-      precioExtras += pedidoActual.adiciones.reduce((sum, a) => sum + (a.precio || 0), 0);
-    }
-    if (pedidoActual.salsas?.length > 0) {
-      precioExtras += pedidoActual.salsas.reduce((sum, s) => sum + (s.precio || 0), 0);
+    try {
+      const clienteAutenticado = await authService.obtenerDatosClienteLogueado();
+      if (clienteAutenticado && clienteAutenticado.idcliente) {
+        clienteId = clienteAutenticado.idcliente;
+        nombreCliente = `${clienteAutenticado.nombre} ${clienteAutenticado.apellido}`;
+        console.log('✅ Cliente autenticado:', nombreCliente, 'ID:', clienteId);
+      }
+    } catch (error) {
+      console.warn('⚠️ No se pudo obtener cliente autenticado, usando genérico:', error);
     }
 
-    const subtotal = precioBase + precioExtras;
-    const iva = subtotal * 0.19;
+    const productosConExtras = productos.map(producto => {
+      const precioBase = producto.precio * (producto.cantidad || 1);
+      
+      // 🆕 OBTENER PERSONALIZACIÓN ESPECÍFICA DEL PRODUCTO
+      let precioExtras = 0;
+      let personalizacion = null;
+      
+      if (personalizacionesGuardadas && personalizacionesGuardadas[producto.id]) {
+        personalizacion = personalizacionesGuardadas[producto.id];
+        
+        // Calcular precio de personalizaciones específicas
+        if (personalizacion.toppings?.length > 0) {
+          precioExtras += personalizacion.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
+        }
+        if (personalizacion.salsas?.length > 0) {
+          precioExtras += personalizacion.salsas.reduce((sum, s) => sum + (s.precio || 0), 0);
+        }
+        if (personalizacion.adiciones?.length > 0) {
+          precioExtras += personalizacion.adiciones.reduce((sum, a) => sum + (a.precio || 0), 0);
+        }
+      }
+
+      const subtotal = precioBase + precioExtras;
+      const iva = subtotal * 0.19;
+
+      return {
+        fechaventa: new Date().toISOString(),
+        cliente: clienteId,
+        idproductogeneral: producto.id,
+        cantidad: producto.cantidad || 1,
+        preciounitario: producto.precio,
+        subtotal: subtotal,
+        iva: iva,
+        // 🆕 Incluir personalización
+        personalizacion: personalizacion ? {
+          toppings: personalizacion.toppings || [],
+          salsas: personalizacion.salsas || [],
+          adiciones: personalizacion.adiciones || [],
+          comentarios: personalizacion.comentarios || ''
+        } : null
+      };
+    });
+
+    const totalFinal = calcularTotal();
+    const ivaTotal = totalFinal * 0.19;
+
+    // Obtener nombre de sede correcto
+    const sedeNombre = datosPago.sedeNombre || 
+                       pedidoActual.opciones.entrega?.ubicacionData?.nombre || 
+                       'San Benito';
+
+    console.log('🏪 Sede seleccionada:', sedeNombre);
+    console.log('👤 Cliente ID:', clienteId);
+    console.log('📝 Nombre cliente:', nombreCliente);
 
     return {
-      idproductogeneral: producto.id,
-      cantidad: producto.cantidad || 1,
-      preciounitario: producto.precio,
-      subtotal: subtotal,
-      iva: iva
+      fechaventa: new Date().toISOString(),
+      cliente: clienteId,
+      clienteId: clienteId,
+      clienteNombre: nombreCliente,
+      sede: sedeNombre,
+      sedeNombre: sedeNombre,
+      metodopago: datosPago.metodo || pedidoActual.opciones.pago,
+      tipoventa: 'pedido',
+      total: totalFinal + ivaTotal,
+      detalleventa: productosConExtras,
+      datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
+      comentarios: pedidoActual.comentarios,
+      personalizacionesProductos: personalizacionesGuardadas,
+      extras: {
+        toppings: pedidoActual.toppings,
+        adiciones: pedidoActual.adiciones,
+        salsas: pedidoActual.salsas
+      }
     };
-  });
-
-  const totalFinal = calcularTotal();
-  const ivaTotal = totalFinal * 0.19;
-
-  // Obtener nombre de sede correcto
-  const sedeNombre = datosPago.sedeNombre || 
-                     pedidoActual.opciones.entrega?.ubicacionData?.nombre || 
-                     'San Benito';
-
-  console.log('🏪 Sede seleccionada:', sedeNombre);
-  console.log('👤 Cliente ID:', clienteId);
-  console.log('📝 Nombre cliente:', nombreCliente);
-
-  return {
-    fechaventa: new Date().toISOString(),
-    cliente: clienteId, // ✅ Enviar ID del cliente autenticado
-    clienteId: clienteId, // ✅ También en clienteId para compatibilidad
-    clienteNombre: nombreCliente,
-    sede: sedeNombre,
-    sedeNombre: sedeNombre,
-    metodopago: datosPago.metodo || pedidoActual.opciones.pago,
-    tipoventa: 'pedido',
-    total: totalFinal + ivaTotal,
-    detalleventa: productosConExtras,
-    // Información adicional del pedido
-    datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
-    comentarios: pedidoActual.comentarios,
-    extras: {
-      toppings: pedidoActual.toppings,
-      adiciones: pedidoActual.adiciones,
-      salsas: pedidoActual.salsas
-    }
   };
-};
 
   const renderizarVista = () => {
     switch(vistaActual) {
@@ -319,43 +313,13 @@ const Pedidos = () => {
             onActualizarCantidad={actualizarCantidadProducto}
           />
         );
-
-      case 'toppings':
-        return (
-          <ToppingsView 
-            selectedItems={toppingsSeleccionados}
-            onItemToggle={toggleTopping}
-            onContinue={continuarDesdeToppings}
-            onBack={() => setVistaActual('productos')}
-          />
-        );
-
-      case 'adiciones':
-        return (
-          <AdicionesView 
-            selectedItems={adicionesSeleccionadas}
-            onItemToggle={toggleAdicion}
-            onContinue={continuarDesdeAdiciones}
-            onBack={() => setVistaActual('toppings')}
-          />
-        );
-
-      case 'salsas':
-        return (
-          <SalsasView 
-            selectedItems={salsasSeleccionadas}
-            onItemToggle={toggleSalsa}
-            onContinue={continuarDesdeSalsas}
-            onBack={() => setVistaActual('adiciones')}
-          />
-        );
       
       case 'entrega':
         return (
           <OpcionesEntregaView 
             pedido={pedidoActual}
             onSiguiente={() => cambiarVista('confirmacion')}
-            onAnterior={() => cambiarVista('salsas')}
+            onAnterior={() => cambiarVista('productos')}
             onOpcionSeleccionada={(opcion) => {
               setPedidoActual(prev => ({
                 ...prev,
@@ -437,24 +401,20 @@ const Pedidos = () => {
       {tabActivo === 'nuevo' && (
         <div className="progress-indicator">
           <div className="progress-steps">
-            <div className={`step ${vistaActual === 'productos' ? 'active' : ''} ${['toppings', 'adiciones', 'salsas', 'entrega', 'confirmacion', 'pago'].includes(vistaActual) ? 'completed' : ''}`}>
+            <div className={`step ${vistaActual === 'productos' ? 'active' : ''} ${['entrega', 'confirmacion', 'pago'].includes(vistaActual) ? 'completed' : ''}`}>
               <span className="step-number">1</span>
               <span className="step-label">Productos</span>
             </div>
-            <div className={`step ${['toppings', 'adiciones', 'salsas'].includes(vistaActual) ? 'active' : ''} ${['entrega', 'confirmacion', 'pago'].includes(vistaActual) ? 'completed' : ''}`}>
-              <span className="step-number">2</span>
-              <span className="step-label">Personalización</span>
-            </div>
             <div className={`step ${vistaActual === 'entrega' ? 'active' : ''} ${['confirmacion', 'pago'].includes(vistaActual) ? 'completed' : ''}`}>
-              <span className="step-number">3</span>
+              <span className="step-number">2</span>
               <span className="step-label">Entrega</span>
             </div>
             <div className={`step ${vistaActual === 'confirmacion' ? 'active' : ''} ${vistaActual === 'pago' ? 'completed' : ''}`}>
-              <span className="step-number">4</span>
+              <span className="step-number">3</span>
               <span className="step-label">Confirmar</span>
             </div>
             <div className={`step ${vistaActual === 'pago' ? 'active' : ''}`}>
-              <span className="step-number">5</span>
+              <span className="step-number">4</span>
               <span className="step-label">Pago</span>
             </div>
           </div>

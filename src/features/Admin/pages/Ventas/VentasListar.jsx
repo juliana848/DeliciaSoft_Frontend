@@ -4,6 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
 import AppNotification from '../../components/Notification';
+import Tooltip from '../../components/Tooltip';
 import { Tag } from 'primereact/tag';
 import SearchBar from '../../components/SearchBar';
 import ventaApiService from '../../services/venta_services';
@@ -171,41 +172,52 @@ export default function VentasListar({
 
         return (
             <div className="action-buttons-container">
-                <button
-                    className="admin-button gray"
-                    title="Ver Detalle"
-                    onClick={() => verDetalleVenta(rowData)}
-                >
-                    🔍
-                </button>
-                <button
-                    className="admin-button red"
-                    title="Anular"
-                    onClick={() => abrirModal('anular', rowData)}
-                    disabled={rowData.idEstadoVenta === estadoAnuladoId}
-                >
-                    🛑
-                </button>
-                <button
-                    className="admin-button blue"
-                    title="Descargar PDF"
-                    onClick={() => abrirPreviewPDF(rowData)}
-                    disabled={loadingPDF}
-                    style={{ 
-                        opacity: loadingPDF ? 0.6 : 1,
-                        cursor: loadingPDF ? 'wait' : 'pointer'
-                    }}
-                >
-                    {loadingPDF ? '⏳' : '⬇️'}
-                </button>
-               {rowData.tipoVenta === 'pedido' && isAnulable && (
+                <Tooltip text="Visualizar">
                     <button
-                        className="admin-button green"
-                        title="Abonos"
-                        onClick={() => setMostrarModalAbonos(rowData)}  
+                        className="admin-button gray"
+                        onClick={() => verDetalleVenta(rowData)}
                     >
-                        💰
+                        📋
                     </button>
+                </Tooltip>
+                
+                <Tooltip text={rowData.idEstadoVenta === estadoAnuladoId ? "Venta anulada" : "Anular"}>
+                    <button
+                        className="admin-button red"
+                        onClick={() => abrirModal('anular', rowData)}
+                        disabled={rowData.idEstadoVenta === estadoAnuladoId}
+                        style={{
+                            opacity: rowData.idEstadoVenta === estadoAnuladoId ? 0.5 : 1,
+                            cursor: rowData.idEstadoVenta === estadoAnuladoId ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        🛑
+                    </button>
+                </Tooltip>
+                
+                <Tooltip text={loadingPDF ? "Cargando..." : "Descargar PDF"}>
+                    <button
+                        className="admin-button blue"
+                        onClick={() => abrirPreviewPDF(rowData)}
+                        disabled={loadingPDF}
+                        style={{ 
+                            opacity: loadingPDF ? 0.6 : 1,
+                            cursor: loadingPDF ? 'wait' : 'pointer'
+                        }}
+                    >
+                        {loadingPDF ? '⏳' : '⬇️'}
+                    </button>
+                </Tooltip>
+                
+               {rowData.tipoVenta === 'pedido' && isAnulable && (
+                    <Tooltip text="Gestionar Abonos">
+                        <button
+                            className="admin-button green"
+                            onClick={() => setMostrarModalAbonos(rowData)}  
+                        >
+                            💰
+                        </button>
+                    </Tooltip>
                 )}
             </div>
         );

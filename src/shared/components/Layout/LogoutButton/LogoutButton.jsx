@@ -1,17 +1,32 @@
 // LogoutButton.jsx - Componente para cerrar sesión con diseño mejorado
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactDOM from 'react-dom';
 
-const LogoutButton = ({ className = "logout-btn", showText = false }) => {
+const LogoutButton = ({ className = "logout-btn", showText = false, isDropdown = false }) => {
   const navigate = useNavigate();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
-  const handleLogout = () => {
+  // Prevenir scroll cuando el modal está abierto
+  useEffect(() => {
+    if (showConfirmModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showConfirmModal]);
+  
+  const handleLogout = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShowConfirmModal(true);
   };
 
   const confirmLogout = () => {
-    // Mostrar alerta de despedida
     const userName = localStorage.getItem('userName') || 'Usuario';
     
     // Limpiar datos de autenticación
@@ -21,31 +36,26 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
     localStorage.removeItem('userName');
     localStorage.removeItem('userData');
     
-    // Cerrar modal
     setShowConfirmModal(false);
     
-    // Mostrar mensaje de despedida
     setTimeout(() => {
-      // Crear un toast personalizado en lugar de alert
       showCustomToast(`¡Hasta luego ${userName}!`, 'Has cerrado sesión exitosamente', 'success');
     }, 100);
     
-    // Redirigir al login
-    navigate('/iniciar-sesion');
+    navigate('/');
     
-    // Recargar para limpiar el estado
     setTimeout(() => {
       window.location.reload();
     }, 500);
   };
 
-  const cancelLogout = () => {
+  const cancelLogout = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShowConfirmModal(false);
   };
 
-  // Función para mostrar toast personalizado
   const showCustomToast = (title, message, type) => {
-    // Crear el elemento toast
     const toast = document.createElement('div');
     toast.style.cssText = `
       position: fixed;
@@ -76,7 +86,6 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
       </div>
     `;
 
-    // Agregar estilos de animación
     const style = document.createElement('style');
     style.textContent = `
       @keyframes slideInToast {
@@ -102,10 +111,8 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
     `;
     document.head.appendChild(style);
     
-    // Agregar al DOM
     document.body.appendChild(toast);
     
-    // Remover después de 4 segundos
     setTimeout(() => {
       toast.style.animation = 'slideOutToast 0.4s ease forwards';
       setTimeout(() => {
@@ -119,51 +126,70 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
     }, 4000);
   };
   
+  const buttonClass = isDropdown || className.includes('dropdown') ? 'logout-dropdown-btn' : className;
+  
+  // Componente Modal separado
+  const LogoutModal = () => (
+    <div 
+      className="logout-modal-overlay"
+      onClick={cancelLogout}
+    >
+      <div 
+        className="logout-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="logout-modal-content">
+          <div className="logout-modal-icon">
+            🌟
+          </div>
+          <h3>
+            ¿Estás seguro que deseas cerrar sesión?
+          </h3>
+          <p>
+            Tendrás que iniciar sesión nuevamente para acceder a tu perfil.
+          </p>
+          <div className="logout-modal-buttons">
+            <button
+              onClick={cancelLogout}
+              className="logout-cancel-btn"
+            >
+              <i className="bi bi-x-circle"></i>
+              <span>Cancelar</span>
+            </button>
+            <button
+              onClick={confirmLogout}
+              className="logout-confirm-btn"
+            >
+              <i className="bi bi-box-arrow-right"></i>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
   return (
     <>
+      {/* Bootstrap Icons */}
+      <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+        rel="stylesheet"
+      />
+      
       <button 
-        className={className} 
+        className={buttonClass} 
         onClick={handleLogout}
         title="Cerrar sesión"
       >
         <i className="bi bi-box-arrow-right"></i>
-        {showText && <span>Cerrar Sesión</span>}
+        {(showText || isDropdown || className.includes('dropdown')) && <span>Cerrar Sesión</span>}
       </button>
 
-      {/* Modal de Confirmación Mejorado */}
-      {showConfirmModal && (
-        <div className="logout-modal-overlay">
-          <div className="logout-modal">
-            <div className="logout-modal-content">
-              <div className="logout-modal-icon">
-                🌟
-              </div>
-              <h3>
-                ¿Estás seguro que deseas cerrar sesión?
-              </h3>
-              <p>
-                Tendrás que iniciar sesión nuevamente para acceder a tu perfil y realizar pedidos. 
-                Todos tus datos estarán seguros y te estaremos esperando.
-              </p>
-              <div className="logout-modal-buttons">
-                <button
-                  onClick={cancelLogout}
-                  className="logout-cancel-btn"
-                >
-                  <i className="bi bi-x-circle"></i>
-                  <span>Cancelar</span>
-                </button>
-                <button
-                  onClick={confirmLogout}
-                  className="logout-confirm-btn"
-                >
-                  <i className="bi bi-box-arrow-right"></i>
-                  <span>Cerrar Sesión</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Modal usando Portal */}
+      {showConfirmModal && ReactDOM.createPortal(
+        <LogoutModal />,
+        document.body
       )}
 
       <style>{`
@@ -187,50 +213,47 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
           overflow: hidden;
         }
 
-        /* Botón fijo en esquina superior derecha */
-        .logout-button-fixed {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 1001;
-          background: linear-gradient(135deg, #ff69b4, #ff1493);
-          border: none;
-          color: white;
-          cursor: pointer;
-          padding: 12px 20px;
-          border-radius: 25px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: all 0.15s ease; /* Transición más rápida */
-          box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
-          backdrop-filter: blur(10px);
-          width: auto;
-          height: 44px; /* Altura fija */
-          min-width: 150px; /* Ancho mínimo fijo para reservar espacio */
-        }
-
-        .logout-button-fixed:hover,
         .logout-btn:hover {
           background: linear-gradient(135deg, #ff1493, #dc143c);
           transform: translateY(-2px);
           box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
         }
 
-        .logout-button-fixed:active,
         .logout-btn:active {
           transform: translateY(0);
         }
 
-        .logout-button-fixed i {
-          font-size: 16px;
-        }
-
         .logout-btn i {
           font-size: 18px;
+        }
+
+        /* Botón en dropdown */
+        .logout-dropdown-btn {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          background: linear-gradient(135deg, #ff69b4, #ff1493);
+          border: none;
+          color: white;
+          font-size: 14px;
+          font-weight: 600;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
+        }
+
+        .logout-dropdown-btn:hover {
+          background: linear-gradient(135deg, #ff1493, #dc143c);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
+        }
+
+        .logout-dropdown-btn i {
+          font-size: 16px;
         }
 
         /* Modal de confirmación mejorado */
@@ -240,41 +263,28 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(255, 105, 180, 0.1));
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(255, 105, 180, 0.15));
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 10000;
-          backdrop-filter: blur(8px);
-          animation: fadeInBackdrop 0.4s ease forwards;
+          z-index: 999999;
+          backdrop-filter: blur(10px);
+          animation: fadeInBackdrop 0.3s ease forwards;
+          padding: 20px;
         }
 
         .logout-modal {
-          background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
+          background: white;
           border-radius: 24px;
           padding: 2.5rem;
           max-width: 450px;
-          width: 90%;
+          width: 100%;
           text-align: center;
-          box-shadow: 
-            0 20px 60px rgba(255, 105, 180, 0.3),
-            0 0 0 1px rgba(255, 105, 180, 0.1);
+          box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
           border: 2px solid #ff69b4;
           animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           position: relative;
-          overflow: hidden;
-        }
-
-        .logout-modal::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255, 105, 180, 0.05) 0%, transparent 70%);
-          animation: rotateGradient 20s linear infinite;
-          pointer-events: none;
+          z-index: 1000000;
         }
 
         .logout-modal-content {
@@ -283,15 +293,16 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
         }
 
         .logout-modal-icon {
-          font-size: 4rem;
-          margin-bottom: 1.5rem;
-          background: linear-gradient(135deg, #ff69b4, #ff1493);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: bounceIcon 2s ease-in-out infinite;
-          display: inline-block;
-        }
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #ff69b4, #ff1493);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: bounceIcon 2s ease-in-out infinite;
+        display: inline-block;
+      }
+
 
         .logout-modal h3 {
           color: #1f2937;
@@ -299,7 +310,6 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-weight: 700;
           font-size: 1.5rem;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .logout-modal p {
@@ -307,7 +317,6 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
           margin-bottom: 2rem;
           line-height: 1.6;
           font-size: 1rem;
-          opacity: 0.9;
         }
 
         .logout-modal-buttons {
@@ -364,17 +373,12 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
         .logout-confirm-btn:active,
         .logout-cancel-btn:active {
           transform: translateY(0) scale(0.98);
-          transition: transform 0.1s ease;
         }
 
         /* Animaciones */
         @keyframes fadeInBackdrop {
-          from { 
-            opacity: 0; 
-          }
-          to { 
-            opacity: 1; 
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         @keyframes slideUpModal {
@@ -389,40 +393,20 @@ const LogoutButton = ({ className = "logout-btn", showText = false }) => {
         }
 
         @keyframes bounceIcon {
-          0%, 100% { 
-            transform: translateY(0); 
-          }
-          50% { 
-            transform: translateY(-8px); 
-          }
-        }
-
-        @keyframes rotateGradient {
-          0% { 
-            transform: rotate(0deg); 
-          }
-          100% { 
-            transform: rotate(360deg); 
-          }
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-          .logout-button-fixed {
-            top: 10px;
-            right: 10px;
-            padding: 10px 16px;
-            font-size: 13px;
-          }
-
           .logout-modal {
             margin: 20px;
             padding: 2rem;
-            max-width: none;
           }
           
           .logout-modal-buttons {
             flex-direction: column;
+            width: 100%;
           }
           
           .logout-cancel-btn,

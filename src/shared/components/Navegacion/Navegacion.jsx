@@ -145,9 +145,9 @@ const Navegacion = ({ isAuthenticated = false }) => {
           <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
             INICIO
           </Link>
-          <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
+          {/* <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
             CARTAS
-          </Link>
+          </Link> */}
           <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
             PEDIDOS
           </Link>
@@ -234,9 +234,9 @@ const Navegacion = ({ isAuthenticated = false }) => {
         <Link to="/" className={`cliente-nav-link ${isActive('/') ? 'active' : ''}`}>
           INICIO
         </Link>
-        <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
+        {/* <Link to="/cartas" className={`cliente-nav-link ${isActive('/cartas') ? 'active' : ''}`}>
           CARTAS
-        </Link>
+        </Link> */}
         <Link to="/pedidos" className={`cliente-nav-link ${isActive('/pedidos') ? 'active' : ''}`}>
           PEDIDOS
         </Link>

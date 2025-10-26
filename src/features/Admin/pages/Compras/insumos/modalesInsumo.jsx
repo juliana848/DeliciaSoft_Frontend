@@ -40,23 +40,32 @@ export default function ModalInsumo({
   const [cargandoCatalogos, setCargandoCatalogos] = useState(false);
   const fileInputRef = useRef(null);
 
-  const opcionesCatalogos = [
-    { label: '🍰 Adiciones/Toppings', value: 'adicion' },
-    { label: '🎨 Sabores', value: 'sabor' },
-    { label: '🥧 Rellenos', value: 'relleno' }
+const opcionesCatalogos = [
+  { label: '🍬 Adiciones', value: 'adicion' },
+  { label: '🍫 Toppings', value: 'topping' },
+  { label: '🌶️ Salsas', value: 'salsa' },
+  { label: '🎨 Sabores', value: 'sabor' },
+  { label: '🥧 Rellenos', value: 'relleno' }
+];
+const esCategoriaEspecial = (categoriaId) => {
+  if (!categoriaId || categorias.length === 0) return false;
+  
+  const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
+  if (!categoria) return false;
+  
+  
+  const especiales = [
+    'toppings', 'topping', 
+    'adiciones', 'adicion',
+    'salsas', 'salsa',     
+    'sabores', 'sabor', 
+    'rellenos', 'relleno'
   ];
-
-  const esCategoriaEspecial = (categoriaId) => {
-    if (!categoriaId || categorias.length === 0) return false;
-    
-    const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
-    if (!categoria) return false;
-    
-    const especiales = ['toppings', 'topping', 'adiciones', 'adicion', 'sabores', 'sabor', 'rellenos', 'relleno'];
-    return especiales.some(especial => 
-      categoria.nombreCategoria?.toLowerCase().includes(especial)
-    );
-  };
+  
+  return especiales.some(especial => 
+    categoria.nombreCategoria?.toLowerCase().includes(especial)
+  );
+};
 
   // FUNCIÓN PARA CARGAR LA IMAGEN DESDE LA API
   const cargarImagenDesdeAPI = async (idImagen) => {
@@ -80,7 +89,7 @@ export default function ModalInsumo({
     
     try {
       // Intentar cargar de cada tipo de catálogo
-      const tipos = ['adicion', 'sabor', 'relleno'];
+      const tipos = ['adicion', 'topping', 'salsa', 'sabor', 'relleno'];
       
       for (const tipo of tipos) {
         try {
@@ -92,7 +101,7 @@ export default function ModalInsumo({
           catalogosDelInsumo.forEach(cat => {
             catalogos.push({
               tipo: tipo,
-              id: cat.idcatalogoadiciones || cat.idcatalogosabor || cat.idcatalogorrelleno,
+              id: cat.idadiciones || cat.idtopping || cat.idsalsa || cat.idcatalogosabor || cat.idcatalogorrelleno,
               nombre: cat.nombre,
               precio: cat.precioadicion,
               estado: cat.estado
@@ -558,10 +567,12 @@ export default function ModalInsumo({
                       }}
                     >
                       <span style={{ fontSize: "20px" }}>
-                        {cat.tipo === 'adicion' && '🍰'}
-                        {cat.tipo === 'sabor' && '🎨'}
-                        {cat.tipo === 'relleno' && '🥧'}
-                      </span>
+                      {cat.tipo === 'adicion' && '🍬'}
+                      {cat.tipo === 'topping' && '🍫'}
+                      {cat.tipo === 'salsa' && '🌶️'}
+                      {cat.tipo === 'sabor' && '🎨'}
+                      {cat.tipo === 'relleno' && '🥧'}
+                    </span>
                       <div>
                         <strong>{cat.nombre}</strong>
                         <div style={{ fontSize: "12px", color: "#666" }}>

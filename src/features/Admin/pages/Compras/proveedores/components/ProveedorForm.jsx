@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
 import { useProveedorForm } from '../hooks/useProveedorForm';
-import './modalstyle.css'
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+import './modalstyle.css';
+
+const libraries = ['places'];
 
 const ProveedorForm = ({ tipo, proveedor, proveedores, onSave, onCancel, loading }) => {
   const {
@@ -11,6 +14,32 @@ const ProveedorForm = ({ tipo, proveedor, proveedores, onSave, onCancel, loading
     handleFieldBlur,
     validarCampos
   } = useProveedorForm({ tipo, proveedor, proveedores });
+
+// 🚀 Carga de Google Places API (Vite usa import.meta.env)
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+const { isLoaded } = useJsApiLoader({
+  googleMapsApiKey: apiKey,
+  libraries,
+});
+
+
+  const autocompleteRef = useRef(null);
+
+  const onLoad = (auto) => {
+    autocompleteRef.current = auto;
+  };
+const onPlaceChanged = () => {
+  if (autocompleteRef.current) {
+    const place = autocompleteRef.current.getPlace();
+    if (place && place.formatted_address) {
+      // 🧠 Corta la dirección a 30 caracteres para cumplir con tu BD
+      const direccionCorta = place.formatted_address.slice(0, 30);
+      handleFieldChange('direccion', direccionCorta);
+    }
+  }
+};
+
 
   const handleSubmit = () => {
     if (!validarCampos()) return;
@@ -158,17 +187,31 @@ const ProveedorForm = ({ tipo, proveedor, proveedores, onSave, onCancel, loading
             {errors.correo && <span className="error-message">{errors.correo}</span>}
           </label>
 
-          {/* Dirección */}
+          {/* Dirección con Autocomplete */}
           <label>Dirección*
-            <input
-              type="text"
-              value={formData.direccion}
-              onChange={(e) => handleFieldChange('direccion', e.target.value)}
-              onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
-              className={`modal-input ${errors.direccion ? 'error' : ''}`}
-              placeholder="Dirección completa"
-              disabled={loading}
-            />
+            {isLoaded ? (
+              <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+                <input
+                  type="text"
+                  value={formData.direccion}
+                  onChange={(e) => handleFieldChange('direccion', e.target.value)}
+                  onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
+                  className={`modal-input ${errors.direccion ? 'error' : ''}`}
+                  placeholder="Busca una dirección válida..."
+                  disabled={loading}
+                />
+              </Autocomplete>
+            ) : (
+              <input
+                type="text"
+                value={formData.direccion}
+                onChange={(e) => handleFieldChange('direccion', e.target.value)}
+                onBlur={(e) => handleFieldBlur('direccion', e.target.value)}
+                className={`modal-input ${errors.direccion ? 'error' : ''}`}
+                placeholder="Dirección completa"
+                disabled={loading}
+              />
+            )}
             {errors.direccion && <span className="error-message">{errors.direccion}</span>}
           </label>
 

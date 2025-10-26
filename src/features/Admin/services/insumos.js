@@ -2,9 +2,12 @@ const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/insumos";
 const CATEGORIAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/categoria-insumos";
 const UNIDADES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/unidadmedida";
 
-const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones";
-const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno";
-const CATALOGO_SABORES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor";
+// ✅ 5 CATÁLOGOS: Adiciones, Toppings, Salsas, Sabores, Rellenos
+const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones";  // ✅ MANTENER
+const CATALOGO_TOPPINGS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings";    // 🆕 NUEVO
+const CATALOGO_SALSAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas";        // 🆕 NUEVO
+const CATALOGO_SABORES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor";        // ✅ MANTENER
+const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno";     // ✅ MANTENER
 
 class InsumoApiService {
   constructor() {
@@ -30,7 +33,7 @@ class InsumoApiService {
     return response.json();
   }
 
-  // FUNCIÓN CORREGIDA: Crear múltiples catálogos
+  // ✅ FUNCIÓN ACTUALIZADA: Soporta los 5 catálogos
   async crearMultiplesCatalogos(insumoId, catalogos) {
     try {
       console.log('🎯 CREANDO MÚLTIPLES CATÁLOGOS');
@@ -47,6 +50,12 @@ class InsumoApiService {
           switch (catalogo.tipo.toLowerCase()) {
             case 'adicion':
               url = CATALOGO_ADICIONES_URL;
+              break;
+            case 'topping':
+              url = CATALOGO_TOPPINGS_URL;
+              break;
+            case 'salsa':
+              url = CATALOGO_SALSAS_URL;
               break;
             case 'sabor':
               url = CATALOGO_SABORES_URL;
@@ -138,7 +147,6 @@ class InsumoApiService {
       estado: insumo.estado !== undefined ? Boolean(insumo.estado) : true,
     };
 
-    // CORREGIDO: Agregar ID de imagen si existe
     if (insumo.idImagen && insumo.idImagen !== null && insumo.idImagen !== "") {
       transformed.idimagen = parseInt(insumo.idImagen);
       console.log("ID de imagen incluido:", transformed.idimagen);
@@ -153,7 +161,6 @@ class InsumoApiService {
       console.log('🚀 INICIANDO CREACIÓN DE INSUMO');
       console.log('Datos recibidos:', JSON.stringify(insumoData, null, 2));
 
-      // Guardar datos de catálogos ANTES de transformar
       const catalogosSeleccionados = insumoData.catalogosSeleccionados || [];
       const nombreCatalogo = insumoData.nombreCatalogo;
       const precioadicion = insumoData.precioadicion;
@@ -187,7 +194,6 @@ class InsumoApiService {
 
       const insumoId = insumoCreado.idinsumo;
 
-      // CORREGIDO: Crear catálogos SOLO si hay seleccionados
       if (catalogosSeleccionados && catalogosSeleccionados.length > 0) {
         console.log('🎯 Creando catálogos múltiples...');
         
@@ -202,7 +208,6 @@ class InsumoApiService {
 
         const resultadosCatalogos = await this.crearMultiplesCatalogos(insumoId, catalogosParaCrear);
         
-        // Verificar si al menos uno fue exitoso
         const algunoExitoso = resultadosCatalogos.some(r => r.exito);
         if (!algunoExitoso) {
           console.error('⚠️ Ningún catálogo se creó exitosamente');
@@ -407,6 +412,7 @@ class InsumoApiService {
     }
   }
 
+  // ✅ FUNCIÓN ACTUALIZADA: Soporta los 5 catálogos
   async obtenerCatalogos(tipoCatalogo) {
     try {
       let url;
@@ -415,11 +421,17 @@ class InsumoApiService {
         case 'adicion':
           url = CATALOGO_ADICIONES_URL;
           break;
-        case 'relleno':
-          url = CATALOGO_RELLENOS_URL;
+        case 'topping':
+          url = CATALOGO_TOPPINGS_URL;
+          break;
+        case 'salsa':
+          url = CATALOGO_SALSAS_URL;
           break;
         case 'sabor':
           url = CATALOGO_SABORES_URL;
+          break;
+        case 'relleno':
+          url = CATALOGO_RELLENOS_URL;
           break;
         default:
           throw new Error(`Tipo de catálogo inválido: ${tipoCatalogo}`);
@@ -511,6 +523,39 @@ class InsumoApiService {
   limpiarCache() {
     this.unidadesCache = null;
     this.categoriasCache = null;
+  }
+
+  // 🆕 Método auxiliar para crear un catálogo individual (usado por modalCatalogo.jsx)
+  async crearCatalogo(tipoCatalogo, datos) {
+    let url;
+    
+    switch (tipoCatalogo.toLowerCase()) {
+      case 'adicion':
+        url = CATALOGO_ADICIONES_URL;
+        break;
+      case 'topping':
+        url = CATALOGO_TOPPINGS_URL;
+        break;
+      case 'salsa':
+        url = CATALOGO_SALSAS_URL;
+        break;
+      case 'sabor':
+        url = CATALOGO_SABORES_URL;
+        break;
+      case 'relleno':
+        url = CATALOGO_RELLENOS_URL;
+        break;
+      default:
+        throw new Error(`Tipo de catálogo inválido: ${tipoCatalogo}`);
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: this.baseHeaders,
+      body: JSON.stringify(datos),
+    });
+
+    return await this.handleResponse(response);
   }
 }
 

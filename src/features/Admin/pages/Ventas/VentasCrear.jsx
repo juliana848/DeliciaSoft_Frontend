@@ -363,23 +363,38 @@ export default function VentasCrear({
                             )}
                         </div>
                         
-                        {ventaData.tipo_venta === 'pedido' && (
-                            <div className="field-group">
-                                <label className="field-label">Fecha de Entrega <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    type="date"
-                                    name="fecha_entrega"
-                                    value={ventaData.fecha_entrega || ''}
-                                    onChange={handleChange}
-                                    className={`form-input ${erroresValidacion.fecha_entrega ? 'error' : ''}`}
-                                    required={ventaData.tipo_venta === 'pedido'}
-                                    min={minDateFormatted}
-                                    max={maxDateFormatted}
-                                />
-                                {erroresValidacion.fecha_entrega && (
-                                    <span className="error-message">{erroresValidacion.fecha_entrega}</span>
-                                )}
-                            </div>
+{ventaData.tipo_venta === 'pedido' && (
+                            <>
+                                <div className="field-group">
+                                    <label className="field-label">Fecha de Entrega <span style={{ color: 'red' }}>*</span></label>
+                                    <input
+                                        type="date"
+                                        name="fecha_entrega"
+                                        value={ventaData.fecha_entrega || ''}
+                                        onChange={handleChange}
+                                        className={`form-input ${erroresValidacion.fecha_entrega ? 'error' : ''}`}
+                                        required={ventaData.tipo_venta === 'pedido'}
+                                        min={minDateFormatted}
+                                        max={maxDateFormatted}
+                                    />
+                                    {erroresValidacion.fecha_entrega && (
+                                        <span className="error-message">{erroresValidacion.fecha_entrega}</span>
+                                    )}
+                                </div>
+                                
+                                <div className="field-group" style={{ gridColumn: '1 / -1' }}>
+                                    <label className="field-label">Observaciones</label>
+                                    <textarea
+                                        name="observaciones"
+                                        value={ventaData.observaciones || ''}
+                                        onChange={handleChange}
+                                        className="form-input"
+                                        placeholder="Ingrese observaciones del pedido (opcional)..."
+                                        rows="3"
+                                        style={{ resize: 'vertical', minHeight: '80px' }}
+                                    />
+                                </div>
+                            </>
                         )}
                         
                         <div className="field-group">

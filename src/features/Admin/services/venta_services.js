@@ -378,7 +378,6 @@ async crearVenta(ventaData) {
     try {
         console.log('Datos originales recibidos para crear venta:', ventaData);
         
-        // Simplificar la lógica del cliente
         let clienteId = null;
         if (ventaData.clienteId !== null && ventaData.clienteId !== undefined) {
             clienteId = parseInt(ventaData.clienteId);
@@ -387,11 +386,9 @@ async crearVenta(ventaData) {
             console.log('Usando cliente genérico (null)');
         }
         
-        // Obtener ID de sede dinámicamente
         const sedeId = await this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
         console.log(`Sede procesada: ${ventaData.sedeNombre || ventaData.sede} -> ID: ${sedeId}`);
         
-        // Normalizar tipo de venta
         let tipoVenta = ventaData.tipoventa || ventaData.tipo_venta;
         if (tipoVenta === 'venta directa') {
             tipoVenta = 'directa';
@@ -410,8 +407,6 @@ async crearVenta(ventaData) {
         }));
 
         const fechaFormateada = this.formatearFecha(ventaData.fechaventa || ventaData.fecha_venta);
-        console.log('Fecha original:', ventaData.fechaventa || ventaData.fecha_venta);
-        console.log('Fecha formateada:', fechaFormateada);
 
         const ventaParaAPI = {
             fechaventa: fechaFormateada,
@@ -424,10 +419,20 @@ async crearVenta(ventaData) {
             detalleventa: detallesVenta
         };
 
+        // ✅ AGREGAR FECHA DE ENTREGA SI ES PEDIDO
+        if (tipoVenta === 'pedido') {
+            const fechaEntrega = ventaData.fechaentrega || ventaData.fecha_entrega;
+            if (fechaEntrega) {
+                ventaParaAPI.fechaentrega = this.formatearFecha(fechaEntrega);
+                console.log('Fecha de entrega incluida:', ventaParaAPI.fechaentrega);
+            }
+            
+            if (ventaData.observaciones) {
+                ventaParaAPI.observaciones = ventaData.observaciones;
+            }
+        }
+
         console.log('Datos transformados para la API:', ventaParaAPI);
-        console.log('Cliente final que se enviará:', clienteId);
-        console.log('Sede final que se enviará:', sedeId);
-        console.log('Tipo de venta:', tipoVenta);
         
         if (!ventaParaAPI.metodopago) {
             throw new Error('Método de pago es requerido');
@@ -454,7 +459,6 @@ async crearVenta(ventaData) {
             const errorText = await response.text();
             console.error('Error al crear venta:', errorText);
             
-            // Intentar parsear el error como JSON
             let errorMessage = `HTTP error! Status: ${response.status}`;
             try {
                 const errorJson = JSON.parse(errorText);
@@ -484,7 +488,12 @@ async crearVenta(ventaData) {
             nombreEstado: estadoId === 5 ? 'Activa' : 'En espera',
             nombreCliente: ventaData.cliente || ventaData.clienteNombre || 'Cliente Genérico',
             nombreSede: ventaData.sede || ventaData.sedeNombre || 'N/A',
-            mensaje: ventaCreada.mensaje // El backend devuelve un mensaje descriptivo
+            mensaje: ventaCreada.mensaje,
+            pedidoInfo: ventaCreada.pedido && ventaCreada.pedido.length > 0 ? {
+                idpedido: ventaCreada.pedido[0].idpedido,
+                fechaentrega: ventaCreada.pedido[0].fechaentrega,
+                observaciones: ventaCreada.pedido[0].observaciones
+            } : null
         };
         
     } catch (error) {
@@ -492,6 +501,7 @@ async crearVenta(ventaData) {
         throw new Error(error.message || 'No se pudo crear la venta');
     }
 }
+
     // FUNCIÓN PARA OBTENER DETALLE DE VENTA CON ABONOS - CORREGIDA
     async obtenerVentaPorId(idVenta) {
         try {

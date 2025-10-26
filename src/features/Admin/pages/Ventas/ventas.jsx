@@ -366,6 +366,8 @@ const verAbonosVenta = async (venta) => {
             total: total,
             clienteNombre: ventaData.cliente,
             sedeNombre: ventaData.sede,
+            fechaentrega: ventaData.fecha_entrega || null, // ✅ AGREGAR FECHA DE ENTREGA
+            observaciones: ventaData.observaciones || null, // ✅ AGREGAR
             productos: insumosSeleccionados.map(item => {
                 const subtotalItem = item.precio * (item.cantidad || 1);
                 const costoAdiciones = (item.adiciones?.slice(2) || []).reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0);

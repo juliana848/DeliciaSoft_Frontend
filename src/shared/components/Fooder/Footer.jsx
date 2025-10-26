@@ -47,27 +47,10 @@ function Footer() {
 
       <div className="relative z-10 pt-8 pb-4">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-            {/* Logo */}
-            <div className="text-center lg:text-left">
-              {logoUrl && (
-                <img
-                  src={logoUrl}
-                  alt="Delicias Darsy"
-                  className="h-40 w-auto mx-auto lg:mx-0 rounded-xl"
-                  style={{ backgroundColor: "transparent" }}
-                />
-              )}
-              <div className="flex justify-center lg:justify-start space-x-2 mt-2">
-                <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200"></div>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 max-w-5xl mx-auto">
             {/* Acerca de */}
-            <div className="text-center lg:text-left">
-              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center lg:justify-start">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center">
                 <span className="mr-2">🧁</span>
                 Delicias Darsy
               </h3>
@@ -78,16 +61,16 @@ function Footer() {
             </div>
 
             {/* Empresa */}
-            <div className="text-center lg:text-left">
-              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center lg:justify-start">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center">
                 <span className="mr-2">🏪</span>
                 Nuestra Empresa
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-1 inline-flex flex-col">
                 <a
                   href="../../../Sedes"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300 justify-center lg:justify-start"
+                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300"
                 >
                   <span>📍</span>
                   Nuestras Sedes
@@ -95,7 +78,7 @@ function Footer() {
                 <a
                   href="../../../Conocenos"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300 justify-center lg:justify-start"
+                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300"
                 >
                   <span>💝</span>
                   Conócenos
@@ -104,18 +87,18 @@ function Footer() {
             </div>
 
             {/* Contacto */}
-            <div className="text-center lg:text-left">
-              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center lg:justify-start">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center justify-center">
                 <span className="mr-2">📞</span>
                 Contacto
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-1 inline-flex flex-col">
                 {/* WhatsApp */}
                 <a
                   href="https://wa.me/573213098504"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300 justify-center lg:justify-start"
+                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300"
                 >
                   <FaWhatsapp className="text-green-500 text-xl" />
                   +57 321 309 85 04
@@ -126,7 +109,7 @@ function Footer() {
                   href="https://www.tiktok.com/@delicias_darsy?_t=ZS-8waDD3RfXJk&_r=1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300 justify-center lg:justify-start"
+                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300"
                 >
                   <FaTiktok className="text-black text-xl" />
                   Delicias_Darsy
@@ -137,7 +120,7 @@ function Footer() {
                   href="https://www.instagram.com/delicias_darsy?igsh=MTYwOWJoOTQ2djMwcg=="
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300 justify-center lg:justify-start"
+                  className="flex items-center gap-x-2 text-gray-800 text-base font-medium hover:text-pink-600 transition-colors duration-300"
                 >
                   <FaInstagram className="text-pink-500 text-xl" />
                   @delicias_darsy
@@ -159,10 +142,14 @@ function Footer() {
 
           {/* Footer inferior */}
           <div className="text-center">
-            <div className="bg-white bg-opacity-90 rounded-full px-6 py-2 inline-block shadow-lg">
+            <div className="bg-white bg-opacity-90 rounded-full px-6 py-2.5 inline-block shadow-lg">
               <p className="text-gray-700 text-sm font-medium">
-                © 2024 Delicias Darsy -{" "}
-                <span className="text-pink-600 font-bold">Hecho con mucho amor</span> ✨
+                © 2024 Delicias Darsy. Todos los derechos reservados.
+              </p>
+            </div>
+            <div className="mt-2">
+              <p className="text-gray-600 text-xs">
+                Desarrollado por: Danna Villegas, Juliana Quintero, Juan Cardona & Miguel Torres
               </p>
             </div>
           </div>

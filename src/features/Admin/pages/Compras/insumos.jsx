@@ -883,15 +883,15 @@ const validarFormulario = () => {
       )}
 
       <h2 className="admin-section-title">Gestión de Insumos</h2>
-      <DataTable
-        value={insumosFiltrados}
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 20]}
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
-        className="admin-table"
-      >
+        <DataTable
+          value={insumosFiltrados}
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 20]}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
+          className="admin-table compact-paginator"
+        >
         <Column header="Nº" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '3rem', textAlign: 'center' }} />
         <Column field="nombre" header="Nombre" />
         <Column field="categoria" header="Categoría" />

@@ -269,19 +269,15 @@ export default function VentasListar({
                     </button>
                 </div>
             </div>
-
-            <DataTable
+                <DataTable
                 value={ventasFiltradas}
-                className="admin-table"
+                className="admin-table compact-paginator"
                 dataKey="idVenta"
                 paginator
                 rows={10}
                 rowsPerPageOptions={[5, 10, 25]}
-                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
-                emptyMessage="No se encontraron ventas."
                 rowClassName={getRowClassName}
-            >
+                >
                 <Column field="idVenta" header="N°"></Column>
                 <Column field="nombreCliente" header="Cliente"></Column>
                 <Column field="nombreSede" header="Sede"></Column>

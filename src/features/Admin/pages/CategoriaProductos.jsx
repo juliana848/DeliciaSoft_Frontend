@@ -317,16 +317,16 @@ export default function CategoriaProductos() {
 
       <h2 className="admin-section-title">Gestión de Categorías de Productos</h2>
       
-      <DataTable
-        value={categoriasFiltradas}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-        loading={loading}
-        emptyMessage="No se encontraron categorías"
-      >
+        <DataTable
+          value={categoriasFiltradas}
+          className="admin-table compact-paginator"
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          tableStyle={{ minWidth: '50rem' }}
+          loading={loading}
+          emptyMessage="No se encontraron categorías"
+        >
         <Column
           header="N°"
           body={(_, { rowIndex }) => rowIndex + 1}

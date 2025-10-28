@@ -2789,3 +2789,109 @@ body, html {
     transform: none !important;
     box-shadow: none !important;
 }
+
+/* ===== PAGINADOR ===== */
+.compact-paginator .p-paginator {
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* Botones del paginador */
+.compact-paginator .p-paginator .p-paginator-page,
+.compact-paginator .p-paginator .p-paginator-next,
+.compact-paginator .p-paginator .p-paginator-prev,
+.compact-paginator .p-paginator .p-paginator-first,
+.compact-paginator .p-paginator .p-paginator-last {
+  background-color: #fff;
+  border: 1px solid #f8a5c2;
+  color: #d63384;
+  margin: 0 2px;
+  border-radius: 6px;
+  min-width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.compact-paginator .p-paginator .p-paginator-page.p-highlight {
+  background-color: #f8a5c2;
+  color: white;
+  border-color: #f597b5;
+}
+
+.compact-paginator .p-paginator button:hover {
+  background-color: #ffd9e6;
+}
+
+/* ===== DROPDOWN (selector de cantidad) ===== */
+.compact-paginator .p-dropdown {
+  border-radius: 6px;
+  border: 1px solid #f8a5c2;
+  height: 30px;
+  font-size: 0.8rem;
+  margin-left: 8px;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+}
+
+.compact-paginator .p-dropdown-label {
+  padding: 0 0.6rem !important;
+  text-align: center;
+  color: #d63384;
+  font-weight: 500;
+}
+
+/* Flecha del dropdown */
+.compact-paginator .p-dropdown-trigger {
+  color: #d63384;
+  border-left: 1px solid #f8a5c2;
+  padding: 0 0.4rem;
+}
+
+/* Menú desplegable bonito */
+.p-dropdown-panel {
+  border: 1px solid #f8a5c2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(246, 117, 160, 0.25);
+  overflow: hidden;
+}
+
+.p-dropdown-panel .p-dropdown-items {
+  padding: 0;
+}
+
+.p-dropdown-panel .p-dropdown-item {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  color: #d63384;
+  transition: 0.2s;
+}
+
+.p-dropdown-panel .p-dropdown-item:hover {
+  background-color: #ffe0eb;
+}
+
+.p-dropdown-panel .p-highlight {
+  background-color: #f8a5c2 !important;
+  color: #fff !important;
+}
+
+.compact-paginator .p-paginator {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.compact-paginator .p-paginator-pages {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+}

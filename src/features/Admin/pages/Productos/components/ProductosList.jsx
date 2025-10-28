@@ -179,15 +179,15 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
       </div>
 
       <h2 className="admin-section-title">Gestión de productos</h2>
-
-      <DataTable
-        value={filteredProductos}
-        paginator
-        rows={5}
-        className="admin-table"
-        emptyMessage="No se encontraron productos"
-        tableStyle={{ minWidth: '50rem' }}
-      >
+        <DataTable
+          value={filteredProductos}
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25]}
+          className="admin-table compact-paginator"
+          emptyMessage="No se encontraron productos"
+          tableStyle={{ minWidth: '50rem' }}
+        >
         <Column
           header="N°"
           body={(_, { rowIndex }) => rowIndex + 1}

@@ -33,8 +33,13 @@ const Pedidos = () => {
 
   const { 
     productosSeleccionados: productosDelContexto,
-    limpiarProductosSeleccionados
+    limpiarProductosSeleccionados,
+    carrito
   } = useContext(CartContext);
+
+  // ==========================================
+  // 🔧 FUNCIONES DE NAVEGACIÓN Y GESTIÓN
+  // ==========================================
 
   const cambiarVista = (nuevaVista) => {
     setVistaActual(nuevaVista);
@@ -68,6 +73,10 @@ const Pedidos = () => {
     limpiarProductosSeleccionados();
   };
 
+  // ==========================================
+  // 🎯 EFFECTS
+  // ==========================================
+
   useEffect(() => {
     // 🎯 Detectar si viene desde personalización
     if (location.state?.vista === 'entrega') {
@@ -96,6 +105,42 @@ const Pedidos = () => {
       }));
     }
   }, [productosDelContexto]);
+
+  // ==========================================
+  // 📦 FUNCIONES DE PRODUCTOS
+  // ==========================================
+
+  const obtenerTodosLosProductos = () => {
+    // Prioridad 1: Productos del pedido actual
+    if (pedidoActual.productos && pedidoActual.productos.length > 0) {
+      return pedidoActual.productos;
+    }
+    
+    // Prioridad 2: Productos del contexto
+    if (productosDelContexto && productosDelContexto.length > 0) {
+      return productosDelContexto;
+    }
+    
+    // Prioridad 3: Carrito del contexto
+    if (carrito && carrito.length > 0) {
+      return carrito;
+    }
+    
+    // Prioridad 4: LocalStorage
+    try {
+      const carritoStorage = localStorage.getItem('carritoParaPersonalizar');
+      if (carritoStorage) {
+        const productos = JSON.parse(carritoStorage);
+        if (productos && productos.length > 0) {
+          return productos;
+        }
+      }
+    } catch (error) {
+      console.error('Error al obtener productos de localStorage:', error);
+    }
+    
+    return [];
+  };
 
   const agregarProducto = (producto) => {
     setPedidoActual(prev => {
@@ -136,49 +181,20 @@ const Pedidos = () => {
     }));
   };
 
-  const siguienteDesdeProductos = () => {
-    // Validar que haya productos
-    const productos = productosDelContexto || [];
-    if (productos.length === 0) {
-      alert('⚠️ Debes agregar al menos un producto al carrito');
-      return;
-    }
-
-    // Calcular cantidad total
-    const cantidadTotal = productos.reduce((sum, p) => sum + (p.cantidad || 1), 0);
-    
-    if (cantidadTotal < 10) {
-      alert(`⚠️ Necesitas al menos 10 productos. Tienes ${cantidadTotal}`);
-      return;
-    }
-
-    // Guardar productos en el pedido actual
-    setPedidoActual(prev => ({
-      ...prev,
-      productos: productos
-    }));
-
-    // 🎯 IR DIRECTAMENTE A PERSONALIZACIÓN
-    console.log('✅ Productos validados, yendo a personalización...');
-    
-    // Guardar en localStorage para personalización
-    localStorage.setItem('carritoParaPersonalizar', JSON.stringify(productos));
-    
-    // Navegar a personalización
-    window.location.href = '/pedidos/PersonalizacionProductos';
-  };
+  // ==========================================
+  // 💰 CÁLCULO DE TOTALES
+  // ==========================================
 
   const calcularTotal = () => {
+    const productos = obtenerTodosLosProductos();
     let total = 0;
     
-    const productos = pedidoActual.productos.length > 0 
-      ? pedidoActual.productos 
-      : (productosDelContexto || []);
-    
+    // Subtotal de productos base
     total += productos.reduce((sum, producto) => 
       sum + (producto.precio * (producto.cantidad || 1)), 0
     );
     
+    // Extras globales (si los hay)
     total += pedidoActual.toppings.reduce((sum, topping) => 
       sum + (topping.precio || 0), 0
     );
@@ -191,7 +207,71 @@ const Pedidos = () => {
       sum + (salsa.precio || 0), 0
     );
     
+    // Sumar personalizaciones individuales
+    if (personalizacionesGuardadas) {
+      productos.forEach(producto => {
+        const personalizacionProducto = personalizacionesGuardadas[producto.id];
+        if (personalizacionProducto) {
+          for (let unidad = 1; unidad <= (producto.cantidad || 1); unidad++) {
+            const personalizacionUnidad = personalizacionProducto[unidad];
+            if (personalizacionUnidad) {
+              // Sumar toppings
+              if (personalizacionUnidad.toppings) {
+                total += personalizacionUnidad.toppings.reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+              // Sumar salsas
+              if (personalizacionUnidad.salsas) {
+                total += personalizacionUnidad.salsas.reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+              // Sumar rellenos
+              if (personalizacionUnidad.rellenos) {
+                total += personalizacionUnidad.rellenos.reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+              // Sumar adiciones
+              if (personalizacionUnidad.adiciones) {
+                total += personalizacionUnidad.adiciones.reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+              // Sumar sabores
+              if (personalizacionUnidad.sabores) {
+                total += personalizacionUnidad.sabores.reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    console.log('💰 Total calculado:', total);
     return total;
+  };
+
+  // ==========================================
+  // 🚀 NAVEGACIÓN ENTRE VISTAS
+  // ==========================================
+
+  const siguienteDesdeProductos = () => {
+    const productos = obtenerTodosLosProductos();
+    
+    if (productos.length === 0) {
+      alert('⚠️ Debes agregar al menos un producto al carrito');
+      return;
+    }
+
+    const cantidadTotal = productos.reduce((sum, p) => sum + (p.cantidad || 1), 0);
+    
+    if (cantidadTotal < 10) {
+      alert(`⚠️ Necesitas al menos 10 productos. Tienes ${cantidadTotal}`);
+      return;
+    }
+
+    setPedidoActual(prev => ({
+      ...prev,
+      productos: productos
+    }));
+
+    console.log('✅ Productos validados, yendo a personalización...');
+    localStorage.setItem('carritoParaPersonalizar', JSON.stringify(productos));
+    window.location.href = '/pedidos/PersonalizacionProductos';
   };
 
   const manejarConfirmacion = (pedidoConComentarios) => {
@@ -202,14 +282,44 @@ const Pedidos = () => {
     setVistaActual('pago');
   };
 
-  const prepararDatosVenta = async (datosPago) => {
-    const productos = pedidoActual.productos.length > 0 
-      ? pedidoActual.productos 
-      : (productosDelContexto || []);
+  // ==========================================
+  // 🔧 FUNCIÓN CRÍTICA: prepararDatosVenta
+  // ==========================================
 
-    console.log('📦 Productos a enviar:', productos);
+const prepararDatosVenta = async (datosPago) => {
+    console.log('🔥 prepararDatosVenta - Datos recibidos:', datosPago);
+    
+    // Extraer datos del pago
+    const {
+      metodo,
+      sede,
+      sedeNombre,
+      abono,
+      total,
+      subtotalProductos,
+      subtotalExtras,
+      numeroPedido,
+      comprobante
+    } = datosPago;
 
-    // 🔒 OBTENER CLIENTE AUTENTICADO
+    // ✅ VALIDACIÓN CRÍTICA: Verificar que el total llegó
+    if (!total || total <= 0) {
+      console.error('❌ ERROR: Total inválido recibido:', total);
+      throw new Error(`Total inválido: ${total}. Debe ser mayor a 0.`);
+    }
+
+    console.log('✅ Total válido recibido:', total);
+
+    // Obtener productos
+    const productos = obtenerTodosLosProductos();
+    
+    if (!productos || productos.length === 0) {
+      throw new Error('No hay productos en el pedido');
+    }
+
+    console.log('📦 Productos encontrados:', productos.length);
+
+    // 🔐 OBTENER CLIENTE AUTENTICADO
     let clienteId = null;
     let nombreCliente = 'Cliente Pedido Online';
     
@@ -221,85 +331,182 @@ const Pedidos = () => {
         console.log('✅ Cliente autenticado:', nombreCliente, 'ID:', clienteId);
       }
     } catch (error) {
-      console.warn('⚠️ No se pudo obtener cliente autenticado, usando genérico:', error);
+      console.warn('⚠️ No se pudo obtener cliente autenticado:', error);
     }
 
+    if (!clienteId) {
+      throw new Error('No se encontró el ID del cliente. Por favor inicia sesión.');
+    }
+
+    // Preparar productos con personalizaciones
     const productosConExtras = productos.map(producto => {
       const precioBase = producto.precio * (producto.cantidad || 1);
-      
-      // 🆕 OBTENER PERSONALIZACIÓN ESPECÍFICA DEL PRODUCTO
       let precioExtras = 0;
-      let personalizacion = null;
-      
+      let personalizacionesProducto = [];
+
+      // Obtener personalizaciones del producto
       if (personalizacionesGuardadas && personalizacionesGuardadas[producto.id]) {
-        personalizacion = personalizacionesGuardadas[producto.id];
+        const personalizacionProducto = personalizacionesGuardadas[producto.id];
         
-        // Calcular precio de personalizaciones específicas
-        if (personalizacion.toppings?.length > 0) {
-          precioExtras += personalizacion.toppings.reduce((sum, t) => sum + (t.precio || 0), 0);
-        }
-        if (personalizacion.salsas?.length > 0) {
-          precioExtras += personalizacion.salsas.reduce((sum, s) => sum + (s.precio || 0), 0);
-        }
-        if (personalizacion.adiciones?.length > 0) {
-          precioExtras += personalizacion.adiciones.reduce((sum, a) => sum + (a.precio || 0), 0);
+        // Recorrer cada unidad
+        for (let unidad = 1; unidad <= (producto.cantidad || 1); unidad++) {
+          const personalizacionUnidad = personalizacionProducto[unidad];
+          if (personalizacionUnidad) {
+            // Sumar precios de personalizaciones
+            ['toppings', 'salsas', 'rellenos', 'adiciones', 'sabores'].forEach(tipo => {
+              if (personalizacionUnidad[tipo]?.length > 0) {
+                precioExtras += personalizacionUnidad[tipo].reduce((sum, item) => sum + (item.precio || 0), 0);
+              }
+            });
+            
+            personalizacionesProducto.push({
+              unidad: unidad,
+              ...personalizacionUnidad
+            });
+          }
         }
       }
 
-      const subtotal = precioBase + precioExtras;
-      const iva = subtotal * 0.19;
+      const subtotalProducto = precioBase + precioExtras;
 
       return {
         fechaventa: new Date().toISOString(),
         cliente: clienteId,
         idproductogeneral: producto.id,
+        nombreProducto: producto.nombre,
         cantidad: producto.cantidad || 1,
         preciounitario: producto.precio,
-        subtotal: subtotal,
-        iva: iva,
-        // 🆕 Incluir personalización
-        personalizacion: personalizacion ? {
-          toppings: personalizacion.toppings || [],
-          salsas: personalizacion.salsas || [],
-          adiciones: personalizacion.adiciones || [],
-          comentarios: personalizacion.comentarios || ''
-        } : null
+        precioExtras: precioExtras,
+        subtotal: subtotalProducto,
+        personalizaciones: personalizacionesProducto
       };
     });
 
-    const totalFinal = calcularTotal();
-    const ivaTotal = totalFinal * 0.19;
+    // 🎯 RECUPERAR DATOS DE ENTREGA GUARDADOS
+    const datosEntregaStorage = localStorage.getItem('datosEntrega');
+    const datosEntrega = datosEntregaStorage ? JSON.parse(datosEntregaStorage) : null;
 
-    // Obtener nombre de sede correcto
-    const sedeNombre = datosPago.sedeNombre || 
-                       pedidoActual.opciones.entrega?.ubicacionData?.nombre || 
-                       'San Benito';
+    console.log('📅 Datos de entrega recuperados:', datosEntrega);
 
-    console.log('🏪 Sede seleccionada:', sedeNombre);
-    console.log('👤 Cliente ID:', clienteId);
-    console.log('📝 Nombre cliente:', nombreCliente);
+    // ✅ VALIDACIÓN: Para pedidos, la fecha de entrega es obligatoria
+    if (!datosEntrega || !datosEntrega.fecha) {
+      throw new Error('No se encontró la fecha de entrega. Por favor regresa y selecciona una fecha.');
+    }
 
-    return {
-      fechaventa: new Date().toISOString(),
+    // Formatear fecha de entrega (backend espera formato ISO o YYYY-MM-DD)
+    const fechaEntrega = datosEntrega.fecha.includes('T') 
+      ? datosEntrega.fecha 
+      : `${datosEntrega.fecha}T${datosEntrega.hora || '12:00'}:00.000Z`;
+
+    console.log('📅 Fecha de entrega formateada:', fechaEntrega);
+
+    // 🎯 CONSTRUIR OBJETO DE VENTA CON TOTAL CORRECTO
+    const datosVenta = {
+      // ===== CLIENTE =====
+      idCliente: clienteId,
       cliente: clienteId,
-      clienteId: clienteId,
       clienteNombre: nombreCliente,
+      
+      // ===== SEDE =====
+      idSede: Number(sede),
       sede: sedeNombre,
       sedeNombre: sedeNombre,
-      metodopago: datosPago.metodo || pedidoActual.opciones.pago,
-      tipoventa: 'pedido',
-      total: totalFinal + ivaTotal,
+      
+      // ===== PRODUCTOS =====
+      productos: productosConExtras,
       detalleventa: productosConExtras,
-      datosEntrega: pedidoActual.opciones.entrega?.datosEntrega,
-      comentarios: pedidoActual.comentarios,
+      
+      // ===== 💰 TOTALES (CRÍTICO) =====
+      subtotalProductos: Number(subtotalProductos) || 0,
+      subtotalExtras: Number(subtotalExtras) || 0,
+      total: Number(total),           // ✅ TOTAL CALCULADO CORRECTAMENTE
+      abono: Number(abono),           // ✅ 50% del total
+      saldo: Number(total - abono),   // Lo que falta por pagar
+      
+      // ===== MÉTODO DE PAGO =====
+      metodoPago: metodo,
+      metodopago: metodo,
+      
+      // ===== TIPO DE VENTA =====
+      tipoventa: 'pedido',
+      tipo_venta: 'pedido',
+      
+      // ===== ESTADO =====
+      // SIEMPRE usar estado 1 (En espera) para pedidos nuevos
+      idEstado: 1,
+      estadoVentaId: 1,
+      estado: 'En espera',
+      
+      // ===== OTROS DATOS =====
+      numeroPedido: numeroPedido,
+      fechaventa: new Date().toISOString(),
+      fechaPedido: new Date().toISOString(),
+      fechaCreacion: new Date().toISOString(),
+      
+      // ===== 📅 FECHA DE ENTREGA (CRÍTICO PARA PEDIDOS) =====
+      fechaentrega: fechaEntrega,
+      fecha_entrega: fechaEntrega,
+      
+      // ===== PERSONALIZACIONES =====
       personalizacionesProductos: personalizacionesGuardadas,
+      
+      // ===== DATOS DE ENTREGA =====
+      datosEntrega: {
+        fechaEntrega: datosEntrega.fecha,
+        horaEntrega: datosEntrega.hora,
+        telefono: datosEntrega.telefono,
+        observaciones: datosEntrega.observaciones || '',
+        ubicacion: datosEntrega.ubicacion,
+        ubicacionData: datosEntrega.ubicacionData
+      },
+      
+      // ===== OBSERVACIONES =====
+      comentarios: pedidoActual.comentarios || datosEntrega.observaciones || '',
+      observaciones: pedidoActual.comentarios || datosEntrega.observaciones || '',
+      
+      // ===== EXTRAS GLOBALES =====
       extras: {
-        toppings: pedidoActual.toppings,
-        adiciones: pedidoActual.adiciones,
-        salsas: pedidoActual.salsas
+        toppings: pedidoActual.toppings || [],
+        adiciones: pedidoActual.adiciones || [],
+        salsas: pedidoActual.salsas || []
       }
     };
+    // 🔍 VALIDACIONES FINALES
+    console.log('🔍 Validando datos de venta...');
+    
+    if (!datosVenta.total || datosVenta.total <= 0) {
+      console.error('❌ Total inválido en datosVenta:', datosVenta.total);
+      throw new Error(`Total debe ser mayor a 0. Recibido: ${datosVenta.total}`);
+    }
+    
+    if (!datosVenta.abono || datosVenta.abono <= 0) {
+      console.error('❌ Abono inválido en datosVenta:', datosVenta.abono);
+      throw new Error(`Abono debe ser mayor a 0. Recibido: ${datosVenta.abono}`);
+    }
+    
+    if (!datosVenta.productos || datosVenta.productos.length === 0) {
+      console.error('❌ No hay productos en datosVenta');
+      throw new Error('Debe haber al menos un producto');
+    }
+
+    console.log('✅ Validaciones pasadas');
+    console.log('📤 Datos de venta preparados:', {
+      idCliente: datosVenta.idCliente,
+      idSede: datosVenta.idSede,
+      total: datosVenta.total,
+      abono: datosVenta.abono,
+      saldo: datosVenta.saldo,
+      metodoPago: datosVenta.metodoPago,
+      productos: datosVenta.productos.length,
+      estado: datosVenta.estado
+    });
+
+    return datosVenta;
   };
+
+  // ==========================================
+  // 🎨 RENDERIZADO DE VISTAS
+  // ==========================================
 
   const renderizarVista = () => {
     switch(vistaActual) {
@@ -376,6 +583,10 @@ const Pedidos = () => {
         );
     }
   };
+
+  // ==========================================
+  // 🎨 RENDER PRINCIPAL
+  // ==========================================
 
   return (
     <div className="pedidos-container">

@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './OpcionesPagoView.css';
 import ventaApiService from '../../Admin/services/venta_services.js';
 import sedeApiService from '../../Admin/services/sedes_services.js';
+import { CartContext } from "../../Cartas/pages/CartContext";
 
 const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpcionSeleccionada, prepararDatosVenta }) => {
+  const { carrito } = useContext(CartContext);
+  
   const [metodoPago, setMetodoPago] = useState('');
   const [sedeSeleccionada, setSedeSeleccionada] = useState('');
   const [mostrarDatosBanco, setMostrarDatosBanco] = useState(false);
@@ -20,6 +23,25 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
   const [sedes, setSedes] = useState([]);
   const [cargandoSedes, setCargandoSedes] = useState(true);
   const [errorSedes, setErrorSedes] = useState('');
+  const [personalizacionesProductos, setPersonalizacionesProductos] = useState({});
+
+  useEffect(() => {
+    console.log('🔍 OpcionesPagoView - Verificando productos...');
+    console.log('Productos del pedido prop:', pedido?.productos);
+    console.log('Productos del carrito context:', carrito);
+
+    // Cargar personalizaciones
+    const personalizacionesStorage = localStorage.getItem('personalizacionesPedido');
+    if (personalizacionesStorage) {
+      try {
+        const personalizaciones = JSON.parse(personalizacionesStorage);
+        setPersonalizacionesProductos(personalizaciones);
+        console.log('✅ Personalizaciones cargadas:', personalizaciones);
+      } catch (error) {
+        console.error('Error al cargar personalizaciones:', error);
+      }
+    }
+  }, [pedido, carrito]);
 
   useEffect(() => {
     const cargarSedes = async () => {
@@ -70,16 +92,55 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     cargarSedes();
   }, []);
 
+  // 🎯 FUNCIÓN CLAVE: Obtener productos de múltiples fuentes
+  const obtenerTodosLosProductos = () => {
+    console.log('📦 Obteniendo productos...');
+    
+    // Prioridad 1: Productos del pedido
+    if (pedido?.productos && Array.isArray(pedido.productos) && pedido.productos.length > 0) {
+      console.log('✅ Usando productos del pedido prop');
+      return pedido.productos;
+    }
+    
+    // Prioridad 2: Productos del carrito context
+    if (carrito && Array.isArray(carrito) && carrito.length > 0) {
+      console.log('✅ Usando productos del carrito context');
+      return carrito;
+    }
+    
+    // Prioridad 3: Recuperar de localStorage como último recurso
+    try {
+      const carritoStorage = localStorage.getItem('carritoParaPersonalizar');
+      if (carritoStorage) {
+        const productosStorage = JSON.parse(carritoStorage);
+        if (productosStorage && productosStorage.length > 0) {
+          console.log('✅ Usando productos de localStorage');
+          return productosStorage;
+        }
+      }
+    } catch (error) {
+      console.error('Error al recuperar carrito de localStorage:', error);
+    }
+    
+    console.warn('⚠️ No se encontraron productos en ninguna fuente');
+    return [];
+  };
+
   const calcularTotales = () => {
+    const productos = obtenerTodosLosProductos();
     let subtotalProductos = 0;
     let subtotalExtras = 0;
 
-    if (pedido?.productos) {
-      subtotalProductos = pedido.productos.reduce((sum, producto) => 
+    console.log('💰 Calculando totales con productos:', productos.length);
+
+    // Calcular productos base
+    if (productos && Array.isArray(productos)) {
+      subtotalProductos = productos.reduce((sum, producto) => 
         sum + (producto.precio * (producto.cantidad || 1)), 0
       );
     }
 
+    // Calcular extras desde el pedido (toppings, salsas globales)
     if (pedido?.toppings) {
       subtotalExtras += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
     }
@@ -90,22 +151,63 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
       subtotalExtras += pedido.salsas.reduce((sum, salsa) => sum + (salsa.precio || 0), 0);
     }
 
-    const subtotalTotal = subtotalProductos + subtotalExtras;
-    const iva = Math.round(subtotalTotal * 0.19);
-    const totalFinal = subtotalTotal + iva;
+    // Calcular personalizaciones desde localStorage
+    try {
+      if (Object.keys(personalizacionesProductos).length > 0 && productos) {
+        productos.forEach(producto => {
+          const personalizacionProducto = personalizacionesProductos[producto.id];
+          if (personalizacionProducto) {
+            for (let unidad = 1; unidad <= (producto.cantidad || 1); unidad++) {
+              const personalizacionUnidad = personalizacionProducto[unidad];
+              if (personalizacionUnidad) {
+                // Sumar toppings
+                if (personalizacionUnidad.toppings) {
+                  subtotalExtras += personalizacionUnidad.toppings.reduce((sum, item) => sum + (item.precio || 0), 0);
+                }
+                // Sumar salsas
+                if (personalizacionUnidad.salsas) {
+                  subtotalExtras += personalizacionUnidad.salsas.reduce((sum, item) => sum + (item.precio || 0), 0);
+                }
+                // Sumar rellenos
+                if (personalizacionUnidad.rellenos) {
+                  subtotalExtras += personalizacionUnidad.rellenos.reduce((sum, item) => sum + (item.precio || 0), 0);
+                }
+                // Sumar adiciones
+                if (personalizacionUnidad.adiciones) {
+                  subtotalExtras += personalizacionUnidad.adiciones.reduce((sum, item) => sum + (item.precio || 0), 0);
+                }
+                // Sumar sabores
+                if (personalizacionUnidad.sabores) {
+                  subtotalExtras += personalizacionUnidad.sabores.reduce((sum, item) => sum + (item.precio || 0), 0);
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al calcular personalizaciones:', error);
+    }
+
+    const totalFinal = subtotalProductos + subtotalExtras;
     const abono = Math.round(totalFinal / 2);
+
+    console.log('📊 Totales calculados:', {
+      subtotalProductos,
+      subtotalExtras,
+      totalFinal,
+      abono
+    });
 
     return {
       subtotalProductos,
       subtotalExtras,
-      subtotalTotal,
-      iva,
       totalFinal,
       abono
     };
   };
 
-  const { subtotalProductos, subtotalExtras, subtotalTotal, iva, totalFinal, abono } = calcularTotales();
+  const { subtotalProductos, subtotalExtras, totalFinal, abono } = calcularTotales();
 
   const triggerAlert = (type, message) => {
     setShowAlert({ show: true, type, message });
@@ -178,132 +280,153 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
   };
 
   const procesarPago = async () => {
-  if (!metodoPago) {
-    triggerAlert('error', 'Por favor selecciona un método de pago.');
-    return;
-  }
+    if (!metodoPago) {
+      triggerAlert('error', 'Por favor selecciona un método de pago.');
+      return;
+    }
 
-  if (metodoPago === 'transferencia' && !comprobante) {
-    setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
-    return;
-  }
+    if (metodoPago === 'transferencia' && !comprobante) {
+      setErrorComprobante('Es obligatorio subir el comprobante de transferencia');
+      return;
+    }
 
-  if (metodoPago === 'efectivo' && !sedeSeleccionada) {
-    triggerAlert('error', 'Por favor selecciona una sede para el pago en efectivo.');
-    return;
-  }
+    if (metodoPago === 'efectivo' && !sedeSeleccionada) {
+      triggerAlert('error', 'Por favor selecciona una sede para el pago en efectivo.');
+      return;
+    }
 
-  setProcesandoPedido(true);
+    // Validar que el total sea mayor a 0
+    if (totalFinal <= 0) {
+      triggerAlert('error', '❌ Error: El total del pedido debe ser mayor a 0. Por favor verifica los productos.');
+      console.error('❌ Total inválido:', totalFinal);
+      return;
+    }
 
-  try {
-    // Obtener información de la sede
-    const sedeInfo = sedes.find(s => s.id === sedeSeleccionada);
-    const sedeNombre = sedeInfo?.nombre || sedes[0]?.nombre || 'San Benito';
-    
-    console.log('🏪 Sede seleccionada:', sedeNombre);
-    console.log('💳 Método de pago:', metodoPago);
-    console.log('💰 Abono:', abono);
-    console.log('💰 Total:', totalFinal);
-    
-    // Preparar datos de la venta (ahora es async)
-    const datosVenta = await prepararDatosVenta({
-      metodo: metodoPago,
-      sede: sedeSeleccionada,
-      sedeNombre: sedeNombre,
-      abono: abono,
-      total: totalFinal,
-      numeroPedido: numeroPedido,
-      comprobante: comprobante
-    });
+    setProcesandoPedido(true);
 
-    console.log('📤 Datos de venta preparados:', datosVenta);
-
-    // PASO 1: Crear la venta
-    console.log('🔄 Creando venta...');
-    const ventaCreada = await ventaApiService.crearVenta(datosVenta);
-    console.log('✅ Venta creada exitosamente:', ventaCreada);
-
-    // PASO 2: Crear el abono
-    const abonoData = {
-      idpedido: ventaCreada.idVenta,
-      metodopago: metodoPago,
-      cantidadpagar: abono,
-      TotalPagado: abono
-    };
-
-    console.log('🔄 Creando abono con datos:', abonoData);
-    const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
-    console.log('✅ Abono creado exitosamente:', abonoCreado);
-
-    // PASO 3: Actualizar estado según método de pago
-    if (metodoPago === 'efectivo') {
-      // Para efectivo, establecer estado "Activa" (ID 5)
-      await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
+    try {
+      // Obtener información de la sede
+      const sedeInfo = sedes.find(s => s.id === sedeSeleccionada);
+      const sedeNombre = sedeInfo?.nombre || sedes[0]?.nombre || 'San Benito';
       
-      triggerAlert('success', 
-        `¡Pedido creado exitosamente!\n` +
-        `Número: ${numeroPedido}\n` +
-        `Sede: ${sedeNombre}\n` +
-        `Dirección: ${sedeInfo?.direccion || 'Ver en la sede'}\n` +
-        `Horario: ${sedeInfo?.horario || '9:00 AM - 6:00 PM'}\n` +
-        `Valor a pagar: $${abono.toLocaleString()}\n\n` +
-        `IMPORTANTE: Presenta este número de pedido al llegar a la sede.`
-      );
-    } else if (metodoPago === 'transferencia') {
-      // Para transferencia, dejar en "En espera" (ID 1) hasta verificar comprobante
-      triggerAlert('success', 
-        `¡Pedido creado exitosamente!\n` +
-        `Número: ${numeroPedido}\n` +
-        `Abono registrado: $${abono.toLocaleString()}\n` +
-        `Tu pedido quedará pendiente hasta verificar el comprobante de pago.\n` +
-        `Te notificaremos cuando sea aprobado.`
-      );
+      console.log('🏪 Sede seleccionada:', sedeNombre);
+      console.log('💳 Método de pago:', metodoPago);
+      console.log('💰 Abono:', abono);
+      console.log('💰 Total:', totalFinal);
+      console.log('📦 Subtotal Productos:', subtotalProductos);
+      console.log('✨ Subtotal Extras:', subtotalExtras);
+      
+      // Preparar datos de la venta con validación explícita
+      const datosPagoInfo = {
+        metodo: metodoPago,
+        sede: sedeSeleccionada,
+        sedeNombre: sedeNombre,
+        abono: Number(abono),
+        total: Number(totalFinal),
+        subtotalProductos: Number(subtotalProductos),
+        subtotalExtras: Number(subtotalExtras),
+        numeroPedido: numeroPedido,
+        comprobante: comprobante
+      };
+
+      console.log('📋 Datos de pago antes de preparar venta:', datosPagoInfo);
+      
+      // Preparar datos de la venta (ahora es async)
+      const datosVenta = await prepararDatosVenta(datosPagoInfo);
+
+      console.log('📤 Datos de venta preparados:', datosVenta);
+      
+      // Validar que datosVenta tenga el total correcto
+      if (!datosVenta.total || datosVenta.total <= 0) {
+        throw new Error(`Total inválido en datosVenta: ${datosVenta.total}. Usando totalFinal: ${totalFinal}`);
+      }
+
+      // PASO 1: Crear la venta
+      console.log('📄 Creando venta...');
+      const ventaCreada = await ventaApiService.crearVenta(datosVenta);
+      console.log('✅ Venta creada exitosamente:', ventaCreada);
+
+      // PASO 2: Crear el abono
+      const abonoData = {
+        idpedido: ventaCreada.idVenta,
+        metodopago: metodoPago,
+        cantidadpagar: abono,
+        TotalPagado: abono
+      };
+
+      console.log('📄 Creando abono con datos:', abonoData);
+      const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
+      console.log('✅ Abono creado exitosamente:', abonoCreado);
+
+      // PASO 3: Actualizar estado según método de pago
+      if (metodoPago === 'efectivo') {
+        // Para efectivo, establecer estado "Activa" (ID 5)
+        await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
+        
+        triggerAlert('success', 
+          `¡Pedido creado exitosamente!\n` +
+          `Número: ${numeroPedido}\n` +
+          `Sede: ${sedeNombre}\n` +
+          `Dirección: ${sedeInfo?.direccion || 'Ver en la sede'}\n` +
+          `Horario: ${sedeInfo?.horario || '9:00 AM - 6:00 PM'}\n` +
+          `Valor a pagar: $${abono.toLocaleString()}\n\n` +
+          `IMPORTANTE: Presenta este número de pedido al llegar a la sede.`
+        );
+      } else if (metodoPago === 'transferencia') {
+        // Para transferencia, dejar en "En espera" (ID 1) hasta verificar comprobante
+        triggerAlert('success', 
+          `¡Pedido creado exitosamente!\n` +
+          `Número: ${numeroPedido}\n` +
+          `Abono registrado: $${abono.toLocaleString()}\n` +
+          `Tu pedido quedará pendiente hasta verificar el comprobante de pago.\n` +
+          `Te notificaremos cuando sea aprobado.`
+        );
+      }
+
+      // Guardar datos del pago para referencia
+      const datosPago = {
+        metodo: metodoPago,
+        sede: sedeSeleccionada,
+        sedeNombre: sedeNombre,
+        abono: abono,
+        total: totalFinal,
+        numeroPedido: numeroPedido,
+        comprobante: comprobante,
+        idVenta: ventaCreada.idVenta,
+        idAbono: abonoCreado.id || abonoCreado.idabono
+      };
+
+      onOpcionSeleccionada(datosPago);
+      
+      // Esperar 3 segundos y recargar la página para mostrar el nuevo pedido
+      setTimeout(() => {
+        console.log('🔄 Recargando página...');
+        window.location.reload();
+      }, 3000);
+
+    } catch (error) {
+      console.error('❌ Error al procesar pago:', error);
+      
+      // Mensajes de error específicos
+      let mensajeError = 'Error al crear el pedido';
+      
+      if (error.message.includes('inventario') || error.message.includes('Inventario')) {
+        mensajeError = `Stock insuficiente: ${error.message}`;
+      } else if (error.message.includes('INVENTARIO_INSUFICIENTE')) {
+        mensajeError = 'No hay suficiente inventario disponible para completar el pedido';
+      } else if (error.message.includes('sede')) {
+        mensajeError = 'Error con la sede seleccionada. Por favor intenta de nuevo';
+      } else {
+        mensajeError = error.message || 'Error desconocido al procesar el pedido';
+      }
+      
+      triggerAlert('error', mensajeError);
+    } finally {
+      setProcesandoPedido(false);
     }
+  };
 
-    // Guardar datos del pago para referencia
-    const datosPago = {
-      metodo: metodoPago,
-      sede: sedeSeleccionada,
-      sedeNombre: sedeNombre,
-      abono: abono,
-      total: totalFinal,
-      numeroPedido: numeroPedido,
-      comprobante: comprobante,
-      idVenta: ventaCreada.idVenta,
-      idAbono: abonoCreado.id || abonoCreado.idabono
-    };
-
-    onOpcionSeleccionada(datosPago);
-    
-    // Esperar 3 segundos y recargar la página para mostrar el nuevo pedido
-    setTimeout(() => {
-      console.log('🔄 Recargando página...');
-      window.location.reload();
-    }, 3000);
-
-  } catch (error) {
-    console.error('❌ Error al procesar pago:', error);
-    
-    // Mensajes de error específicos
-    let mensajeError = 'Error al crear el pedido';
-    
-    if (error.message.includes('inventario') || error.message.includes('Inventario')) {
-      mensajeError = `Stock insuficiente: ${error.message}`;
-    } else if (error.message.includes('INVENTARIO_INSUFICIENTE')) {
-      mensajeError = 'No hay suficiente inventario disponible para completar el pedido';
-    } else if (error.message.includes('sede')) {
-      mensajeError = 'Error con la sede seleccionada. Por favor intenta de nuevo';
-    } else {
-      mensajeError = error.message || 'Error desconocido al procesar el pedido';
-    }
-    
-    triggerAlert('error', mensajeError);
-  } finally {
-    setProcesandoPedido(false);
-  }
-};
-
-return (
+  return (
     <div className="opciones-pago-view">
       {procesandoPedido && (
         <div style={{
@@ -441,43 +564,146 @@ return (
       )}
 
       <div className="pago-contenido">
- <div className="seccion-header">
-  <h2 className="seccion-title">💳 Opciones de Pago</h2>
-  <div className="numero-pedido">
-    <span>📋 Número de Pedido: <strong>{numeroPedido}</strong></span>
-  </div>
-  <div style={{
-    background: '#fce4ec',
-    padding: '12px 20px',
-    borderRadius: '12px',
-    border: '2px solid #e91e63',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginTop: '15px',
-    fontSize: '15px',
-    boxShadow: '0 2px 8px rgba(233, 30, 99, 0.2)'
-  }}>
-    <span style={{ fontSize: '20px' }}>ℹ️</span>
-    <span style={{ color: '#c2185b', fontWeight: '600' }}>Los productos personalizados requieren un abono del 50% para iniciar la producción</span>
-  </div>
-</div>
+        <div className="seccion-header">
+          <h2 className="seccion-title">💳 Opciones de Pago</h2>
+          <div className="numero-pedido">
+            <span>📋 Número de Pedido: <strong>{numeroPedido}</strong></span>
+          </div>
+          <div style={{
+            background: '#fce4ec',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            border: '2px solid #e91e63',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '15px',
+            fontSize: '15px',
+            boxShadow: '0 2px 8px rgba(233, 30, 99, 0.2)'
+          }}>
+            <span style={{ fontSize: '20px' }}>ℹ️</span>
+            <span style={{ color: '#c2185b', fontWeight: '600' }}>Los productos personalizados requieren un abono del 50% para iniciar la producción</span>
+          </div>
+        </div>
 
         <div className="resumen-pago">
           <h3 className="resumen-title">📋 Resumen del Pedido</h3>
 
-          {pedido?.productos && pedido.productos.length > 0 && (
-            <div className="productos-lista">
-              <h4 className="subseccion-title">Productos:</h4>
-              {pedido.productos.map((producto, index) => (
-                <div key={index} className="producto-pago-item">
-                  <span className="producto-nombre">{producto.nombre}</span>
-                  <span className="producto-cantidad">x{producto.cantidad || 1}</span>
-                  <span className="producto-precio">${(producto.precio * (producto.cantidad || 1)).toLocaleString()}</span>
+          {(() => {
+            const productos = obtenerTodosLosProductos();
+            
+            if (!productos || productos.length === 0) {
+              return (
+                <div style={{
+                  padding: '30px',
+                  textAlign: 'center',
+                  background: '#fff3cd',
+                  borderRadius: '12px',
+                  border: '2px dashed #ffc107'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '15px' }}>⚠️</div>
+                  <h4 style={{ color: '#856404', marginBottom: '10px' }}>
+                    No se encontraron productos
+                  </h4>
+                  <p style={{ color: '#856404', fontSize: '14px' }}>
+                    Por favor, regresa y agrega productos al carrito
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            }
+
+            return (
+              <>
+                <div className="productos-lista">
+                  <h4 className="subseccion-title">Productos:</h4>
+                  {productos.map((producto, index) => (
+                    <div key={index} className="producto-pago-item">
+                      <span className="producto-nombre">{producto.nombre}</span>
+                      <span className="producto-cantidad">x{producto.cantidad || 1}</span>
+                      <span className="producto-precio">${(producto.precio * (producto.cantidad || 1)).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mostrar personalizaciones si existen */}
+                {(() => {
+                  const tienePersonalizaciones = productos.some(producto => {
+                    const personalizacionProducto = personalizacionesProductos[producto.id];
+                    if (!personalizacionProducto) return false;
+                    
+                    return Object.values(personalizacionProducto).some(unidad => 
+                      (unidad.toppings?.length > 0) ||
+                      (unidad.salsas?.length > 0) ||
+                      (unidad.rellenos?.length > 0) ||
+                      (unidad.adiciones?.length > 0) ||
+                      (unidad.sabores?.length > 0)
+                    );
+                  });
+
+                  if (!tienePersonalizaciones) return null;
+
+                  return (
+                    <div className="extras-section">
+                      <h4 className="subseccion-title">🎨 Personalizaciones:</h4>
+                      {productos.map(producto => {
+                        const personalizacionProducto = personalizacionesProductos[producto.id];
+                        if (!personalizacionProducto) return null;
+
+                        const extrasProducto = [];
+                        
+                        Object.values(personalizacionProducto).forEach(unidad => {
+                          ['toppings', 'salsas', 'rellenos', 'adiciones', 'sabores'].forEach(tipo => {
+                            if (unidad[tipo]?.length > 0) {
+                              unidad[tipo].forEach(item => {
+                                const existente = extrasProducto.find(e => e.nombre === item.nombre);
+                                if (existente) {
+                                  existente.cantidad++;
+                                } else {
+                                  extrasProducto.push({
+                                    nombre: item.nombre,
+                                    precio: item.precio || 0,
+                                    cantidad: 1
+                                  });
+                                }
+                              });
+                            }
+                          });
+                        });
+
+                        if (extrasProducto.length === 0) return null;
+
+                        return (
+                          <div key={producto.id} style={{ marginBottom: '15px' }}>
+                            <strong style={{ 
+                              display: 'block', 
+                              marginBottom: '8px',
+                              color: '#495057',
+                              fontSize: '14px'
+                            }}>
+                              {producto.nombre}:
+                            </strong>
+                            {extrasProducto.map((extra, idx) => (
+                              <div key={idx} className="extra-item">
+                                <span>
+                                  {extra.nombre} {extra.cantidad > 1 && `x${extra.cantidad}`}
+                                </span>
+                                <span>
+                                  {extra.precio > 0 
+                                    ? `+$${(extra.precio * extra.cantidad).toLocaleString()}`
+                                    : 'Gratis'
+                                  }
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </>
+            );
+          })()}
 
           {pedido?.toppings && pedido.toppings.length > 0 && (
             <div className="extras-section">
@@ -517,29 +743,21 @@ return (
 
           <div className="totales">
             <div className="total-item">
-              <span>Productos:</span>
+              <span>Subtotal Productos:</span>
               <span>${subtotalProductos.toLocaleString()}</span>
             </div>
             {subtotalExtras > 0 && (
               <div className="total-item">
-                <span>Extras (toppings/adiciones/salsas):</span>
+                <span>Personalizaciones:</span>
                 <span>${subtotalExtras.toLocaleString()}</span>
               </div>
             )}
-            <div className="total-item">
-              <span>Subtotal:</span>
-              <span>${subtotalTotal.toLocaleString()}</span>
-            </div>
-            <div className="total-item">
-              <span>IVA (19%):</span>
-              <span>${iva.toLocaleString()}</span>
-            </div>
             <div className="total-item total-final">
-              <span>Total:</span>
+              <span>Total del Pedido:</span>
               <span>${totalFinal.toLocaleString()}</span>
             </div>
             <div className="total-item abono-destacado">
-              <span>📸 Abono requerido (50%):</span>
+              <span>💸 Abono requerido (50%):</span>
               <span className="abono-valor">${abono.toLocaleString()}</span>
             </div>
           </div>

@@ -1,9 +1,10 @@
-// VentasCrear.jsx - Con estructura igual a CompraForm
+// VentasCrear.jsx - CORREGIDO: Funciones de toppings agregadas
 import React, { useEffect, useState } from 'react';
 import AgregarProductosModal from '../../components/catalogos/AgregarProductosModal';
 import AgregarAdicionesModal from '../../components/catalogos/AgregarAdicionesModal';
 import AgregarSalsasModal from '../../components/catalogos/AgregarSalsasModal';
 import AgregarRellenosModal from '../../components/catalogos/AgregarRellenosModal';
+import AgregarToppingsModal from '../../components/catalogos/AgregarToppingsModal';
 import clienteApiService from '../../services/cliente_services';
 import ventaApiService from '../../services/venta_services';
 import './VentasCrear.css';
@@ -39,24 +40,27 @@ export default function VentasCrear({
     agregarRellenos,
     setProductoEditandoId,
     productoEditandoId,
-    showNotification
+    showNotification,
+    // ✅ PROPS ADICIONALES PARA TOPPINGS
+    abrirModalToppings,
+    removeTopping,
+    mostrarModalToppings,
+    setMostrarModalToppings,
+    agregarToppings,
+    configuraciones,
+    setConfiguraciones,
+    setInsumosSeleccionados
 }) {
-    // Estados para clientes
     const [clientes, setClientes] = useState([]);
     const [loadingClientes, setLoadingClientes] = useState(true);
     const [errorClientes, setErrorClientes] = useState('');
-    
-    // Estados para sedes
     const [sedes, setSedes] = useState([]);
     const [loadingSedes, setLoadingSedes] = useState(true);
     const [errorSedes, setErrorSedes] = useState('');
-    
-    // Estados para el campo de cliente con búsqueda
     const [inputCliente, setInputCliente] = useState('');
     const [clientesFiltrados, setClientesFiltrados] = useState([]);
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
-    // Función para obtener la fecha de hoy en formato YYYY-MM-DD
     const getTodayDate = () => {
         const today = new Date();
         const year = today.getFullYear();
@@ -65,13 +69,16 @@ export default function VentasCrear({
         return `${year}-${month}-${day}`;
     };
 
-    // Cargar clientes y sedes al montar el componente
     useEffect(() => {
         fetchClientes();
         fetchSedes();
     }, []);
 
-    // Establecer la fecha de venta al día de hoy al cargar el componente
+    // Cargar configuraciones cuando cambian los productos
+    useEffect(() => {
+        cargarConfiguraciones();
+    }, [insumosSeleccionados]);
+
     useEffect(() => {
         if (ventaData.fecha_venta !== getTodayDate()) {
             handleChange({
@@ -83,19 +90,56 @@ export default function VentasCrear({
         }
     }, [ventaData.fecha_venta, handleChange]);
 
-    // Función para cargar clientes desde la API
+    // FUNCIÓN PARA CARGAR CONFIGURACIONES DE PRODUCTOS
+    const cargarConfiguraciones = async () => {
+        const configs = {};
+        for (const producto of insumosSeleccionados) {
+            if (!configuraciones[producto.id]) {
+                try {
+                    const response = await fetch(
+                        `https://deliciasoft-backend-i6g9.onrender.com/api/configuracion-producto/producto/${producto.id}`
+                    );
+                    if (response.ok) {
+                        const config = await response.json();
+                        configs[producto.id] = config;
+                    } else {
+                        configs[producto.id] = {
+                            permiteToppings: false,
+                            permiteSalsas: false,
+                            permiteRellenos: false,
+                            permiteAdiciones: false,
+                            limiteTopping: 0,
+                            limiteSalsa: 0,
+                            limiteRelleno: 0
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error al cargar config para producto ${producto.id}:`, error);
+                    configs[producto.id] = {
+                        permiteToppings: false,
+                        permiteSalsas: false,
+                        permiteRellenos: false,
+                        permiteAdiciones: false,
+                        limiteTopping: 0,
+                        limiteSalsa: 0,
+                        limiteRelleno: 0
+                    };
+                }
+            }
+        }
+        setConfiguraciones(prev => ({ ...prev, ...configs }));
+    };
+
     const fetchClientes = async () => {
         try {
             setLoadingClientes(true);
             setErrorClientes('');
-            
             const clientesData = await clienteApiService.obtenerClientesParaVenta();
             setClientes(clientesData);
             setClientesFiltrados(clientesData);
         } catch (error) {
             console.error('Error al cargar clientes:', error);
             setErrorClientes('Error al cargar clientes');
-            
             const fallbackClientes = [
                 {
                     idcliente: null,
@@ -110,13 +154,11 @@ export default function VentasCrear({
         }
     };
 
-    // Función para cargar sedes desde la API
     const fetchSedes = async () => {
         try {
             setLoadingSedes(true);
             setErrorSedes('');
-            
-            const response = await fetch('https://deliciasoft-backend.onrender.com/api/sede', {
+            const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/sede', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -131,11 +173,9 @@ export default function VentasCrear({
             const sedesData = await response.json();
             const sedesActivas = sedesData.filter(sede => sede.estado === true);
             setSedes(sedesActivas);
-            
         } catch (error) {
             console.error('Error al cargar sedes:', error);
             setErrorSedes('Error al cargar sedes');
-            
             const fallbackSedes = [
                 { idsede: 1, nombre: 'San Pablo' },
                 { idsede: 2, nombre: 'San Benito' }
@@ -146,7 +186,6 @@ export default function VentasCrear({
         }
     };
 
-    // Función para filtrar clientes basado en la entrada del usuario
     const filtrarClientes = (termino) => {
         if (!termino || termino.trim() === '') {
             setClientesFiltrados(clientes);
@@ -154,18 +193,15 @@ export default function VentasCrear({
         }
 
         const terminoLimpio = termino.toLowerCase().trim();
-        
         const filtrados = clientes.filter(cliente => {
             const nombre = cliente.nombreCompleto?.toLowerCase() || '';
             const documento = cliente.numeroDocumento?.toString() || '';
-            
             return nombre.includes(terminoLimpio) || documento.includes(terminoLimpio);
         });
 
         setClientesFiltrados(filtrados);
     };
 
-    // Función para manejar cambios en el input de cliente
     const handleInputClienteChange = (e) => {
         const valor = e.target.value;
         setInputCliente(valor);
@@ -197,7 +233,6 @@ export default function VentasCrear({
         }
     };
 
-    // Función para seleccionar un cliente de la lista
     const seleccionarCliente = (cliente) => {
         const displayText = cliente.numeroDocumento 
             ? `${cliente.nombreCompleto} -- ${cliente.numeroDocumento}`
@@ -221,7 +256,6 @@ export default function VentasCrear({
         });
     };
 
-    // Función para manejar el foco del input
     const handleInputFocus = () => {
         setMostrarSugerencias(true);
         if (clientesFiltrados.length === clientes.length && inputCliente === '') {
@@ -229,14 +263,12 @@ export default function VentasCrear({
         }
     };
 
-    // Función para manejar cuando se pierde el foco
     const handleInputBlur = () => {
         setTimeout(() => {
             setMostrarSugerencias(false);
         }, 200);
     };
 
-    // Calcular las fechas min y max para la fecha de entrega
     const today = new Date();
     const minDeliveryDate = new Date();
     minDeliveryDate.setDate(today.getDate() + 15);
@@ -254,7 +286,6 @@ export default function VentasCrear({
     const minDateFormatted = formatForInput(minDeliveryDate);
     const maxDateFormatted = formatForInput(maxDeliveryDate);
 
-    // Función para manejar el envío del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -274,6 +305,7 @@ export default function VentasCrear({
                     precio: producto.precio,
                     subtotal: (producto.precio * (producto.cantidad || 1)),
                     disponible: producto.disponible,
+                    toppings: producto.toppings || [],
                     adiciones: producto.adiciones || [],
                     salsas: producto.salsas || [],
                     sabores: producto.sabores || []
@@ -287,7 +319,6 @@ export default function VentasCrear({
         }
     };
 
-    // Validar que no se pueda abrir el modal sin sede (para venta directa)
     const handleAbrirModal = () => {
         if (!ventaData.tipo_venta) {
             if (showNotification) {
@@ -310,9 +341,52 @@ export default function VentasCrear({
         setMostrarModalInsumos(true);
     };
 
+    const obtenerBotonesCatalogo = (productoId) => {
+        const config = configuraciones[productoId];
+        if (!config) return null;
+
+        const botones = [];
+
+        if (config.permiteToppings) {
+            botones.push({
+                key: 'toppings',
+                label: 'Toppings',
+                limite: config.limiteTopping,
+                onClick: () => abrirModalToppings(productoId)
+            });
+        }
+
+        if (config.permiteSalsas) {
+            botones.push({
+                key: 'salsas',
+                label: 'Salsas',
+                limite: config.limiteSalsa,
+                onClick: () => abrirModalSalsas(productoId)
+            });
+        }
+
+        if (config.permiteRellenos) {
+            botones.push({
+                key: 'rellenos',
+                label: 'Rellenos',
+                limite: config.limiteRelleno,
+                onClick: () => abrirModalRellenos(productoId)
+            });
+        }
+
+        if (config.permiteAdiciones) {
+            botones.push({
+                key: 'adiciones',
+                label: 'Adiciones',
+                onClick: () => abrirModalAdiciones(productoId)
+            });
+        }
+
+        return botones;
+    };
+
     return (
         <div className="compra-form-container">
-            {/* Header con información */}
             <div className="header-info">
                 <div className="info-badge">
                     <span className="badge-icon">🛒</span>
@@ -320,7 +394,6 @@ export default function VentasCrear({
                 </div>
             </div>
 
-            {/* Formulario principal */}
             <div className="form-card">
                 <h2 className="section-title">
                     <span className="title-icon">🏢</span>
@@ -363,7 +436,7 @@ export default function VentasCrear({
                             )}
                         </div>
                         
-{ventaData.tipo_venta === 'pedido' && (
+                        {ventaData.tipo_venta === 'pedido' && (
                             <>
                                 <div className="field-group">
                                     <label className="field-label">Fecha de Entrega <span style={{ color: 'red' }}>*</span></label>
@@ -502,7 +575,6 @@ export default function VentasCrear({
                 </form>
             </div>
             
-            {/* Sección de detalles */}
             <div className="form-card">
                 <h2 className="section-title">
                     <span className="title-icon">📦</span>
@@ -523,9 +595,7 @@ export default function VentasCrear({
                                 <th>Nombre</th>
                                 <th>Cantidad</th>
                                 <th>Precio Unitario</th>
-                                <th>Adiciones</th>
-                                <th>Salsas</th>
-                                <th>Rellenos</th>
+                                <th style={{ width: '250px' }}>Catálogos</th>
                                 <th>Subtotal Item</th>
                                 <th>Acciones</th>
                             </tr>
@@ -533,7 +603,7 @@ export default function VentasCrear({
                         <tbody>
                             {insumosSeleccionados.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" style={{textAlign: 'center', padding: '20px'}}>
+                                    <td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>
                                         No hay productos en esta venta
                                     </td>
                                 </tr>
@@ -543,21 +613,22 @@ export default function VentasCrear({
                                         <tr className="product-row">
                                             <td className="product-name">
                                                 {item.nombre}
-                                                <button
-                                                    type="button"
-                                                    className="btn-small toggle-details-btn"
-                                                    onClick={() => toggleNestedDetails(item.id)}
-                                                    title={nestedDetailsVisible[item.id] ? 'Ocultar detalles' : 'Mostrar detalles'}
-                                                    style={{ marginLeft: '10px' }}
-                                                >
-                                                    {nestedDetailsVisible[item.id] ? '▲' : '▼'}
-                                                </button>
+                                                {nestedDetailsVisible[item.id] !== undefined && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-small toggle-details-btn"
+                                                        onClick={() => toggleNestedDetails(item.id)}
+                                                        title={nestedDetailsVisible[item.id] ? 'Ocultar detalles' : 'Mostrar detalles'}
+                                                        style={{ marginLeft: '10px' }}
+                                                    >
+                                                        {nestedDetailsVisible[item.id] ? '▲' : '▼'}
+                                                    </button>
+                                                )}
                                             </td>
-                                           <td className="quantity-cell">
+                                            <td className="quantity-cell">
                                                 <input
                                                     type="number"
                                                     min={1}
-                                                    // SOLO establecer max para venta directa
                                                     max={
                                                         (ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') 
                                                             ? item.disponible 
@@ -569,13 +640,11 @@ export default function VentasCrear({
                                                     }
                                                     className="quantity-input"
                                                 />
-                                                {/* SOLO mostrar disponibilidad para venta directa */}
                                                 {(ventaData.tipo_venta === 'directa' || ventaData.tipo_venta === 'venta directa') && (
                                                     <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
                                                         Máx: {item.disponible}
                                                     </div>
                                                 )}
-                                                {/* Mostrar mensaje informativo para pedidos */}
                                                 {ventaData.tipo_venta === 'pedido' && (
                                                     <div style={{ fontSize: '11px', color: '#2563eb', marginTop: '2px' }}>
                                                         Sin límite (se producirá)
@@ -583,19 +652,48 @@ export default function VentasCrear({
                                                 )}
                                             </td>
                                             <td className="price-cell">${item.precio.toLocaleString('es-CO')}</td>
-                                            <td className="action-cell">
-                                                <button type="button" className="btn-small" onClick={() => abrirModalAdiciones(item.id)}>+ Adición</button>
+                                            
+                                            <td className="catalog-buttons-cell">
+                                                {(() => {
+                                                    const botones = obtenerBotonesCatalogo(item.id);
+                                                    if (!botones || botones.length === 0) {
+                                                        return <span style={{ color: '#9ca3af', fontSize: '12px' }}>Sin catálogos</span>;
+                                                    }
+                                                    return (
+                                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                            {botones.map(btn => {
+                                                                const itemsCatalogo = item[btn.key] || [];
+                                                                const count = itemsCatalogo.length;
+                                                                const limiteAlcanzado = btn.limite && count >= btn.limite;
+                                                                
+                                                                return (
+                                                                    <button
+                                                                        key={btn.key}
+                                                                        type="button"
+                                                                        className="btn-small"
+                                                                        onClick={btn.onClick}
+                                                                        disabled={limiteAlcanzado}
+                                                                        style={{
+                                                                            opacity: limiteAlcanzado ? 0.5 : 1,
+                                                                            cursor: limiteAlcanzado ? 'not-allowed' : 'pointer',
+                                                                            background: limiteAlcanzado ? '#e5e7eb' : undefined,
+                                                                            fontSize: '12px',
+                                                                            padding: '5px 10px'
+                                                                        }}
+                                                                        title={`${btn.label}${btn.limite ? ` (${count}/${btn.limite})` : count > 0 ? ` (${count})` : ''}`}
+                                                                    >
+                                                                        + {btn.label}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </td>
-                                            <td className="action-cell">
-                                                <button type="button" className="btn-small" onClick={() => abrirModalSalsas(item.id)}>+ Salsa</button>
-                                            </td>
-                                            <td className="action-cell">
-                                                <button type="button" className="btn-small" onClick={() => abrirModalRellenos(item.id)}>+ Relleno</button>
-                                            </td>
+                                            
                                             <td className="subtotal-cell">
                                                 ${((item.precio * (item.cantidad || 1)) +
-                                                    (item.adiciones?.slice(2)?.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) || 0) +
-                                                    (item.sabores?.reduce((acc, re) => acc + (re.precio * (re.cantidad || 1)), 0) || 0)
+                                                    (item.adiciones?.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) || 0)
                                                 ).toLocaleString('es-CO')}
                                             </td>
                                             <td className="action-cell">
@@ -611,7 +709,43 @@ export default function VentasCrear({
                                         </tr>
                                         {nestedDetailsVisible[item.id] && (
                                             <tr>
-                                                <td colSpan="8" style={{background: '#f9fafb', padding: '16px'}}>
+                                                <td colSpan="6" style={{background: '#f9fafb', padding: '16px'}}>
+                                                    {item.toppings && item.toppings.length > 0 && (
+                                                        <div className="nested-item-list">
+                                                            <strong>Toppings:</strong>
+                                                            {item.toppings.map(t => (
+                                                                <div key={t.id}>
+                                                                    {t.nombre}
+                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeTopping(item.id, t.id)}>x</button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {item.salsas && item.salsas.length > 0 && (
+                                                        <div className="nested-item-list">
+                                                            <strong>Salsas:</strong>
+                                                            {item.salsas.map(sa => (
+                                                                <div key={sa.id}>
+                                                                    {sa.nombre}
+                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeSalsa(item.id, sa.id)}>x</button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {item.sabores && item.sabores.length > 0 && (
+                                                        <div className="nested-item-list">
+                                                            <strong>Rellenos:</strong>
+                                                            {item.sabores.map(re => (
+                                                                <div key={re.id}>
+                                                                    {re.nombre}
+                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeRelleno(item.id, re.id)}>x</button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    
                                                     {item.adiciones && item.adiciones.length > 0 && (
                                                         <div className="nested-item-list">
                                                             <strong>Adiciones:</strong>
@@ -623,32 +757,12 @@ export default function VentasCrear({
                                                             ))}
                                                         </div>
                                                     )}
-                                                    {item.salsas && item.salsas.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Salsas:</strong>
-                                                            {item.salsas.map(sa => (
-                                                                <div key={sa.id}>
-                                                                    {sa.nombre} (${sa.precio.toLocaleString('es-CO')})
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeSalsa(item.id, sa.id)}>x</button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {item.sabores && item.sabores.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Rellenos:</strong>
-                                                            {item.sabores.map(re => (
-                                                                <div key={re.id}>
-                                                                    {re.nombre} (${re.precio.toLocaleString('es-CO')})
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeRelleno(item.id, re.id)}>x</button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {(!item.adiciones || item.adiciones.length === 0) && 
+                                                    
+                                                    {(!item.toppings || item.toppings.length === 0) && 
+                                                     (!item.adiciones || item.adiciones.length === 0) && 
                                                      (!item.salsas || item.salsas.length === 0) && 
                                                      (!item.sabores || item.sabores.length === 0) && (
-                                                        <p style={{margin: 0, color: '#6b7280'}}>No hay adiciones, salsas o rellenos añadidos.</p>
+                                                        <p style={{margin: 0, color: '#6b7280'}}>No hay catálogos añadidos.</p>
                                                     )}
                                                 </td>
                                             </tr>
@@ -670,7 +784,6 @@ export default function VentasCrear({
                 </button>
             </div>
 
-            {/* Tarjetas de totales */}
             <div className="totals-section">
                 <div className="totals-grid">
                     <div className="total-card subtotal-card">
@@ -691,7 +804,6 @@ export default function VentasCrear({
                 </div>
             </div>
 
-            {/* Botones de acción */}
             <div className="action-buttons">
                 <button
                     type="button"
@@ -709,6 +821,7 @@ export default function VentasCrear({
                 </button>
             </div>
 
+            {/* MODALES */}
             {mostrarModalInsumos && (
                 <AgregarProductosModal
                     onClose={() => setMostrarModalInsumos(false)}
@@ -719,9 +832,23 @@ export default function VentasCrear({
                 />
             )}
 
+            {mostrarModalToppings && (
+                <AgregarToppingsModal
+                    onClose={() => { 
+                        setMostrarModalToppings(false); 
+                        setProductoEditandoId(null); 
+                    }}
+                    onAgregar={agregarToppings}
+                    limiteMaximo={configuraciones[productoEditandoId]?.limiteTopping || null}
+                />
+            )}
+
             {mostrarModalAdiciones && (
                 <AgregarAdicionesModal
-                    onClose={() => { setMostrarModalAdiciones(false); setProductoEditandoId(null); }}
+                    onClose={() => { 
+                        setMostrarModalAdiciones(false); 
+                        setProductoEditandoId(null); 
+                    }}
                     onAgregar={agregarAdiciones}
                     adicionesSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.adiciones || []}
                 />
@@ -729,16 +856,24 @@ export default function VentasCrear({
             
             {mostrarModalSalsas && (
                 <AgregarSalsasModal
-                    onClose={() => { setMostrarModalSalsas(false); setProductoEditandoId(null); }}
+                    onClose={() => { 
+                        setMostrarModalSalsas(false); 
+                        setProductoEditandoId(null); 
+                    }}
                     onAgregar={agregarSalsas}
+                    limiteMaximo={configuraciones[productoEditandoId]?.limiteSalsa || null}
                     salsasSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.salsas || []}
                 />
             )}
             
             {mostrarModalRellenos && (
                 <AgregarRellenosModal
-                    onClose={() => { setMostrarModalRellenos(false); setProductoEditandoId(null); }}
+                    onClose={() => { 
+                        setMostrarModalRellenos(false); 
+                        setProductoEditandoId(null); 
+                    }}
                     onAgregar={agregarRellenos}
+                    limiteMaximo={configuraciones[productoEditandoId]?.limiteRelleno || null}
                     rellenosSeleccionados={insumosSeleccionados.find(item => item.id === productoEditandoId)?.sabores || []}
                 />
             )}

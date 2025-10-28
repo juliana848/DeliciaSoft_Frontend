@@ -35,6 +35,50 @@ export default function Ventas() {
     const [mostrarModalInsumos, setMostrarModalInsumos] = useState(false);
     const [mostrarVerDetalle, setMostrarVerDetalle] = useState(false);
     const [erroresValidacion, setErroresValidacion] = useState({});
+    const [mostrarModalToppings, setMostrarModalToppings] = useState(false);
+    const [configuraciones, setConfiguraciones] = useState({});
+
+    // Agregar función para abrir modal de toppings
+const abrirModalToppings = (productoId) => {
+    setProductoEditandoId(productoId);
+    setMostrarModalToppings(true);
+};
+
+// Agregar función para agregar toppings
+const agregarToppings = (toppings) => {
+    console.log('🍫 Agregando toppings:', toppings);
+    console.log('📦 Producto editando:', productoEditandoId);
+    
+    setInsumosSeleccionados(prev => {
+        const nuevosInsumos = prev.map(item => {
+            if (item.id === productoEditandoId) {
+                const toppingsExistentes = item.toppings || [];
+                const toppingsNuevos = toppings.filter(
+                    nuevoTopping => !toppingsExistentes.some(existente => existente.id === nuevoTopping.id)
+                );
+                console.log('✅ Toppings a agregar (sin duplicados):', toppingsNuevos);
+                return {
+                    ...item,
+                    toppings: [...toppingsExistentes, ...toppingsNuevos]
+                };
+            }
+            return item;
+        });
+        console.log('📋 Insumos actualizados:', nuevosInsumos);
+        return nuevosInsumos;
+    });
+};
+
+// Agregar función para remover toppings
+const removeTopping = (itemId, toppingId) => {
+    setInsumosSeleccionados(prev => 
+        prev.map(item => 
+            item.id === itemId 
+                ? { ...item, toppings: item.toppings?.filter(t => t.id !== toppingId) || [] }
+                : item
+        )
+    );
+};
     
     // Estados para los modales de ventas
     const [mostrarModalAbonos, setMostrarModalAbonos] = useState(false);
@@ -492,35 +536,65 @@ const verAbonosVenta = async (venta) => {
         setInsumosSeleccionados(prev => [...prev, ...nuevosInsumos]);
     };
 
-    const agregarAdiciones = (adiciones) => {
-        setInsumosSeleccionados(prev => 
-            prev.map(item => 
-                item.id === productoEditandoId 
-                    ? { ...item, adiciones: [...(item.adiciones || []), ...adiciones] }
-                    : item
-            )
-        );
-    };
+const agregarAdiciones = (adiciones) => {
+    console.log('✨ Agregando adiciones:', adiciones);
+    
+    setInsumosSeleccionados(prev => 
+        prev.map(item => {
+            if (item.id === productoEditandoId) {
+                const adicionesExistentes = item.adiciones || [];
+                const adicionesNuevos = adiciones.filter(
+                    nuevaAdicion => !adicionesExistentes.some(existente => existente.id === nuevaAdicion.id)
+                );
+                return {
+                    ...item,
+                    adiciones: [...adicionesExistentes, ...adicionesNuevos]
+                };
+            }
+            return item;
+        })
+    );
+};
 
-    const agregarSalsas = (salsas) => {
-        setInsumosSeleccionados(prev => 
-            prev.map(item => 
-                item.id === productoEditandoId 
-                    ? { ...item, salsas: [...(item.salsas || []), ...salsas] }
-                    : item
-            )
-        );
-    };
+const agregarSalsas = (salsas) => {
+    console.log('🍯 Agregando salsas:', salsas);
+    
+    setInsumosSeleccionados(prev => 
+        prev.map(item => {
+            if (item.id === productoEditandoId) {
+                const salsasExistentes = item.salsas || [];
+                const salsasNuevos = salsas.filter(
+                    nuevaSalsa => !salsasExistentes.some(existente => existente.id === nuevaSalsa.id)
+                );
+                return {
+                    ...item,
+                    salsas: [...salsasExistentes, ...salsasNuevos]
+                };
+            }
+            return item;
+        })
+    );
+};
 
-    const agregarRellenos = (rellenos) => {
-        setInsumosSeleccionados(prev => 
-            prev.map(item => 
-                item.id === productoEditandoId 
-                    ? { ...item, sabores: [...(item.sabores || []), ...rellenos] }
-                    : item
-            )
-        );
-    };
+const agregarRellenos = (rellenos) => {
+    console.log('🥧 Agregando rellenos:', rellenos);
+    
+    setInsumosSeleccionados(prev => 
+        prev.map(item => {
+            if (item.id === productoEditandoId) {
+                const rellenosExistentes = item.sabores || [];
+                const rellenosNuevos = rellenos.filter(
+                    nuevoRelleno => !rellenosExistentes.some(existente => existente.id === nuevoRelleno.id)
+                );
+                return {
+                    ...item,
+                    sabores: [...rellenosExistentes, ...rellenosNuevos]
+                };
+            }
+            return item;
+        })
+    );
+};
 
     // Funciones para remover elementos
     const removeInsumo = (itemId) => {
@@ -743,6 +817,12 @@ const verAbonosVenta = async (venta) => {
                     agregarRellenos={agregarRellenos}
                     setProductoEditandoId={setProductoEditandoId}
                     productoEditandoId={productoEditandoId}
+                    abrirModalToppings={abrirModalToppings}
+                    removeTopping={removeTopping}
+                    mostrarModalToppings={mostrarModalToppings}
+                    setMostrarModalToppings={setMostrarModalToppings}
+                    configuraciones={configuraciones}
+                    setConfiguraciones={setConfiguraciones}
                 />
             ) : (
                 <VentasListar

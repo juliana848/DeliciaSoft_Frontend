@@ -256,11 +256,27 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
     
     setTimeout(() => {
       const ubicacionSeleccionadaData = ubicaciones.find(u => u.id === ubicacionSeleccionada);
+      
+      // 🎯 GUARDAR DATOS DE ENTREGA EN LOCALSTORAGE
+      const datosEntregaCompletos = {
+        fecha: datosEntrega.fecha,
+        hora: datosEntrega.hora,
+        telefono: datosEntrega.telefono,
+        observaciones: datosEntrega.observaciones || '',
+        ubicacion: ubicacionSeleccionada,
+        ubicacionData: ubicacionSeleccionadaData
+      };
+      
+      console.log('💾 Guardando datos de entrega en localStorage:', datosEntregaCompletos);
+      localStorage.setItem('datosEntrega', JSON.stringify(datosEntregaCompletos));
+      
+      // Pasar datos al componente padre
       onOpcionSeleccionada({
         ubicacion: ubicacionSeleccionada,
         ubicacionData: ubicacionSeleccionadaData,
-        datosEntrega: datosEntrega
+        datosEntrega: datosEntregaCompletos
       });
+      
       onSiguiente();
     }, 1000);
   };
@@ -281,7 +297,6 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
   const fechaMaximaString = fechaMaxima.toISOString().split('T')[0];
 
   return (
-
     <div className="opciones-entrega-container">
       {/* Contenedor de alertas */}
       <div className="alertas-container">
@@ -470,9 +485,7 @@ const OpcionesEntregaView = ({ pedido, onSiguiente, onAnterior, onOpcionSeleccio
         </div>
       </div>
     </div>
-    
   );
 };
-
 
 export default OpcionesEntregaView;

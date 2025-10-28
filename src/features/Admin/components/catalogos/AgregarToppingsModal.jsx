@@ -1,7 +1,7 @@
-// AgregarSalsasModal.jsx - TOTALMENTE FUNCIONAL
+// AgregarToppingsModal.jsx - TOTALMENTE FUNCIONAL
 import React, { useState, useEffect } from 'react';
 
-const SalsaCard = ({ salsa, selected, onToggle, disabled }) => {
+const ToppingCard = ({ topping, selected, onToggle, disabled }) => {
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -12,7 +12,7 @@ const SalsaCard = ({ salsa, selected, onToggle, disabled }) => {
 
   return (
     <div
-      className={`salsa-modal-card ${selected ? 'salsa-modal-card-selected' : ''} ${disabled ? 'salsa-modal-card-disabled' : ''}`}
+      className={`topping-modal-card ${selected ? 'topping-modal-card-selected' : ''} ${disabled ? 'topping-modal-card-disabled' : ''}`}
       onClick={handleClick}
       style={{ 
         opacity: disabled ? 0.5 : 1, 
@@ -21,12 +21,12 @@ const SalsaCard = ({ salsa, selected, onToggle, disabled }) => {
       }}
     >
       <img 
-        src={salsa.imagen || 'https://via.placeholder.com/100x100?text=Salsa'} 
-        alt={salsa.nombre}
-        onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=Salsa'; }}
+        src={topping.imagen || 'https://via.placeholder.com/100x100?text=Topping'} 
+        alt={topping.nombre}
+        onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=Topping'; }}
         draggable="false"
       />
-      <h4>{salsa.nombre}</h4>
+      <h4>{topping.nombre}</h4>
       <p>Gratis</p>
       {selected && (
         <div style={{
@@ -52,23 +52,23 @@ const SalsaCard = ({ salsa, selected, onToggle, disabled }) => {
   );
 };
 
-const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
-  const [selectedSalsas, setSelectedSalsas] = useState([]);
+const AgregarToppingsModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
+  const [selectedToppings, setSelectedToppings] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [salsasData, setSalsasData] = useState([]);
+  const [toppingsData, setToppingsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchSalsas();
+    fetchToppings();
   }, []);
 
-  const fetchSalsas = async () => {
+  const fetchToppings = async () => {
     try {
       setLoading(true);
       setError('');
       
-      const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas', {
+      const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -81,46 +81,46 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
       }
 
       const data = await response.json();
-      console.log('🍯 Salsas obtenidas desde API:', data);
+      console.log('🍫 Toppings obtenidos desde API:', data);
       
-      const salsasActivas = data
-        .filter(salsa => salsa.estado === true)
-        .map(salsa => ({
-          id: salsa.idsalsa || salsa.id,
-          nombre: salsa.nombre,
+      const toppingsActivos = data
+        .filter(topping => topping.estado === true)
+        .map(topping => ({
+          id: topping.idtopping || topping.id,
+          nombre: topping.nombre,
           precio: 0,
-          imagen: salsa.imagen || null,
-          unidad: 'ml',
+          imagen: topping.imagen || null,
+          unidad: 'g',
           cantidad: 1
         }));
       
-      setSalsasData(salsasActivas);
+      setToppingsData(toppingsActivos);
       
     } catch (error) {
-      console.error('Error al obtener salsas:', error);
-      setError('Error al cargar salsas');
-      setSalsasData([]);
+      console.error('Error al obtener toppings:', error);
+      setError('Error al cargar toppings');
+      setToppingsData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredSalsas = salsasData.filter(salsa =>
-    salsa.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredToppings = toppingsData.filter(topping =>
+    topping.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleSalsa = (salsa) => {
-    setSelectedSalsas(prev => {
-      const existe = prev.find(s => s.id === salsa.id);
+  const toggleTopping = (topping) => {
+    setSelectedToppings(prev => {
+      const existe = prev.find(t => t.id === topping.id);
       
       if (existe) {
-        return prev.filter(s => s.id !== salsa.id);
+        return prev.filter(t => t.id !== topping.id);
       } else {
         if (limiteMaximo !== null && prev.length >= limiteMaximo) {
-          alert(`⚠️ Solo puedes seleccionar máximo ${limiteMaximo} salsa${limiteMaximo > 1 ? 's' : ''}`);
+          alert(`⚠️ Solo puedes seleccionar máximo ${limiteMaximo} topping${limiteMaximo > 1 ? 's' : ''}`);
           return prev;
         }
-        return [...prev, { ...salsa, cantidad: 1 }];
+        return [...prev, { ...topping, cantidad: 1 }];
       }
     });
   };
@@ -129,13 +129,13 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (selectedSalsas.length === 0) {
-      alert('Por favor selecciona al menos una salsa');
+    if (selectedToppings.length === 0) {
+      alert('Por favor selecciona al menos un topping');
       return;
     }
     
-    console.log('✅ Agregando salsas:', selectedSalsas);
-    onAgregar(selectedSalsas);
+    console.log('✅ Agregando toppings:', selectedToppings);
+    onAgregar(selectedToppings);
     onClose();
   };
 
@@ -151,16 +151,16 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
     }
   };
 
-  const esSalsaDisabled = (salsa) => {
-    const yaSeleccionado = selectedSalsas.some(s => s.id === salsa.id);
-    return !yaSeleccionado && limiteMaximo !== null && selectedSalsas.length >= limiteMaximo;
+  const esToppingDisabled = (topping) => {
+    const yaSeleccionado = selectedToppings.some(t => t.id === topping.id);
+    return !yaSeleccionado && limiteMaximo !== null && selectedToppings.length >= limiteMaximo;
   };
 
   return (
-    <div className="salsa-modal-overlay" onClick={handleOverlayClick}>
-      <div className="salsa-modal-container" onClick={(e) => e.stopPropagation()}>
+    <div className="topping-modal-overlay" onClick={handleOverlayClick}>
+      <div className="topping-modal-container" onClick={(e) => e.stopPropagation()}>
         <style>{`
-          .salsa-modal-overlay {
+          .topping-modal-overlay {
             background-color: rgba(0, 0, 0, 0.5);
             position: fixed;
             top: 0; left: 0;
@@ -171,7 +171,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             z-index: 9999;
           }
 
-          .salsa-modal-container {
+          .topping-modal-container {
             background: #fff0f5;
             border-radius: 20px;
             padding: 25px;
@@ -183,14 +183,14 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             animation: fadeIn 0.3s ease-in-out;
           }
 
-          .salsa-modal-header {
+          .topping-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
           }
 
-          .salsa-modal-close-btn {
+          .topping-modal-close-btn {
             background: none;
             border: none;
             font-size: 28px;
@@ -205,7 +205,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             transition: transform 0.2s;
           }
 
-          .salsa-modal-close-btn:hover {
+          .topping-modal-close-btn:hover {
             transform: scale(1.2);
           }
 
@@ -236,7 +236,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             color: #d32f2f;
           }
 
-          .salsa-modal-search-container {
+          .topping-modal-search-container {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -244,7 +244,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             position: relative;
           }
 
-          .salsa-modal-search-container input {
+          .topping-modal-search-container input {
             flex-grow: 1;
             padding: 10px;
             border-radius: 10px;
@@ -252,7 +252,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             font-size: 16px;
           }
 
-          .salsa-modal-grid {
+          .topping-modal-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 20px;
@@ -260,7 +260,7 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             min-height: 200px;
           }
 
-          .salsa-modal-card {
+          .topping-modal-card {
             background: #fff;
             border-radius: 16px;
             padding: 10px;
@@ -272,22 +272,22 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             position: relative;
           }
 
-          .salsa-modal-card:hover:not(.salsa-modal-card-disabled) {
+          .topping-modal-card:hover:not(.topping-modal-card-disabled) {
             transform: translateY(-4px);
             border-color: #ff69b4;
           }
 
-          .salsa-modal-card-selected {
+          .topping-modal-card-selected {
             border-color: #d63384;
             background: #ffe4ec;
           }
 
-          .salsa-modal-card-disabled {
+          .topping-modal-card-disabled {
             opacity: 0.5;
             cursor: not-allowed;
           }
 
-          .salsa-modal-card img {
+          .topping-modal-card img {
             width: 100px;
             height: 100px;
             object-fit: cover;
@@ -296,14 +296,14 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             pointer-events: none;
           }
 
-          .salsa-modal-card h4 {
+          .topping-modal-card h4 {
             font-size: 16px;
             color: #d63384;
             margin: 0;
             pointer-events: none;
           }
 
-          .salsa-modal-card p {
+          .topping-modal-card p {
             font-size: 14px;
             color: #28a745;
             font-weight: bold;
@@ -311,14 +311,14 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             pointer-events: none;
           }
 
-          .salsa-modal-footer {
+          .topping-modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
             margin-top: 20px;
           }
 
-          .salsa-modal-btn {
+          .topping-modal-btn {
             padding: 10px 18px;
             border: none;
             border-radius: 10px;
@@ -328,26 +328,26 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
             transition: all 0.2s;
           }
 
-          .salsa-modal-btn-cancel {
+          .topping-modal-btn-cancel {
             background-color: #f8d7da;
             color: #721c24;
           }
 
-          .salsa-modal-btn-cancel:hover {
+          .topping-modal-btn-cancel:hover {
             background-color: #f1b0b7;
           }
 
-          .salsa-modal-btn-add {
+          .topping-modal-btn-add {
             background-color: #ff69b4;
             color: white;
           }
 
-          .salsa-modal-btn-add:hover:not(:disabled) {
+          .topping-modal-btn-add:hover:not(:disabled) {
             background-color: #d63384;
             transform: translateY(-2px);
           }
 
-          .salsa-modal-btn:disabled {
+          .topping-modal-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
           }
@@ -395,11 +395,11 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
           }
         `}</style>
 
-        <div className="salsa-modal-header">
-          <h2>🍯 Seleccionar Salsas</h2>
+        <div className="topping-modal-header">
+          <h2>🍫 Seleccionar Toppings</h2>
           <button 
             onClick={handleCancelar} 
-            className="salsa-modal-close-btn"
+            className="topping-modal-close-btn"
             type="button"
           >
             ×
@@ -409,67 +409,67 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
         {limiteMaximo !== null && limiteMaximo > 0 && (
           <div className="limite-info">
             <span className="limite-info-text">
-              📊 Límite de salsas configurado
+              📊 Límite de toppings configurado
             </span>
-            <span className={`limite-contador ${selectedSalsas.length >= limiteMaximo ? 'limite-alcanzado' : ''}`}>
-              {selectedSalsas.length} / {limiteMaximo}
+            <span className={`limite-contador ${selectedToppings.length >= limiteMaximo ? 'limite-alcanzado' : ''}`}>
+              {selectedToppings.length} / {limiteMaximo}
             </span>
           </div>
         )}
 
-        <div className="salsa-modal-search-container">
+        <div className="topping-modal-search-container">
           <input
             type="text"
-            placeholder="Buscar salsa..."
+            placeholder="Buscar topping..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={loading}
           />
         </div>
 
-        <div className="salsa-modal-grid">
+        <div className="topping-modal-grid">
           {loading ? (
             <div className="loading-container" style={{ gridColumn: '1 / -1' }}>
               <div className="loading-spinner"></div>
-              <p>Cargando salsas...</p>
+              <p>Cargando toppings...</p>
             </div>
           ) : error ? (
             <div className="error-container" style={{ gridColumn: '1 / -1' }}>
               <p>{error}</p>
-              <button onClick={fetchSalsas} type="button">Reintentar</button>
+              <button onClick={fetchToppings} type="button">Reintentar</button>
             </div>
-          ) : filteredSalsas.length === 0 ? (
+          ) : filteredToppings.length === 0 ? (
             <div className="error-container" style={{ gridColumn: '1 / -1' }}>
-              <p>No se encontraron salsas</p>
+              <p>No se encontraron toppings</p>
             </div>
           ) : (
-            filteredSalsas.map(salsa => (
-              <SalsaCard
-                key={salsa.id}
-                salsa={salsa}
-                selected={selectedSalsas.some(s => s.id === salsa.id)}
-                onToggle={() => toggleSalsa(salsa)}
-                disabled={esSalsaDisabled(salsa)}
+            filteredToppings.map(topping => (
+              <ToppingCard
+                key={topping.id}
+                topping={topping}
+                selected={selectedToppings.some(t => t.id === topping.id)}
+                onToggle={() => toggleTopping(topping)}
+                disabled={esToppingDisabled(topping)}
               />
             ))
           )}
         </div>
 
-        <div className="salsa-modal-footer">
+        <div className="topping-modal-footer">
           <button 
-            className="salsa-modal-btn salsa-modal-btn-cancel" 
+            className="topping-modal-btn topping-modal-btn-cancel" 
             onClick={handleCancelar}
             type="button"
           >
             Cancelar
           </button>
           <button 
-            className="salsa-modal-btn salsa-modal-btn-add" 
+            className="topping-modal-btn topping-modal-btn-add" 
             onClick={handleAgregar}
-            disabled={selectedSalsas.length === 0 || loading}
+            disabled={selectedToppings.length === 0 || loading}
             type="button"
           >
-            Agregar ({selectedSalsas.length})
+            Agregar ({selectedToppings.length})
           </button>
         </div>
       </div>
@@ -477,4 +477,4 @@ const AgregarSalsasModal = ({ onClose, onAgregar, limiteMaximo = null }) => {
   );
 };
 
-export default AgregarSalsasModal;
+export default AgregarToppingsModal;

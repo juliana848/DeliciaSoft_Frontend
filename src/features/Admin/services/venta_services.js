@@ -87,13 +87,12 @@ class VentaApiService {
     }
 
     // Obtener estado según tipo de venta
+// ✅ CORREGIDO: Estado siempre 1 (En espera) para pedidos nuevos
     obtenerEstadoSegunTipo(tipoVenta) {
-        if (tipoVenta === 'venta directa' || tipoVenta === 'directa') {
-            return 5; 
-        } else if (tipoVenta === 'pedido') {
-            return 1; 
+        if (tipoVenta === 'pedido') {
+            return 1; // Siempre "En espera" para pedidos nuevos
         }
-        return 5; 
+        return 5; // "Activa" para ventas directas
     }
 
     // FUNCIÓN PARA FORMATEAR FECHA CORRECTAMENTE
@@ -378,13 +377,23 @@ async crearVenta(ventaData) {
     try {
         console.log('Datos originales recibidos para crear venta:', ventaData);
         
+        // ✅ VALIDACIÓN CRÍTICA DEL CLIENTE
         let clienteId = null;
-        if (ventaData.clienteId !== null && ventaData.clienteId !== undefined) {
+
+        // Intentar obtener el ID del cliente de múltiples fuentes
+        if (ventaData.idCliente !== null && ventaData.idCliente !== undefined) {
+            clienteId = parseInt(ventaData.idCliente);
+        } else if (ventaData.cliente !== null && ventaData.cliente !== undefined) {
+            clienteId = parseInt(ventaData.cliente);
+        } else if (ventaData.clienteId !== null && ventaData.clienteId !== undefined) {
             clienteId = parseInt(ventaData.clienteId);
-            console.log('Cliente ID procesado:', clienteId);
-        } else {
-            console.log('Usando cliente genérico (null)');
         }
+
+        if (!clienteId || isNaN(clienteId)) {
+            throw new Error('❌ No se encontró el ID del cliente. El cliente debe estar autenticado.');
+        }
+
+        console.log('✅ Cliente ID validado:', clienteId);
         
         const sedeId = await this.obtenerIdSede(ventaData.sedeNombre || ventaData.sede);
         console.log(`Sede procesada: ${ventaData.sedeNombre || ventaData.sede} -> ID: ${sedeId}`);
@@ -433,7 +442,10 @@ async crearVenta(ventaData) {
         }
 
         console.log('Datos transformados para la API:', ventaParaAPI);
-        
+
+        if (!ventaParaAPI.cliente) {
+            throw new Error('❌ Cliente es requerido');
+        }
         if (!ventaParaAPI.metodopago) {
             throw new Error('Método de pago es requerido');
         }

@@ -1,15 +1,47 @@
-// AgregarAdicionesModal.jsx
-import React, { useState } from 'react';
+// AgregarAdicionesModal.jsx - TOTALMENTE FUNCIONAL
+import React, { useState, useEffect } from 'react';
 
 const AdicionCard = ({ adicion, selected, onToggle }) => {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggle();
+  };
+
   return (
     <div
       className={`adicion-modal-card ${selected ? 'adicion-modal-card-selected' : ''}`}
-      onClick={onToggle}
+      onClick={handleClick}
+      style={{ userSelect: 'none' }}
     >
-      <img src={adicion.imagen} alt={adicion.nombre} />
+      <img 
+        src={adicion.imagen || 'https://via.placeholder.com/100x100?text=Adicion'} 
+        alt={adicion.nombre}
+        onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=Adicion'; }}
+        draggable="false"
+      />
       <h4>{adicion.nombre}</h4>
-      <p>{`$${adicion.precio.toFixed(2)} / ${adicion.unidad}`}</p>
+      <p>${adicion.precio.toLocaleString('es-CO')}</p>
+      {selected && (
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          background: '#ec4899',
+          color: 'white',
+          borderRadius: '50%',
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          pointerEvents: 'none'
+        }}>
+          ✓
+        </div>
+      )}
     </div>
   );
 };
@@ -17,89 +49,111 @@ const AdicionCard = ({ adicion, selected, onToggle }) => {
 const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
   const [selectedAdiciones, setSelectedAdiciones] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for dropdown visibility
+  const [adicionesData, setAdicionesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const adicionesData = [
-{
-  id: 307,
-  nombre: 'Mini malvaviscos',
-  unidad: 'g',
-  precio: 520,
-  imagen: 'https://media.istockphoto.com/id/628530120/es/foto/fondo-de-mini-malvaviscos-rosas-y-blancos.jpg?s=612x612&w=0&k=20&c=w-ZmM7gE9Jegs9uBnit5FMiU9HEHptX-8LYMhm3glJg=',
-  category: 'Malvaviscos'
-},
-{
-  id: 308,
-  nombre: 'Chocolatina rallada',
-  unidad: 'g',
-  precio: 600,
-  imagen: 'https://thumbs.dreamstime.com/b/piel-de-chocolate-rallado-en-blanco-pila-bloques-sobre-fondo-151707432.jpg',
-  category: 'Chocolates'
-},
-{
-  id: 309,
-  nombre: 'Frambuesas frescas',
-  unidad: 'unidad',
-  precio: 750,
-  imagen: 'https://editorial.aristeguinoticias.com/wp-content/uploads/2024/03/enfermedades-frambuesa-232024.jpg',
-  category: 'Frutas'
-},
-{
-  id: 310,
-  nombre: 'Rodajas de fresa',
-  unidad: 'unidad',
-  precio: 625,
-  imagen: 'https://st3.depositphotos.com/15352324/33625/i/450/depositphotos_336259748-stock-photo-strawberry-slices-fresh-berries-macro.jpg',
-  category: 'Frutas'
-},
-{
-  id: 311,
-  nombre: 'Galletas oreo',
-  unidad: 'g',
-  precio: 395,
-  imagen: 'https://www.pediatriamildias.com/wp-content/uploads/2022/09/Blog53.jpg',
-  category: 'Galletas'
-},
+  useEffect(() => {
+    fetchAdiciones();
+  }, []);
 
+  const fetchAdiciones = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await fetch('https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
 
-  ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-  const categoriasData = [
-    'Todos', 'Malvaviscos', 'Chocolates', 'Frutas', 'Galletas'
-  ];
+      const data = await response.json();
+      console.log('✨ Adiciones obtenidas desde API:', data);
+      
+      const adicionesActivas = data
+        .filter(adicion => adicion.estado === true)
+        .map(adicion => ({
+          id: adicion.idadiciones || adicion.id,
+          nombre: adicion.nombre,
+          precio: parseFloat(adicion.precioadicion || 0),
+          imagen: adicion.imagen || null,
+          unidad: 'g',
+          cantidad: 1
+        }));
+      
+      setAdicionesData(adicionesActivas);
+      
+    } catch (error) {
+      console.error('Error al obtener adiciones:', error);
+      setError('Error al cargar adiciones');
+      setAdicionesData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredAdiciones = adicionesData.filter(adicion =>
-    adicion.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedCategory === 'Todos' || adicion.category === selectedCategory)
+    adicion.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleAdicion = (adicion) => {
-    setSelectedAdiciones(prev =>
-      prev.some(i => i.id === adicion.id)
-        ? prev.filter(i => i.id !== adicion.id)
-        : [...prev, { ...adicion, cantidad: 1 }]
-    );
+    setSelectedAdiciones(prev => {
+      const existe = prev.find(a => a.id === adicion.id);
+      
+      if (existe) {
+        return prev.filter(a => a.id !== adicion.id);
+      } else {
+        return [...prev, { ...adicion, cantidad: 1 }];
+      }
+    });
   };
 
-  const handleAgregar = () => {
+  const handleAgregar = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (selectedAdiciones.length === 0) {
+      alert('Por favor selecciona al menos una adición');
+      return;
+    }
+    
+    console.log('✅ Agregando adiciones:', selectedAdiciones);
     onAgregar(selectedAdiciones);
     onClose();
   };
 
+  const handleCancelar = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="adicion-modal-overlay">
-      <div className="adicion-modal-container">
+    <div className="adicion-modal-overlay" onClick={handleOverlayClick}>
+      <div className="adicion-modal-container" onClick={(e) => e.stopPropagation()}>
         <style>{`
           .adicion-modal-overlay {
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.5);
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 999;
+            z-index: 9999;
           }
 
           .adicion-modal-container {
@@ -108,6 +162,8 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             padding: 25px;
             width: 90%;
             max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             animation: fadeIn 0.3s ease-in-out;
           }
@@ -125,9 +181,20 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             font-size: 28px;
             cursor: pointer;
             color: #d63384;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
           }
 
-          .adicion-modal-search-container { /* New class for search and filter */
+          .adicion-modal-close-btn:hover {
+            transform: scale(1.2);
+          }
+
+          .adicion-modal-search-container {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -136,64 +203,11 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
           }
 
           .adicion-modal-search-container input {
-            flex-grow: 1; /* Allows input to take available space */
+            flex-grow: 1;
             padding: 10px;
             border-radius: 10px;
             border: 2px solid #ffb6c1;
             font-size: 16px;
-          }
-
-          .adicion-modal-filter-btn { /* New button style */
-            padding: 10px 15px;
-            border: none;
-            border-radius: 10px;
-            background-color: #ff69b4;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-          }
-
-          .adicion-modal-filter-btn:hover {
-            background-color: #d63384;
-          }
-
-          .adicion-modal-categories-dropdown { /* New dropdown style */
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: #ffe4ec;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 1000;
-            min-width: 150px;
-          }
-
-          .adicion-modal-category-btn {
-            padding: 8px 15px;
-            border: 1px solid #ff69b4;
-            border-radius: 8px;
-            background-color: #ffe4ec;
-            color: #d63384;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s, color 0.2s;
-            text-align: left;
-          }
-
-          .adicion-modal-category-btn.selected {
-            background-color: #ff69b4;
-            color: white;
-          }
-
-          .adicion-modal-category-btn:hover:not(.selected) {
-            background-color: #ffb6c1;
           }
 
           .adicion-modal-grid {
@@ -201,6 +215,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 20px;
             margin: 20px 0;
+            min-height: 200px;
           }
 
           .adicion-modal-card {
@@ -212,6 +227,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             transition: transform 0.2s;
             cursor: pointer;
             border: 3px solid transparent;
+            position: relative;
           }
 
           .adicion-modal-card:hover {
@@ -230,18 +246,29 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             object-fit: cover;
             border-radius: 12px;
             margin-bottom: 8px;
+            pointer-events: none;
           }
 
           .adicion-modal-card h4 {
             font-size: 16px;
             color: #d63384;
             margin: 0;
+            pointer-events: none;
+          }
+
+          .adicion-modal-card p {
+            font-size: 14px;
+            color: #e67e22;
+            font-weight: bold;
+            margin: 4px 0 0 0;
+            pointer-events: none;
           }
 
           .adicion-modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            margin-top: 20px;
           }
 
           .adicion-modal-btn {
@@ -251,6 +278,7 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             font-weight: bold;
             cursor: pointer;
             font-size: 16px;
+            transition: all 0.2s;
           }
 
           .adicion-modal-btn-cancel {
@@ -258,70 +286,130 @@ const AgregarAdicionesModal = ({ onClose, onAgregar }) => {
             color: #721c24;
           }
 
+          .adicion-modal-btn-cancel:hover {
+            background-color: #f1b0b7;
+          }
+
           .adicion-modal-btn-add {
             background-color: #ff69b4;
             color: white;
+          }
+
+          .adicion-modal-btn-add:hover:not(:disabled) {
+            background-color: #d63384;
+            transform: translateY(-2px);
+          }
+
+          .adicion-modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+
+          .loading-container, .error-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+            flex-direction: column;
+            gap: 15px;
+          }
+
+          .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff69b4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+          }
+
+          .error-container {
+            color: #d63384;
+          }
+
+          .error-container button {
+            background-color: #ff69b4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
           }
 
           @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
           }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
         `}</style>
 
         <div className="adicion-modal-header">
-          <h2>Seleccionar Adiciones</h2>
-          <button onClick={onClose} className="adicion-modal-close-btn">&times;</button>
+          <h2>✨ Seleccionar Adiciones</h2>
+          <button 
+            onClick={handleCancelar} 
+            className="adicion-modal-close-btn"
+            type="button"
+          >
+            ×
+          </button>
         </div>
 
-        <div className="adicion-modal-search-container"> {/* Updated class */}
+        <div className="adicion-modal-search-container">
           <input
             type="text"
             placeholder="Buscar adición..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={loading}
           />
-          <button
-            className="adicion-modal-filter-btn"
-            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-          >
-            Categorías
-            {showCategoryDropdown ? ' ▲' : ' ▼'}
-          </button>
-          {showCategoryDropdown && (
-            <div className="adicion-modal-categories-dropdown">
-              {categoriasData.map(category => (
-                <button
-                  key={category}
-                  className={`adicion-modal-category-btn ${selectedCategory === category ? 'selected' : ''}`}
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    setShowCategoryDropdown(false); // Close dropdown after selection
-                  }}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="adicion-modal-grid">
-          {filteredAdiciones.map(adicion => (
-            <AdicionCard
-              key={adicion.id}
-              adicion={adicion}
-              selected={selectedAdiciones.some(i => i.id === adicion.id)}
-              onToggle={() => toggleAdicion(adicion)}
-            />
-          ))}
+          {loading ? (
+            <div className="loading-container" style={{ gridColumn: '1 / -1' }}>
+              <div className="loading-spinner"></div>
+              <p>Cargando adiciones...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container" style={{ gridColumn: '1 / -1' }}>
+              <p>{error}</p>
+              <button onClick={fetchAdiciones} type="button">Reintentar</button>
+            </div>
+          ) : filteredAdiciones.length === 0 ? (
+            <div className="error-container" style={{ gridColumn: '1 / -1' }}>
+              <p>No se encontraron adiciones</p>
+            </div>
+          ) : (
+            filteredAdiciones.map(adicion => (
+              <AdicionCard
+                key={adicion.id}
+                adicion={adicion}
+                selected={selectedAdiciones.some(a => a.id === adicion.id)}
+                onToggle={() => toggleAdicion(adicion)}
+              />
+            ))
+          )}
         </div>
 
         <div className="adicion-modal-footer">
-          <button className="adicion-modal-btn adicion-modal-btn-cancel" onClick={onClose}>
+          <button 
+            className="adicion-modal-btn adicion-modal-btn-cancel" 
+            onClick={handleCancelar}
+            type="button"
+          >
             Cancelar
           </button>
-          <button className="adicion-modal-btn adicion-modal-btn-add" onClick={handleAgregar}>
+          <button 
+            className="adicion-modal-btn adicion-modal-btn-add" 
+            onClick={handleAgregar}
+            disabled={selectedAdiciones.length === 0 || loading}
+            type="button"
+          >
             Agregar ({selectedAdiciones.length})
           </button>
         </div>

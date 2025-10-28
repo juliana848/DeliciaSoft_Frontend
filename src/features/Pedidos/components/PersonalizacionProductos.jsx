@@ -22,10 +22,13 @@ const PersonalizacionProductos = () => {
   const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
 
+  // 🆕 URLs ACTUALIZADAS CON TOPPINGS Y SALSAS
   const API_URLS = {
     adiciones: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones',
     rellenos: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno',
     sabores: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor',
+    toppings: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings',  // 🆕 NUEVO
+    salsas: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas',      // 🆕 NUEVO
     configuracion: 'https://deliciasoft-backend-i6g9.onrender.com/api/configuracion-producto'
   };
 
@@ -45,34 +48,55 @@ const PersonalizacionProductos = () => {
     try {
       setLoading(true);
       
-      const [adicionesRes, rellenosRes, saboresRes] = await Promise.all([
+      // 🆕 CARGAR TODOS LOS CATÁLOGOS INCLUYENDO TOPPINGS Y SALSAS
+      const [adicionesRes, rellenosRes, saboresRes, toppingsRes, salsasRes] = await Promise.all([
         fetch(API_URLS.adiciones).catch(() => ({ ok: false })),
         fetch(API_URLS.rellenos).catch(() => ({ ok: false })),
-        fetch(API_URLS.sabores).catch(() => ({ ok: false }))
+        fetch(API_URLS.sabores).catch(() => ({ ok: false })),
+        fetch(API_URLS.toppings).catch(() => ({ ok: false })),  // 🆕 NUEVO
+        fetch(API_URLS.salsas).catch(() => ({ ok: false }))     // 🆕 NUEVO
       ]);
 
-      let adicionesData = [], rellenosData = [], saboresData = [];
+      let adicionesData = [], rellenosData = [], saboresData = [], toppingsData = [], salsasData = [];
 
       if (adicionesRes.ok) adicionesData = await adicionesRes.json();
       if (rellenosRes.ok) rellenosData = await rellenosRes.json();
       if (saboresRes.ok) saboresData = await saboresRes.json();
+      if (toppingsRes.ok) toppingsData = await toppingsRes.json();  // 🆕 NUEVO
+      if (salsasRes.ok) salsasData = await salsasRes.json();        // 🆕 NUEVO
 
       console.log('📦 Catálogos cargados:');
       console.log('Adiciones:', adicionesData);
       console.log('Rellenos:', rellenosData);
       console.log('Sabores:', saboresData);
+      console.log('Toppings:', toppingsData);  // 🆕 NUEVO
+      console.log('Salsas:', salsasData);      // 🆕 NUEVO
 
-      // 🔧 Función helper para generar imagen placeholder
       const getPlaceholderImage = (nombre, color = 'E91E63') => {
         return `https://via.placeholder.com/50x50/${color}/FFFFFF?text=${encodeURIComponent(nombre?.charAt(0) || '?')}`;
       };
 
+      // 🆕 PROCESAR TOPPINGS Y SALSAS
       setCatalogos({
-        toppings: [],
-        salsas: [],
+        toppings: Array.isArray(toppingsData) 
+          ? toppingsData.filter(t => t.estado).map(t => ({
+              id: t.idtopping || t.id,
+              nombre: t.nombre,
+              precio: parseFloat(t.precioadicion || 0),
+              imagen: (t.imagen && t.imagen.trim() !== '') ? t.imagen : getPlaceholderImage(t.nombre, '8B4513')
+            }))
+          : [],
+        salsas: Array.isArray(salsasData)
+          ? salsasData.filter(s => s.estado).map(s => ({
+              id: s.idsalsa || s.id,
+              nombre: s.nombre,
+              precio: parseFloat(s.precioadicion || 0),
+              imagen: (s.imagen && s.imagen.trim() !== '') ? s.imagen : getPlaceholderImage(s.nombre, 'FF5722')
+            }))
+          : [],
         rellenos: Array.isArray(rellenosData) 
           ? rellenosData.filter(r => r.estado).map(r => ({
-              id: r.idsalsa || r.id,
+              id: r.idrelleno || r.id,
               nombre: r.nombre,
               precio: parseFloat(r.precioadicion || 0),
               imagen: (r.imagen && r.imagen.trim() !== '') ? r.imagen : getPlaceholderImage(r.nombre, '007BFF')
@@ -96,6 +120,7 @@ const PersonalizacionProductos = () => {
           : []
       });
 
+      // Cargar configuraciones
       const configs = {};
       for (const producto of carrito) {
         try {
@@ -105,26 +130,26 @@ const PersonalizacionProductos = () => {
             configs[producto.id] = config;
           } else {
             configs[producto.id] = {
-              permiteToppings: false,
-              permiteSalsas: false,
+              permiteToppings: true,   // 🆕 ACTIVADO POR DEFECTO
+              permiteSalsas: true,     // 🆕 ACTIVADO POR DEFECTO
               permiteRellenos: true,
               permiteAdiciones: true,
               permiteSabores: false,
-              limiteTopping: 0,
-              limiteSalsa: 0,
+              limiteTopping: 3,        // 🆕 LÍMITE POR DEFECTO
+              limiteSalsa: 2,          // 🆕 LÍMITE POR DEFECTO
               limiteRelleno: 3,
               limiteSabor: 0
             };
           }
         } catch (error) {
           configs[producto.id] = {
-            permiteToppings: false,
-            permiteSalsas: false,
+            permiteToppings: true,
+            permiteSalsas: true,
             permiteRellenos: true,
             permiteAdiciones: true,
             permiteSabores: false,
-            limiteTopping: 0,
-            limiteSalsa: 0,
+            limiteTopping: 3,
+            limiteSalsa: 2,
             limiteRelleno: 3,
             limiteSabor: 0
           };
@@ -133,6 +158,7 @@ const PersonalizacionProductos = () => {
       
       setConfiguraciones(configs);
 
+      // Inicializar personalizaciones
       const initialPersonalizaciones = {};
       carrito.forEach(producto => {
         initialPersonalizaciones[producto.id] = {};
@@ -272,7 +298,6 @@ const PersonalizacionProductos = () => {
     showCustomAlert('success', '🎉 ¡Personalización completada!');
     
     setTimeout(() => {
-      // 🎯 REDIRIGIR A OPCIONES DE ENTREGA EN PEDIDOS
       navigate('/pedidos', { state: { vista: 'entrega' } });
     }, 1000);
   };
@@ -386,29 +411,31 @@ const PersonalizacionProductos = () => {
           )}
         </div>
 
-        {configActual.permiteToppings && (
+        {/* 🆕 SECCIÓN TOPPINGS */}
+        {configActual.permiteToppings && catalogos.toppings.length > 0 && (
           <SeccionCompacta
-            titulo="🍰 Toppings"
+            titulo="🍫 Toppings"
             items={catalogos.toppings}
             seleccionados={personalizacionActual.toppings}
             onToggle={(item) => toggleItem('toppings', item)}
             limite={configActual.limiteTopping}
-            mensajeVacio="⚠️ Los toppings no están disponibles actualmente. Próximamente."
+            mensajeVacio="No hay toppings disponibles"
           />
         )}
 
-        {configActual.permiteSalsas && (
+        {/* 🆕 SECCIÓN SALSAS */}
+        {configActual.permiteSalsas && catalogos.salsas.length > 0 && (
           <SeccionCompacta
             titulo="🍯 Salsas"
             items={catalogos.salsas}
             seleccionados={personalizacionActual.salsas}
             onToggle={(item) => toggleItem('salsas', item)}
             limite={configActual.limiteSalsa}
-            mensajeVacio="⚠️ Las salsas no están disponibles actualmente. Próximamente."
+            mensajeVacio="No hay salsas disponibles"
           />
         )}
 
-        {configActual.permiteRellenos && (
+        {configActual.permiteRellenos && catalogos.rellenos.length > 0 && (
           <SeccionCompacta
             titulo="🥧 Rellenos"
             items={catalogos.rellenos}
@@ -524,7 +551,7 @@ const SeccionCompacta = ({ titulo, items, seleccionados, onToggle, limite, mensa
                 <div className="item-info-compacta">
                   <div className="item-nombre-compacto">{item.nombre}</div>
                   <div className="item-precio-compacto">
-                    {item.precio > 0 ? `+${item.precio.toLocaleString()}` : 'Gratis'}
+                    {item.precio > 0 ? `+$${item.precio.toLocaleString()}` : 'Gratis'}
                   </div>
                 </div>
                 {isSelected && (

@@ -96,15 +96,15 @@ export default function ProveedoresTable() {
           <LoadingSpinner />
         </div>
       ) : (
-        <DataTable 
-          value={proveedoresFiltrados} 
-          className="admin-table" 
-          paginator 
-          rows={5}
-          rowsPerPageOptions={[5, 10, 20]}
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
-        >
+          <DataTable 
+            value={proveedoresFiltrados} 
+            className="admin-table compact-paginator" 
+            paginator 
+            rows={5}
+            rowsPerPageOptions={[5, 10, 20]}
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
+          >
           <Column 
             header="N°" 
             headerStyle={{ paddingLeft: '1rem' }} 

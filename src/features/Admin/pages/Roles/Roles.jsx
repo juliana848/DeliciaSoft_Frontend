@@ -341,21 +341,21 @@ export default function Roles() {
       </div>
 
       <h2 className="admin-section-title">Gestión de Roles</h2>
-      <DataTable
-        value={rolesFiltrados}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '35rem' }}
-        rowClassName={(rowData) => {
-          const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
-          if (esAdmin) return 'fila-admin';
-          if (!rowData.activo) return 'fila-inactiva';
-          return '';
-        }}
-        emptyMessage="No se encontraron roles"
-      >
+        <DataTable
+          value={rolesFiltrados}
+          className="admin-table compact-paginator"
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          tableStyle={{ minWidth: '35rem' }}
+          rowClassName={(rowData) => {
+            const esAdmin = roleApiService.esRolAdmin(rowData.nombre);
+            if (esAdmin) return 'fila-admin';
+            if (!rowData.activo) return 'fila-inactiva';
+            return '';
+          }}
+          emptyMessage="No se encontraron roles"
+        >
         <Column 
           header="N°" 
           headerStyle={{ paddingLeft: '2rem' }}

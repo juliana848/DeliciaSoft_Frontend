@@ -286,14 +286,14 @@ export default function CategoriaTableDemo() {
 
       <h2 className="admin-section-title">Gestión de Categoría Insumos</h2>
 
-      <DataTable
-        value={categoriasFiltradas}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-      >
+        <DataTable
+          value={categoriasFiltradas}
+          className="admin-table compact-paginator"
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          tableStyle={{ minWidth: '50rem' }}
+        >
         <Column header="N°" body={(_, { rowIndex }) => rowIndex + 1} />
         <Column field="nombre" header="Nombre" />
         <Column field="descripcion" header="Descripción" />

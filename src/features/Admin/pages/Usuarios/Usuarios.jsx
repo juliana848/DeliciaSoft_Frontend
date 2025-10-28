@@ -241,14 +241,16 @@ export default function Usuarios() {
       </div>
 
       <h2 className="admin-section-title">Gestión de Usuarios</h2>
-      <DataTable
-        value={usuariosFiltrados}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-      >
+        <DataTable
+          value={usuariosFiltrados}
+          className="admin-table compact-paginator"
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          tableStyle={{ minWidth: '50rem' }}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          pageLinkSize={3}
+        >
         <Column 
           header="N°" 
           body={(rowData, { rowIndex }) => rowIndex + 1} 

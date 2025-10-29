@@ -533,16 +533,18 @@ export default function ComprasTable() {
                         </button>
                     </div>
 
-                    <DataTable
+                        <DataTable
                         value={comprasFiltradas}
-                        className="admin-table"
-                        paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
+                        className="admin-table compact-paginator"
+                        paginator
+                        rows={10}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
                         rowClassName={rowData => !rowData.estado ? 'fila-anulada' : ''}
                         tableStyle={{ 
                             tableLayout: 'fixed',
                             width: '100%'
                         }}
-                    >
+                        >
                         <Column 
                             header="Nº" 
                             body={(r, { rowIndex }) => rowIndex + 1} 

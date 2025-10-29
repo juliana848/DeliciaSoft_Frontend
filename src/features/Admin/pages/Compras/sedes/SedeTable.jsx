@@ -63,21 +63,21 @@ export default function SedeTable({
   );
 
    return (
-    <DataTable
-      value={sedes}
-      className="admin-table"
-      paginator
-      rows={5}
-      rowsPerPageOptions={[5, 10, 25, 50]}
-      tableStyle={{ minWidth: "50rem" }}
-      emptyMessage="No se encontraron sedes"
-      loading={loading}
-      loadingIcon="pi pi-spinner pi-spin"
-      scrollable
-      scrollHeight="500px"
-      size="small"
-      stripedRows
-    >
+      <DataTable
+        value={sedes}
+        className="admin-table compact-paginator"
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{ minWidth: "50rem" }}
+        emptyMessage="No se encontraron sedes"
+        loading={loading}
+        loadingIcon="pi pi-spinner pi-spin"
+        scrollable
+        scrollHeight="500px"
+        size="small"
+        stripedRows
+      >
       <Column
         header="N°"
         body={numeroTemplate}

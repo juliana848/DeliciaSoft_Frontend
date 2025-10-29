@@ -362,7 +362,7 @@ export default function RecetasTabla() {
           <h2 className="admin-section-title">Gestión de Recetas</h2>
           <DataTable
             value={recetasFiltradas}
-            className="admin-table"
+            className="admin-table compact-paginator"
             paginator
             rows={5}
             rowsPerPageOptions={[5, 10, 25, 50]}

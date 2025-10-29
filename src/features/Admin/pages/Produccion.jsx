@@ -236,7 +236,13 @@ export default function Produccion() {
           ) : (
             <>
               {pestanaActiva === 'pedido' ? (
-                <DataTable value={procesosFiltrados} className="admin-table" paginator rows={10} rowsPerPageOptions={[5,10,25]}>
+                  <DataTable
+                    value={procesosFiltrados}
+                    className="admin-table compact-paginator"
+                    paginator
+                    rows={10}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  >
                   <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />
@@ -255,7 +261,13 @@ export default function Produccion() {
                   )} />
                 </DataTable>
               ) : (
-                <DataTable value={procesosFiltrados} className="admin-table" paginator rows={10} rowsPerPageOptions={[5,10,25]}>
+                  <DataTable
+                    value={procesosFiltrados}
+                    className="admin-table compact-paginator"
+                    paginator
+                    rows={10}
+                    rowsPerPageOptions={[5, 10, 25]}
+                  >
                   <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />

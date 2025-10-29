@@ -146,3 +146,78 @@
 .modal-footer {
   margin-top: 20px;
 }
+
+/* ===== PAGINADOR ===== */
+.compact-paginator .p-paginator {
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0.4rem 0 0.6rem !important;
+  font-size: 0.85rem !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+/* Botones */
+.compact-paginator .p-paginator .p-paginator-page,
+.compact-paginator .p-paginator .p-paginator-next,
+.compact-paginator .p-paginator .p-paginator-prev,
+.compact-paginator .p-paginator .p-paginator-first,
+.compact-paginator .p-paginator .p-paginator-last {
+  background-color: #fff !important;
+  border: 1px solid #f8a5c2 !important;
+  color: #d63384 !important;
+  margin: 0 2px !important;
+  border-radius: 6px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  font-size: 0.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: 0.2s !important;
+}
+
+.compact-paginator .p-paginator .p-paginator-page.p-highlight {
+  background-color: #f8a5c2 !important;
+  color: white !important;
+  border-color: #f597b5 !important;
+}
+
+.compact-paginator .p-paginator button:hover {
+  background-color: #ffd9e6 !important;
+}
+
+/* ===== DROPDOWN ===== */
+.compact-paginator .p-dropdown {
+  border-radius: 6px !important;
+  border: 1px solid #f8a5c2 !important;
+  height: 30px !important;
+  font-size: 0.8rem !important;
+  margin-left: 8px !important;
+  background-color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.compact-paginator .p-dropdown-label {
+  padding: 0 0.6rem !important;
+  text-align: center !important;
+  color: #d63384 !important;
+  font-weight: 500 !important;
+}
+
+.compact-paginator .p-dropdown-trigger {
+  color: #d63384 !important;
+  border-left: 1px solid #f8a5c2 !important;
+  padding: 0 0.4rem !important;
+}
+
+/* Menú desplegable */
+.p-dropdown-panel {
+  border: 1px solid #f8a5c2 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(246, 117, 160, 0.25) !important;
+  overflow: hidden !important;
+}

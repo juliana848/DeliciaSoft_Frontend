@@ -1105,17 +1105,18 @@ const guardarCompra = async () => {
                             {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
                         </button>
                     </div>
-
-                    <DataTable
+                        <DataTable
                         value={comprasFiltradas}
-                        className="admin-table"
-                        paginator rows={10} rowsPerPageOptions={[5,10,25,50]}
+                        className="admin-table compact-paginator"
+                        paginator
+                        rows={10}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
                         rowClassName={rowData => !rowData.estado ? 'fila-anulada' : ''}
                         tableStyle={{ 
                             tableLayout: 'fixed',
                             width: '100%'
                         }}
-                    >
+                        >
                         <Column 
                             header="N°" 
                             body={(r, { rowIndex }) => rowIndex + 1} 

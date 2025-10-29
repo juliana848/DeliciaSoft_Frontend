@@ -202,15 +202,15 @@ export default function Clientes() {
 
       <h2 className="admin-section-title">Gestión de Clientes</h2>
 
-      <DataTable
-        value={clientesFiltrados}
-        className="admin-table"
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: '50rem' }}
-        emptyMessage="No hay clientes para mostrar"
-      >
+        <DataTable
+          value={clientesFiltrados}
+          className="admin-table compact-paginator"
+          paginator
+          rows={5}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          tableStyle={{ minWidth: '50rem' }}
+          emptyMessage="No hay clientes para mostrar"
+        >
         <Column
           header="N°"
           headerStyle={{ paddingLeft: '1.5rem' }}

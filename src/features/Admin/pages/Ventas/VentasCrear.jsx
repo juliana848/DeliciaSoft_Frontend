@@ -454,19 +454,6 @@ export default function VentasCrear({
                                         <span className="error-message">{erroresValidacion.fecha_entrega}</span>
                                     )}
                                 </div>
-                                
-                                <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                                    <label className="field-label">Observaciones</label>
-                                    <textarea
-                                        name="observaciones"
-                                        value={ventaData.observaciones || ''}
-                                        onChange={handleChange}
-                                        className="form-input"
-                                        placeholder="Ingrese observaciones del pedido (opcional)..."
-                                        rows="3"
-                                        style={{ resize: 'vertical', minHeight: '80px' }}
-                                    />
-                                </div>
                             </>
                         )}
                         
@@ -783,6 +770,27 @@ export default function VentasCrear({
                     Agregar Productos
                 </button>
             </div>
+
+{ventaData.tipo_venta === 'pedido' && (
+    <div className="form-card">
+        <h2 className="section-title">
+            <span className="title-icon">📝</span>
+            Observaciones
+        </h2>
+        <div className="field-group">
+            <textarea
+                name="observaciones"
+                value={ventaData.observaciones || ''}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Ingrese observaciones del pedido (opcional)..."
+                rows="3"
+                style={{ resize: 'vertical', minHeight: '80px' }}
+            />
+        </div>
+    </div>
+)}
+
 
             <div className="totals-section">
                 <div className="totals-grid">

@@ -4,12 +4,115 @@ import LogoutButton from '../Layout/LogoutButton/LogoutButton';
 import { CartContext } from '../../../features/Cartas/pages/CartContext';
 import './navegacion.css';
 
+// Componente Toast Mejorado
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const getIcon = () => {
+    if (type === 'warning') return '⚠️';
+    if (type === 'error') return '❌';
+    if (type === 'success') return '✅';
+    return 'ℹ️';
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      background: 'linear-gradient(135deg, #ec4899 0%, #f06292 100%)',
+      borderRadius: '16px',
+      padding: '20px 24px',
+      boxShadow: '0 10px 30px rgba(236, 72, 153, 0.4)',
+      zIndex: 10000,
+      minWidth: '340px',
+      maxWidth: '420px',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      animation: 'slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '16px',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <div style={{
+        fontSize: '28px',
+        flexShrink: 0,
+        backgroundColor: type === 'warning' ? '#FFD54A' : 'rgba(255, 255, 255, 0.95)',
+        width: '48px',
+        height: '48px',
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+      }}>
+        {getIcon()}
+      </div>
+      <div style={{ flex: 1, paddingTop: '4px' }}>
+        <p style={{
+          margin: 0,
+          color: 'white',
+          fontSize: '15px',
+          lineHeight: '1.6',
+          fontWeight: '500',
+          whiteSpace: 'pre-line',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+        }}>
+          {message}
+        </p>
+      </div>
+      <button
+        onClick={onClose}
+        style={{
+          background: 'rgba(255, 255, 255, 0.2)',
+          border: 'none',
+          color: 'white',
+          fontSize: '22px',
+          cursor: 'pointer',
+          padding: '4px',
+          width: '32px',
+          height: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          borderRadius: '8px',
+          transition: 'background 0.2s ease',
+          fontWeight: 'bold'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+      >
+        ×
+      </button>
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(450px) scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const Navegacion = ({ isAuthenticated = false }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const [isAuthenticatedState, setIsAuthenticatedState] = useState(isAuthenticated);
+  const [toast, setToast] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -17,11 +120,40 @@ const Navegacion = ({ isAuthenticated = false }) => {
   const cartButtonRef = useRef(null);
   
   // Obtener carrito del contexto
-  const { carrito, actualizarCantidadCarrito, eliminarDelCarrito } = useContext(CartContext);
+  const { carrito, actualizarCantidadCarrito, eliminarDelCarrito, setCarrito } = useContext(CartContext);
 
   // Obtener datos del usuario
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || 'usuario@email.com');
   const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Usuario');
+
+  // CARGAR carrito desde localStorage al iniciar
+  useEffect(() => {
+    const carritoGuardado = localStorage.getItem('deliciasoft_cart_v1');
+    if (carritoGuardado) {
+      try {
+        const carritoParseado = JSON.parse(carritoGuardado);
+        if (Array.isArray(carritoParseado) && carritoParseado.length > 0) {
+          console.log('✅ Carrito cargado desde localStorage:', carritoParseado);
+          setCarrito(carritoParseado);
+        }
+      } catch (error) {
+        console.error('❌ Error al cargar carrito:', error);
+      }
+    }
+  }, [setCarrito]);
+
+  // GUARDAR carrito en localStorage cuando cambie
+  useEffect(() => {
+    if (carrito && carrito.length >= 0) {
+      localStorage.setItem('deliciasoft_cart_v1', JSON.stringify(carrito));
+      console.log('💾 Carrito guardado en localStorage:', carrito);
+    }
+  }, [carrito]);
+
+  // Función para mostrar toast
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -188,20 +320,22 @@ const Navegacion = ({ isAuthenticated = false }) => {
     console.log('🔵 Productos:', carrito);
     
     if (cantidadTotal < 10) {
-      alert(`⚠️ Necesitas al menos 10 productos para continuar.\nTienes: ${cantidadTotal} productos.`);
+      showToast(`⚠️ Necesitas al menos 10 productos para continuar.\nTienes: ${cantidadTotal} productos.`, 'warning');
       return;
     }
 
     if (cantidadTotal > 100) {
-      alert(`⚠️ Máximo 100 productos permitidos.\nTienes: ${cantidadTotal} productos.`);
+      showToast(`⚠️ Máximo 100 productos permitidos.\nTienes: ${cantidadTotal} productos.`, 'warning');
       return;
     }
 
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
-      alert('⚠️ Debes iniciar sesión para continuar con tu pedido');
+      showToast('⚠️ Debes iniciar sesión para continuar con tu pedido', 'warning');
       setShowCartDropdown(false);
-      navigate('/iniciar-sesion');
+      setTimeout(() => {
+        navigate('/iniciar-sesion');
+      }, 1000);
       return;
     }
 
@@ -217,6 +351,15 @@ const Navegacion = ({ isAuthenticated = false }) => {
 
   return (
     <>
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       {/* Bootstrap Icons */}
       <link
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"

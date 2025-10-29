@@ -14,22 +14,36 @@ const PersonalizacionProductos = () => {
   const [catalogos, setCatalogos] = useState({
     toppings: [],
     salsas: [],
-    rellenos: [],
-    adiciones: [],
-    sabores: []
+    adiciones: []
   });
   const [configuraciones, setConfiguraciones] = useState({});
   const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
+  const [modalAdiciones, setModalAdiciones] = useState(false);
+  
+  // 🎯 Estados para acordeones en resumen
+  const [acordeones, setAcordeones] = useState({
+    toppings: true,
+    salsas: true,
+    adiciones: true
+  });
+  
+  const [searchToppings, setSearchToppings] = useState('');
+  const [searchSalsas, setSearchSalsas] = useState('');
+  const [searchAdiciones, setSearchAdiciones] = useState('');
+  const [paginaToppings, setPaginaToppings] = useState(1);
+  const [paginaSalsas, setPaginaSalsas] = useState(1);
+  const [paginaAdiciones, setPaginaAdiciones] = useState(1);
+  
+  const ITEMS_POR_PAGINA = 9;
 
-  // 🆕 URLs ACTUALIZADAS CON TOPPINGS Y SALSAS
   const API_URLS = {
     adiciones: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones',
-    rellenos: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno',
-    sabores: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor',
-    toppings: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings',  // 🆕 NUEVO
-    salsas: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas',      // 🆕 NUEVO
-    configuracion: 'https://deliciasoft-backend-i6g9.onrender.com/api/configuracion-producto'
+    toppings: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings',
+    salsas: 'https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas',
+    configuracion: 'https://deliciasoft-backend-i6g9.onrender.com/api/configuracion-producto',
+    insumos: 'https://deliciasoft-backend-i6g9.onrender.com/api/insumos',
+    imagenes: 'https://deliciasoft-backend-i6g9.onrender.com/api/imagenes'
   };
 
   const scrollToTop = () => {
@@ -40,6 +54,13 @@ const PersonalizacionProductos = () => {
     }
   };
 
+  const toggleAcordeon = (seccion) => {
+    setAcordeones(prev => ({
+      ...prev,
+      [seccion]: !prev[seccion]
+    }));
+  };
+
   useEffect(() => {
     cargarDatos();
   }, []);
@@ -48,79 +69,225 @@ const PersonalizacionProductos = () => {
     try {
       setLoading(true);
       
-      // 🆕 CARGAR TODOS LOS CATÁLOGOS INCLUYENDO TOPPINGS Y SALSAS
-      const [adicionesRes, rellenosRes, saboresRes, toppingsRes, salsasRes] = await Promise.all([
-        fetch(API_URLS.adiciones).catch(() => ({ ok: false })),
-        fetch(API_URLS.rellenos).catch(() => ({ ok: false })),
-        fetch(API_URLS.sabores).catch(() => ({ ok: false })),
-        fetch(API_URLS.toppings).catch(() => ({ ok: false })),  // 🆕 NUEVO
-        fetch(API_URLS.salsas).catch(() => ({ ok: false }))     // 🆕 NUEVO
+      const [adicionesRes, toppingsRes, salsasRes, insumosRes] = await Promise.all([
+        fetch(API_URLS.adiciones).catch(err => {
+          console.error('❌ Error cargando adiciones:', err);
+          return { ok: false };
+        }),
+        fetch(API_URLS.toppings).catch(err => {
+          console.error('❌ Error cargando toppings:', err);
+          return { ok: false };
+        }),
+        fetch(API_URLS.salsas).catch(err => {
+          console.error('❌ Error cargando salsas:', err);
+          return { ok: false };
+        }),
+        fetch(API_URLS.insumos).catch(err => {
+          console.error('❌ Error cargando insumos:', err);
+          return { ok: false };
+        })
       ]);
 
-      let adicionesData = [], rellenosData = [], saboresData = [], toppingsData = [], salsasData = [];
+      let adicionesData = [], toppingsData = [], salsasData = [], insumosData = [];
 
-      if (adicionesRes.ok) adicionesData = await adicionesRes.json();
-      if (rellenosRes.ok) rellenosData = await rellenosRes.json();
-      if (saboresRes.ok) saboresData = await saboresRes.json();
-      if (toppingsRes.ok) toppingsData = await toppingsRes.json();  // 🆕 NUEVO
-      if (salsasRes.ok) salsasData = await salsasRes.json();        // 🆕 NUEVO
+      if (adicionesRes.ok) {
+        adicionesData = await adicionesRes.json();
+        console.log('✅ Adiciones cargadas:', adicionesData.length);
+      }
+      
+      if (toppingsRes.ok) {
+        toppingsData = await toppingsRes.json();
+        console.log('✅ Toppings cargados:', toppingsData.length);
+      }
+      
+      if (salsasRes.ok) {
+        salsasData = await salsasRes.json();
+        console.log('✅ Salsas cargadas:', salsasData.length);
+      }
+      
+      if (insumosRes.ok) {
+        insumosData = await insumosRes.json();
+        console.log('✅ Insumos cargados:', insumosData.length);
+      }
 
-      console.log('📦 Catálogos cargados:');
-      console.log('Adiciones:', adicionesData);
-      console.log('Rellenos:', rellenosData);
-      console.log('Sabores:', saboresData);
-      console.log('Toppings:', toppingsData);  // 🆕 NUEVO
-      console.log('Salsas:', salsasData);      // 🆕 NUEVO
+      const getImagenInsumo = async (idinsumos) => {
+        if (!idinsumos) {
+          console.warn('⚠️ No hay idinsumos');
+          return null;
+        }
 
-      const getPlaceholderImage = (nombre, color = 'E91E63') => {
-        return `https://via.placeholder.com/50x50/${color}/FFFFFF?text=${encodeURIComponent(nombre?.charAt(0) || '?')}`;
+        const insumo = Array.isArray(insumosData) 
+          ? insumosData.find(i => parseInt(i.idinsumo) === parseInt(idinsumos))
+          : null;
+        
+        if (!insumo) {
+          console.warn(`⚠️ No se encontró insumo con ID: ${idinsumos}`);
+          return null;
+        }
+
+        console.log(`🔍 Procesando insumo ${idinsumos}:`, insumo);
+
+        if (insumo.idimagen) {
+          try {
+            const imageUrl = `${API_URLS.imagenes}/${insumo.idimagen}`;
+            console.log(`📡 Consultando imagen: ${imageUrl}`);
+            
+            const imageResponse = await fetch(imageUrl);
+            
+            if (imageResponse.ok) {
+              const contentType = imageResponse.headers.get('content-type');
+              console.log(`📸 Content-Type: ${contentType}`);
+              
+              if (contentType && contentType.startsWith('image/')) {
+                console.log(`✅ Imagen directa encontrada: ${imageUrl}`);
+                return imageUrl;
+              }
+              
+              if (contentType && contentType.includes('json')) {
+                const imageData = await imageResponse.json();
+                console.log(`📦 Datos JSON de imagen:`, imageData);
+                
+                const imageUrlFromData = 
+                  imageData.urlimg ||
+                  imageData.url || 
+                  imageData.ruta || 
+                  imageData.urlimagen ||
+                  imageData.imagenUrl ||
+                  imageData.imagen ||
+                  imageData.path ||
+                  imageData.src;
+                
+                if (imageUrlFromData) {
+                  console.log(`✅ URL extraída del JSON: ${imageUrlFromData}`);
+                  
+                  if (imageUrlFromData.startsWith('/')) {
+                    const fullUrl = `https://deliciasoft-backend-i6g9.onrender.com${imageUrlFromData}`;
+                    console.log(`🔗 URL completa construida: ${fullUrl}`);
+                    return fullUrl;
+                  }
+                  
+                  if (imageUrlFromData.startsWith('data:image')) {
+                    console.log(`📸 Imagen base64 detectada`);
+                    return imageUrlFromData;
+                  }
+                  
+                  return imageUrlFromData;
+                }
+                
+                if (imageData.data && imageData.data.url) {
+                  console.log(`✅ URL en data.url: ${imageData.data.url}`);
+                  return imageData.data.url;
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`❌ Error obteniendo imagen ${insumo.idimagen}:`, error);
+          }
+          
+          const fallbackUrl = `${API_URLS.imagenes}/${insumo.idimagen}`;
+          console.log(`⚠️ Usando URL directa como último recurso: ${fallbackUrl}`);
+          return fallbackUrl;
+        }
+
+        if (insumo.imagenes) {
+          if (insumo.imagenes.idimagenes) {
+            const imagenUrl = `${API_URLS.imagenes}/${insumo.imagenes.idimagenes}`;
+            console.log(`✅ Imagen desde relación Prisma: ${imagenUrl}`);
+            return imagenUrl;
+          }
+          
+          if (insumo.imagenes.url || insumo.imagenes.ruta) {
+            const url = insumo.imagenes.url || insumo.imagenes.ruta;
+            console.log(`✅ URL desde objeto imagenes: ${url}`);
+            return url;
+          }
+        }
+
+        console.warn(`⚠️ Insumo ${idinsumos} no tiene imagen disponible`);
+        return null;
       };
 
-      // 🆕 PROCESAR TOPPINGS Y SALSAS
+      const getPlaceholderImage = (nombre, color = 'E91E63') => {
+        const inicial = nombre?.charAt(0).toUpperCase() || '?';
+        return `https://via.placeholder.com/100x100/${color}/FFFFFF?text=${encodeURIComponent(inicial)}`;
+      };
+
+      const toppingsPromises = Array.isArray(toppingsData) 
+        ? toppingsData
+            .filter(t => t.estado)
+            .map(async (t, idx) => {
+              const imagenInsumo = await getImagenInsumo(t.idinsumos);
+              
+              const toppingId = String(
+                t.idtopping || 
+                t.id || 
+                t.idtoppings ||
+                t.catalogotoppingId ||
+                t.idinsumos || 
+                `topping-${idx}`
+              );
+              
+              console.log(`🍫 Topping #${idx} RAW:`, t);
+              console.log(`🍫 Topping "${t.nombre}" - ID extraído: ${toppingId}`);
+              
+              return {
+                id: toppingId,
+                nombre: t.nombre,
+                imagen: imagenInsumo || getPlaceholderImage(t.nombre, '8B4513'),
+                _raw: t
+              };
+            })
+        : [];
+
+      const salsasPromises = Array.isArray(salsasData)
+        ? salsasData
+            .filter(s => s.estado)
+            .map(async (s, idx) => {
+              const imagenInsumo = await getImagenInsumo(s.idinsumos);
+              const salsaId = String(s.idsalsa || s.id);
+              console.log(`🍯 Salsa #${idx} "${s.nombre}" - ID: ${salsaId} (tipo: ${typeof salsaId}) - imagen: ${imagenInsumo || 'placeholder'}`);
+              return {
+                id: salsaId,
+                nombre: s.nombre,
+                imagen: imagenInsumo || getPlaceholderImage(s.nombre, 'FF5722')
+              };
+            })
+        : [];
+
+      const adicionesPromises = Array.isArray(adicionesData)
+        ? adicionesData
+            .filter(a => a.estado)
+            .map(async (a, idx) => {
+              const imagenInsumo = await getImagenInsumo(a.idinsumos);
+              const adicionId = String(a.idadiciones || a.id);
+              console.log(`✨ Adición #${idx} "${a.nombre}" - ID: ${adicionId} (tipo: ${typeof adicionId}) - imagen: ${imagenInsumo || 'placeholder'}`);
+              return {
+                id: adicionId,
+                nombre: a.nombre,
+                precio: parseFloat(a.precioadicion || 0),
+                imagen: imagenInsumo || getPlaceholderImage(a.nombre, 'FFC107')
+              };
+            })
+        : [];
+
+      const [toppingsConImagenes, salsasConImagenes, adicionesConImagenes] = await Promise.all([
+        Promise.all(toppingsPromises),
+        Promise.all(salsasPromises),
+        Promise.all(adicionesPromises)
+      ]);
+
       setCatalogos({
-        toppings: Array.isArray(toppingsData) 
-          ? toppingsData.filter(t => t.estado).map(t => ({
-              id: t.idtopping || t.id,
-              nombre: t.nombre,
-              precio: parseFloat(t.precioadicion || 0),
-              imagen: (t.imagen && t.imagen.trim() !== '') ? t.imagen : getPlaceholderImage(t.nombre, '8B4513')
-            }))
-          : [],
-        salsas: Array.isArray(salsasData)
-          ? salsasData.filter(s => s.estado).map(s => ({
-              id: s.idsalsa || s.id,
-              nombre: s.nombre,
-              precio: parseFloat(s.precioadicion || 0),
-              imagen: (s.imagen && s.imagen.trim() !== '') ? s.imagen : getPlaceholderImage(s.nombre, 'FF5722')
-            }))
-          : [],
-        rellenos: Array.isArray(rellenosData) 
-          ? rellenosData.filter(r => r.estado).map(r => ({
-              id: r.idrelleno || r.id,
-              nombre: r.nombre,
-              precio: parseFloat(r.precioadicion || 0),
-              imagen: (r.imagen && r.imagen.trim() !== '') ? r.imagen : getPlaceholderImage(r.nombre, '007BFF')
-            }))
-          : [],
-        adiciones: Array.isArray(adicionesData)
-          ? adicionesData.filter(a => a.estado).map(a => ({
-              id: a.idadiciones || a.id,
-              nombre: a.nombre,
-              precio: parseFloat(a.precioadicion || 0),
-              imagen: (a.imagen && a.imagen.trim() !== '') ? a.imagen : getPlaceholderImage(a.nombre, 'E91E63')
-            }))
-          : [],
-        sabores: Array.isArray(saboresData)
-          ? saboresData.filter(s => s.estado).map(s => ({
-              id: s.idsabor || s.id,
-              nombre: s.nombre,
-              precio: parseFloat(s.precioadicion || 0),
-              imagen: (s.imagen && s.imagen.trim() !== '') ? s.imagen : getPlaceholderImage(s.nombre, 'FFC107')
-            }))
-          : []
+        toppings: toppingsConImagenes,
+        salsas: salsasConImagenes,
+        adiciones: adicionesConImagenes
       });
 
-      // Cargar configuraciones
+      console.log('📊 Catálogos procesados:', {
+        toppings: toppingsConImagenes.length,
+        salsas: salsasConImagenes.length,
+        adiciones: adicionesConImagenes.length
+      });
+
       const configs = {};
       for (const producto of carrito) {
         try {
@@ -130,35 +297,26 @@ const PersonalizacionProductos = () => {
             configs[producto.id] = config;
           } else {
             configs[producto.id] = {
-              permiteToppings: true,   // 🆕 ACTIVADO POR DEFECTO
-              permiteSalsas: true,     // 🆕 ACTIVADO POR DEFECTO
-              permiteRellenos: true,
-              permiteAdiciones: true,
-              permiteSabores: false,
-              limiteTopping: 3,        // 🆕 LÍMITE POR DEFECTO
-              limiteSalsa: 2,          // 🆕 LÍMITE POR DEFECTO
-              limiteRelleno: 3,
-              limiteSabor: 0
+              permiteToppings: false,
+              permiteSalsas: false,
+              permiteAdiciones: false,
+              limiteTopping: 0,
+              limiteSalsa: 0
             };
           }
         } catch (error) {
           configs[producto.id] = {
-            permiteToppings: true,
-            permiteSalsas: true,
-            permiteRellenos: true,
-            permiteAdiciones: true,
-            permiteSabores: false,
-            limiteTopping: 3,
-            limiteSalsa: 2,
-            limiteRelleno: 3,
-            limiteSabor: 0
+            permiteToppings: false,
+            permiteSalsas: false,
+            permiteAdiciones: false,
+            limiteTopping: 0,
+            limiteSalsa: 0
           };
         }
       }
       
       setConfiguraciones(configs);
 
-      // Inicializar personalizaciones
       const initialPersonalizaciones = {};
       carrito.forEach(producto => {
         initialPersonalizaciones[producto.id] = {};
@@ -166,16 +324,14 @@ const PersonalizacionProductos = () => {
           initialPersonalizaciones[producto.id][i] = {
             toppings: [],
             salsas: [],
-            rellenos: [],
-            adiciones: [],
-            sabores: []
+            adiciones: []
           };
         }
       });
       setPersonalizaciones(initialPersonalizaciones);
 
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      console.error('❌ Error cargando datos:', error);
       showCustomAlert('error', 'Error al cargar datos');
     } finally {
       setLoading(false);
@@ -192,37 +348,77 @@ const PersonalizacionProductos = () => {
   const personalizacionActual = personalizaciones[productoActual?.id]?.[unidadActual] || {
     toppings: [],
     salsas: [],
-    rellenos: [],
-    adiciones: [],
-    sabores: []
+    adiciones: []
   };
 
-  const toggleItem = (tipo, item) => {
-    const limites = {
-      toppings: configActual.limiteTopping || 0,
-      salsas: configActual.limiteSalsa || 0,
-      rellenos: configActual.limiteRelleno || 0,
-      sabores: configActual.limiteSabor || 0
-    };
-
-    const limite = limites[tipo] || 0;
-    const itemsActuales = personalizacionActual[tipo];
-    const existe = itemsActuales.find(i => i.id === item.id);
-
-    if (existe) {
+  const seleccionarTopping = (item) => {
+    console.log('🔍 Seleccionando topping:', item);
+    console.log('📋 Toppings actuales:', personalizacionActual.toppings);
+    
+    const limite = configActual.limiteTopping || 0;
+    const toppingsActuales = personalizacionActual.toppings || [];
+    
+    const itemIdStr = String(item.id);
+    const yaSeleccionado = toppingsActuales.find(t => {
+      const tIdStr = String(t.id);
+      console.log(`  Comparando: "${tIdStr}" === "${itemIdStr}" ? ${tIdStr === itemIdStr}`);
+      return tIdStr === itemIdStr;
+    });
+    
+    console.log('✅ Ya seleccionado?', yaSeleccionado);
+    
+    if (yaSeleccionado) {
+      console.log('🗑️ Quitando topping...');
       setPersonalizaciones(prev => ({
         ...prev,
         [productoActual.id]: {
           ...prev[productoActual.id],
           [unidadActual]: {
             ...prev[productoActual.id][unidadActual],
-            [tipo]: itemsActuales.filter(i => i.id !== item.id)
+            toppings: toppingsActuales.filter(t => String(t.id) !== itemIdStr)
           }
         }
       }));
     } else {
-      if (limite > 0 && itemsActuales.length >= limite) {
-        showCustomAlert('error', `Solo puedes seleccionar hasta ${limite} ${tipo}`);
+      if (limite > 0 && toppingsActuales.length >= limite) {
+        showCustomAlert('error', `Máximo ${limite} topping(s) permitido(s)`);
+        return;
+      }
+      
+      console.log('➕ Agregando topping...');
+      setPersonalizaciones(prev => ({
+        ...prev,
+        [productoActual.id]: {
+          ...prev[productoActual.id],
+          [unidadActual]: {
+            ...prev[productoActual.id][unidadActual],
+            toppings: [...toppingsActuales, item]
+          }
+        }
+      }));
+    }
+  };
+
+  const seleccionarSalsa = (item) => {
+    const limite = configActual.limiteSalsa || 0;
+    const salsasActuales = personalizacionActual.salsas || [];
+    
+    const yaSeleccionado = salsasActuales.find(s => String(s.id) === String(item.id));
+    
+    if (yaSeleccionado) {
+      setPersonalizaciones(prev => ({
+        ...prev,
+        [productoActual.id]: {
+          ...prev[productoActual.id],
+          [unidadActual]: {
+            ...prev[productoActual.id][unidadActual],
+            salsas: salsasActuales.filter(s => String(s.id) !== String(item.id))
+          }
+        }
+      }));
+    } else {
+      if (limite > 0 && salsasActuales.length >= limite) {
+        showCustomAlert('error', `Máximo ${limite} salsa(s) permitida(s)`);
         return;
       }
       
@@ -232,31 +428,51 @@ const PersonalizacionProductos = () => {
           ...prev[productoActual.id],
           [unidadActual]: {
             ...prev[productoActual.id][unidadActual],
-            [tipo]: [...itemsActuales, item]
+            salsas: [...salsasActuales, item]
           }
         }
       }));
     }
   };
 
-  const aplicarATodas = () => {
-    const personalizacionBase = personalizaciones[productoActual.id][unidadActual];
+  const toggleAdicion = (item) => {
+    const existe = personalizacionActual.adiciones.find(a => String(a.id) === String(item.id));
     
-    setPersonalizaciones(prev => {
-      const nuevasPersonalizaciones = { ...prev };
-      for (let i = 1; i <= productoActual.cantidad; i++) {
-        nuevasPersonalizaciones[productoActual.id][i] = {
-          toppings: [...personalizacionBase.toppings],
-          salsas: [...personalizacionBase.salsas],
-          rellenos: [...personalizacionBase.rellenos],
-          adiciones: [...personalizacionBase.adiciones],
-          sabores: [...personalizacionBase.sabores]
-        };
+    setPersonalizaciones(prev => ({
+      ...prev,
+      [productoActual.id]: {
+        ...prev[productoActual.id],
+        [unidadActual]: {
+          ...prev[productoActual.id][unidadActual],
+          adiciones: existe 
+            ? personalizacionActual.adiciones.filter(a => String(a.id) !== String(item.id))
+            : [...personalizacionActual.adiciones, item]
+        }
       }
-      return nuevasPersonalizaciones;
-    });
+    }));
+  };
 
-    showCustomAlert('success', `✅ Personalización aplicada a todas las ${productoActual.cantidad} unidades`);
+  const filtrarYPaginar = (items, search, pagina) => {
+    const filtrados = items.filter(item => 
+      item.nombre.toLowerCase().includes(search.toLowerCase())
+    );
+    const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
+    const fin = inicio + ITEMS_POR_PAGINA;
+    return {
+      items: filtrados.slice(inicio, fin),
+      total: filtrados.length,
+      totalPaginas: Math.ceil(filtrados.length / ITEMS_POR_PAGINA)
+    };
+  };
+
+  const toppingsPaginados = filtrarYPaginar(catalogos.toppings, searchToppings, paginaToppings);
+  const salsasPaginadas = filtrarYPaginar(catalogos.salsas, searchSalsas, paginaSalsas);
+  const adicionesPaginadas = filtrarYPaginar(catalogos.adiciones, searchAdiciones, paginaAdiciones);
+
+  const calcularTotalUnidad = () => {
+    let total = productoActual.precio;
+    total += personalizacionActual.adiciones.reduce((sum, item) => sum + (item.precio || 0), 0);
+    return total;
   };
 
   const siguienteUnidad = () => {
@@ -273,6 +489,10 @@ const PersonalizacionProductos = () => {
     if (productoActualIndex < carrito.length - 1) {
       setProductoActualIndex(productoActualIndex + 1);
       setUnidadActual(1);
+      setPaginaToppings(1);
+      setPaginaSalsas(1);
+      setSearchToppings('');
+      setSearchSalsas('');
       showCustomAlert('success', '✅ Producto completo. Siguiente...');
       scrollToTop();
     } else {
@@ -289,7 +509,33 @@ const PersonalizacionProductos = () => {
       const productoAnterior = carrito[productoActualIndex - 1];
       setUnidadActual(productoAnterior.cantidad);
       scrollToTop();
+    } else {
+      navigate('/pedidos');
     }
+  };
+
+  const aplicarATodos = () => {
+    const personalizacionBase = personalizaciones[productoActual.id][unidadActual];
+    
+    setPersonalizaciones(prev => {
+      const nuevasPersonalizaciones = { ...prev };
+      
+      for (let i = 1; i <= productoActual.cantidad; i++) {
+        nuevasPersonalizaciones[productoActual.id][i] = {
+          toppings: [...personalizacionBase.toppings],
+          salsas: [...personalizacionBase.salsas],
+          adiciones: [...personalizacionBase.adiciones]
+        };
+      }
+      
+      return nuevasPersonalizaciones;
+    });
+    
+    showCustomAlert('success', '✅ Personalización aplicada a todas las unidades');
+    
+    setTimeout(() => {
+      siguienteProducto();
+    }, 1000);
   };
 
   const finalizarPersonalizacion = () => {
@@ -302,21 +548,20 @@ const PersonalizacionProductos = () => {
     }, 1000);
   };
 
-  const calcularTotalUnidad = () => {
-    let total = productoActual.precio;
-    ['toppings', 'salsas', 'rellenos', 'adiciones', 'sabores'].forEach(tipo => {
-      total += personalizacionActual[tipo].reduce((sum, item) => sum + (item.precio || 0), 0);
-    });
-    return total;
-  };
+  const tienePersonalizacion = configActual.permiteToppings || configActual.permiteSalsas || 
+                                configActual.permiteAdiciones || configActual.permiteRellenos || 
+                                configActual.permiteSabores;
+  
+  const tieneCatalogos = (configActual.permiteToppings && catalogos.toppings.length > 0) ||
+                         (configActual.permiteSalsas && catalogos.salsas.length > 0) ||
+                         (configActual.permiteAdiciones && catalogos.adiciones.length > 0);
 
-  const totalUnidadesPersonalizadas = carrito.reduce((sum, p, idx) => {
-    if (idx < productoActualIndex) return sum + p.cantidad;
-    if (idx === productoActualIndex) return sum + (unidadActual - 1);
-    return sum;
-  }, 0);
-
-  const totalUnidades = carrito.reduce((sum, p) => sum + p.cantidad, 0);
+  useEffect(() => {
+    if (!loading && productoActual && (!tienePersonalizacion || !tieneCatalogos)) {
+      console.log('Producto sin personalización disponible, saltando...');
+      siguienteProducto();
+    }
+  }, [productoActualIndex, loading]);
 
   if (loading) {
     return (
@@ -349,156 +594,205 @@ const PersonalizacionProductos = () => {
       )}
 
       <div className="personalizacion-content">
-        <div className="producto-header-compacto" style={{ border: '3px solid #e91e63' }}>
-          <div className="producto-compacto-layout">
-            <div 
-              className="producto-imagen-compacta"
-              style={{ backgroundImage: `url(${productoActual.imagen})` }}
-            />
-            
-            <div className="producto-info-compacta">
-              <h1 className="producto-nombre-compacto">{productoActual.nombre}</h1>
-              <p className="producto-detalle-compacto">
-                ${productoActual.precio.toLocaleString()} por unidad
-              </p>
-            </div>
-
-            <div style={{ 
-              background: 'linear-gradient(45deg, #e91e63, #f06292)', 
-              color: 'white', 
-              padding: '15px 25px', 
-              borderRadius: '15px', 
-              textAlign: 'center', 
-              minWidth: '120px',
-              boxShadow: '0 4px 15px rgba(233,30,99,0.3)'
-            }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold' }}>{unidadActual}</div>
-              <div style={{ fontSize: '12px', opacity: 0.9 }}>de {productoActual.cantidad}</div>
-            </div>
-          </div>
-
-          <div className="progress-total-container">
-            <span className="progress-label">
-              Progreso total: {totalUnidadesPersonalizadas + 1}/{totalUnidades} unidades
-            </span>
-            <div className="progress-bar-container">
-              <div 
-                className="progress-bar-fill"
-                style={{ width: `${((totalUnidadesPersonalizadas + 1) / totalUnidades) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {productoActual.cantidad > 1 && (
-            <button 
-              onClick={aplicarATodas} 
-              style={{
-                width: '100%',
-                marginTop: '15px',
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '12px',
-                background: 'linear-gradient(45deg, #17a2b8, #20c997)',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              🔄 Aplicar esta personalización a las {productoActual.cantidad} unidades
-            </button>
-          )}
-        </div>
-
-        {/* 🆕 SECCIÓN TOPPINGS */}
-        {configActual.permiteToppings && catalogos.toppings.length > 0 && (
-          <SeccionCompacta
-            titulo="🍫 Toppings"
-            items={catalogos.toppings}
-            seleccionados={personalizacionActual.toppings}
-            onToggle={(item) => toggleItem('toppings', item)}
-            limite={configActual.limiteTopping}
-            mensajeVacio="No hay toppings disponibles"
-          />
-        )}
-
-        {/* 🆕 SECCIÓN SALSAS */}
-        {configActual.permiteSalsas && catalogos.salsas.length > 0 && (
-          <SeccionCompacta
-            titulo="🍯 Salsas"
-            items={catalogos.salsas}
-            seleccionados={personalizacionActual.salsas}
-            onToggle={(item) => toggleItem('salsas', item)}
-            limite={configActual.limiteSalsa}
-            mensajeVacio="No hay salsas disponibles"
-          />
-        )}
-
-        {configActual.permiteRellenos && catalogos.rellenos.length > 0 && (
-          <SeccionCompacta
-            titulo="🥧 Rellenos"
-            items={catalogos.rellenos}
-            seleccionados={personalizacionActual.rellenos}
-            onToggle={(item) => toggleItem('rellenos', item)}
-            limite={configActual.limiteRelleno}
-            mensajeVacio="No hay rellenos disponibles"
-          />
-        )}
-
-        {configActual.permiteAdiciones && catalogos.adiciones.length > 0 && (
-          <SeccionCompacta
-            titulo="✨ Adiciones"
-            items={catalogos.adiciones}
-            seleccionados={personalizacionActual.adiciones}
-            onToggle={(item) => toggleItem('adiciones', item)}
-            limite={null}
-          />
-        )}
-
-        {configActual.permiteSabores && catalogos.sabores.length > 0 && (
-          <SeccionCompacta
-            titulo="🎨 Sabores"
-            items={catalogos.sabores}
-            seleccionados={personalizacionActual.sabores}
-            onToggle={(item) => toggleItem('sabores', item)}
-            limite={configActual.limiteSabor}
-          />
-        )}
-
-        <div className="resumen-compacto">
-          <h3>📋 Resumen Unidad {unidadActual}</h3>
-          <div className="resumen-items">
-            <div className="resumen-item">
-              <span>Producto:</span>
-              <span>${productoActual.precio.toLocaleString()}</span>
-            </div>
-            {['toppings', 'salsas', 'rellenos', 'adiciones', 'sabores'].map(tipo => {
-              const items = personalizacionActual[tipo];
-              if (items.length === 0) return null;
-              const total = items.reduce((sum, item) => sum + (item.precio || 0), 0);
-              return (
-                <div key={tipo} className="resumen-item extras">
-                  <span style={{ textTransform: 'capitalize' }}>{tipo}:</span>
-                  <span>+${total.toLocaleString()}</span>
+        <div className="personalizacion-layout">
+          <div className="left-panel">
+            <div className="producto-header-compacto">
+              <div className="producto-compacto-layout">
+                <div 
+                  className="producto-imagen-compacta"
+                  style={{ backgroundImage: `url(${productoActual.imagen})` }}
+                />
+                
+                <div className="producto-info-compacta">
+                  <h1 className="producto-nombre-compacto">{productoActual.nombre}</h1>
+                  <p className="producto-detalle-compacto">
+                    ${productoActual.precio.toLocaleString()} por unidad
+                  </p>
                 </div>
-              );
-            })}
-            <div className="resumen-item total">
-              <span>Total:</span>
-              <span>${calcularTotalUnidad().toLocaleString()}</span>
+
+                <div className="unidad-badge">
+                  <div className="unidad-badge-numero">{unidadActual}</div>
+                  <div className="unidad-badge-texto">de {productoActual.cantidad}</div>
+                </div>
+              </div>
+
+              {configActual.permiteAdiciones && catalogos.adiciones.length > 0 && (
+                <button 
+                  onClick={() => setModalAdiciones(true)}
+                  className="btn-adicciones"
+                >
+                  <span className="icon">+</span>
+                  Adicciones
+                  {personalizacionActual.adiciones.length > 0 && (
+                    <span className="badge-count">
+                      {personalizacionActual.adiciones.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
+
+            {/* 🎯 RESUMEN CON ACORDEONES */}
+            <div className="resumen-compacto">
+              <h3>📋 Resumen Unidad {unidadActual}</h3>
+              <div className="resumen-items">
+                <div className="resumen-item base">
+                  <span className="resumen-item-nombre">
+                    🍰 {productoActual.nombre}
+                  </span>
+                  <span className="resumen-item-precio">
+                    ${productoActual.precio.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Acordeón Toppings */}
+                {personalizacionActual.toppings.length > 0 && (
+                  <div className="resumen-seccion">
+                    <div 
+                      className="resumen-seccion-header"
+                      onClick={() => toggleAcordeon('toppings')}
+                    >
+                      <div className="resumen-seccion-titulo">
+                        🍫 Toppings
+                        <span className="resumen-seccion-badge">
+                          {personalizacionActual.toppings.length}
+                        </span>
+                      </div>
+                      <span className={`resumen-seccion-icono ${acordeones.toppings ? 'open' : ''}`}>
+                        ▼
+                      </span>
+                    </div>
+                    <div className={`resumen-seccion-contenido ${acordeones.toppings ? 'open' : ''}`}>
+                      <div className="resumen-seccion-lista">
+                        {personalizacionActual.toppings.map((topping, index) => (
+                          <div key={`topping-${topping.id}-${index}`} className="resumen-item">
+                            <span className="resumen-item-nombre">+ {topping.nombre}</span>
+                            <span className="resumen-item-precio">Gratis</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Acordeón Salsas */}
+                {personalizacionActual.salsas.length > 0 && (
+                  <div className="resumen-seccion">
+                    <div 
+                      className="resumen-seccion-header"
+                      onClick={() => toggleAcordeon('salsas')}
+                    >
+                      <div className="resumen-seccion-titulo">
+                        🍯 Salsas
+                        <span className="resumen-seccion-badge">
+                          {personalizacionActual.salsas.length}
+                        </span>
+                      </div>
+                      <span className={`resumen-seccion-icono ${acordeones.salsas ? 'open' : ''}`}>
+                        ▼
+                      </span>
+                    </div>
+                    <div className={`resumen-seccion-contenido ${acordeones.salsas ? 'open' : ''}`}>
+                      <div className="resumen-seccion-lista">
+                        {personalizacionActual.salsas.map((salsa, index) => (
+                          <div key={`salsa-${salsa.id}-${index}`} className="resumen-item">
+                            <span className="resumen-item-nombre">+ {salsa.nombre}</span>
+                            <span className="resumen-item-precio">Gratis</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Acordeón Adicciones */}
+                {personalizacionActual.adiciones.length > 0 && (
+                  <div className="resumen-seccion">
+                    <div 
+                      className="resumen-seccion-header"
+                      onClick={() => toggleAcordeon('adiciones')}
+                    >
+                      <div className="resumen-seccion-titulo">
+                        ✨ Adicciones
+                        <span className="resumen-seccion-badge">
+                          {personalizacionActual.adiciones.length}
+                        </span>
+                      </div>
+                      <span className={`resumen-seccion-icono ${acordeones.adiciones ? 'open' : ''}`}>
+                        ▼
+                      </span>
+                    </div>
+                    <div className={`resumen-seccion-contenido ${acordeones.adiciones ? 'open' : ''}`}>
+                      <div className="resumen-seccion-lista">
+                        {personalizacionActual.adiciones.map((adicion, index) => (
+                          <div key={`adicion-${adicion.id}-${index}`} className="resumen-item">
+                            <span className="resumen-item-nombre">+ {adicion.nombre}</span>
+                            <span className="resumen-item-precio">
+                              +${adicion.precio.toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="resumen-item total">
+                  <span className="resumen-item-nombre">Total:</span>
+                  <span className="resumen-item-precio">
+                    ${calcularTotalUnidad().toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="right-panel">
+            {configActual.permiteToppings && catalogos.toppings.length > 0 && (
+              <CatalogoBox
+                titulo="🍫 Toppings"
+                items={toppingsPaginados.items}
+                seleccionados={personalizacionActual.toppings}
+                onSelect={seleccionarTopping}
+                search={searchToppings}
+                onSearchChange={setSearchToppings}
+                pagina={paginaToppings}
+                totalPaginas={toppingsPaginados.totalPaginas}
+                onPaginaChange={setPaginaToppings}
+                limite={configActual.limiteTopping}
+              />
+            )}
+
+            {configActual.permiteSalsas && catalogos.salsas.length > 0 && (
+              <CatalogoBox
+                titulo="🍯 Salsas"
+                items={salsasPaginadas.items}
+                seleccionados={personalizacionActual.salsas}
+                onSelect={seleccionarSalsa}
+                search={searchSalsas}
+                onSearchChange={setSearchSalsas}
+                pagina={paginaSalsas}
+                totalPaginas={salsasPaginadas.totalPaginas}
+                onPaginaChange={setPaginaSalsas}
+                limite={configActual.limiteSalsa}
+              />
+            )}
           </div>
         </div>
 
         <div className="navigation-buttons">
           <button
             onClick={anteriorUnidad}
-            disabled={productoActualIndex === 0 && unidadActual === 1}
             className="btn-nav anterior"
           >
             ← Anterior
           </button>
+          
+          {productoActual.cantidad > 1 && (
+            <button onClick={aplicarATodos} className="btn-nav aplicar-todos">
+              ✨ Personalizar Todas las Unidades
+            </button>
+          )}
           
           <button onClick={siguienteUnidad} className="btn-nav siguiente">
             {unidadActual < productoActual.cantidad 
@@ -510,58 +804,225 @@ const PersonalizacionProductos = () => {
           </button>
         </div>
       </div>
+
+      {modalAdiciones && (
+        <ModalAdiciones
+          items={adicionesPaginadas.items}
+          seleccionados={personalizacionActual.adiciones}
+          onToggle={toggleAdicion}
+          onClose={() => setModalAdiciones(false)}
+          search={searchAdiciones}
+          onSearchChange={setSearchAdiciones}
+          pagina={paginaAdiciones}
+          totalPaginas={adicionesPaginadas.totalPaginas}
+          onPaginaChange={setPaginaAdiciones}
+        />
+      )}
     </div>
   );
 };
 
-const SeccionCompacta = ({ titulo, items, seleccionados, onToggle, limite, mensajeVacio }) => {
+const CatalogoBox = ({ 
+  titulo, 
+  items, 
+  seleccionados = [],
+  onSelect, 
+  search, 
+  onSearchChange,
+  pagina,
+  totalPaginas,
+  onPaginaChange,
+  limite = 0
+}) => {
   return (
-    <div className="seccion-compacta">
-      <div className="seccion-header-compacta">
+    <div className="catalogo-box">
+      <div className="catalogo-header">
         <h3>{titulo}</h3>
-        {limite > 0 && (
-          <p className="limite-info">
-            Hasta {limite} opciones ({seleccionados.length}/{limite})
-          </p>
-        )}
-        {!limite && items.length > 0 && (
-          <p className="limite-info">Selecciona las que desees</p>
-        )}
+        <p className="catalogo-limite">
+          {limite > 0 ? `Máximo ${limite}` : 'Sin límite'}
+        </p>
+      </div>
+
+      <div className="catalogo-search">
+        <span className="catalogo-search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => {
+            onSearchChange(e.target.value);
+            onPaginaChange(1);
+          }}
+        />
       </div>
 
       {items.length === 0 ? (
         <div className="no-items">
-          <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔭</div>
-          <p>{mensajeVacio || 'No hay opciones disponibles'}</p>
+          <div className="icon">🔭</div>
+          <p>No se encontraron resultados</p>
         </div>
       ) : (
-        <div className="items-grid-compacta">
-          {items.map(item => {
-            const isSelected = seleccionados.some(s => s.id === item.id);
-            return (
-              <div
-                key={item.id}
-                onClick={() => onToggle(item)}
-                className={`item-card-compacta ${isSelected ? 'selected' : ''}`}
-              >
-                <div 
-                  className="item-imagen-compacta"
-                  style={{ backgroundImage: `url(${item.imagen})` }}
-                />
-                <div className="item-info-compacta">
-                  <div className="item-nombre-compacto">{item.nombre}</div>
-                  <div className="item-precio-compacto">
-                    {item.precio > 0 ? `+$${item.precio.toLocaleString()}` : 'Gratis'}
-                  </div>
+        <>
+          <div className="catalogo-grid-3x3">
+            {items.map((item, index) => {
+              const itemIdStr = String(item.id);
+              const isSelected = seleccionados.some(s => {
+                const sIdStr = String(s.id);
+                const match = sIdStr === itemIdStr;
+                if (index === 0) {
+                  console.log(`🎯 Item "${item.nombre}" (${itemIdStr}) vs Seleccionados:`, 
+                    seleccionados.map(sel => `"${sel.nombre}" (${String(sel.id)})`), 
+                    'Match:', match);
+                }
+                return match;
+              });
+              
+              return (
+                <div
+                  key={`item-${item.id}-${index}`}
+                  onClick={() => onSelect(item)}
+                  className={`item-card-3x3 ${isSelected ? 'selected' : ''}`}
+                >
+                  <div 
+                    className="item-imagen-3x3"
+                    style={{ 
+                      backgroundImage: `url("${item.imagen}")`,
+                      backgroundColor: '#e0e0e0',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                    title={item.imagen}
+                  />
+                  <div className="item-nombre-3x3">{item.nombre}</div>
+                  {isSelected && (
+                    <div className="item-check-3x3">✓</div>
+                  )}
                 </div>
-                {isSelected && (
-                  <div className="item-checkbox-compacto">✓</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {totalPaginas > 1 && (
+            <div className="catalogo-pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => onPaginaChange(Math.max(1, pagina - 1))}
+                disabled={pagina === 1}
+              >
+                ←
+              </button>
+              <span className="pagination-info">
+                {pagina} / {totalPaginas}
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => onPaginaChange(Math.min(totalPaginas, pagina + 1))}
+                disabled={pagina === totalPaginas}
+              >
+                →
+              </button>
+            </div>
+          )}
+        </>
       )}
+    </div>
+  );
+};
+
+const ModalAdiciones = ({ 
+  items, 
+  seleccionados, 
+  onToggle, 
+  onClose,
+  search,
+  onSearchChange,
+  pagina,
+  totalPaginas,
+  onPaginaChange
+}) => {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>✨ Adicciones</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          <div className="modal-search">
+            <span className="modal-search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Buscar adicciones..."
+              value={search}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                onPaginaChange(1);
+              }}
+            />
+          </div>
+
+          {items.length === 0 ? (
+            <div className="no-items">
+              <div className="icon">🔭</div>
+              <p>No se encontraron adicciones</p>
+            </div>
+          ) : (
+            <div className="catalogo-grid-3x3">
+              {items.map(item => {
+                const isSelected = seleccionados.some(s => String(s.id) === String(item.id));
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onToggle(item)}
+                    className={`item-card-3x3 ${isSelected ? 'selected' : ''}`}
+                  >
+                    <div 
+                      className="item-imagen-3x3"
+                      style={{ 
+                        backgroundImage: `url(${item.imagen})`,
+                        backgroundColor: '#e0e0e0'
+                      }}
+                    />
+                    <div className="item-nombre-3x3">{item.nombre}</div>
+                    {item.precio > 0 && (
+                      <div className="adicion-precio-mini">
+                        +${item.precio.toLocaleString()}
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div className="item-check-3x3">✓</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {totalPaginas > 1 && (
+          <div className="catalogo-pagination">
+            <button
+              className="pagination-btn"
+              onClick={() => onPaginaChange(Math.max(1, pagina - 1))}
+              disabled={pagina === 1}
+            >
+              ←
+            </button>
+            <span className="pagination-info">
+              {pagina} / {totalPaginas}
+            </span>
+            <button
+              className="pagination-btn"
+              onClick={() => onPaginaChange(Math.min(totalPaginas, pagina + 1))}
+              disabled={pagina === totalPaginas}
+            >
+              →
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

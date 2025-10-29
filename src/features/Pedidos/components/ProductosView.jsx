@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { CartContext } from "../../Cartas/pages/CartContext";
 import categoriaProductoApiService from '../../Admin/services/categoriaProductosService';
 import productoApiService from '../../Admin/services/productos_services';
+import { FiEye } from "react-icons/fi"; 
+
 
 const ProductosView = () => {
   const [categoriaActiva, setCategoriaActiva] = useState(null);
@@ -10,11 +12,17 @@ const ProductosView = () => {
   const [showAlert, setShowAlert] = useState({ show: false, type: '', message: '' });
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   
-  // Nuevos estados para datos de la API
+  // Estados para datos de la API
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // NUEVOS ESTADOS PARA FILTROS
+  const [busqueda, setBusqueda] = useState('');
+  const [precioMin, setPrecioMin] = useState(0);
+  const [precioMax, setPrecioMax] = useState(1000000);
+  const [rangoActivo, setRangoActivo] = useState(false);
 
   const navigate = useNavigate();
   const { 
@@ -84,6 +92,13 @@ const ProductosView = () => {
         setCategoriaActiva(categoriasTransformadas[0].id);
       }
 
+      // Calcular precio máximo automáticamente
+      let maxPrecio = 0;
+      productosResponse.forEach(p => {
+        if (p.precio > maxPrecio) maxPrecio = p.precio;
+      });
+      setPrecioMax(Math.ceil(maxPrecio / 1000) * 1000);
+
     } catch (error) {
       console.error('Error al cargar datos:', error);
       setError(`Error al cargar datos: ${error.message}`);
@@ -107,7 +122,7 @@ const ProductosView = () => {
     if (nombre.includes('bebida')) return '🥤';
     if (nombre.includes('helado')) return '🍦';
     
-    return '🰀'; // Icono por defecto
+    return '🍰'; // Icono por defecto
   };
 
   // Función para agrupar productos por categoría
@@ -141,6 +156,24 @@ const ProductosView = () => {
     });
 
     return productosAgrupados;
+  };
+
+  // NUEVA FUNCIÓN PARA FILTRAR PRODUCTOS
+  const filtrarProductos = (productosCategoria) => {
+    return productosCategoria.filter(producto => {
+      const cumpleBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase());
+      const cumplePrecio = rangoActivo 
+        ? producto.precio >= precioMin && producto.precio <= precioMax
+        : true;
+      return cumpleBusqueda && cumplePrecio;
+    });
+  };
+
+  // NUEVA FUNCIÓN PARA RESETEAR FILTROS
+  const resetearFiltros = () => {
+    setBusqueda('');
+    setRangoActivo(false);
+    setPrecioMin(0);
   };
 
   const showCustomAlert = (type, message) => {
@@ -249,8 +282,9 @@ const ProductosView = () => {
     );
   }
 
-  // Obtener productos de la categoría activa
+  // Obtener productos de la categoría activa Y APLICAR FILTROS
   const productosCategoria = productos[categoriaActiva] || [];
+  const productosFiltrados = filtrarProductos(productosCategoria);
 
   return (
     <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', padding: '20px' }}>
@@ -298,6 +332,161 @@ const ProductosView = () => {
         </p>
       </div>
 
+      {/* NUEVA SECCIÓN: FILTROS DE BÚSQUEDA */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        padding: '25px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '20px',
+          alignItems: 'end'
+        }}>
+          {/* Buscador */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2c3e50',
+              marginBottom: '8px'
+            }}>
+              🔍 Buscar producto
+            </label>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nombre..."
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                border: '2px solid #e0e0e0',
+                borderRadius: '12px',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'border-color 0.3s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#e91e63'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+          </div>
+
+          {/* Filtro de precio */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2c3e50',
+              marginBottom: '8px'
+            }}>
+              💰 Rango de precio
+            </label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input
+                type="number"
+                value={precioMin}
+                onChange={(e) => setPrecioMin(Number(e.target.value))}
+                placeholder="Min"
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#e91e63'}
+                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              />
+              <span style={{ color: '#7f8c8d', fontWeight: 'bold' }}>-</span>
+              <input
+                type="number"
+                value={precioMax}
+                onChange={(e) => setPrecioMax(Number(e.target.value))}
+                placeholder="Max"
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#e91e63'}
+                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              />
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setRangoActivo(!rangoActivo)}
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                backgroundColor: rangoActivo ? '#e91e63' : '#FFD700',
+                color: rangoActivo ? 'white' : '#2c3e50',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            >
+              {rangoActivo ? '✓ Filtro activo' : 'Aplicar filtro'}
+            </button>
+            <button
+              onClick={resetearFiltros}
+              style={{
+                padding: '12px 20px',
+                border: '2px solid #e0e0e0',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+                color: '#7f8c8d',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#e91e63';
+                e.target.style.color = '#e91e63';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#e0e0e0';
+                e.target.style.color = '#7f8c8d';
+              }}
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        {/* Indicador de resultados */}
+        {(busqueda || rangoActivo) && (
+          <div style={{
+            marginTop: '15px',
+            padding: '10px 15px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '10px',
+            fontSize: '14px',
+            color: '#2c3e50',
+            borderLeft: '4px solid #e91e63'
+          }}>
+            📊 Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{productosCategoria.length}</strong> productos
+          </div>
+        )}
+      </div>
+
       {/* Categorías */}
       <div style={{ 
         display: 'flex', 
@@ -341,7 +530,7 @@ const ProductosView = () => {
         gap: '20px',
         marginBottom: '30px'
       }}>
-        {productosCategoria.length === 0 ? (
+        {productosFiltrados.length === 0 ? (
           <div style={{ 
             gridColumn: '1 / -1',
             textAlign: 'center',
@@ -350,11 +539,18 @@ const ProductosView = () => {
             borderRadius: '20px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>📦</div>
-            <h3 style={{ color: '#7f8c8d' }}>No hay productos disponibles en esta categoría</h3>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>
+              {busqueda || rangoActivo ? '🔍' : '📦'}
+            </div>
+            <h3 style={{ color: '#7f8c8d' }}>
+              {busqueda || rangoActivo 
+                ? 'No se encontraron productos con estos filtros'
+                : 'No hay productos disponibles en esta categoría'
+              }
+            </h3>
           </div>
         ) : (
-          productosCategoria.map(producto => {
+          productosFiltrados.map(producto => {
             const yaEnCarrito = carrito.find(p => p.id === producto.id);
 
             return (
@@ -381,20 +577,46 @@ const ProductosView = () => {
                   }}
                   onClick={() => abrirModal(producto)}
                 >
+{/* NUEVO: Icono de ver detalles (ojito) */}
+<div
+  style={{
+    position: 'absolute',
+    top: '10px',
+    left: '10px',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    color: '#ec4899', // rosa moderno
+    borderRadius: '50%',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '22px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    transition: 'transform 0.3s ease'
+  }}
+  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+>
+  <FiEye />
+</div>
+
                   {yaEnCarrito && (
                     <div style={{
                       position: 'absolute',
                       top: '10px',
                       right: '10px',
-                      backgroundColor: '#e91e63',
+                      backgroundColor: '#4CAF50',
                       color: 'white',
                       borderRadius: '50%',
-                      width: '30px',
-                      height: '30px',
+                      width: '35px',
+                      height: '35px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '16px'
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                     }}>
                       ✓
                     </div>
@@ -421,6 +643,7 @@ const ProductosView = () => {
                     ${producto.precio.toLocaleString()}
                   </p>
                   
+                  {/* MODIFICADO: Botón con ícono de carrito */}
                   <button
                     style={{
                       width: '100%',
@@ -428,17 +651,31 @@ const ProductosView = () => {
                       border: 'none',
                       borderRadius: '12px',
                       fontSize: '14px',
-                      fontWeight: '500',
+                      fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                       backgroundColor: yaEnCarrito ? '#4caf50' : '#e91e63',
-                      color: 'white'
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       seleccionarProducto(producto);
                     }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    }}
                   >
+                    <span style={{ fontSize: '18px' }}>🛒</span>
                     {yaEnCarrito ? `En carrito (${yaEnCarrito.cantidad})` : 'Agregar al carrito'}
                   </button>
                 </div>
@@ -460,8 +697,11 @@ const ProductosView = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
-        }}>
+          zIndex: 1000,
+          padding: '20px'
+        }}
+        onClick={cerrarModal}
+        >
           <div style={{
             backgroundColor: 'white',
             borderRadius: '20px',
@@ -469,8 +709,11 @@ const ProductosView = () => {
             maxWidth: '500px',
             width: '90%',
             position: 'relative',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
-          }}>
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            animation: 'scaleIn 0.3s ease-out'
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={cerrarModal}
               style={{
@@ -487,19 +730,23 @@ const ProductosView = () => {
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                transition: 'transform 0.2s'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(90deg)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
             >
               ✕
             </button>
             
             <div style={{
-              height: '200px',
+              height: '250px',
               backgroundImage: `url(${modalDetalle.imagen})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               borderRadius: '15px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }} />
             
             <h2 style={{ 
@@ -513,7 +760,7 @@ const ProductosView = () => {
             </h2>
             
             <p style={{ 
-              fontSize: '18px', 
+              fontSize: '28px', 
               fontWeight: 'bold',
               color: '#e91e63',
               marginBottom: '15px',
@@ -525,7 +772,7 @@ const ProductosView = () => {
             <p style={{ 
               fontSize: '16px', 
               color: '#7f8c8d',
-              lineHeight: '1.5',
+              lineHeight: '1.6',
               marginBottom: '20px',
               margin: '0 0 20px 0'
             }}>

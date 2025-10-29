@@ -1,12 +1,32 @@
 // src/features/Cartas/pages/CartContext.jsx
 import React from "react"; 
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-    const [carrito, setCarrito] = useState([]);
+    // Cargar carrito desde localStorage al iniciar
+    const [carrito, setCarrito] = useState(() => {
+        try {
+            const carritoGuardado = localStorage.getItem('deliciasoft_cart_v1');
+            if (carritoGuardado) {
+                const carritoParseado = JSON.parse(carritoGuardado);
+                console.log('✅ Carrito cargado desde localStorage:', carritoParseado);
+                return Array.isArray(carritoParseado) ? carritoParseado : [];
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar carrito:', error);
+        }
+        return [];
+    });
+
     const [productosSeleccionados, setProductosSeleccionados] = useState([]);
+
+    // Guardar carrito en localStorage cada vez que cambie
+    useEffect(() => {
+        localStorage.setItem('deliciasoft_cart_v1', JSON.stringify(carrito));
+        console.log('💾 Carrito guardado automáticamente:', carrito);
+    }, [carrito]);
 
     const agregarProducto = (producto) => {
         setCarrito((prevCarrito) => {
@@ -34,6 +54,10 @@ export const CartProvider = ({ children }) => {
 
     const eliminarDelCarrito = (id) => {
         setCarrito(prev => prev.filter(item => item.id !== id));
+    };
+
+    const vaciarCarrito = () => {
+        setCarrito([]);
     };
 
     const agregarProductoSeleccionado = (producto) => {
@@ -67,9 +91,11 @@ export const CartProvider = ({ children }) => {
     return (
         <CartContext.Provider value={{ 
             carrito, 
+            setCarrito, // 👈 IMPORTANTE: Exponemos setCarrito
             agregarProducto, 
             actualizarCantidadCarrito, 
             eliminarDelCarrito,
+            vaciarCarrito,
             productosSeleccionados,
             agregarProductoSeleccionado,
             actualizarCantidadSeleccionado,

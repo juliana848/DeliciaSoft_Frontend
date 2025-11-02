@@ -40,34 +40,33 @@ export default function ModalInsumo({
   const [cargandoCatalogos, setCargandoCatalogos] = useState(false);
   const fileInputRef = useRef(null);
 
-const opcionesCatalogos = [
-  { label: '🍬 Adiciones', value: 'adicion' },
-  { label: '🍫 Toppings', value: 'topping' },
-  { label: '🌶️ Salsas', value: 'salsa' },
-  { label: '🎨 Sabores', value: 'sabor' },
-  { label: '🥧 Rellenos', value: 'relleno' }
-];
-const esCategoriaEspecial = (categoriaId) => {
-  if (!categoriaId || categorias.length === 0) return false;
-  
-  const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
-  if (!categoria) return false;
-  
-  
-  const especiales = [
-    'toppings', 'topping', 
-    'adiciones', 'adicion',
-    'salsas', 'salsa',     
-    'sabores', 'sabor', 
-    'rellenos', 'relleno'
+  const opcionesCatalogos = [
+    { label: '🍬 Adiciones', value: 'adicion' },
+    { label: '🍫 Toppings', value: 'topping' },
+    { label: '🌶️ Salsas', value: 'salsa' },
+    { label: '🎨 Sabores', value: 'sabor' },
+    { label: '🥧 Rellenos', value: 'relleno' }
   ];
-  
-  return especiales.some(especial => 
-    categoria.nombreCategoria?.toLowerCase().includes(especial)
-  );
-};
 
-  // FUNCIÓN PARA CARGAR LA IMAGEN DESDE LA API
+  const esCategoriaEspecial = (categoriaId) => {
+    if (!categoriaId || categorias.length === 0) return false;
+    
+    const categoria = categorias.find(cat => cat.id === parseInt(categoriaId));
+    if (!categoria) return false;
+    
+    const especiales = [
+      'toppings', 'topping', 
+      'adiciones', 'adicion',
+      'salsas', 'salsa',     
+      'sabores', 'sabor', 
+      'rellenos', 'relleno'
+    ];
+    
+    return especiales.some(especial => 
+      categoria.nombreCategoria?.toLowerCase().includes(especial)
+    );
+  };
+
   const cargarImagenDesdeAPI = async (idImagen) => {
     if (!idImagen) return null;
     
@@ -82,13 +81,11 @@ const esCategoriaEspecial = (categoriaId) => {
     }
   };
 
-  // FUNCIÓN PARA CARGAR CATÁLOGOS EXISTENTES
   const cargarCatalogosDelInsumo = async (insumoId) => {
     setCargandoCatalogos(true);
     const catalogos = [];
     
     try {
-      // Intentar cargar de cada tipo de catálogo
       const tipos = ['adicion', 'topping', 'salsa', 'sabor', 'relleno'];
       
       for (const tipo of tipos) {
@@ -101,7 +98,7 @@ const esCategoriaEspecial = (categoriaId) => {
           catalogosDelInsumo.forEach(cat => {
             catalogos.push({
               tipo: tipo,
-              id: cat.idadiciones || cat.idtopping || cat.idsalsa || cat.idcatalogosabor || cat.idcatalogorrelleno,
+              id: cat.idadiciones || cat.idtoppings || cat.idsalsa || cat.idcatalogosabor || cat.idcatalogorrelleno,
               nombre: cat.nombre,
               precio: cat.precioadicion,
               estado: cat.estado
@@ -122,20 +119,17 @@ const esCategoriaEspecial = (categoriaId) => {
     }
   };
 
-  // USEEFFECT CORREGIDO - Carga todos los datos incluyendo imagen
   useEffect(() => {
     const cargarDatosModal = async () => {
       if (modal.tipo === "editar" && modal.insumo) {
         const insumoId = modal.insumo.id || modal.insumo.idinsumo;
         
-        // Cargar imagen si existe
         let urlImagen = null;
         if (modal.insumo.idImagen || modal.insumo.idimagen) {
           const idImagen = modal.insumo.idImagen || modal.insumo.idimagen;
           urlImagen = await cargarImagenDesdeAPI(idImagen);
         }
         
-        // Cargar catálogos si es categoría especial
         if (esCategoriaEspecial(modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos)) {
           await cargarCatalogosDelInsumo(insumoId);
         }
@@ -159,14 +153,12 @@ const esCategoriaEspecial = (categoriaId) => {
       } else if (modal.tipo === "ver" && modal.insumo) {
         const insumoId = modal.insumo.id || modal.insumo.idinsumo;
         
-        // Cargar imagen si existe
         let urlImagen = null;
         if (modal.insumo.idImagen || modal.insumo.idimagen) {
           const idImagen = modal.insumo.idImagen || modal.insumo.idimagen;
           urlImagen = await cargarImagenDesdeAPI(idImagen);
         }
         
-        // Cargar catálogos si es categoría especial
         if (esCategoriaEspecial(modal.insumo.idCategoriaInsumos || modal.insumo.idcategoriainsumos)) {
           await cargarCatalogosDelInsumo(insumoId);
         }
@@ -298,11 +290,7 @@ const esCategoriaEspecial = (categoriaId) => {
 
       const esEspecial = esCategoriaEspecial(form.idCategoriaInsumos);
       
-      if (esEspecial && modal.tipo === "agregar") {
-        if (form.catalogosSeleccionados.length === 0) {
-          showNotification("Debes seleccionar al menos un tipo de catálogo", "error");
-          return;
-        }
+      if (esEspecial && form.catalogosSeleccionados.length > 0) {
         if (!form.nombreCatalogo.trim()) {
           showNotification("El nombre para el catálogo es obligatorio", "error");
           return;
@@ -311,6 +299,11 @@ const esCategoriaEspecial = (categoriaId) => {
           showNotification("El precio de adición debe ser mayor o igual a 0", "error");
           return;
         }
+      }
+
+      if (esEspecial && modal.tipo === "agregar" && form.catalogosSeleccionados.length === 0) {
+        showNotification("Debes seleccionar al menos un tipo de catálogo", "error");
+        return;
       }
 
       if (!form.cantidad || form.cantidad <= 0) {
@@ -322,7 +315,6 @@ const esCategoriaEspecial = (categoriaId) => {
         return;
       }
 
-      // PASO 1: SUBIR IMAGEN SI EXISTE
       let idImagenParaGuardar = form.idImagenExistente;
       
       if (form.imagen && form.imagen instanceof File) {
@@ -355,7 +347,6 @@ const esCategoriaEspecial = (categoriaId) => {
         }
       }
 
-      // PASO 2: PREPARAR DATOS DEL INSUMO
       const datosEnvio = {
         nombreInsumo: form.nombreInsumo.trim(),
         idCategoriaInsumos: parseInt(form.idCategoriaInsumos),
@@ -370,15 +361,13 @@ const esCategoriaEspecial = (categoriaId) => {
         datosEnvio.idImagen = parseInt(idImagenParaGuardar);
       }
 
-      // PASO 3: AGREGAR CATÁLOGOS SI ES CATEGORÍA ESPECIAL (solo al crear)
-      if (esEspecial && modal.tipo === "agregar" && form.catalogosSeleccionados.length > 0) {
+      if (esEspecial && form.catalogosSeleccionados.length > 0) {
         datosEnvio.catalogosSeleccionados = form.catalogosSeleccionados;
         datosEnvio.nombreCatalogo = form.nombreCatalogo.trim();
         datosEnvio.precioadicion = parseFloat(form.precioadicion);
         datosEnvio.estadoCatalogo = form.estadoCatalogo;
       }
 
-      // PASO 4: GUARDAR INSUMO
       if (modal.tipo === "agregar") {
         await insumoApiService.crearInsumo(datosEnvio);
         const catalogosTexto = form.catalogosSeleccionados.length > 0 
@@ -388,7 +377,15 @@ const esCategoriaEspecial = (categoriaId) => {
       } else if (modal.tipo === "editar") {
         const insumoId = modal.insumo.id || modal.insumo.idinsumo;
         await insumoApiService.actualizarInsumo(insumoId, datosEnvio);
-        showNotification("✅ Insumo actualizado exitosamente", "success");
+        
+        if (form.catalogosSeleccionados.length > 0) {
+          showNotification(
+            `✅ Insumo actualizado y agregado a ${form.catalogosSeleccionados.length} catálogo(s)`, 
+            "success"
+          );
+        } else {
+          showNotification("✅ Insumo actualizado exitosamente", "success");
+        }
       }
       
       await cargarInsumos();
@@ -517,7 +514,6 @@ const esCategoriaEspecial = (categoriaId) => {
               />
             </label>
 
-            {/* IMAGEN EN VER */}
             {form.imagenPreview && (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", marginTop: "15px" }}>
                 <h4 style={{ margin: "0 0 10px 0" }}>Imagen del insumo:</h4>
@@ -535,7 +531,6 @@ const esCategoriaEspecial = (categoriaId) => {
               </div>
             )}
 
-            {/* CATÁLOGOS EN VER */}
             {esEspecialVer && catalogosExistentes.length > 0 && (
               <div style={{ 
                 gridColumn: "1 / -1",
@@ -567,12 +562,12 @@ const esCategoriaEspecial = (categoriaId) => {
                       }}
                     >
                       <span style={{ fontSize: "20px" }}>
-                      {cat.tipo === 'adicion' && '🍬'}
-                      {cat.tipo === 'topping' && '🍫'}
-                      {cat.tipo === 'salsa' && '🌶️'}
-                      {cat.tipo === 'sabor' && '🎨'}
-                      {cat.tipo === 'relleno' && '🥧'}
-                    </span>
+                        {cat.tipo === 'adicion' && '🍬'}
+                        {cat.tipo === 'topping' && '🍫'}
+                        {cat.tipo === 'salsa' && '🌶️'}
+                        {cat.tipo === 'sabor' && '🎨'}
+                        {cat.tipo === 'relleno' && '🥧'}
+                      </span>
                       <div>
                         <strong>{cat.nombre}</strong>
                         <div style={{ fontSize: "12px", color: "#666" }}>
@@ -786,9 +781,7 @@ const esCategoriaEspecial = (categoriaId) => {
                   </div>
                 </label>
               </div>
-            )}
-
-            {mostrarCamposCatalogo && (
+            )}{mostrarCamposCatalogo && (
               <>
                 <div style={{ 
                   gridColumn: "1 / -1", 
@@ -817,7 +810,9 @@ const esCategoriaEspecial = (categoriaId) => {
                         fontWeight: '600',
                         color: '#374151'
                       }}>
-                        Agregar a catálogos* (Puedes seleccionar varios)
+                        {modal.tipo === "agregar" 
+                          ? "Agregar a catálogos* (Puedes seleccionar varios)" 
+                          : "Agregar a catálogos adicionales (Opcional)"}
                       </label>
                       
                       <MultiSelect
@@ -889,7 +884,9 @@ const esCategoriaEspecial = (categoriaId) => {
                           fontSize: '13px',
                           lineHeight: '1.4'
                         }}>
-                          Este insumo se agregará automáticamente a todos los catálogos que selecciones
+                          {modal.tipo === "agregar" 
+                            ? "Este insumo se agregará automáticamente a todos los catálogos que selecciones"
+                            : "Los catálogos que selecciones se agregarán SIN eliminar los existentes"}
                         </small>
                       </div>
                     </div>
@@ -973,7 +970,9 @@ const esCategoriaEspecial = (categoriaId) => {
                             color: '#047857',
                             fontSize: '15px'
                           }}>
-                            Se creará el insumo en {form.catalogosSeleccionados.length} catálogo{form.catalogosSeleccionados.length > 1 ? 's' : ''}:
+                            {modal.tipo === "agregar" 
+                              ? `Se creará el insumo en ${form.catalogosSeleccionados.length} catálogo${form.catalogosSeleccionados.length > 1 ? 's' : ''}:`
+                              : `Se agregará a ${form.catalogosSeleccionados.length} catálogo${form.catalogosSeleccionados.length > 1 ? 's' : ''} adicional${form.catalogosSeleccionados.length > 1 ? 'es' : ''}:`}
                           </p>
                         </div>
                         <div style={{
@@ -999,7 +998,7 @@ const esCategoriaEspecial = (categoriaId) => {
                                   color: '#047857'
                                 }}
                               >
-                                <span>✓</span>
+                                <span>✔</span>
                                 {opcion?.label}
                               </div>
                             );

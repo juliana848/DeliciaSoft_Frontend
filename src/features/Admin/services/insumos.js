@@ -224,38 +224,66 @@ class InsumoApiService {
   }
 
   async actualizarInsumo(id, insumoData) {
-    try {
-      console.log("=== ACTUALIZANDO INSUMO ===");
-      console.log("ID:", id);
-      console.log("Datos:", JSON.stringify(insumoData, null, 2));
+  try {
+    console.log("=== ACTUALIZANDO INSUMO ===");
+    console.log("ID:", id);
+    console.log("Datos:", JSON.stringify(insumoData, null, 2));
 
-      const insumoAPI = this.transformarInsumoParaAPI({
-        ...insumoData,
-        cantidad: Number(insumoData.cantidad) || 0,
-      });
+    // 📦 Extraer datos de catálogos si existen
+    const catalogosSeleccionados = insumoData.catalogosSeleccionados || [];
+    const nombreCatalogo = insumoData.nombreCatalogo;
+    const precioadicion = insumoData.precioadicion;
+    const estadoCatalogo = insumoData.estadoCatalogo;
 
-      await this.verificarIDsValidos(insumoAPI);
-      this.validarDatosInsumo(insumoAPI);
+    const insumoAPI = this.transformarInsumoParaAPI({
+      ...insumoData,
+      cantidad: Number(insumoData.cantidad) || 0,
+    });
 
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT",
-        headers: this.baseHeaders,
-        body: JSON.stringify(insumoAPI),
-      });
+    await this.verificarIDsValidos(insumoAPI);
+    this.validarDatosInsumo(insumoAPI);
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
+    // 🔄 Actualizar el insumo base
+    const response = await fetch(`${BASE_URL}/${id}`, {
+      method: "PUT",
+      headers: this.baseHeaders,
+      body: JSON.stringify(insumoAPI),
+    });
 
-      const data = await response.json();
-      return this.transformarInsumoDesdeAPI(data);
-
-    } catch (error) {
-      console.error(`Error al actualizar insumo ${id}:`, error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
     }
-  }
 
+    const data = await response.json();
+
+    // 🎯 Si hay catálogos seleccionados, crearlos
+    if (catalogosSeleccionados && catalogosSeleccionados.length > 0) {
+      console.log('🎯 Creando catálogos múltiples durante la actualización...');
+      
+      const catalogosParaCrear = catalogosSeleccionados.map(tipo => ({
+        tipo: tipo,
+        nombre: nombreCatalogo,
+        precioadicion: parseFloat(precioadicion || 0),
+        estado: estadoCatalogo
+      }));
+
+      console.log('Catálogos a crear:', JSON.stringify(catalogosParaCrear, null, 2));
+
+      const resultadosCatalogos = await this.crearMultiplesCatalogos(id, catalogosParaCrear);
+      
+      const algunoExitoso = resultadosCatalogos.some(r => r.exito);
+      if (!algunoExitoso) {
+        console.error('⚠️ Ningún catálogo se creó exitosamente');
+      }
+    }
+
+    return this.transformarInsumoDesdeAPI(data);
+
+  } catch (error) {
+    console.error(`Error al actualizar insumo ${id}:`, error);
+    throw error;
+  }
+}
   async eliminarInsumo(id) {
     try {
       const response = await fetch(`${BASE_URL}/${id}`, {

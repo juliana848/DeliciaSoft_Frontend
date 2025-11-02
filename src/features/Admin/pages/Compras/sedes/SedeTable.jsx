@@ -3,6 +3,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputSwitch } from "primereact/inputswitch";
 import './sedeStyles.css'
+import Tooltip from '../../../components/Tooltip';
 
 export default function SedeTable({
   sedes,
@@ -19,38 +20,43 @@ export default function SedeTable({
 
   const accionesTemplate = (rowData) => (
     <div className="action-buttons">
-      <button
-        className="admin-button gray"
-        title="Visualizar"
-        onClick={() => onVerSede(rowData)}
-        disabled={loading}
-      >
-        👁
-      </button>
-      <button
-        className="admin-button yellow"
-        title="Editar"
-        onClick={() => onEditarSede(rowData)}
-        disabled={loading || !rowData.activo}
-        style={{
-          opacity: !rowData.activo ? 0.5 : 1,
-          cursor: !rowData.activo ? "not-allowed" : "pointer",
-        }}
-      >
-        ✏️
-      </button>
-      <button
-        className="admin-button red"
-        title="Eliminar"
-        onClick={() => onEliminarSede(rowData)}
-        disabled={loading || !rowData.activo}
-        style={{
-          opacity: !rowData.activo ? 0.5 : 1,
-          cursor: !rowData.activo ? "not-allowed" : "pointer",
-        }}
-      >
-        🗑️
-      </button>
+      <Tooltip text="Visualizar">
+        <button
+          className="admin-button gray"
+          onClick={() => onVerSede(rowData)}
+          disabled={loading}
+        >
+          👁
+        </button>
+      </Tooltip>
+
+      <Tooltip text={!rowData.activo ? "Editar (Deshabilitado)" : "Editar"}>
+        <button
+          className="admin-button yellow"
+          onClick={() => onEditarSede(rowData)}
+          disabled={loading || !rowData.activo}
+          style={{
+            opacity: !rowData.activo ? 0.5 : 1,
+            cursor: !rowData.activo ? "not-allowed" : "pointer",
+          }}
+        >
+          ✏️
+        </button>
+      </Tooltip>
+
+      <Tooltip text={!rowData.activo ? "Eliminar (Deshabilitado)" : "Eliminar"}>
+        <button
+          className="admin-button red"
+          onClick={() => onEliminarSede(rowData)}
+          disabled={loading || !rowData.activo}
+          style={{
+            opacity: !rowData.activo ? 0.5 : 1,
+            cursor: !rowData.activo ? "not-allowed" : "pointer",
+          }}
+        >
+          🗑️
+        </button>
+      </Tooltip>
     </div>
   );
 

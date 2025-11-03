@@ -38,6 +38,7 @@ export default function Ventas() {
     const [mostrarModalToppings, setMostrarModalToppings] = useState(false);
     const [configuraciones, setConfiguraciones] = useState({});
 
+
     // Agregar función para abrir modal de toppings
 const abrirModalToppings = (productoId) => {
     setProductoEditandoId(productoId);
@@ -103,6 +104,7 @@ const removeTopping = (itemId, toppingId) => {
     const [nestedDetailsVisible, setNestedDetailsVisible] = useState({});
     const [estadosVenta, setEstadosVenta] = useState([]);
     const [productosDisponibles, setProductosDisponibles] = useState([]); 
+
 
     // Estado para el formulario de venta
 
@@ -810,10 +812,13 @@ const agregarRellenos = (rellenos) => {
                     setMostrarAgregarVenta={setMostrarAgregarVenta}
                     agregarInsumos={agregarInsumos}
                     mostrarModalAdiciones={mostrarModalAdiciones}
+                    setMostrarModalAdiciones={setMostrarModalAdiciones}
                     agregarAdiciones={agregarAdiciones}
                     mostrarModalSalsas={mostrarModalSalsas}
+                    setMostrarModalSalsas={setMostrarModalSalsas}
                     agregarSalsas={agregarSalsas}
                     mostrarModalRellenos={mostrarModalRellenos}
+                    setMostrarModalRellenos={setMostrarModalRellenos}
                     agregarRellenos={agregarRellenos}
                     setProductoEditandoId={setProductoEditandoId}
                     productoEditandoId={productoEditandoId}
@@ -821,8 +826,10 @@ const agregarRellenos = (rellenos) => {
                     removeTopping={removeTopping}
                     mostrarModalToppings={mostrarModalToppings}
                     setMostrarModalToppings={setMostrarModalToppings}
+                    agregarToppings={agregarToppings}
                     configuraciones={configuraciones}
                     setConfiguraciones={setConfiguraciones}
+                    showNotification={showNotification}
                 />
             ) : (
                 <VentasListar
@@ -899,5 +906,8 @@ const agregarRellenos = (rellenos) => {
                 anularAbono={() => anularAbono(abonoSeleccionado?.idAbono)}
             />
         </div>
+
+        
     );
+    
 }

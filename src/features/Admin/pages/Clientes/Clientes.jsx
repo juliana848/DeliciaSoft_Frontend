@@ -6,7 +6,7 @@ import '../../adminStyles.css';
 import Modal from '../../components/modal';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
-import Tooltip from '../../components/Tooltip'; // 👈 Importar Tooltip
+import Tooltip from '../../components/Tooltip';
 import ClienteFormModal from './components/ClientesForm';
 import clienteApiService from '../../services/cliente_services'; 
 import LoadingSpinner from '../../components/LoadingSpinner';

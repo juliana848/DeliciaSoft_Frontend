@@ -261,7 +261,14 @@ export default function RoleForm({ initialData, formType, permisos, onSave, onCa
   };
 
   return (
-    <div style={{ width: '900px', maxWidth: '90vw' }}>
+    <div style={{ 
+  width: '900px', 
+  maxWidth: '90vw', 
+  maxHeight: '80vh', // 🔹 Limita el alto total al 80% de la pantalla
+  overflowY: 'auto', // 🔹 Agrega scroll vertical si se pasa del límite
+  padding: '0.5rem', // 🔹 Reduce el padding general
+}}>
+
       <h2 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#000000' }}>
         {getTitleByType()}
         {/* ✅ NUEVO: Mostrar indicador si es rol Admin */}

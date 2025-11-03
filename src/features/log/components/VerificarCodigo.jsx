@@ -74,7 +74,8 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
     }
   };
 
-  const manejarVerificacion = () => {
+  // 🔥 MÉTODO CRÍTICO CORREGIDO: No mostrar éxito hasta confirmar con el servidor
+  const manejarVerificacion = async () => {
     const codigoCompleto = codigo.join('');
     
     if (codigoCompleto.length < 6) {
@@ -82,44 +83,56 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
       return;
     }
 
-    console.log('🔐 Código ingresado:', codigoCompleto);
-    console.log('🔑 Código esperado:', codigoCorrecto);
+    // 🔥 OBTENER CÓDIGO CORRECTO DEL STORAGE PARA RECUPERACIÓN
+    const codigoAlmacenado = isLogin ? codigoCorrecto : sessionStorage.getItem('tempRecoveryCode');
+    
+    console.log('🔍 Código ingresado:', codigoCompleto);
+    console.log('🔑 Código esperado:', codigoAlmacenado);
+    console.log('🎯 Es para login?:', isLogin);
 
     setIsLoading(true);
     setIntentos(prev => prev + 1);
 
-    // VALIDACIÓN DIRECTA - Solo verificar contra el código del servidor
-    setTimeout(() => {
-      if (isLogin) {
-        // Para login: enviar directamente el código ingresado al servidor
-        // El servidor hará la validación final
-        if (vieneDesdeContacto) {
-          showCustomAlert('success', 'Verificando código...');
-        } else {
-          showCustomAlert('success', 'Verificando código e iniciando sesión...');
-        }
-        
+    // Esperar un momento para simular validación
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    if (isLogin) {
+      // 🔥 PARA LOGIN: Enviar al servidor sin mostrar éxito aún
+      try {
+        console.log('📤 Enviando código al servidor para validación...');
+        await onCodigoValido(codigoCompleto);
+        // Si llega aquí sin error, el código fue válido
+        // La alerta de éxito la mostrará LoginForm después del login
+      } catch (error) {
+        // 🔥 SI HAY ERROR: Mostrar alerta de error y limpiar código
+        console.error('❌ Error validando código:', error.message);
+        showCustomAlert('error', error.message || 'Código incorrecto. Intenta nuevamente.');
+        setCodigo(['', '', '', '', '', '']);
         setTimeout(() => {
-          onCodigoValido(codigoCompleto);
-        }, 800);
-        
+          document.getElementById('code-0')?.focus();
+        }, 100);
+      } finally {
+        setIsLoading(false);
+      }
+      
+    } else {
+      // 🔥 Para recuperación de contraseña: validar contra sessionStorage
+      if (codigoCompleto === String(codigoAlmacenado)) {
+        console.log('✅ Código correcto para recuperación');
+        showCustomAlert('success', 'Código verificado correctamente');
+        setTimeout(() => {
+          onCodigoValido();
+        }, 1000);
       } else {
-        // Para recuperación de contraseña: validar localmente
-        if (codigoCompleto === String(codigoCorrecto)) {
-          showCustomAlert('success', 'Código verificado correctamente');
-          setTimeout(() => {
-            onCodigoValido();
-          }, 1000);
-        } else {
-          showCustomAlert('error', 'Código incorrecto. Inténtalo nuevamente.');
-          setCodigo(['', '', '', '', '', '']);
-          setTimeout(() => {
-            document.getElementById('code-0')?.focus();
-          }, 100);
-        }
+        console.error('❌ Código incorrecto:', codigoCompleto, 'vs', codigoAlmacenado);
+        showCustomAlert('error', 'Código incorrecto. Inténtalo nuevamente.');
+        setCodigo(['', '', '', '', '', '']);
+        setTimeout(() => {
+          document.getElementById('code-0')?.focus();
+        }, 100);
       }
       setIsLoading(false);
-    }, 600);
+    }
   };
 
   const reenviarCodigo = () => {
@@ -202,22 +215,22 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
   return (
     <div className="recovery-overlay">
       {showAlert.show && (
-        <div className={`custom-alert alert-${showAlert.type}`}>
+        <div className={`custom-alert alert-${showAlert.type}`} style={{ zIndex: 10000 }}>
           {showAlert.message}
         </div>
       )}
 
-      <div className="recovery-modal" style={{ maxWidth: '480px', padding: '1.8rem 1.5rem' }}>
+     <div className="recovery-modal" style={{ maxWidth: '420px', padding: '1.3rem 1.2rem' }}>
         {getProgreso()}
 
         {vieneDesdeContacto && (
           <div style={{
             background: 'linear-gradient(135deg, #fef3c7, #fcd34d)',
             color: '#92400e',
-            padding: '12px',
-            borderRadius: '8px',
-            margin: '0 0 15px 0',
-            fontSize: '13px',
+            padding: '10px',
+            borderRadius: '6px',
+            margin: '0 0 12px 0',
+            fontSize: '12px',
             textAlign: 'center',
             fontWeight: '600'
           }}>
@@ -226,18 +239,18 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
         )}
 
         <div className="modal-content">
-          <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
-            <div className="icon-container" style={{ width: '60px', height: '60px', marginBottom: '1rem' }}>
+          <div className="modal-header" style={{ marginBottom: '1rem' }}>
+            <div className="icon-container" style={{ width: '50px', height: '50px', marginBottom: '0.6rem' }}>
               {getIcono()}
             </div>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>{getTitulo()}</h2>
-            <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.3rem' }}>{getTitulo()}</h2>
+            <p style={{ fontSize: '0.85rem', lineHeight: '1.3' }}>
               {getDescripcion()} <strong>{correo}</strong>
             </p>
           </div>
 
           <div className="modal-body">
-            <div className="code-input-container" style={{ margin: '1.5rem 0' }}>
+            <div className="code-input-container" style={{ margin: '1rem 0' }}>
               {codigo.map((digit, index) => (
                 <input
                   key={index}
@@ -253,14 +266,14 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                   style={{
                     borderColor: digit ? getBotonColor() : '#f1f3f4',
                     background: digit ? '#ffffff' : '#fafbfc',
-                    width: '44px',
-                    height: '52px'
+                    width: '38px',
+                    height: '44px'
                   }}
                 />
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '0.8rem' }}>
               <button 
                 onClick={manejarVerificacion}
                 className="btn-primary"
@@ -269,9 +282,9 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                   flex: '1',
                   backgroundColor: getBotonColor(),
                   color: vieneDesdeContacto ? '#111827' : 'white',
-                  padding: '14px 20px',
-                  fontSize: '15px',
-                  minHeight: '48px'
+                  padding: '11px 16px',
+                  fontSize: '14px',
+                  minHeight: '42px'
                 }}
               >
                 {isLoading ? (
@@ -282,7 +295,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                 ) : (
                   <>
                     {getBotonTexto()}
-                    <ArrowRight size={16} />
+                    <ArrowRight size={14} />
                   </>
                 )}
               </button>
@@ -292,7 +305,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                 onClick={onClose}
                 className="btn-secondary"
                 disabled={isLoading}
-                style={{ flex: '1', padding: '14px 20px', fontSize: '15px', minHeight: '48px' }}
+                style={{ flex: '1', padding: '11px 16px', fontSize: '14px', minHeight: '42px' }}
               >
                 Cancelar
               </button>
@@ -306,32 +319,32 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
                 width: '100%',
                 background: 'rgba(233, 30, 99, 0.05)',
                 border: '1px solid rgba(233, 30, 99, 0.2)',
-                borderRadius: '8px',
-                padding: '12px',
+                borderRadius: '6px',
+                padding: '10px',
                 color: '#e91e63',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: '500',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: '6px',
                 transition: 'all 0.3s ease'
               }}
             >
-              <RotateCcw size={14} />
+              <RotateCcw size={12} />
               Reenviar código
             </button>
 
             <div style={{
               background: 'rgba(233, 30, 99, 0.05)',
               border: '1px solid rgba(233, 30, 99, 0.1)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginTop: '1rem',
+              borderRadius: '6px',
+              padding: '10px',
+              marginTop: '0.8rem',
               textAlign: 'center'
             }}>
-              <div style={{ color: '#5f6368', fontSize: '13px', lineHeight: '1.4' }}>
+              <div style={{ color: '#5f6368', fontSize: '12px', lineHeight: '1.3' }}>
                 {isLogin 
                   ? 'Revisa tu bandeja de spam si no recibiste el código'
                   : 'El código expira en 10 minutos por seguridad'
@@ -342,9 +355,9 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
             {intentos > 0 && (
               <div style={{
                 textAlign: 'center',
-                marginTop: '1rem',
+                marginTop: '0.8rem',
                 color: intentos >= 3 ? '#ef4444' : '#9aa0a6',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: intentos >= 3 ? '600' : 'normal'
               }}>
                 Intentos: {intentos}/3
@@ -366,7 +379,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1000;
+          z-index: 9998;
           padding: 20px;
         }
 
@@ -378,6 +391,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
           box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
           animation: modalSlideIn 0.4s ease-out;
           overflow-y: auto;
+          z-index: 9998;
         }
 
         @keyframes modalSlideIn {
@@ -498,7 +512,7 @@ const ModalIngresarCodigo = ({ codigoCorrecto, onClose, onCodigoValido, correoEm
           position: fixed;
           top: 20px;
           right: 20px;
-          z-index: 2000;
+          z-index: 10000;
           padding: 1rem 1.5rem;
           border-radius: 15px;
           color: white;

@@ -1,8 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './HeroSection.css';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleConocenos = () => {
+    navigate('/conocenos');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePedido = () => {
+    navigate('/pedidos');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <section className="hero-section">
       <div className="hero-content">
@@ -23,12 +35,12 @@ const HeroSection = () => {
             personalizados hasta dulces artesanales.
           </p>
           <div className="hero-buttons">
-            <Link to="/cartas" className="btn btn-primary">
-              Ver Productos
-            </Link>
-            <Link to="/pedidos" className="btn btn-secondary">
+            <button onClick={handleConocenos} className="btn btn-primary">
+              Conócenos Más
+            </button>
+            <button onClick={handlePedido} className="btn btn-secondary">
               Hacer Pedido
-            </Link>
+            </button>
           </div>
         </div>
       </div>

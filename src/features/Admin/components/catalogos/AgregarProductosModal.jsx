@@ -1,9 +1,9 @@
-// AgregarProductosModal.jsx - ESTILO SIMPLE CON FILTRO DE CATEGORÍAS
+// AgregarProductosModal.jsx - VERSIÓN CON DISEÑO UNIFICADO
 import React, { useState, useEffect, useMemo } from 'react';
 import productoApiService from '../../services/productos_services';
 import inventarioApiService from '../../services/inventario_services';
 import categoriaProductoApiService from '../../services/categoriaProductosService';
-import './AgregarProductosModal.css';
+import './EstilosModalesComunes.css';
 
 const AgregarProductosModal = ({ 
   onClose, 
@@ -34,7 +34,6 @@ const AgregarProductosModal = ({
   const fetchCategorias = async () => {
     try {
       const categoriasData = await categoriaProductoApiService.obtenerCategoriasActivas();
-      console.log('Categorías cargadas:', categoriasData);
       setCategorias(categoriasData || []);
     } catch (error) {
       console.error('Error al cargar categorías:', error);
@@ -92,7 +91,6 @@ const AgregarProductosModal = ({
     return inventario[producto.idproductogeneral || producto.id] || 0;
   };
 
-  // Filtrar productos por búsqueda y categoría
   const productosFiltrados = useMemo(() => {
     return productos.filter((p) => {
       const nombreProducto = (p.nombre || p.nombreproducto || '').toLowerCase();
@@ -115,20 +113,17 @@ const AgregarProductosModal = ({
         coincideCategoria = idCategoriaNum === categoriaSeleccionadaNum;
       }
       
-      // Filtrar productos sin stock en venta directa
       const tieneStock = esPedido || obtenerDisponible(p) > 0;
       
       return coincideBusqueda && coincideCategoria && tieneStock;
     });
   }, [productos, searchTerm, categoriaSeleccionada, esPedido, inventario]);
 
-  // Calcular paginación
   const totalPaginas = Math.ceil(productosFiltrados.length / productosPorPagina);
   const indiceInicio = (paginaActual - 1) * productosPorPagina;
   const indiceFin = indiceInicio + productosPorPagina;
   const productosPaginados = productosFiltrados.slice(indiceInicio, indiceFin);
 
-  // Resetear página cuando cambie el filtro o categoría
   useEffect(() => {
     setPaginaActual(1);
   }, [searchTerm, categoriaSeleccionada]);
@@ -161,27 +156,39 @@ const AgregarProductosModal = ({
     onClose();
   };
 
+  const handleOverlayClick = (e) => {
+    if (e.target.className === 'modal-catalogo-overlay') {
+      onClose();
+    }
+  };
+
   return (
-    <div className="agregar-prod-modal-overlay">
-      <div className="agregar-prod-modal-container">
-        <button className="agregar-prod-modal-close" onClick={onClose}>
+    <div className="modal-catalogo-overlay" onClick={handleOverlayClick}>
+      <div className="modal-catalogo-container">
+        <button className="modal-catalogo-close" onClick={onClose}>
           ✕
         </button>
         
-        <h2 className="agregar-prod-modal-title">Seleccionar productos</h2>
+        <h2 className="modal-catalogo-title">🛒 Seleccionar Productos</h2>
 
         {!esPedido && sedeSeleccionada && (
-          <div className="agregar-prod-inventario-banner">
-            📦 Inventario de **{sedeSeleccionada}** - {productosFiltrados.length} productos disponibles
+          <div className="modal-catalogo-banner">
+            <span className="modal-catalogo-banner-text">
+              📦 Inventario de {sedeSeleccionada}
+            </span>
+            <span className="modal-catalogo-contador-banner">
+              {productosFiltrados.length} productos
+            </span>
           </div>
         )}
-        <div className="agregar-prod-modal-controles">
+
+        <div className="modal-catalogo-controles">
           <input
             type="text"
             placeholder="Buscar productos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="agregar-prod-modal-input"
+            className="modal-catalogo-input"
             disabled={loading}
           />
           
@@ -191,7 +198,7 @@ const AgregarProductosModal = ({
               const nuevaCategoria = e.target.value === 'todas' ? 'todas' : parseInt(e.target.value);
               setCategoriaSeleccionada(nuevaCategoria);
             }}
-            className="agregar-prod-modal-select"
+            className="modal-catalogo-select"
             disabled={loading}
           >
             <option value="todas">Todas las categorías</option>
@@ -203,20 +210,20 @@ const AgregarProductosModal = ({
           </select>
         </div>
 
-        <div className="agregar-prod-modal-info">
+        <div className="modal-catalogo-info">
           Mostrando {productosPaginados.length} de {productosFiltrados.length} productos
         </div>
 
         {loading ? (
-          <div className="agregar-prod-modal-loading">
-            <div className="agregar-prod-loading-spinner"></div>
+          <div className="modal-catalogo-loading">
+            <div className="modal-catalogo-loading-spinner"></div>
             <p>Cargando productos...</p>
           </div>
         ) : (
-          <div className="agregar-prod-modal-grid-wrapper">
-            <div className="agregar-prod-modal-grid">
+          <div className="modal-catalogo-grid-wrapper">
+            <div className="modal-catalogo-grid">
               {productosPaginados.length === 0 ? (
-                <div className="agregar-prod-modal-empty">
+                <div className="modal-catalogo-empty">
                   {searchTerm || categoriaSeleccionada !== 'todas' 
                     ? 'No se encontraron productos con estos filtros' 
                     : 'No hay productos disponibles'}
@@ -229,11 +236,11 @@ const AgregarProductosModal = ({
                   return (
                     <div
                       key={producto.id || producto.idproductogeneral}
-                      className={`agregar-prod-modal-card ${estaSeleccionado ? 'agregar-prod-modal-card-seleccionado' : ''} ${!esPedido && disponible === 0 ? 'agregar-prod-card-agotado' : ''}`}
+                      className={`modal-catalogo-card ${estaSeleccionado ? 'modal-catalogo-card-seleccionado' : ''} ${!esPedido && disponible === 0 ? 'modal-catalogo-card-disabled' : ''}`}
                       onClick={() => toggleProducto(producto)}
                     >
                       {estaSeleccionado && (
-                        <div className="agregar-prod-check-icon">✓</div>
+                        <div className="modal-catalogo-check-icon">✓</div>
                       )}
                       <img
                         src={producto.urlimagen || 'https://via.placeholder.com/160?text=Sin+Imagen'}
@@ -243,15 +250,27 @@ const AgregarProductosModal = ({
                           e.target.src = 'https://via.placeholder.com/160?text=Sin+Imagen';
                         }}
                       />
-                      <span className="agregar-prod-nombre">{producto.nombre || producto.nombreproducto}</span>
-                      <span className="agregar-prod-precio">${producto.precio.toLocaleString('es-CO')}</span>
-                      {!esPedido && (
-                        <div className={`agregar-prod-stock-mini ${disponible < 5 ? 'agregar-prod-stock-mini-poco' : ''}`}>
-                          {disponible} disponibles
-                        </div>
-                      )}
+                      <span className="modal-catalogo-nombre">{producto.nombre || producto.nombreproducto}</span>
+                      <span className="modal-catalogo-precio">${producto.precio.toLocaleString('es-CO')}</span>
                       {!esPedido && disponible === 0 && (
-                          <div className='agregar-prod-agotado-overlay'>AGOTADO</div>
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                          color: '#e91e63',
+                          fontWeight: 'bold',
+                          fontSize: '0.9em',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: '8px',
+                          pointerEvents: 'none'
+                        }}>
+                          AGOTADO
+                        </div>
                       )}
                     </div>
                   );
@@ -261,40 +280,39 @@ const AgregarProductosModal = ({
           </div>
         )}
 
-        <div className="agregar-prod-modal-footer">
+        {totalPaginas > 1 && (
+          <div className="modal-catalogo-paginacion">
+            <button
+              className="modal-catalogo-paginacion-btn"
+              onClick={() => cambiarPagina('anterior')}
+              disabled={paginaActual === 1}
+            >
+              ←
+            </button>
+            
+            <span className="modal-catalogo-paginacion-info">
+              Página {paginaActual} de {totalPaginas}
+            </span>
+            
+            <button
+              className="modal-catalogo-paginacion-btn"
+              onClick={() => cambiarPagina('siguiente')}
+              disabled={paginaActual === totalPaginas}
+            >
+              →
+            </button>
+          </div>
+        )}
 
-          {/* Paginación */}
-          {totalPaginas > 1 && (
-            <div className="agregar-prod-modal-paginacion">
-              <button
-                className="agregar-prod-paginacion-btn"
-                onClick={() => cambiarPagina('anterior')}
-                disabled={paginaActual === 1}
-                title="Página anterior"
-              >
-                ← Anterior
-              </button>
-              
-              <span className="agregar-prod-paginacion-info">
-                Página {paginaActual} de {totalPaginas}
-              </span>
-              
-              <button
-                className="agregar-prod-paginacion-btn"
-                onClick={() => cambiarPagina('siguiente')}
-                disabled={paginaActual === totalPaginas}
-                title="Página siguiente"
-              >
-                Siguiente →
-              </button>
-            </div>
-          )}
+        <div className="modal-catalogo-footer">
+          <div className="modal-catalogo-contador">
+            Seleccionados: {selectedProductos.length}
+          </div>
 
-          {/* Botones de acción */}
-          <div className="agregar-prod-modal-footer-acciones">
-            <button className="agregar-prod-cancel-btn" onClick={onClose}>Cancelar</button>
+          <div className="modal-catalogo-footer-acciones">
+            <button className="modal-catalogo-cancel-btn" onClick={onClose}>Cancelar</button>
             <button 
-              className="agregar-prod-save-btn" 
+              className="modal-catalogo-save-btn" 
               onClick={handleAgregar}
               disabled={selectedProductos.length === 0 || loading}
             >

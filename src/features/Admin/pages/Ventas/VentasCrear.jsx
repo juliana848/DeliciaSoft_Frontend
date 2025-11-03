@@ -1,4 +1,4 @@
-// VentasCrear.jsx - CORREGIDO: Funciones de toppings agregadas
+// VentasCrear.jsx - VERSIÓN COMPLETA Y CORREGIDA
 import React, { useEffect, useState } from 'react';
 import AgregarProductosModal from '../../components/catalogos/AgregarProductosModal';
 import AgregarAdicionesModal from '../../components/catalogos/AgregarAdicionesModal';
@@ -33,15 +33,17 @@ export default function VentasCrear({
     mostrarModalInsumos,
     agregarInsumos,
     mostrarModalAdiciones,
+    setMostrarModalAdiciones,
     agregarAdiciones,
     mostrarModalSalsas,
+    setMostrarModalSalsas,
     agregarSalsas,
     mostrarModalRellenos,
+    setMostrarModalRellenos,
     agregarRellenos,
     setProductoEditandoId,
     productoEditandoId,
     showNotification,
-    // ✅ PROPS ADICIONALES PARA TOPPINGS
     abrirModalToppings,
     removeTopping,
     mostrarModalToppings,
@@ -600,17 +602,6 @@ export default function VentasCrear({
                                         <tr className="product-row">
                                             <td className="product-name">
                                                 {item.nombre}
-                                                {nestedDetailsVisible[item.id] !== undefined && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn-small toggle-details-btn"
-                                                        onClick={() => toggleNestedDetails(item.id)}
-                                                        title={nestedDetailsVisible[item.id] ? 'Ocultar detalles' : 'Mostrar detalles'}
-                                                        style={{ marginLeft: '10px' }}
-                                                    >
-                                                        {nestedDetailsVisible[item.id] ? '▲' : '▼'}
-                                                    </button>
-                                                )}
                                             </td>
                                             <td className="quantity-cell">
                                                 <input
@@ -659,17 +650,16 @@ export default function VentasCrear({
                                                                         type="button"
                                                                         className="btn-small"
                                                                         onClick={btn.onClick}
-                                                                        disabled={limiteAlcanzado}
                                                                         style={{
-                                                                            opacity: limiteAlcanzado ? 0.5 : 1,
-                                                                            cursor: limiteAlcanzado ? 'not-allowed' : 'pointer',
-                                                                            background: limiteAlcanzado ? '#e5e7eb' : undefined,
                                                                             fontSize: '12px',
-                                                                            padding: '5px 10px'
+                                                                            padding: '5px 10px',
+                                                                            background: count > 0 ? '#ec4899' : undefined,
+                                                                            color: count > 0 ? 'white' : undefined,
+                                                                            fontWeight: count > 0 ? 'bold' : undefined
                                                                         }}
                                                                         title={`${btn.label}${btn.limite ? ` (${count}/${btn.limite})` : count > 0 ? ` (${count})` : ''}`}
                                                                     >
-                                                                        + {btn.label}
+                                                                        {count > 0 ? `✓ ${btn.label} (${count})` : `+ ${btn.label}`}
                                                                     </button>
                                                                 );
                                                             })}
@@ -679,9 +669,35 @@ export default function VentasCrear({
                                             </td>
                                             
                                             <td className="subtotal-cell">
-                                                ${((item.precio * (item.cantidad || 1)) +
-                                                    (item.adiciones?.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) || 0)
-                                                ).toLocaleString('es-CO')}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+                                                    <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                                                        ${((item.precio * (item.cantidad || 1)) +
+                                                            (item.adiciones?.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0) || 0)
+                                                        ).toLocaleString('es-CO')}
+                                                    </div>
+                                                    
+                                                    {/* Acordeón de detalles */}
+                                                    {(item.toppings?.length > 0 || item.salsas?.length > 0 || item.sabores?.length > 0 || item.adiciones?.length > 0) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleNestedDetails(item.id)}
+                                                           style={{
+                                                                background: '#ec4899',
+                                                                borderTop: '2px solid #ec4899',
+                                                                borderRadius: '4px',
+                                                                padding: '4px 8px',
+                                                                fontSize: '11px',
+                                                                cursor: 'pointer',
+                                                                color: '#ffffffff',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}
+                                                        >
+                                                            {nestedDetailsVisible[item.id] ? '▲' : '▼'} Ver detalles
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="action-cell">
                                                 <button
@@ -696,61 +712,150 @@ export default function VentasCrear({
                                         </tr>
                                         {nestedDetailsVisible[item.id] && (
                                             <tr>
-                                                <td colSpan="6" style={{background: '#f9fafb', padding: '16px'}}>
-                                                    {item.toppings && item.toppings.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Toppings:</strong>
-                                                            {item.toppings.map(t => (
-                                                                <div key={t.id}>
-                                                                    {t.nombre}
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeTopping(item.id, t.id)}>x</button>
+                                                <td colSpan="6" style={{background: '#fef3f2', padding: '16px', borderLeft: '4px solid #ec4899'}}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                                                        
+
+                                                        {/* Toppings */}
+                                                        {item.toppings && item.toppings.length > 0 && (
+                                                            <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                                                <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '8px', fontSize: '14px' }}>
+                                                                    🍫 Toppings ({item.toppings.length})
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {item.salsas && item.salsas.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Salsas:</strong>
-                                                            {item.salsas.map(sa => (
-                                                                <div key={sa.id}>
-                                                                    {sa.nombre}
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeSalsa(item.id, sa.id)}>x</button>
+                                                                {item.toppings.map(t => (
+                                                                    <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                                                                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{t.nombre}</span>
+                                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                            <span style={{ color: '#10b981', fontWeight: '600', fontSize: '12px' }}>Gratis</span>
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => removeTopping(item.id, t.id)}
+                                                                                style={{ 
+                                                                                    background: '#fee2e2', 
+                                                                                    border: 'none', 
+                                                                                    borderRadius: '4px', 
+                                                                                    padding: '2px 6px', 
+                                                                                    cursor: 'pointer',
+                                                                                    color: '#dc2626',
+                                                                                    fontSize: '12px',
+                                                                                    fontWeight: 'bold'
+                                                                                }}
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Salsas */}
+                                                        {item.salsas && item.salsas.length > 0 && (
+                                                            <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                                                <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '8px', fontSize: '14px' }}>
+                                                                    🍯 Salsas ({item.salsas.length})
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {item.sabores && item.sabores.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Rellenos:</strong>
-                                                            {item.sabores.map(re => (
-                                                                <div key={re.id}>
-                                                                    {re.nombre}
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeRelleno(item.id, re.id)}>x</button>
+                                                                {item.salsas.map(sa => (
+                                                                    <div key={sa.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                                                                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{sa.nombre}</span>
+                                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                            <span style={{ color: '#10b981', fontWeight: '600', fontSize: '12px' }}>Gratis</span>
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => removeSalsa(item.id, sa.id)}
+                                                                                style={{ 
+                                                                                    background: '#fee2e2', 
+                                                                                    border: 'none', 
+                                                                                    borderRadius: '4px', 
+                                                                                    padding: '2px 6px', 
+                                                                                    cursor: 'pointer',
+                                                                                    color: '#dc2626',
+                                                                                    fontSize: '12px',
+                                                                                    fontWeight: 'bold'
+                                                                                }}
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Rellenos */}
+                                                        {item.sabores && item.sabores.length > 0 && (
+                                                            <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                                                <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '8px', fontSize: '14px' }}>
+                                                                    🥧 Rellenos ({item.sabores.length})
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {item.adiciones && item.adiciones.length > 0 && (
-                                                        <div className="nested-item-list">
-                                                            <strong>Adiciones:</strong>
-                                                            {item.adiciones.map(ad => (
-                                                                <div key={ad.id}>
-                                                                    {ad.nombre} (${ad.precio.toLocaleString('es-CO')})
-                                                                    <button type="button" className="btn-small btn-eliminar-nested" onClick={() => removeAdicion(item.id, ad.id)}>x</button>
+                                                                {item.sabores.map(re => (
+                                                                    <div key={re.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                                                                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{re.nombre}</span>
+                                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                            <span style={{ color: '#10b981', fontWeight: '600', fontSize: '12px' }}>Gratis</span>
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => removeRelleno(item.id, re.id)}
+                                                                                style={{ 
+                                                                                    background: '#fee2e2', 
+                                                                                    border: 'none', 
+                                                                                    borderRadius: '4px', 
+                                                                                    padding: '2px 6px', 
+                                                                                    cursor: 'pointer',
+                                                                                    color: '#dc2626',
+                                                                                    fontSize: '12px',
+                                                                                    fontWeight: 'bold'
+                                                                                }}
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Adiciones */}
+                                                        {item.adiciones && item.adiciones.length > 0 && (
+                                                            <div style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                                                <div style={{ fontWeight: 'bold', color: '#1f2937', marginBottom: '8px', fontSize: '14px' }}>
+                                                                    ✨ Adiciones ({item.adiciones.length})
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {(!item.toppings || item.toppings.length === 0) && 
-                                                     (!item.adiciones || item.adiciones.length === 0) && 
-                                                     (!item.salsas || item.salsas.length === 0) && 
-                                                     (!item.sabores || item.sabores.length === 0) && (
-                                                        <p style={{margin: 0, color: '#6b7280'}}>No hay catálogos añadidos.</p>
-                                                    )}
+                                                                {item.adiciones.map(ad => (
+                                                                    <div key={ad.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>
+                                                                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{ad.nombre}</span>
+                                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                            <span style={{ fontWeight: '600', color: '#ec4899', fontSize: '12px' }}>
+                                                                                +${ad.precio.toLocaleString('es-CO')}
+                                                                            </span>
+                                                                            <button 
+                                                                                type="button" 
+                                                                                onClick={() => removeAdicion(item.id, ad.id)}
+                                                                                style={{ 
+                                                                                    background: '#fee2e2', 
+                                                                                    border: 'none', 
+                                                                                    borderRadius: '4px', 
+                                                                                    padding: '2px 6px', 
+                                                                                    cursor: 'pointer',
+                                                                                    color: '#dc2626',
+                                                                                    fontSize: '12px',
+                                                                                    fontWeight: 'bold'
+                                                                                }}
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '2px solid #ec4899', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                                    <span style={{ color: '#1f2937' }}>Subtotal Adiciones:</span>
+                                                                    <span style={{ color: '#ec4899' }}>
+                                                                        ${(item.adiciones.reduce((acc, ad) => acc + (ad.precio * (ad.cantidad || 1)), 0)).toLocaleString('es-CO')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}
@@ -771,26 +876,25 @@ export default function VentasCrear({
                 </button>
             </div>
 
-{ventaData.tipo_venta === 'pedido' && (
-    <div className="form-card">
-        <h2 className="section-title">
-            <span className="title-icon">📝</span>
-            Observaciones
-        </h2>
-        <div className="field-group">
-            <textarea
-                name="observaciones"
-                value={ventaData.observaciones || ''}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="Ingrese observaciones del pedido (opcional)..."
-                rows="3"
-                style={{ resize: 'vertical', minHeight: '80px' }}
-            />
-        </div>
-    </div>
-)}
-
+            {ventaData.tipo_venta === 'pedido' && (
+                <div className="form-card">
+                    <h2 className="section-title">
+                        <span className="title-icon">📝</span>
+                        Observaciones
+                    </h2>
+                    <div className="field-group">
+                        <textarea
+                            name="observaciones"
+                            value={ventaData.observaciones || ''}
+                            onChange={handleChange}
+                            className="form-input"
+                            placeholder="Ingrese observaciones del pedido (opcional)..."
+                            rows="3"
+                            style={{ resize: 'vertical', minHeight: '80px' }}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="totals-section">
                 <div className="totals-grid">
@@ -829,7 +933,7 @@ export default function VentasCrear({
                 </button>
             </div>
 
-            {/* MODALES */}
+            {/* ✅ MODALES - CON CIERRE AUTOMÁTICO AL AGREGAR */}
             {mostrarModalInsumos && (
                 <AgregarProductosModal
                     onClose={() => setMostrarModalInsumos(false)}
@@ -846,8 +950,13 @@ export default function VentasCrear({
                         setMostrarModalToppings(false); 
                         setProductoEditandoId(null); 
                     }}
-                    onAgregar={agregarToppings}
+                    onAgregar={(toppings) => {
+                        agregarToppings(toppings);
+                        setMostrarModalToppings(false);
+                        setProductoEditandoId(null);
+                    }}
                     limiteMaximo={configuraciones[productoEditandoId]?.limiteTopping || null}
+                    toppingsSeleccionados={insumosSeleccionados.find(item => item.id === productoEditandoId)?.toppings || []}
                 />
             )}
 
@@ -857,7 +966,11 @@ export default function VentasCrear({
                         setMostrarModalAdiciones(false); 
                         setProductoEditandoId(null); 
                     }}
-                    onAgregar={agregarAdiciones}
+                    onAgregar={(adiciones) => {
+                        agregarAdiciones(adiciones);
+                        setMostrarModalAdiciones(false);
+                        setProductoEditandoId(null);
+                    }}
                     adicionesSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.adiciones || []}
                 />
             )}
@@ -868,7 +981,11 @@ export default function VentasCrear({
                         setMostrarModalSalsas(false); 
                         setProductoEditandoId(null); 
                     }}
-                    onAgregar={agregarSalsas}
+                    onAgregar={(salsas) => {
+                        agregarSalsas(salsas);
+                        setMostrarModalSalsas(false);
+                        setProductoEditandoId(null);
+                    }}
                     limiteMaximo={configuraciones[productoEditandoId]?.limiteSalsa || null}
                     salsasSeleccionadas={insumosSeleccionados.find(item => item.id === productoEditandoId)?.salsas || []}
                 />
@@ -880,7 +997,11 @@ export default function VentasCrear({
                         setMostrarModalRellenos(false); 
                         setProductoEditandoId(null); 
                     }}
-                    onAgregar={agregarRellenos}
+                    onAgregar={(rellenos) => {
+                        agregarRellenos(rellenos);
+                        setMostrarModalRellenos(false);
+                        setProductoEditandoId(null);
+                    }}
                     limiteMaximo={configuraciones[productoEditandoId]?.limiteRelleno || null}
                     rellenosSeleccionados={insumosSeleccionados.find(item => item.id === productoEditandoId)?.sabores || []}
                 />

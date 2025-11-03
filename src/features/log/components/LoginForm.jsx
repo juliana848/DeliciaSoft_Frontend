@@ -79,7 +79,6 @@ const LoginForm = () => {
     
     localStorage.setItem('user', JSON.stringify(userForContact));
     
-    // Si se abrió desde otra pestaña, cerrar esta y dejar que la original se sincronice
     if (openerUrl && window.opener === null) {
       localStorage.removeItem('loginOpenerUrl');
       showCustomAlert('success', 'Inicio de sesión exitoso. Cerrando pestaña...');
@@ -104,7 +103,6 @@ const LoginForm = () => {
       return;
     }
     
-    // Flujo normal cuando NO se abrió en nueva pestaña
     if (redirectPath === '/contactenos') {
       localStorage.removeItem('redirectAfterLogin');
       sessionStorage.setItem('fromLogin', 'true');
@@ -170,12 +168,17 @@ const LoginForm = () => {
         console.log('Login exitoso, procesando redirección...');
         handleLoginSuccess(result.user, result.userType);
       } else {
+        // 🔥 NO CERRAR EL MODAL - mantenerlo abierto para reintentar
         console.error('Error en login:', result.message);
         showCustomAlert('error', result.message || 'Código incorrecto. Verifica tu email.');
+        
+        // Devolver error al modal para que lo maneje
+        throw new Error(result.message || 'Código incorrecto');
       }
     } catch (error) {
       console.error('Error en completarLogin:', error);
-      showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
+      // Propagar el error al modal
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -188,10 +191,12 @@ const LoginForm = () => {
     });
   };
 
+  // 🔥 MÉTODO PRINCIPAL ACTUALIZADO: Ahora envía la contraseña para validación
   const manejarSubmit = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
 
+    // Validaciones básicas
     if (!email.trim() || !password.trim()) {
       showCustomAlert('error', 'Por favor, completa todos los campos.');
       return;
@@ -211,33 +216,39 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      console.log('Iniciando proceso de login para:', email);
+      console.log('🔐 Iniciando proceso de login para:', email);
       
       const redirectPath = localStorage.getItem('redirectAfterLogin');
       if (redirectPath === '/contactenos') {
-        showCustomAlert('success', 'Código de validación enviado. Una vez verificado, te redirigiremos al formulario de contacto');
+        showCustomAlert('success', 'Validando credenciales...');
       }
 
-      const validacionResult = await authService.enviarCodigoValidacionLoginConDeteccion(email);
+      // 🔥 CAMBIO CRÍTICO: Ahora se pasa la contraseña para validación previa
+      const validacionResult = await authService.enviarCodigoValidacionLoginConDeteccion(email, password);
       
-      console.log('Resultado envío código:', validacionResult);
+      console.log('📋 Resultado validación:', validacionResult);
 
       if (validacionResult.success) {
+        // Guardar datos para usar después de validar código
         setDatosLoginPendiente({ email, password });
         
         if (!redirectPath || redirectPath !== '/contactenos') {
           showCustomAlert('success', 'Código de validación enviado a tu correo');
+        } else {
+          showCustomAlert('success', 'Código enviado. Una vez verificado, te redirigiremos al formulario de contacto');
         }
         
-        console.log('Mostrando modal de validación...');
+        console.log('✅ Mostrando modal de validación...');
         setMostrarModalValidacionLogin(true);
         
       } else {
+        // 🔥 MOSTRAR ERROR ESPECÍFICO DEL SERVIDOR
+        console.error('❌ Error en validación:', validacionResult.message);
         showCustomAlert('error', validacionResult.message || 'Error al enviar código de validación');
       }
 
     } catch (error) {
-      console.error('Error en manejarSubmit:', error);
+      console.error('❌ Error en manejarSubmit:', error);
       showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
@@ -299,7 +310,6 @@ const LoginForm = () => {
           required
         />
         
-        {/* Campo de contraseña con toggle */}
         <div style={{ position: 'relative', width: '100%' }}>
           <input
             type={showPassword ? 'text' : 'password'}
@@ -359,7 +369,7 @@ const LoginForm = () => {
             cursor: isLoading ? 'not-allowed' : 'pointer'
           }}
         >
-          {isLoading ? 'Enviando código...' : 'Iniciar'}
+          {isLoading ? 'Validando...' : 'Iniciar'}
         </button>
 
         {isLoading && (

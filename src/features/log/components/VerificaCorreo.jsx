@@ -38,18 +38,34 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
     setIsLoading(true);
 
     try {
-      console.log('Solicitando recuperación de contraseña para:', correo);
+      console.log('🔄 Solicitando recuperación de contraseña para:', correo);
       
       const result = await authService.solicitarRecuperacionPassword(correo);
       
+      console.log('📋 Resultado completo del servidor:', result);
+      console.log('🔑 Código recibido del servidor:', result.codigo);
+      
       if (result.success) {
+        // 🔥 VALIDACIÓN CRÍTICA: Verificar que el código existe
+        if (!result.codigo) {
+          console.error('❌ ERROR: No se recibió código del servidor');
+          showCustomAlert('error', 'Error: No se recibió código de verificación');
+          return;
+        }
+
         showCustomAlert('success', '✅ Código enviado a tu correo electrónico');
         
-        // CRÍTICO: Guardar tanto el correo como el código en sessionStorage
+        // 🔥 GUARDAR TANTO CORREO COMO CÓDIGO
         sessionStorage.setItem('tempEmailRecovery', correo);
-        sessionStorage.setItem('tempRecoveryCode', result.codigo || '');
+        sessionStorage.setItem('tempRecoveryCode', result.codigo);
         
-        console.log('✅ Código guardado en sessionStorage:', result.codigo);
+        console.log('✅ Datos guardados en sessionStorage:');
+        console.log('  - Correo:', correo);
+        console.log('  - Código:', result.codigo);
+        
+        // Verificar que se guardó correctamente
+        const codigoGuardado = sessionStorage.getItem('tempRecoveryCode');
+        console.log('✅ Verificación - Código guardado:', codigoGuardado);
         
         setTimeout(() => {
           onCodigoGenerado(result.codigo);
@@ -59,7 +75,7 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error en manejarEnvio:', error);
       showCustomAlert('error', 'Error de conexión. Inténtalo nuevamente.');
     } finally {
       setIsLoading(false);
@@ -69,56 +85,51 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
   return (
     <div className="recovery-overlay">
       {showAlert.show && (
-        <div className={`custom-alert alert-${showAlert.type}`}>
+        <div className={`custom-alert alert-${showAlert.type}`} style={{ zIndex: 10000 }}>
           {showAlert.message}
         </div>
       )}
 
-      <div className="recovery-modal" style={{ 
-        maxWidth: '480px',
-        padding: '2rem 1.5rem 1.5rem',
-        minHeight: 'auto',
-        maxHeight: '85vh'
+<div className="recovery-modal" style={{ 
+        maxWidth: '400px',
+        padding: '1.2rem 1rem'
       }}>
-        <div className="progress-indicator" style={{ marginBottom: '1.5rem' }}>
+        <div className="progress-indicator" style={{ marginBottom: '0.8rem' }}>
           <div className="step active">
             <div className="step-circle">1</div>
-            <span>Correo</span>
           </div>
           <div className="step-line"></div>
           <div className="step">
             <div className="step-circle">2</div>
-            <span>Código</span>
           </div>
           <div className="step-line"></div>
           <div className="step">
             <div className="step-circle">3</div>
-            <span>Nueva Contraseña</span>
           </div>
         </div>
 
         <div className="modal-content">
-          <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
+          <div className="modal-header" style={{ marginBottom: '0.8rem' }}>
             <div className="icon-container" style={{ 
-              width: '60px', 
-              height: '60px',
-              marginBottom: '1rem'
+              width: '45px', 
+              height: '45px',
+              marginBottom: '0.5rem'
             }}>
-              <Mail size={24} />
+              <Mail size={20} />
             </div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
               Recuperar Contraseña
             </h2>
-            <p style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-              Ingresa tu correo electrónico para enviarte un código de verificación
+            <p style={{ fontSize: '0.8rem', lineHeight: '1.25' }}>
+              Ingresa tu correo para recibir el código
             </p>
           </div>
 
           <div className="modal-body">
             <form onSubmit={manejarEnvio}>
-              <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+              <div className="input-group" style={{ marginBottom: '0.8rem' }}>
                 <div className="input-wrapper">
-                  <Mail className="input-icon" size={18} />
+                  <Mail className="input-icon" size={15} />
                   <input
                     type="email"
                     placeholder="Correo Electrónico"
@@ -130,8 +141,8 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
                     autoFocus
                     style={{
                       width: '100%',
-                      padding: '14px 14px 14px 44px',
-                      fontSize: '15px'
+                      padding: '10px 10px 10px 36px',
+                      fontSize: '13px'
                     }}
                   />
                 </div>
@@ -139,8 +150,8 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
 
               <div style={{
                 display: 'flex',
-                gap: '12px',
-                marginBottom: '1rem'
+                gap: '8px',
+                marginBottom: '0.7rem'
               }}>
                 <button 
                   type="submit"
@@ -148,10 +159,10 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
                   disabled={isLoading || !correo.trim()}
                   style={{
                     flex: '1',
-                    padding: '14px 20px',
-                    fontSize: '15px',
+                    padding: '10px 14px',
+                    fontSize: '13px',
                     fontWeight: '600',
-                    minHeight: '48px'
+                    minHeight: '38px'
                   }}
                 >
                   {isLoading ? (
@@ -162,7 +173,7 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
                   ) : (
                     <>
                       Enviar Código
-                      <ArrowRight size={16} />
+                      <ArrowRight size={13} />
                     </>
                   )}
                 </button>
@@ -174,10 +185,10 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
                   disabled={isLoading}
                   style={{
                     flex: '1',
-                    padding: '14px 20px',
-                    fontSize: '15px',
+                    padding: '10px 14px',
+                    fontSize: '13px',
                     fontWeight: '600',
-                    minHeight: '48px'
+                    minHeight: '38px'
                   }}
                 >
                   Cancelar
@@ -187,26 +198,165 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
               <div style={{
                 background: 'rgba(233, 30, 99, 0.05)',
                 border: '1px solid rgba(233, 30, 99, 0.1)',
-                borderRadius: '8px',
-                padding: '12px',
+                borderRadius: '6px',
+                padding: '8px',
                 textAlign: 'center'
               }}>
                 <div style={{
                   color: '#5f6368',
-                  fontSize: '13px',
-                  lineHeight: '1.4'
+                  fontSize: '11px',
+                  lineHeight: '1.3'
                 }}>
-                  Te enviaremos un código de 6 dígitos para verificar tu identidad
+                  Te enviaremos un código de 6 dígitos
                 </div>
               </div>
             </form>
           </div>
         </div>
       </div>
-
+      
       <style jsx>{`
-        .recovery-overlay {
-          padding: 20px;
+      .recovery-overlay {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      background: rgba(0, 0, 0, 0.8) !important;
+      backdrop-filter: blur(15px) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 999999 !important;
+      padding: 15px !important;
+      animation: fadeInOverlay 0.4s ease-out !important;
+    }
+
+    .recovery-modal {
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      padding: 1.3rem 1.2rem !important;
+      max-width: 440px !important;
+      width: 95% !important;
+      max-height: none !important;
+      overflow-y: visible !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
+      animation: slideInModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      position: relative !important;
+    }
+
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .progress-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0;
+        }
+
+        .step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .step-circle {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 14px;
+          background: #f1f3f4;
+          color: #9aa0a6;
+          border: 2px solid #f1f3f4;
+        }
+
+        .step.active .step-circle {
+          background: #e91e63;
+          color: white;
+          border-color: #e91e63;
+        }
+
+        .step.completed .step-circle {
+          background: #10b981;
+          color: white;
+          border-color: #10b981;
+        }
+
+        .step span {
+          font-size: 12px;
+          color: #9aa0a6;
+          font-weight: 500;
+          text-align: center;
+        }
+
+        .step.active span {
+          color: #e91e63;
+          font-weight: 600;
+        }
+
+        .step.completed span {
+          color: #10b981;
+          font-weight: 600;
+        }
+
+        .step-line {
+          width: 40px;
+          height: 2px;
+          background: #f1f3f4;
+          margin: 0 5px;
+          margin-top: -20px;
+        }
+
+        .step-line.completed {
+          background: #10b981;
+        }
+
+        .icon-container {
+          background: linear-gradient(135deg, #e91e63, #ad1457);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          margin: 0 auto;
+          box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3);
+        }
+
+        .input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .input-icon {
+          position: absolute;
+          left: 14px;
+          color: #9ca3af;
+          z-index: 1;
+        }
+
+        .styled-input {
+          width: 100%;
+          padding: 14px 14px 14px 44px;
+          font-size: 15px;
+          border: 2px solid #f1f3f4;
+          border-radius: 12px;
+          outline: none;
+          transition: all 0.3s ease;
         }
 
         .styled-input:focus {
@@ -271,11 +421,51 @@ const ModalVerificarCorreo = ({ onCodigoGenerado, onClose }) => {
           100% { transform: rotate(360deg); }
         }
 
+        .custom-alert {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 10000;
+          padding: 1rem 1.5rem;
+          border-radius: 15px;
+          color: white;
+          font-weight: 600;
+          font-size: 0.9rem;
+          min-width: 300px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          animation: slideInRight 0.5s ease-out;
+        }
+
+        .alert-success {
+          background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .alert-error {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
         @media (max-width: 640px) {
           .recovery-modal {
             margin: 1rem !important;
             padding: 1.5rem 1rem !important;
             max-height: 90vh !important;
+          }
+
+          .custom-alert {
+            right: 10px !important;
+            left: 10px !important;
+            min-width: auto !important;
           }
         }
       `}</style>

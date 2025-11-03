@@ -1,8 +1,7 @@
-// services/authService.js
+// services/authService.js - VERSIÓN CORREGIDA
 const API_BASE_URL = 'https://deliciasoft-backend-i6g9.onrender.com/api';
 
 class AuthService {
-  // Función auxiliar para manejar errores de respuesta
   async handleResponse(response) {
     const contentType = response.headers.get('content-type');
     
@@ -22,19 +21,27 @@ class AuthService {
     }
   }
 
-  // 1. ENVIAR CÓDIGO DE VALIDACIÓN PARA LOGIN (CON DEBUGGING MEJORADO)
-   async enviarCodigoValidacionLogin(correo, userType = null) {
+  // 🔥 MÉTODO CRÍTICO CORREGIDO: Ahora envía contraseña para validar ANTES del código
+  async enviarCodigoValidacionLogin(correo, password, userType = null) {
     try {
-      console.log('📧 Enviando código de validación a:', correo);
-      console.log('📧 Tipo de usuario especificado:', userType);
+      console.log('🔐 Validando credenciales para:', correo);
       console.log('🌐 URL del API:', API_BASE_URL);
       
+      // 🔥 VALIDACIÓN: Contraseña es obligatoria ahora
+      if (!password) {
+        return {
+          success: false,
+          message: 'Contraseña es requerida'
+        };
+      }
+
       const requestBody = { 
         correo, 
+        password, // 🔥 NUEVO: Enviar contraseña para validación previa
         userType: userType || 'cliente' 
       };
       
-      console.log('📦 Datos a enviar:', requestBody);
+      console.log('📦 Enviando para validación:', { correo, userType });
       
       const response = await fetch(`${API_BASE_URL}/auth/send-verification-code`, {
         method: 'POST',
@@ -46,22 +53,30 @@ class AuthService {
       });
 
       console.log('📡 Status de respuesta:', response.status);
-      console.log('📡 Headers de respuesta:', [...response.headers.entries()]);
 
       const { isJson, data } = await this.handleResponse(response);
 
       if (isJson && response.ok && data.success) {
-        console.log('✅ Código enviado exitosamente:', data);
+        console.log('✅ Credenciales válidas, código enviado:', data);
         return {
           success: true,
-          codigo: data.codigo, // IMPORTANTE: Código real del servidor
+          codigo: data.codigo,
           message: data.message || 'Código enviado correctamente',
           userType: data.userType,
           emailSent: data.emailSent || false,
           provider: data.provider || 'Unknown'
         };
       } else {
-        console.error('❌ Error enviando código:', {
+        // 🔥 MANEJO MEJORADO DE ERRORES ESPECÍFICOS
+        let errorMessage = data.message || `Error ${response.status}: ${response.statusText}`;
+        
+        if (response.status === 401) {
+          errorMessage = 'Contraseña incorrecta';
+        } else if (response.status === 404) {
+          errorMessage = 'El correo ingresado no está registrado. Por favor, regístrate primero.';
+        }
+        
+        console.error('❌ Error en validación:', {
           status: response.status,
           statusText: response.statusText,
           data: data,
@@ -70,7 +85,7 @@ class AuthService {
         
         return {
           success: false,
-          message: data.message || `Error ${response.status}: ${response.statusText}`,
+          message: errorMessage,
           status: response.status,
           responseData: data
         };
@@ -83,28 +98,20 @@ class AuthService {
         stack: error.stack
       });
       
-      // MEJORADO: Fallback más consistente para desarrollo
-      const codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log('🔓 CÓDIGO FALLBACK GENERADO:', codigoGenerado);
-      
+      // NO USAR FALLBACK EN PRODUCCIÓN - Error real
       return {
-        success: true,
-        codigo: codigoGenerado,
-        message: 'Código generado (modo fallback - error de conexión)',
-        fallback: true,
-        emailSent: false,
-        provider: 'Fallback Local',
+        success: false,
+        message: 'Error de conexión con el servidor. Verifica tu internet e intenta nuevamente.',
         originalError: error.message
       };
     }
   }
 
   // MÉTODO CON DETECCIÓN AUTOMÁTICA MEJORADO
-  async enviarCodigoValidacionLoginConDeteccion(correo) {
+  async enviarCodigoValidacionLoginConDeteccion(correo, password) {
     try {
       console.log('🔍 Detectando tipo de usuario para:', correo);
       
-      // Intentar detectar si es admin/usuario
       let userType = 'cliente'; // valor por defecto
       
       try {
@@ -115,7 +122,6 @@ class AuthService {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          // Agregar timeout para evitar que se cuelgue
           signal: AbortSignal.timeout(5000)
         });
         
@@ -139,17 +145,18 @@ class AuthService {
       
       console.log('🎯 Tipo de usuario final detectado:', userType);
       
-      // Ahora enviar el código con el tipo correcto
-      return await this.enviarCodigoValidacionLogin(correo, userType);
+      // 🔥 CAMBIO CRÍTICO: Pasar contraseña al método de envío
+      return await this.enviarCodigoValidacionLogin(correo, password, userType);
       
     } catch (error) {
       console.error('❌ Error crítico en detección automática:', error);
-      // Fallback simple
-      return await this.enviarCodigoValidacionLogin(correo, 'cliente');
+      return {
+        success: false,
+        message: 'Error detectando tipo de usuario'
+      };
     }
   }
 
-  // 2. LOGIN CON VALIDACIÓN (CON DEBUGGING MEJORADO)
   async loginConValidacion(correo, password, codigo) {
     try {
       console.log('🔐 Haciendo login con validación para:', correo);
@@ -170,7 +177,6 @@ class AuthService {
           'Accept': 'application/json'
         },
         body: JSON.stringify(requestBody),
-        // Timeout para login
         signal: AbortSignal.timeout(10000)
       });
 
@@ -212,7 +218,6 @@ class AuthService {
     }
   }
 
-  // 3. SOLICITAR CÓDIGO PARA RECUPERAR CONTRASEÑA
   async solicitarRecuperacionPassword(correo) {
     try {
       console.log('🔄 Solicitando recuperación de contraseña para:', correo);
@@ -232,7 +237,7 @@ class AuthService {
       if (isJson && response.ok) {
         return {
           success: true,
-          codigo: data.codigo, // Para desarrollo
+          codigo: data.codigo,
           message: data.message || 'Código enviado correctamente'
         };
       } else {
@@ -244,18 +249,13 @@ class AuthService {
 
     } catch (error) {
       console.error('❌ Error en solicitar recuperación:', error);
-      // Fallback para desarrollo
-      const codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
       return {
-        success: true,
-        codigo: codigoGenerado,
-        message: 'Código generado (modo desarrollo)',
-        fallback: true
+        success: false,
+        message: 'Error de conexión. Inténtalo nuevamente.'
       };
     }
   }
 
-  // 4. CAMBIAR CONTRASEÑA CON CÓDIGO
   async cambiarPasswordConCodigo(correo, codigo, nuevaPassword) {
     try {
       console.log('🔄 Cambiando contraseña con código para:', correo);
@@ -297,7 +297,6 @@ class AuthService {
     }
   }
 
-  // 5. LOGIN DIRECTO (OPCIONAL - PARA COMPATIBILIDAD)
   async loginDirecto(correo, password) {
     try {
       console.log('🔐 Login directo para:', correo);
@@ -340,7 +339,6 @@ class AuthService {
     }
   }
 
-  // MÉTODO DE TESTING PARA DIAGNOSTICAR PROBLEMAS
   async testConnection() {
     try {
       console.log('🧪 Probando conexión con el servidor...');
@@ -370,7 +368,6 @@ class AuthService {
     }
   }
 
-  // MÉTODOS EXISTENTES (MANTENER PARA COMPATIBILIDAD)
   async registrarCliente(datosCliente) {
     try {
       console.log('📝 Registrando cliente:', datosCliente);
@@ -498,7 +495,6 @@ class AuthService {
         throw new Error('Cliente no encontrado');
       }
 
-      // Actualizar localStorage con datos completos
       localStorage.setItem('userData', JSON.stringify(cliente));
       
       return cliente;
@@ -508,7 +504,6 @@ class AuthService {
     }
   }
 
-  // Obtener perfil del usuario logueado
   getUserProfile() {
     const userEmail = localStorage.getItem('userEmail');
     const userRole = localStorage.getItem('userRole');
@@ -525,7 +520,6 @@ class AuthService {
     return null;
   }
 
-  // Cerrar sesión
   logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userRole');
@@ -534,27 +528,23 @@ class AuthService {
     localStorage.removeItem('productosTemporales');
   }
 
-  // Verificar si está autenticado
   isAuthenticated() {
     const token = localStorage.getItem('authToken');
     const userRole = localStorage.getItem('userRole');
     return !!(token && userRole);
   }
 
-  // Verificar si es administrador
   isAdmin() {
     const userRole = localStorage.getItem('userRole');
     return userRole === 'admin';
   }
 
-  // Verificar si es cliente
   isCliente() {
     const userRole = localStorage.getItem('userRole');
     return userRole === 'cliente';
   }
 }
 
-// Crear instancia singleton
 const authService = new AuthService();
 
 export default authService;

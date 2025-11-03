@@ -2,23 +2,23 @@
 
 export const EstadoMap = {
   produccion: [
-    { id: 1, label: 'Pendiente 🟡' },
-    { id: 2, label: 'Empaquetando 🟠' },
-    { id: 3, label: 'En producción 🔵' },
-    { id: 4, label: 'Decorado 🟤' },
-    { id: 5, label: 'Empaquetado 🟦' },
-    { id: 6, label: 'Entregado 🟢' },
-    { id: 99, label: 'N/A 🔴' }
+    { id: 1, label: 'Pendiente ' },
+    { id: 2, label: 'Empaquetando ' },
+    { id: 3, label: 'En producción ' },
+    { id: 4, label: 'Decorado ' },
+    { id: 5, label: 'Empaquetado ' },
+    { id: 6, label: 'Entregado ' },
+    { id: 99, label: 'N/A ' }
   ],
   pedido: [
-    { id: 1, label: 'Abonado 🟣' },
-    { id: 2, label: 'Empaquetando 🟠' },
-    { id: 3, label: 'En producción 🔵' },
-    { id: 4, label: 'Decorado 🟤' },
-    { id: 5, label: 'Empaquetado 🟦' },
-    { id: 6, label: 'Entregado a ventas 🔵' },
-    { id: 7, label: 'Entregado al cliente 🟢' },
-    { id: 99, label: 'N/A 🔴' }
+    { id: 1, label: 'Abonado ' },
+    { id: 2, label: 'Empaquetando ' },
+    { id: 3, label: 'En producción ' },
+    { id: 4, label: 'Decorado ' },
+    { id: 5, label: 'Empaquetado ' },
+    { id: 6, label: 'Entregado a ventas ' },
+    { id: 7, label: 'Entregado al cliente ' },
+    { id: 99, label: 'N/A ' }
   ]
 };
 

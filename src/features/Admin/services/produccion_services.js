@@ -14,7 +14,7 @@ class ProduccionApiService {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
         errorDetails = errorData;
-        console.error("🚨 Detalles del error de la API:", errorData);
+        console.error("🚨 ERROR COMPLETO DE LA API:", JSON.stringify(errorData, null, 2));
       } catch (e) {
         console.error("❌ No se pudo parsear la respuesta de error:", e);
       }
@@ -83,14 +83,20 @@ class ProduccionApiService {
     }
   }
 
-  async actualizarEstado(id, nuevoEstado) {
+  // 🔥 MÉTODO CORREGIDO - Ahora acepta objeto con estados
+  async actualizarEstado(id, estados) {
     try {
+      console.log(`🔄 Actualizando estado de producción ${id}:`, estados);
+      
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PATCH",
         headers: this.baseHeaders,
-        body: JSON.stringify({ estadoproduccion: nuevoEstado }),
+        body: JSON.stringify(estados), // Enviar objeto completo { estadoproduccion: X } o { estadopedido: Y }
       });
-      return this.handleResponse(response);
+      
+      const result = await this.handleResponse(response);
+      console.log('✅ Estado actualizado correctamente');
+      return result;
     } catch (error) {
       console.error(`❌ Error al actualizar estado de producción ${id}:`, error);
       throw error;
@@ -98,7 +104,7 @@ class ProduccionApiService {
   }
 
   async eliminarProduccion(produccion) {
-    const id = produccion?.idproduccion || produccion;
+    const id = produccion?.idproduccion || produccion?.id || produccion;
 
     if (!id) throw new Error("ID de producción no proporcionado");
 

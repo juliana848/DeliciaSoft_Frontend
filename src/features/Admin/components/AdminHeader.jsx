@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
-const AdminHeader = ({ insumos = [], pedidos = [] }) => {
+const AdminHeader = ({ insumos = [], pedidos = [], producciones = [] }) => {
   const navigate = useNavigate();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
@@ -127,9 +127,9 @@ const AdminHeader = ({ insumos = [], pedidos = [] }) => {
         zIndex: 100
         
       }}>
-        {/* Campanita de notificaciones */}
+        {/* Campanita de notificaciones - Ahora con producciones */}
         <div>
-          <NotificationBell insumos={insumos} pedidos={pedidos} />
+          <NotificationBell insumos={insumos} pedidos={pedidos} producciones={producciones} />
         </div>
         
         {/* Botón de cerrar sesión */}

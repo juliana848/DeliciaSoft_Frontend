@@ -226,3 +226,75 @@
 .products-table th{
   user-select: none;
 }
+/* Agrega estos estilos al final de tu archivo Produccion.css */
+
+/* ===== SELECTORES DE ESTADO MEJORADOS ===== */
+.estado-select-mejorado {
+  transition: all 0.3s ease;
+}
+
+.estado-select-mejorado:hover:not(:disabled) {
+  background-color: #C2185B !important;
+  box-shadow: 0 4px 8px rgba(194, 24, 91, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+.estado-select-mejorado:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.3) !important;
+}
+
+.estado-select-mejorado:active:not(:disabled) {
+  background-color: #AD1457 !important;
+  transform: translateY(0);
+  box-shadow: none !important;
+}
+
+.estado-select-mejorado option {
+  padding: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.estado-select-mejorado:disabled {
+  cursor: not-allowed;
+  filter: grayscale(40%);
+}
+
+/* Animación suave al cambiar de estado */
+@keyframes pulseEstado {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.estado-select-mejorado:focus {
+  animation: pulseEstado 1s ease-in-out;
+}
+
+/* Mejora para navegadores que soportan color-scheme */
+.estado-select-mejorado option:checked {
+  font-weight: 700;
+}
+
+/* Estilos para el contenedor del select */
+.admin-table td {
+  position: relative;
+}
+
+/* Asegurar que los selectores no sean muy anchos */
+.admin-table .estado-select-mejorado {
+  margin: 0 auto;
+  width: 180px !important;
+  max-width: 100%;
+}
+
+/* Quitar cualquier círculo o bullet point extraño */
+.estado-select-mejorado option::before,
+.estado-select-mejorado option::after {
+  content: none !important;
+  display: none !important;
+}

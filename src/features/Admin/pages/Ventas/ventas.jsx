@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '../../adminStyles.css';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useOutletContext } from 'react-router-dom';
 
 // Importar los nuevos componentes
 import VentasListar from './VentasListar';
@@ -37,6 +38,9 @@ export default function Ventas() {
     const [erroresValidacion, setErroresValidacion] = useState({});
     const [mostrarModalToppings, setMostrarModalToppings] = useState(false);
     const [configuraciones, setConfiguraciones] = useState({});
+    const outletContext = useOutletContext();
+    const actualizarPedidos = outletContext?.actualizarPedidos;
+    const actualizarProducciones = outletContext?.actualizarProducciones;
 
 
     // Agregar función para abrir modal de toppings
@@ -313,29 +317,69 @@ const verAbonosVenta = async (venta) => {
         }
     };
     
-    // Función para cambiar estado de venta
-    const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
-        try {
-            await ventaApiService.actualizarEstadoVenta(idVenta, nuevoEstadoId);
-            
-            setAllSales(prevSales => 
-                prevSales.map(venta => 
-                    venta.idVenta === idVenta 
-                        ? { 
-                            ...venta, 
-                            idEstadoVenta: nuevoEstadoId,
-                            nombreEstado: estadosVenta.find(e => e.idestadoventa === nuevoEstadoId)?.nombre_estado || venta.nombreEstado
-                          }
-                        : venta
-                )
+ const manejarCambioEstado = async (idVenta, nuevoEstadoId) => {
+    try {
+        console.log(`🔄 Cambiando estado de venta ${idVenta} a ${nuevoEstadoId}`);
+        
+        const resultado = await ventaApiService.actualizarEstadoVenta(idVenta, nuevoEstadoId);
+        
+        setAllSales(prevSales => 
+            prevSales.map(venta => 
+                venta.idVenta === idVenta 
+                    ? { 
+                        ...venta, 
+                        idEstadoVenta: nuevoEstadoId,
+                        nombreEstado: estadosVenta.find(e => e.idestadoventa === nuevoEstadoId)?.nombre_estado || venta.nombreEstado
+                      }
+                    : venta
+            )
+        );
+        
+        // ✅ ACTUALIZAR NOTIFICACIONES DE PEDIDOS
+        if (actualizarPedidos) {
+            await actualizarPedidos();
+        }
+        
+        // 🔥 SI SE CREÓ UNA PRODUCCIÓN AUTOMÁTICAMENTE
+        if (resultado.produccionCreada) {
+            console.log('✅ Producción creada:', resultado.produccionCreada);
+            showNotification(
+                `Estado actualizado. Se creó la producción #${resultado.produccionCreada.idproduccion} automáticamente`, 
+                'success'
             );
             
+            // ✅ ACTUALIZAR NOTIFICACIONES DE PRODUCCIONES
+            if (actualizarProducciones) {
+                await actualizarProducciones();
+            }
+        } else if (nuevoEstadoId === 2) {
+            // Estado "En producción" pero no se creó (probablemente ya existía)
+            showNotification('Estado de venta actualizado. La producción ya existe.', 'success');
+        } else if (nuevoEstadoId === 4) {
+            // ✅ NUEVO: Estado "Entregado/Finalizado"
+            showNotification('Pedido marcado como entregado', 'success');
+            
+            // ✅ ACTUALIZAR NOTIFICACIONES
+            if (actualizarPedidos) {
+                await actualizarPedidos();
+            }
+        } else if (nuevoEstadoId === 3) {
+            // ✅ NUEVO: Estado "Por entregar"
+            showNotification('Pedido listo para entregar', 'success');
+            
+            // ✅ ACTUALIZAR NOTIFICACIONES
+            if (actualizarPedidos) {
+                await actualizarPedidos();
+            }
+        } else {
             showNotification('Estado de venta actualizado correctamente', 'success');
-        } catch (error) {
-            console.error('Error al cambiar estado:', error);
-            showNotification(error.message || 'Error al actualizar el estado', 'error');
         }
-    };
+        
+    } catch (error) {
+        console.error('Error al cambiar estado:', error);
+        showNotification(error.message || 'Error al actualizar el estado', 'error');
+    }
+};
 
     // Función para generar PDF
     const generarPDFVenta = (venta) => {

@@ -436,7 +436,7 @@ const Dashboard = () => {
                     tipo="compras" 
                   />
                   <div style={styles.sedeFilterCard}>
-                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '500' }}>
+                    <div style={{ fontSize: '9px', color: '#666', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: '500' }}>
                       🏢 Filtrar por sede
                     </div>
                     <select 
@@ -501,17 +501,17 @@ const Dashboard = () => {
                     </div>
                   </div>
                   
-                  <ResponsiveContainer width="100%" height={230}>
+                  <ResponsiveContainer width="100%" height={165}>
                     {obtenerDatosCalculados.length === 0 ? (
                       <NoData mensaje="No hay datos de ventas o compras para mostrar" />
                     ) : (
-                      <BarChart data={obtenerDatosCalculados} barCategoryGap="20%">
+                      <BarChart data={obtenerDatosCalculados} barCategoryGap="15%">
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="periodo" axisLine={false} tickLine={false} fontSize={12} />
+                        <XAxis dataKey="periodo" axisLine={false} tickLine={false} fontSize={10} />
                         <YAxis 
                           axisLine={false} 
                           tickLine={false} 
-                          fontSize={11} 
+                          fontSize={9} 
                           tickFormatter={(value) => `${(value / 1000)}k`} 
                         />
                         <Tooltip content={<CustomTooltip />} />
@@ -528,16 +528,14 @@ const Dashboard = () => {
               </div>
 
               <div style={styles.rightSection}>
-                <div style={{ marginBottom: '30px' }}>
-                  <TortaComponent 
-                    periodoTorta={periodoTorta}
-                    setPeriodoTorta={setPeriodoTorta}
-                    mostrarPorcentajes={mostrarPorcentajes}
-                    setMostrarPorcentajes={setMostrarPorcentajes}
-                    setTortaExpandida={setTortaExpandida}
-                    obtenerDatosTorta={obtenerDatosTorta}
-                  />
-                </div>
+                <TortaComponent 
+                  periodoTorta={periodoTorta}
+                  setPeriodoTorta={setPeriodoTorta}
+                  mostrarPorcentajes={mostrarPorcentajes}
+                  setMostrarPorcentajes={setMostrarPorcentajes}
+                  setTortaExpandida={setTortaExpandida}
+                  obtenerDatosTorta={obtenerDatosTorta}
+                />
                 
                 <div style={styles.realtimeCard}>
                   <div style={styles.realtimeHeader}>
@@ -560,7 +558,7 @@ const Dashboard = () => {
                   </div>
                   <div style={styles.ventasList}>
                     {ventasFiltradas.length === 0 ? (
-                      <div style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                      <div style={{ textAlign: 'center', color: '#666', padding: '12px', fontSize: '10px' }}>
                         Esperando ventas...
                       </div>
                     ) : (

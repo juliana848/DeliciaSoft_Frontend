@@ -1,100 +1,114 @@
+// DashboardStyles.js - OPTIMIZADO SIN ESPACIOS EXCESIVOS
+
 export const styles = {
   dashboard: {
     fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f5f5f5',
-    minHeight: '100vh',
-    padding: '15px',
-    color: '#333'
+    backgroundColor: '#ffffff',
+    minHeight: '70vh',
+    maxHeight: '70vh',
+    padding: '8px',
+    color: '#333',
+    overflow: 'hidden'
   },
   container: {
-    maxWidth: '1400px',
-    margin: '0 auto'
+    maxWidth: '100%',
+    margin: '0 auto',
+    padding: '0 8px',
+    height: 'calc(100vh - 16px)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column'
   },
   header: {
-    fontSize: '24px',
+    fontSize: '18px',
     fontWeight: 'bold',
-    marginBottom: '15px',
+    marginBottom: '8px',
     color: '#333',
-    marginTop: '10px'
+    marginTop: '0'
   },
   mainContent: {
     display: 'flex',
-    gap: '20px',
-    marginBottom: '20px',
+    gap: '10px',
+    marginBottom: '0',
     flexWrap: 'wrap',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    flexDirection: 'row-reverse',
+    flex: 1,
+    overflow: 'hidden'
   },
   leftSection: {
     flex: '1.8',
-    minWidth: '600px',
+    minWidth: '500px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
-    marginTop:'45px'
+    gap: '10px',
+    marginTop: '0',
+    order: 2
   },
   rightSection: {
     flex: '1',
-    minWidth: '400px',
-    maxWidth: '450px',
+    minWidth: '320px',
+    maxWidth: '380px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px'
+    gap: '8px',
+    order: 1
   },
   statsRow: {
     display: 'flex',
-    gap: '15px',
-    marginBottom: '20px',
+    gap: '8px',
+    marginBottom: '0',
     flexWrap: 'wrap',
     alignItems: 'stretch'
   },
   statCard: {
     background: 'white',
-    borderRadius: '10px',
-    padding: '25px',
+    borderRadius: '8px',
+    padding: '10px',
     flex: '1',
-    minWidth: '220px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+    minWidth: '140px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between'
   },
   statTitle: {
-    fontSize: '13px',
+    fontSize: '9px',
     color: '#666',
-    marginBottom: '8px',
+    marginBottom: '3px',
     fontWeight: '400',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px'
+    letterSpacing: '0.3px'
   },
   statValue: {
-    fontSize: '32px',
+    fontSize: '18px',
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: '12px',
+    marginBottom: '4px',
     lineHeight: '1'
   },
   statChange: {
-    fontSize: '13px',
+    fontSize: '9px',
     fontWeight: '500',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
+    gap: '3px',
     color: '#666',
-    marginBottom: '8px'
+    marginBottom: '3px'
   },
   statSubInfo: {
-    fontSize: '11px',
+    fontSize: '8px',
     color: '#999',
-    marginTop: '5px'
+    marginTop: '2px'
   },
   statProgress: {
     position: 'absolute',
     bottom: '0',
     left: '0',
     right: '0',
-    height: '4px',
-    borderRadius: '0 0 10px 10px',
+    height: '3px',
+    borderRadius: '0 0 8px 8px',
     overflow: 'hidden'
   },
   progressBarVentas: {
@@ -109,19 +123,19 @@ export const styles = {
   },
   realtimeCard: {
     background: 'white',
-    borderRadius: '10px',
-    padding: '20px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: '320px',
+    borderRadius: '8px',
+    padding: '10px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    height: '200px',
     display: 'flex',
     flexDirection: 'column'
   },
   tortaCard: {
     background: 'white',
-    borderRadius: '10px',
-    padding: '20px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: '320px',
+    borderRadius: '8px',
+    padding: '10px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    height: '190px',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden'
@@ -133,10 +147,10 @@ export const styles = {
     transform: 'translate(-50%, -50%)',
     background: 'white',
     borderRadius: '10px',
-    padding: '30px',
+    padding: '25px',
     boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
     zIndex: 1000,
-    width: '600px',
+    width: '550px',
     maxWidth: '90vw',
     maxHeight: '90vh',
     overflow: 'auto'
@@ -154,81 +168,80 @@ export const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '15px',
+    marginBottom: '8px',
     flexWrap: 'wrap',
-    gap: '10px'
-
+    gap: '6px'
   },
   tortaHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '15px',
+    marginBottom: '8px',
     flexWrap: 'wrap',
-    gap: '10px'
+    gap: '6px'
   },
   realtimeTitle: {
-    fontSize: '16px',
+    fontSize: '12px',
     fontWeight: '600',
     color: '#333',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '5px'
   },
   tortaTitle: {
-    fontSize: '16px',
+    fontSize: '12px',
     fontWeight: '600',
     color: '#333'
   },
   liveIndicator: {
-    width: '8px',
-    height: '8px',
+    width: '5px',
+    height: '5px',
     backgroundColor: '#4CAF50',
     borderRadius: '50%',
     animation: 'pulse 2s infinite'
   },
   sedeSelector: {
-    padding: '6px 12px',
+    padding: '3px 6px',
     border: '1px solid #ddd',
     borderRadius: '4px',
-    fontSize: '12px',
+    fontSize: '9px',
     backgroundColor: 'white',
     cursor: 'pointer'
   },
   sedeFilterCard: {
     background: 'white',
-    borderRadius: '10px',
-    padding: '25px',
-    minWidth: '220px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+    borderRadius: '8px',
+    padding: '10px',
+    minWidth: '140px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center'
   },
   tortaControls: {
     display: 'flex',
-    gap: '10px',
+    gap: '5px',
     alignItems: 'center',
     flexWrap: 'wrap'
   },
   ventasList: {
     flex: 1,
     overflowY: 'auto',
-    paddingRight: '5px',
-    minHeight: '220px'
+    paddingRight: '3px',
+    minHeight: '140px'
   },
   ventaItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '10px',
+    gap: '6px',
+    padding: '5px',
     borderBottom: '1px solid #f0f0f0',
     transition: 'background-color 0.3s ease'
   },
   ventaImagen: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '6px',
+    width: '30px',
+    height: '30px',
+    borderRadius: '4px',
     objectFit: 'cover'
   },
   ventaInfo: {
@@ -236,7 +249,7 @@ export const styles = {
     minWidth: '0'
   },
   ventaNombre: {
-    fontSize: '13px',
+    fontSize: '10px',
     fontWeight: '500',
     color: '#333',
     marginBottom: '2px',
@@ -245,21 +258,21 @@ export const styles = {
     textOverflow: 'ellipsis'
   },
   ventaDetalles: {
-    fontSize: '11px',
+    fontSize: '8px',
     color: '#666',
     display: 'flex',
-    gap: '8px'
+    gap: '5px'
   },
   ventaPrecio: {
-    fontSize: '12px',
+    fontSize: '10px',
     fontWeight: 'bold',
     color: '#FF1493',
     textAlign: 'right'
   },
   sedeTag: {
-    fontSize: '10px',
-    padding: '2px 6px',
-    borderRadius: '10px',
+    fontSize: '7px',
+    padding: '2px 4px',
+    borderRadius: '6px',
     fontWeight: '500'
   },
   sedeSanPablo: {
@@ -272,10 +285,10 @@ export const styles = {
   },
   chartCard: {
     background: 'white',
-    borderRadius: '10px',
-    padding: '25px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    height: '420px',
+    borderRadius: '8px',
+    padding: '12px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    height: '270px',
     display: 'flex',
     flexDirection: 'column'
   },
@@ -283,130 +296,134 @@ export const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px',
+    marginBottom: '10px',
     flexWrap: 'wrap',
-    gap: '15px'
+    gap: '8px'
   },
   chartTitle: {
-    fontSize: '16px',
+    fontSize: '12px',
     fontWeight: '600',
     color: '#333'
   },
   controlsContainer: {
     display: 'flex',
-    gap: '15px',
+    gap: '8px',
     alignItems: 'center',
     flexWrap: 'wrap'
   },
   selectorContainer: {
     display: 'flex',
-    gap: '5px'
+    gap: '3px'
   },
   selectorButton: {
-    padding: '8px 16px',
+    padding: '4px 8px',
     border: '1px solid #ddd',
     backgroundColor: 'white',
     color: '#666',
-    fontSize: '12px',
+    fontSize: '9px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s'
   },
   selectorButtonActive: {
-    padding: '8px 16px',
+    padding: '4px 8px',
     border: '1px solid #FF1493',
     backgroundColor: '#FF1493',
     color: 'white',
-    fontSize: '12px',
+    fontSize: '9px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s'
   },
   toggleContainer: {
     display: 'flex',
-    gap: '10px',
+    gap: '5px',
     alignItems: 'center'
   },
   toggleButton: {
-    padding: '6px 12px',
+    padding: '3px 6px',
     border: '1px solid #ddd',
     backgroundColor: 'white',
     color: '#666',
-    fontSize: '11px',
+    fontSize: '8px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px'
+    gap: '3px'
   },
   toggleButtonActive: {
-    padding: '6px 12px',
+    padding: '3px 6px',
     border: '1px solid #FF1493',
     backgroundColor: '#FF1493',
     color: 'white',
-    fontSize: '11px',
+    fontSize: '8px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px'
+    gap: '3px'
   },
   toggleButtonCompras: {
-    padding: '6px 12px',
+    padding: '3px 6px',
     border: '1px solid #ddd',
     backgroundColor: 'white',
     color: '#666',
-    fontSize: '11px',
+    fontSize: '8px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px'
+    gap: '3px'
   },
   toggleButtonComprasActive: {
-    padding: '6px 12px',
+    padding: '3px 6px',
     border: '1px solid #A9A9A9',
     backgroundColor: '#A9A9A9',
     color: 'white',
-    fontSize: '11px',
+    fontSize: '8px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px'
+    gap: '3px'
   },
   colorIndicator: {
-    width: '8px',
-    height: '8px',
+    width: '5px',
+    height: '5px',
     borderRadius: '50%'
   },
   expandButton: {
-    padding: '6px 10px',
+    padding: '3px 6px',
     border: '1px solid #ddd',
     backgroundColor: 'white',
     color: '#666',
-    fontSize: '11px',
+    fontSize: '8px',
     cursor: 'pointer',
     borderRadius: '4px',
     transition: 'all 0.2s'
   },
   closeButton: {
     position: 'absolute',
-    top: '15px',
-    right: '15px',
+    top: '10px',
+    right: '10px',
     background: 'none',
     border: 'none',
-    fontSize: '24px',
+    fontSize: '18px',
     cursor: 'pointer',
     color: '#666'
   },
 };
 
 export const globalStyles = `
+  body {
+    overflow: hidden;
+  }
+  
   @keyframes pulse { 
     0% { opacity: 1; } 
     50% { opacity: 0.5; } 
@@ -429,10 +446,10 @@ export const globalStyles = `
     100% { transform: rotate(360deg); } 
   }
   .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #FF1493;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #FF1493;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }

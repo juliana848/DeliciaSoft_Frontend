@@ -9,12 +9,12 @@ export const LoadingSpinner = ({ mensaje = 'Cargando datos...' }) => (
     display: 'flex', 
     justifyContent: 'center', 
     alignItems: 'center', 
-    minHeight: '200px',
+    minHeight: '150px',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '8px'
   }}>
     <div className="loading-spinner"></div>
-    <div>{mensaje}</div>
+    <div style={{ fontSize: '12px' }}>{mensaje}</div>
   </div>
 );
 
@@ -24,24 +24,25 @@ export const NoData = ({ mensaje = 'No hay datos disponibles' }) => (
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '200px',
+    minHeight: '150px',
     color: '#666',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '8px'
   }}>
-    <span style={{ fontSize: '24px' }}>📊</span>
-    <div>{mensaje}</div>
+    <span style={{ fontSize: '20px' }}>📊</span>
+    <div style={{ fontSize: '12px' }}>{mensaje}</div>
   </div>
 );
 
 // Componente de error
 export const ErrorMessage = ({ message }) => (
   <div style={{ 
-    padding: '20px', 
+    padding: '15px', 
     backgroundColor: '#ffebee', 
     color: '#c62828', 
     borderRadius: '4px',
-    margin: '20px 0'
+    margin: '15px 0',
+    fontSize: '12px'
   }}>
     {message}
   </div>
@@ -86,14 +87,15 @@ export const CustomTooltip = ({ active, payload, label }) => {
     return (
       <div style={{ 
         backgroundColor: 'white', 
-        padding: '10px', 
+        padding: '8px', 
         border: '1px solid #ccc', 
-        borderRadius: '5px', 
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)' 
+        borderRadius: '4px', 
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        fontSize: '11px'
       }}>
         <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ margin: '5px 0 0 0', color: entry.color, fontSize: '12px' }}>
+          <p key={index} style={{ margin: '4px 0 0 0', color: entry.color, fontSize: '10px' }}>
             {entry.name}: {formatearValor(entry.value)}
           </p>
         ))}
@@ -113,22 +115,23 @@ export const CustomPieTooltip = ({ active, payload, obtenerDatosTorta, mostrarPo
     return (
       <div style={{ 
         backgroundColor: 'white', 
-        padding: '10px', 
+        padding: '8px', 
         border: '1px solid #ccc', 
-        borderRadius: '5px', 
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)' 
+        borderRadius: '4px', 
+        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        fontSize: '11px'
       }}>
         <p style={{ margin: 0, fontWeight: 'bold', color: data.payload.color }}>
           {data.payload.categoria}
         </p>
-        <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
+        <p style={{ margin: '4px 0 0 0', fontSize: '10px' }}>
           Ventas: {formatearValor(data.value)}
         </p>
-        <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
+        <p style={{ margin: '4px 0 0 0', fontSize: '10px' }}>
           Cantidad: {data.payload.cantidad} unidades
         </p>
         {mostrarPorcentajes && (
-          <p style={{ margin: '5px 0 0 0', fontSize: '12px' }}>
+          <p style={{ margin: '4px 0 0 0', fontSize: '10px' }}>
             Porcentaje: {porcentaje}%
           </p>
         )}
@@ -152,7 +155,7 @@ export const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadi
       fill="white" 
       textAnchor={x > cx ? 'start' : 'end'} 
       dominantBaseline="central" 
-      fontSize="11" 
+      fontSize="9" 
       fontWeight="bold"
     >
       {`${(percent * 100).toFixed(0)}%`}
@@ -166,21 +169,21 @@ export const CustomLegend = ({ obtenerDatosTorta }) => (
     display: 'flex', 
     flexWrap: 'wrap', 
     justifyContent: 'center', 
-    gap: '15px', 
-    marginTop: '20px' 
+    gap: '10px', 
+    marginTop: '15px' 
   }}>
     {obtenerDatosTorta.map((item, index) => (
       <div key={index} style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        fontSize: '12px', 
-        maxWidth: '150px' 
+        fontSize: '10px', 
+        maxWidth: '120px' 
       }}>
         <div style={{ 
-          width: '12px', 
-          height: '12px', 
+          width: '10px', 
+          height: '10px', 
           backgroundColor: item.color, 
-          marginRight: '5px', 
+          marginRight: '4px', 
           borderRadius: '2px' 
         }}></div>
         <span style={{ 
@@ -258,7 +261,7 @@ export const TortaComponent = React.memo(({
     {obtenerDatosTorta.length === 0 ? (
       <NoData mensaje="No hay ventas registradas en este período" />
     ) : (
-      <ResponsiveContainer width="100%" height={expanded ? 400 : 200}>
+      <ResponsiveContainer width="100%" height={expanded ? 350 : 130}>
         <PieChart>
           <Pie 
             data={obtenerDatosTorta} 
@@ -266,7 +269,7 @@ export const TortaComponent = React.memo(({
             cy="50%" 
             labelLine={false} 
             label={(props) => renderCustomizedLabel(props, mostrarPorcentajes)} 
-            outerRadius={expanded ? 150 : 80} 
+            outerRadius={expanded ? 130 : 50} 
             fill="#8884d8" 
             dataKey="ventas"
           >

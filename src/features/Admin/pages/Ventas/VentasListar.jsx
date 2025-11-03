@@ -1,11 +1,9 @@
-// VentasListar.jsx - Con Previsualización PDF y carga completa de datos
+// VentasListar.jsx - Con estados mejorados en rosa
 import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Dropdown } from 'primereact/dropdown';
 import AppNotification from '../../components/Notification';
 import Tooltip from '../../components/Tooltip';
-import { Tag } from 'primereact/tag';
 import SearchBar from '../../components/SearchBar';
 import ventaApiService from '../../services/venta_services';
 import '../../adminStyles.css';
@@ -43,28 +41,7 @@ export default function VentasListar({
         });
     };
 
-    const getSeverityClass = (nombreEstado) => {
-        switch (nombreEstado) {
-            case 'Activa':
-                return 'estado-activa';
-            case 'Anulada':
-                return 'estado-anulada';
-            case 'En espera':
-            case 'Pendiente':
-                return 'estado-espera';
-            case 'En producción':
-            case 'En Proceso':
-                return 'estado-produccion';
-            case 'Por entregar':
-                return 'estado-entregar';
-            case 'Finalizado':
-            case 'Completada':
-                return 'estado-finalizado';
-            default:
-                return '';
-        }
-    };
-
+    // Función para renderizar el estado como un select mejorado
     const estadoBodyTemplate = (rowData) => {
         const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
         const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa;
@@ -81,58 +58,93 @@ export default function VentasListar({
         const estadoActual = estadosVenta.find(e => e.idestadoventa === rowData.idEstadoVenta);
         const nombreEstadoActual = estadoActual?.nombre_estado || rowData.nombreEstado;
 
+        const colorEstadoEstatico = isStaticState ? '#B0B0B0' : '#E91E63';
+
         if (isStaticState) {
+            // Mostrar como un select deshabilitado
             return (
-                <Tag
-                    value={nombreEstadoActual}
-                    className={`estado-tag ${getSeverityClass(nombreEstadoActual)}`}
-                />
+                <div style={{ 
+                    position: 'relative', 
+                    width: '180px',
+                    maxWidth: '100%',
+                    display: 'inline-block'
+                }}>
+                    <div
+                        style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            border: 'none',
+                            borderRadius: '6px',
+                            backgroundColor: colorEstadoEstatico,
+                            color: '#fff',
+                            textAlign: 'left',
+                            opacity: 0.7,
+                            cursor: 'not-allowed',
+                        }}
+                    >
+                        {nombreEstadoActual}
+                    </div>
+                </div>
             );
         } else {
+            // Select interactivo para estados que pueden cambiar
             const opcionesDropdown = estadosVenta.filter(estado => {
                 const nombreEstado = estado.nombre_estado;
                 return nombreEstado !== 'Activa' && nombreEstado !== 'Anulada';
             });
 
-            const selectedTemplate = (option) => {
-                if (option) {
-                    return (
-                        <Tag 
-                            value={option.nombre_estado} 
-                            className={`estado-tag ${getSeverityClass(option.nombre_estado)}`}
-                        />
-                    );
-                }
-                return null;
-            };
-
-            const itemTemplate = (option) => {
-                return (
-                    <Tag 
-                        value={option.nombre_estado} 
-                        className={`estado-tag ${getSeverityClass(option.nombre_estado)}`}
-                    />
-                );
-            };
-
             return (
-                <Dropdown
-                    value={estadoActual}
-                    options={opcionesDropdown}
-                    onChange={(e) => manejarCambioEstado(rowData.idVenta, e.value.idestadoventa)}
-                    optionLabel="nombre_estado"
-                    valueTemplate={selectedTemplate}
-                    itemTemplate={itemTemplate}
-                    className="estado-dropdown"
-                    panelClassName="estado-dropdown-panel"
-                />
+                <div style={{ 
+                    position: 'relative', 
+                    width: '180px',
+                    maxWidth: '100%',
+                    display: 'inline-block'
+                }}>
+                    <select
+                        value={rowData.idEstadoVenta}
+                        onChange={(e) => manejarCambioEstado(rowData.idVenta, parseInt(e.target.value))}
+                        className="estado-select-ventas"
+                        style={{
+                            width: '100%',
+                            padding: '8px 35px 8px 12px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            border: 'none',
+                            borderRadius: '6px',
+                            appearance: 'none',
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            backgroundColor: '#E91E63',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 5px rgba(233, 30, 99, 0.4)',
+                            transition: 'all 0.3s ease',
+                            textAlign: 'left',
+                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 10px center',
+                            backgroundSize: '16px',
+                        }}
+                    >
+                        {opcionesDropdown.map((estado) => (
+                            <option 
+                                key={estado.idestadoventa} 
+                                value={estado.idestadoventa}
+                            >
+                                {estado.nombre_estado}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             );
         }
     };
 
-    // Función para abrir el preview del PDF - CORREGIDA
+    // Función para abrir el preview del PDF
     const abrirPreviewPDF = async (venta) => {
-        console.log('🔍 Abriendo preview para venta:', venta);
+        console.log('📄 Abriendo preview para venta:', venta);
         setLoadingPDF(true);
         
         try {
@@ -165,6 +177,7 @@ export default function VentasListar({
         setVentaParaPDF(null);
     };
 
+    // Template para los botones de acción
     const actionBodyTemplate = (rowData) => {
         const estadoAnuladoId = estadosVenta.find(e => e.nombre_estado === 'Anulada')?.idestadoventa;
         const estadoActivoId = estadosVenta.find(e => e.nombre_estado === 'Activa')?.idestadoventa;
@@ -269,7 +282,8 @@ export default function VentasListar({
                     </button>
                 </div>
             </div>
-                <DataTable
+            
+            <DataTable
                 value={ventasFiltradas}
                 className="admin-table compact-paginator"
                 dataKey="idVenta"
@@ -277,7 +291,7 @@ export default function VentasListar({
                 rows={10}
                 rowsPerPageOptions={[5, 10, 25]}
                 rowClassName={getRowClassName}
-                >
+            >
                 <Column field="idVenta" header="N°"></Column>
                 <Column field="nombreCliente" header="Cliente"></Column>
                 <Column field="nombreSede" header="Sede"></Column>
@@ -287,7 +301,7 @@ export default function VentasListar({
                     field="nombreEstado"
                     header="Estado"
                     body={estadoBodyTemplate}
-                    style={{ minWidth: '110px', maxWidth: '130px' }}
+                    style={{ minWidth: '180px', maxWidth: '200px' }}
                 ></Column>
                 <Column 
                     field="total" 
@@ -308,109 +322,6 @@ export default function VentasListar({
                     }}
                 />
             )}
-
-            <style jsx>{`
-                .estado-dropdown {
-                    border: none !important;
-                    box-shadow: none !important;
-                    background: transparent !important;
-                    width: 100% !important;
-                    max-width: 140px !important;
-                    transition: all 0.2s ease-in-out;
-                    border-radius: 6px !important;
-                }
-                
-                .estado-dropdown .p-dropdown-trigger {
-                    display: none !important;
-                }
-                
-                .estado-dropdown .p-dropdown-label {
-                    border: none !important;
-                    padding: 0 !important;
-                    background: transparent !important;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                }
-                
-                .estado-dropdown:hover {
-                    background: #e9ecef !important;
-                    cursor: pointer;
-                }
-
-                .estado-dropdown-panel {
-                    border: 1px solid #dee2e6 !important;
-                    border-radius: 6px !important;
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-                    background-color: transparent !important;
-                    max-height: none !important;
-                }
-                
-                .estado-dropdown-panel .p-dropdown-items .p-dropdown-item {
-                    padding: 0.6rem 0.8rem !important;
-                    margin: 0.2rem 0 !important;
-                    border-radius: 4px !important;
-                }
-                
-                .estado-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
-                    background-color: #f1f3f5 !important;
-                }
-                
-                .estado-tag {
-                    font-size: 0.75rem !important;
-                    font-weight: 600 !important;
-                    padding: 0.35rem 0.8rem !important;
-                    border-radius: 10px !important;
-                    min-width: 90px !important;
-                    text-align: center !important;
-                    display: inline-block !important;
-                    white-space: nowrap !important;
-                    overflow: hidden !important;
-                    text-overflow: ellipsis !important;
-                    background-color: #f1f3f5 !important;
-                    color: black !important;
-                }
-                
-                .estado-activa {
-                    background-color: #10b981 !important;
-                    color: white !important;
-                }
-                
-                .estado-anulada {
-                    background-color: #ef4444 !important;
-                    color: white !important;
-                }
-                
-                .estado-espera {
-                    background-color: #f59e0b !important;
-                    color: white !important;
-                }
-                
-                .estado-produccion {
-                    background-color: #3b82f6 !important;
-                    color: white !important;
-                }
-                
-                .estado-entregar {
-                    background-color: #ec4899 !important;
-                    color: white !important;
-                }
-                
-                .estado-finalizado,
-                .estado-completada {
-                    background-color: #8b5cf6 !important;
-                    color: white !important;
-                }
-                
-                .admin-table .row-anulado {
-                    background-color: #fdf2f8 !important;
-                }
-                
-                .admin-table .row-anulado:hover {
-                    background-color: #fce7f3 !important;
-                }
-            `}</style>
         </>
     );
 }

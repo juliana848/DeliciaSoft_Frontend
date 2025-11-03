@@ -14,6 +14,7 @@ import produccionApiService from '../services/produccion_services';
 import { estadoProduccionMap, estadoPedidoMap } from './Produccion/utils/estadosMaps';
 import { obtenerOpcionesEstadoProduccion, obtenerOpcionesEstadoPedido } from './Produccion/utils/transicionesEstado';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useOutletContext } from 'react-router-dom';
 
 export default function Produccion() {
   const [filtro, setFiltro] = useState('');
@@ -25,6 +26,7 @@ export default function Produccion() {
   const [procesos, setProcesos] = useState([]);
   const [pestanaActiva, setPestanaActiva] = useState('pedido');
   const [loading, setLoading] = useState(false);
+  const { actualizarProducciones } = useOutletContext() || {};
 
   // ======================= CARGA DE DATOS =======================
   useEffect(() => {
@@ -109,20 +111,35 @@ export default function Produccion() {
     setModalTipo(null);
   };
 
-  // ======================= ACTUALIZAR ESTADO =======================
-  const actualizarEstadoProceso = async (procesoId, campo, valor) => {
-    try {
-      const estados = {
-        [campo === 'estadoProduccion' ? 'estadoproduccion' : 'estadopedido']: valor
-      };
-      await produccionApiService.actualizarEstado(procesoId, estados);
-      setProcesos(prev => prev.map(p => (p.id === procesoId ? { ...p, [campo]: valor } : p)));
-      showNotification('Estado actualizado correctamente');
-    } catch (error) {
-      console.error('Error actualizando estado:', error);
-      showNotification('Error al actualizar el estado', 'error');
+ // ======================= ACTUALIZAR ESTADO =======================
+const actualizarEstadoProceso = async (procesoId, campo, valor) => {
+  try {
+    console.log(`🔄 Actualizando ${campo} a ${valor} para producción ${procesoId}`);
+    
+    // Construir el objeto con el nombre correcto del campo para el backend
+    const estados = {};
+    
+    if (campo === 'estadoProduccion') {
+      estados.estadoproduccion = valor; // Backend espera estadoproduccion en minúsculas
+    } else if (campo === 'estadoPedido') {
+      estados.estadopedido = valor; // Backend espera estadopedido en minúsculas
     }
-  };
+
+    console.log('📤 Enviando estados:', estados);
+    
+    await produccionApiService.actualizarEstado(procesoId, estados);
+    
+    // Actualizar estado local
+    setProcesos(prev => prev.map(p => 
+      p.id === procesoId ? { ...p, [campo]: valor } : p
+    ));
+    
+    showNotification('Estado actualizado correctamente');
+  } catch (error) {
+    console.error('❌ Error actualizando estado:', error);
+    showNotification(`Error al actualizar el estado: ${error.message}`, 'error');
+  }
+};
 
   // ======================= ELIMINAR PROCESO =======================
 const eliminarProceso = async (proceso) => {
@@ -152,39 +169,91 @@ const eliminarProceso = async (proceso) => {
 };
 
   // ======================= RENDER SELECT ESTADO =======================
-  const renderEstadoSelect = (rowData, campo) => {
-    const estadoActual = rowData[campo];
-    const esProduccion = campo === 'estadoProduccion';
-    const estadosFinales = esProduccion ? [6, 99] : [6, 7, 99];
-    const deshabilitar = estadosFinales.includes(estadoActual);
-    const opciones = esProduccion
-      ? obtenerOpcionesEstadoProduccion(estadoActual)
-      : obtenerOpcionesEstadoPedido(estadoActual);
+const renderEstadoSelect = (rowData, campo) => {
+  const estadoActual = rowData[campo];
+  const esProduccion = campo === 'estadoProduccion';
+  const estadosFinales = esProduccion ? [6, 99] : [6, 7, 99];
+  const deshabilitar = estadosFinales.includes(estadoActual);
+  const opciones = esProduccion
+    ? obtenerOpcionesEstadoProduccion(estadoActual)
+    : obtenerOpcionesEstadoPedido(estadoActual);
 
-    return (
+  // Función para obtener el color según el estado - ROSA DEL BOTÓN AGREGAR
+  const obtenerColorEstado = (idEstado) => {
+    // Todos usan el mismo rosa del botón agregar (#E91E63)
+    return { bg: '#E91E63', text: '#fff' };
+  };
+
+  const colorActual = obtenerColorEstado(estadoActual);
+
+return (
+  <div style={{ position: 'relative', width: 'fit-content', display: 'inline-block' }}>
+    <div style={{ position: 'relative' }}>
       <select
         value={estadoActual}
         onChange={(e) => actualizarEstadoProceso(rowData.id, campo, parseInt(e.target.value))}
         disabled={deshabilitar}
+        className="estado-select-mejorado"
         style={{
           width: '180px',
-          padding: '4px',
-          fontSize: '14px',
+          padding: '6px 28px 6px 10px', // deja espacio para la flecha
+          fontSize: '13px',
+          fontWeight: '600',
           border: 'none',
+          borderRadius: '6px',
           appearance: 'none',
-          background: 'transparent',
-          color: deshabilitar ? '#888' : '#000',
-          cursor: deshabilitar ? 'not-allowed' : 'pointer'
+          backgroundColor: colorActual.bg,
+          color: colorActual.text,
+          cursor: deshabilitar ? 'not-allowed' : 'pointer',
+          opacity: deshabilitar ? 0.6 : 1,
+          boxShadow: deshabilitar 
+            ? 'none' 
+            : '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.2s ease',
+          textAlign: 'left',
         }}
       >
-        {opciones.map((opcion) => (
-          <option key={opcion.id} value={opcion.id}>
-            {opcion.label}
-          </option>
-        ))}
+        {opciones.map((opcion) => {
+          const colorOpcion = obtenerColorEstado(opcion.id);
+          return (
+            <option 
+              key={opcion.id} 
+              value={opcion.id}
+              style={{
+                backgroundColor: colorOpcion.bg,
+                color: colorOpcion.text,
+                padding: '8px',
+              }}
+            >
+              {opcion.label}
+            </option>
+          );
+        })}
       </select>
-    );
-  };
+
+      {/* Icono flecha dentro del mismo contenedor */}
+      {!deshabilitar && (
+        <div 
+          style={{
+            position: 'absolute',
+            right: '10px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: colorActual.text,
+            fontSize: '12px',
+            opacity: 0.9,
+            fontWeight: 'bold',
+          }}
+        >
+          ▼
+        </div>
+      )}
+    </div>
+  </div>
+);
+};
+
 
   // ======================= RENDER PRINCIPAL =======================
   return (

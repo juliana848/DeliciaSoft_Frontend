@@ -27,10 +27,9 @@ export default function FormCrearProduccion({
   const [sedes, setSedes] = useState([]);
   const [cargandoSedes, setCargandoSedes] = useState(true);
   const [procesoData, setProcesoData] = useState({
-    tipoProduccion: pestanaActiva,
+    tipoProduccion: 'fabrica',
     nombreProduccion: '',
     fechaCreacion: new Date().toISOString().split('T')[0],
-    fechaEntrega: ''
   });
 
   useEffect(() => {
@@ -82,8 +81,8 @@ export default function FormCrearProduccion({
             precio: producto.precioproducto,
             receta,
             insumos: receta?.insumos || [],
-            cantidad: 1, // <--- cantidad por defecto en crear
-            cantidadesPorSede: {} // <--- inicializar objeto de cantidades por sede
+            cantidad: 1,
+            cantidadesPorSede: {}
           };
         });
       
@@ -96,24 +95,8 @@ export default function FormCrearProduccion({
     }
   };
 
-  const cambiarSede = (id, nuevaSede) => {
-    setProductosSeleccionados(prev => 
-      prev.map(p => p.id === id ? { ...p, sede: nuevaSede } : p)
-    );
-  };
-
-  const cambiarCantidad = (id, nuevaCantidad) => {
-    const cantidad = parseInt(nuevaCantidad) || 1;
-    if (cantidad < 1) return;
-    
-    setProductosSeleccionados(prev =>
-      prev.map(p => (p.id === id ? { ...p, cantidad } : p))
-    );
-  };
-
   const cambiarCantidadSede = (productoId, nombreSede, cantidad) => {
     const cantidadNum = parseInt(cantidad) || 0;
-    
     setProductosSeleccionados(prev =>
       prev.map(p => {
         if (p.id === productoId) {
@@ -137,93 +120,26 @@ export default function FormCrearProduccion({
     showNotification('Producto eliminado de la lista');
   };
 
-  const verInsumosProducto = (producto) => {
-    try {
-      const base = productosDisponibles.find(p => p.id === producto.id) || producto;
-      if (!base) {
-        showNotification('No se encontró información del producto', 'error');
-        return;
-      }
-
-      const cantidadProducto = producto.cantidad || 1; // siempre al menos 1
-
-      const insumosMultiplicados = (base.insumos || []).map(insumo => ({
-        ...insumo,
-        cantidad: (parseFloat(insumo.cantidad) || 0) * cantidadProducto,
-        unidadmedida: insumo.unidadmedida || 'N/A',
-        nombreinsumo: insumo.nombreinsumo || insumo.nombre || insumo.insumo?.nombreinsumo || 'Sin nombre'
-      }));
-
-      setProductoDetalleInsumos({
-        ...producto,
-        imagen: base.imagen,
-        insumos: insumosMultiplicados
-      });
-      setMostrarDetalleInsumos(true);
-
-    } catch (error) {
-      console.error('Error al cargar insumos del producto:', error);
-      showNotification('Error al cargar insumos del producto', 'error');
-    }
-  };
-
-  const abrirModalRecetaDetalle = async (producto) => {
-    try {
-      if (!producto.receta?.id) {
-        showNotification('Este producto no tiene receta asociada', 'error');
-        return;
-      }
-
-      const res = await fetch('https://deliciasoft-backend.onrender.com/api/receta/recetas');
-      const data = await res.json();
-
-      const recetaCompleta = data.find(r => r.idreceta === producto.receta.id);
-      if (!recetaCompleta) {
-        showNotification('No se encontró la receta en la base de datos', 'error');
-        return;
-      }
-
-      recetaCompleta.imagen = producto.imagen;
-
-      setRecetaSeleccionada(recetaCompleta);
-      setMostrarModalRecetaDetalle(true);
-
-    } catch (error) {
-      console.error('Error cargando receta:', error);
-      showNotification('Error al cargar detalle de receta', 'error');
-    }
-  };
-
-  const cerrarModalRecetaDetalle = () => {
-    setMostrarModalRecetaDetalle(false);
-    setRecetaSeleccionada(null);
-  };
-
   const guardarProceso = async () => {
-    if (!procesoData.nombreProduccion || procesoData.nombreProduccion.trim() === '') {
+    const nombreNormalizado = procesoData.nombreProduccion.trim();
+
+    if (!nombreNormalizado || nombreNormalizado === '') {
       showNotification('El nombre de la producción es obligatorio', 'error');
       return;
     }
 
-    if (procesoData.tipoProduccion === 'pedido') {
-      if (!procesoData.fechaEntrega) {
-        showNotification('La fecha de entrega es obligatoria para pedidos', 'error');
-        return;
-      }
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const entrega = new Date(procesoData.fechaEntrega);
-      entrega.setHours(0, 0, 0, 0);
-      const diff = Math.ceil((entrega - hoy) / (1000 * 60 * 60 * 24));
-      
-      if (diff < 15) {
-        showNotification('La fecha de entrega debe ser al menos 15 días desde hoy', 'error');
-        return;
-      }
-      if (diff > 30) {
-        showNotification('La fecha de entrega no puede ser mayor a 30 días desde hoy', 'error');
-        return;
-      }
+    if (!/^producción\s*/i.test(nombreNormalizado)) {
+      showNotification("El nombre debe comenzar con 'Producción'", 'error');
+      return;
+    }
+
+    const existeProduccion = procesos.some(
+      (p) => p.nombreProduccion?.toLowerCase() === nombreNormalizado.toLowerCase()
+    );
+
+    if (existeProduccion) {
+      showNotification('Ya existe una producción con ese nombre', 'error');
+      return;
     }
 
     if (productosSeleccionados.length === 0) {
@@ -231,108 +147,59 @@ export default function FormCrearProduccion({
       return;
     }
 
-    if (procesoData.tipoProduccion === 'fabrica') {
-      const productosSinCantidad = productosSeleccionados.filter(p => {
-        const total = Object.values(p.cantidadesPorSede || {}).reduce(
-          (sum, cant) => sum + (parseInt(cant) || 0), 
-          0
-        );
-        return total === 0;
-      });
-      
-      if (productosSinCantidad.length > 0) {
-        showNotification('Todos los productos deben tener al menos una cantidad en alguna sede', 'error');
-        return;
-      }
-    } else {
-      const productosSinSede = productosSeleccionados.filter(p => !p.sede);
-      if (productosSinSede.length > 0) {
-        showNotification('Todos los productos deben tener una sede asignada', 'error');
-        return;
-      }
+    const productosSinCantidad = productosSeleccionados.filter(p => {
+      const total = Object.values(p.cantidadesPorSede || {}).reduce(
+        (sum, cant) => sum + (parseInt(cant) || 0), 
+        0
+      );
+      return total === 0;
+    });
+    
+    if (productosSinCantidad.length > 0) {
+      showNotification('Todos los productos deben tener al menos una cantidad en alguna sede', 'error');
+      return;
     }
 
     const payload = {
-      TipoProduccion: procesoData.tipoProduccion,
-      nombreproduccion: procesoData.nombreProduccion.trim(),
-      fechapedido: procesoData.fechaCreacion || new Date().toISOString().split('T')[0],
-      fechaentrega: procesoData.tipoProduccion === 'pedido' ? procesoData.fechaEntrega : null,
-      productos: productosSeleccionados.map(p => {
-        if (procesoData.tipoProduccion === 'fabrica') {
-          return {
-            id: p.id,
-            cantidad: p.cantidad,
-            cantidadesPorSede: p.cantidadesPorSede || {},
-            sede: null
-          };
-        } else {
-          return {
-            id: p.id,
-            cantidad: parseInt(p.cantidad) || 1,
-            sede: p.sede,
-            cantidadesPorSede: null
-          };
-        }
-      })
+      TipoProduccion: 'fabrica',
+      nombreproduccion: nombreNormalizado,
+      fechapedido: procesoData.fechaCreacion,
+      fechaentrega: null,
+      productos: productosSeleccionados.map(p => ({
+        id: p.id,
+        cantidad: p.cantidad,
+        cantidadesPorSede: p.cantidadesPorSede || {},
+        sede: null
+      }))
     };
 
     try {
       const creado = await produccionApiService.crearProduccion(payload);
-
       if (!creado || (!creado.idproduccion && !creado.id)) {
         throw new Error("La API devolvió respuesta inválida");
       }
 
       const nuevoLocal = {
         id: creado.idproduccion || creado.id,
-        tipoProduccion: creado.TipoProduccion,
+        tipoProduccion: 'fabrica',
         nombreProduccion: creado.nombreproduccion,
         fechaCreacion: creado.fechapedido,
-        fechaEntrega: creado.fechaentrega,
         estadoProduccion: creado.estadoproduccion,
-        estadoPedido: creado.estadopedido,
-        numeroPedido: creado.numeropedido || '',
         productos: productosSeleccionados
       };
 
       setProcesos(prev => [nuevoLocal, ...prev]);
-      
-      let mensaje = `Producción "${creado.nombreproduccion}" creada exitosamente`;
-      if (procesoData.tipoProduccion === 'fabrica') {
-        mensaje += '. Insumos descontados e inventario actualizado.';
-      }
-      
-      showNotification(mensaje, 'success');
+      showNotification(`Producción "${creado.nombreproduccion}" creada exitosamente. Insumos descontados e inventario actualizado.`, 'success');
       onCancelar();
-
     } catch (e) {
       console.error('Error al crear producción:', e);
-      
-      if (e.message && e.message.includes('Insumos insuficientes')) {
-        showNotification(
-          'No hay suficientes insumos para esta producción. Revisa el inventario.',
-          'error',
-          8000
-        );
-      } else if (e.details?.tipo === 'INSUMOS_INSUFICIENTES') {
-        const detalles = e.details.insuficientes.map(ins => 
-          `${ins.nombreinsumo}: Falta ${ins.faltante.toFixed(2)} ${ins.unidad}`
-        ).join(', ');
-        showNotification(
-          `Insumos insuficientes: ${detalles}`,
-          'error',
-          10000
-        );
-      } else {
-        showNotification(e.message || 'Error al guardar la producción', 'error');
-      }
+      showNotification(e.message || 'Error al guardar la producción', 'error');
     }
   };
 
   return (
     <>
       <div className="compra-form-container">
-        {/* Header con información */}
         <div className="header-info">
           <div className="info-badge">
             <span className="badge-icon">🏭</span>
@@ -348,7 +215,6 @@ export default function FormCrearProduccion({
         )}
         
         <form onSubmit={(e) => { e.preventDefault(); guardarProceso(); }}>
-          {/* Información de la Producción */}
           <div className="form-card">
             <h2 className="section-title">
               <span className="title-icon">📋</span>
@@ -357,28 +223,24 @@ export default function FormCrearProduccion({
             
             <div className="form-grid">
               <div className="field-group">
-                <label className="field-label">Tipo de Producción<span style={{ color: 'red' }}>*</span></label>
-                <select 
-                  name="tipoProduccion" 
+                <label className="field-label">Tipo de Producción</label>
+                <input 
+                  type="text" 
                   className="form-input" 
-                  value={procesoData.tipoProduccion} 
-                  onChange={(e) => setProcesoData(prev => ({ ...prev, tipoProduccion: e.target.value }))} 
-                  required
-                >
-                  <option value="pedido">Pedido</option>
-                  <option value="fabrica">Fábrica</option>
-                </select>
+                  value="Fábrica" 
+                  disabled 
+                />
               </div>
 
               <div className="field-group">
-                <label className="field-label">Nombre de la Producción <span style={{ color: 'red' }}>*</span></label>
+                <label className="field-label">Nombre de la Producción<span style={{ color: 'red' }}>*</span></label>
                 <input 
                   type="text" 
                   name="nombreProduccion" 
                   value={procesoData.nombreProduccion} 
                   onChange={(e) => setProcesoData(prev => ({ ...prev, nombreProduccion: e.target.value }))} 
                   className="form-input"
-                  placeholder="Ej: Producción pasteles navideños"
+                  placeholder="Ej: Producción #1"
                   maxLength={100}
                   required 
                 />
@@ -393,29 +255,9 @@ export default function FormCrearProduccion({
                   disabled 
                 />
               </div>
-
-              {procesoData.tipoProduccion === 'pedido' && (
-                <div className="field-group">
-                  <label className="field-label">Fecha de Entrega<span style={{ color: 'red' }}>*</span></label>
-                  <input 
-                    type="date" 
-                    name="fechaEntrega" 
-                    className="form-input" 
-                    value={procesoData.fechaEntrega} 
-                    onChange={(e) => setProcesoData(prev => ({ ...prev, fechaEntrega: e.target.value }))} 
-                    required 
-                    min={new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0]} 
-                    max={new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]} 
-                  />
-                  <small style={{ color: '#6b7280', fontSize: '12px' }}>
-                    Entre 15 y 30 días desde hoy
-                  </small>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Productos */}
           <div className="form-card">
             <h2 className="section-title">
               <span className="title-icon">📦</span>
@@ -428,31 +270,19 @@ export default function FormCrearProduccion({
                   <tr>
                     <th>Imagen</th>
                     <th>Nombre</th>
-                    {procesoData.tipoProduccion === 'fabrica' ? (
-                      <>
-                        {sedes.map(sede => (
-                          <th key={sede.id || sede.idsede}>
-                            {sede.nombre}<span style={{ color: 'red' }}>*</span>
-                          </th>
-                        ))}
-                        <th>Total</th>
-                      </>
-                    ) : (
-                      <>
-                        <th>Sede<span style={{ color: 'red' }}>*</span></th>
-                        <th>Cantidad</th>
-                      </>
-                    )}
-                    <th>Receta</th>
-                    <th>Insumos</th>
+                    {sedes.map(sede => (
+                      <th key={sede.id || sede.idsede}>
+                        {sede.nombre}<span style={{ color: 'red' }}>*</span>
+                      </th>
+                    ))}
+                    <th>Total</th>
                     <th>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {productosSeleccionados.length === 0 ? (
                     <tr>
-                      <td colSpan={procesoData.tipoProduccion === 'fabrica' ? (6 + sedes.length) : 7} 
-                          style={{textAlign: 'center', padding: '20px', color: '#6b7280'}}>
+                      <td colSpan={sedes.length + 4} style={{textAlign: 'center', padding: '20px', color: '#6b7280'}}>
                         No hay productos en esta producción
                       </td>
                     </tr>
@@ -476,81 +306,24 @@ export default function FormCrearProduccion({
                             </small>
                           )}
                         </td>
-                        
-                        {procesoData.tipoProduccion === 'fabrica' ? (
-                          <>
-                            {sedes.map(sede => (
-                              <td key={sede.id || sede.idsede} className="quantity-cell">
-                                <input 
-                                  type="number" 
-                                  min="0" 
-                                  value={item.cantidadesPorSede?.[sede.nombre] || 0}
-                                  onChange={(e) => cambiarCantidadSede(item.id, sede.nombre, e.target.value)}
-                                  className="quantity-input"
-                                />
-                              </td>
-                            ))}
-                            <td className="quantity-cell">
-                              <span className="quantity-display">
-                                {Object.values(item.cantidadesPorSede || {}).reduce(
-                                  (sum, cant) => sum + (parseInt(cant) || 0), 
-                                  0
-                                )}
-                              </span>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td>
-                              <select 
-                                value={item.sede || ''} 
-                                onChange={(e) => cambiarSede(item.id, e.target.value)} 
-                                className="form-input"
-                                required
-                              >
-                                <option value="">Seleccione</option>
-                                {sedes.map(sede => (
-                                  <option key={sede.id || sede.idsede} value={sede.nombre}>
-                                    {sede.nombre}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                            <td className="quantity-cell">
-                              <input 
-                                type="number" 
-                                min="1" 
-                                value={item.cantidad} 
-                                onChange={(e) => cambiarCantidad(item.id, e.target.value)} 
-                                className="quantity-input"
-                              />
-                            </td>
-                          </>
-                        )}
-                        
-                        <td className="action-cell">
-                          {item.receta ? (
-                            <button 
-                              type="button" 
-                              className="btn-small" 
-                              onClick={() => abrirModalRecetaDetalle(item)} 
-                              style={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)' }}
-                            >
-                              Ver receta
-                            </button>
-                          ) : (
-                            <span style={{ color: '#6b7280', fontSize: '12px' }}>Sin receta</span>
-                          )}
-                        </td>
-                        <td className="action-cell">
-                          <button 
-                            type="button"
-                            className="btn-small" 
-                            onClick={() => verInsumosProducto(item)} 
-                            style={{ background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)' }}
-                          >
-                            Ver insumos
-                          </button>
+                        {sedes.map(sede => (
+                          <td key={sede.id || sede.idsede} className="quantity-cell">
+                            <input 
+                              type="number" 
+                              min="0" 
+                              value={item.cantidadesPorSede?.[sede.nombre] || 0}
+                              onChange={(e) => cambiarCantidadSede(item.id, sede.nombre, e.target.value)}
+                              className="quantity-input"
+                            />
+                          </td>
+                        ))}
+                        <td className="quantity-cell">
+                          <span className="quantity-display">
+                            {Object.values(item.cantidadesPorSede || {}).reduce(
+                              (sum, cant) => sum + (parseInt(cant) || 0), 
+                              0
+                            )}
+                          </span>
                         </td>
                         <td className="action-cell">
                           <button 
@@ -606,17 +379,17 @@ export default function FormCrearProduccion({
               productosSeleccionados={productosSeleccionados}
               setProductosSeleccionados={setProductosSeleccionados}
               onClose={() => setMostrarModalProductos(false)}
-              tipoProduccion={procesoData.tipoProduccion}
+              tipoProduccion="fabrica"
               sedes={sedes}
             />
           </Modal>
         )}
 
         {mostrarModalRecetaDetalle && recetaSeleccionada && (
-          <Modal visible={mostrarModalRecetaDetalle} onClose={cerrarModalRecetaDetalle}>
+          <Modal visible={mostrarModalRecetaDetalle} onClose={() => setMostrarModalRecetaDetalle(false)}>
             <ModalDetalleReceta 
               receta={recetaSeleccionada} 
-              onClose={cerrarModalRecetaDetalle} 
+              onClose={() => setMostrarModalRecetaDetalle(false)} 
             />
           </Modal>
         )}

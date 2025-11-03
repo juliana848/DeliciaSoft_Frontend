@@ -52,6 +52,7 @@
   padding: 12px;
   border-bottom: 1px solid #eee;
   text-align: left;
+  user-select: none;
 }
 
 .produccion-producto-table th {
@@ -220,4 +221,8 @@
   border-radius: 8px !important;
   box-shadow: 0 2px 8px rgba(246, 117, 160, 0.25) !important;
   overflow: hidden !important;
+}
+
+.products-table th{
+  user-select: none;
 }

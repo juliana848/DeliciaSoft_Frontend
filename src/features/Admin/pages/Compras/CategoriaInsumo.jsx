@@ -9,6 +9,7 @@ import Notification from '../../components/Notification';
 import categoriaInsumoApiService from '../../services/categoriainsumos';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import SearchableInput from './SearchableInput.jsx'; // ← NUEVO
+import Tooltip from '../../components/Tooltip';
 
 export default function CategoriaTableDemo() {
   const [categorias, setCategorias] = useState([]);
@@ -308,51 +309,54 @@ export default function CategoriaTableDemo() {
           )}
         />
         <Column
-          header="Acción"
-          body={(rowData) => {
-            const isEnabled = rowData.activo;
-            const isLoadingThis = loadingStates[rowData.id];
+  header="Acción"
+  body={(rowData) => {
+    const isEnabled = rowData.activo;
+    const isLoadingThis = loadingStates[rowData.id];
 
-            return (
-              <>
-                <button 
-                  className="admin-button gray" 
-                  title="Visualizar" 
-                  onClick={() => abrirModal('visualizar', rowData)}
-                  disabled={isLoadingThis}
-                >
-                  👁
-                </button>
+    return (
+      <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+        <Tooltip text="Visualizar">
+          <button 
+            className="admin-button gray" 
+            onClick={() => abrirModal('visualizar', rowData)}
+            disabled={isLoadingThis}
+          >
+            👁
+          </button>
+        </Tooltip>
 
-                <button 
-                  className="admin-button yellow"
-                  title={isEnabled ? "Editar" : "Editar (Deshabilitado)"}
-                  onClick={() => isEnabled && abrirModal('editar', rowData)}
-                  disabled={!isEnabled || isLoadingThis}
-                  style={{
-                    opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
-                    cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  ✏️
-                </button>
+        <Tooltip text={isEnabled ? "Editar" : "Editar (Deshabilitado)"}>
+          <button 
+            className="admin-button yellow"
+            onClick={() => isEnabled && abrirModal('editar', rowData)}
+            disabled={!isEnabled || isLoadingThis}
+            style={{
+              opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
+              cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
+            }}
+          >
+            ✏️
+          </button>
+        </Tooltip>
 
-                <button 
-                  className="admin-button red"
-                  title={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}
-                  onClick={() => isEnabled && abrirModal('eliminar', rowData)}
-                  disabled={!isEnabled || isLoadingThis}
-                  style={{
-                    opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
-                    cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  🗑️
-                </button>
-              </>
-            );
-          }}
-        />
+        <Tooltip text={isEnabled ? "Eliminar" : "Eliminar (Deshabilitado)"}>
+          <button 
+            className="admin-button red"
+            onClick={() => isEnabled && abrirModal('eliminar', rowData)}
+            disabled={!isEnabled || isLoadingThis}
+            style={{
+              opacity: isEnabled && !isLoadingThis ? 1 : 0.50,
+              cursor: isEnabled && !isLoadingThis ? 'pointer' : 'not-allowed'
+            }}
+          >
+            🗑️
+          </button>
+        </Tooltip>
+      </div>
+    );
+  }}
+/>
       </DataTable>
 
       {/* Modal Agregar / Editar */}

@@ -15,6 +15,7 @@ import insumoApiService from "../../../services/insumos";
 import categoriaInsumoApiService from "../../../services/categoriainsumos";
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import '../comprasCrud/styles/ComprasTable.css'
+import Tooltip from '../../../components/Tooltip';
 
 export default function TablaInsumos() {
   const [insumos, setInsumos] = useState([]);
@@ -255,50 +256,55 @@ export default function TablaInsumos() {
             />
           )}
         />
-        <Column
-          header="Acción"
-          body={(rowData) => (
-            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-              <button
-                className="admin-button gray"
-                title="Visualizar"
-                onClick={() => abrirModal("ver", rowData)}
-              >
-                👁
-              </button>
-              <button
-                className={`admin-button yellow ${
-                  !rowData.estado ? "disabled" : ""
-                }`}
-                title="Editar"
-                onClick={() => rowData.estado && abrirModal("editar", rowData)}
-                disabled={!rowData.estado}
-                style={{
-                  opacity: !rowData.estado ? 0.5 : 1,
-                  cursor: !rowData.estado ? "not-allowed" : "pointer",
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                className={`admin-button red ${
-                  !rowData.estado ? "disabled" : ""
-                }`}
-                title="Eliminar"
-                onClick={() =>
-                  rowData.estado && abrirModal("eliminar", rowData)
-                }
-                disabled={!rowData.estado}
-                style={{
-                  opacity: !rowData.estado ? 0.5 : 1,
-                  cursor: !rowData.estado ? "not-allowed" : "pointer",
-                }}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
-        />
+       <Column
+  header="Acción"
+  body={(rowData) => (
+    <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+      <Tooltip text="Visualizar">
+        <button
+          className="admin-button gray"
+          onClick={() => abrirModal("ver", rowData)}
+        >
+          👁
+        </button>
+      </Tooltip>
+
+      <Tooltip text={!rowData.estado ? "Editar (Deshabilitado)" : "Editar"}>
+        <button
+          className={`admin-button yellow ${
+            !rowData.estado ? "disabled" : ""
+          }`}
+          onClick={() => rowData.estado && abrirModal("editar", rowData)}
+          disabled={!rowData.estado}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado ? "not-allowed" : "pointer",
+          }}
+        >
+          ✏️
+        </button>
+      </Tooltip>
+
+      <Tooltip text={!rowData.estado ? "Eliminar (Deshabilitado)" : "Eliminar"}>
+        <button
+          className={`admin-button red ${
+            !rowData.estado ? "disabled" : ""
+          }`}
+          onClick={() =>
+            rowData.estado && abrirModal("eliminar", rowData)
+          }
+          disabled={!rowData.estado}
+          style={{
+            opacity: !rowData.estado ? 0.5 : 1,
+            cursor: !rowData.estado ? "not-allowed" : "pointer",
+          }}
+        >
+          🗑️
+        </button>
+      </Tooltip>
+    </div>
+  )}
+/>
       </DataTable>
 
       {modal.visible && (

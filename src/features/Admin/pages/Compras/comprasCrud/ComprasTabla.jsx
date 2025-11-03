@@ -521,17 +521,25 @@ export default function ComprasTable() {
                         />
                     </div>
 
-                    <div className="admin-section-header">
-                        <h2 className="admin-tab">Gestión de Compras</h2>
-
-                        <button
-                            className="admin-tab"
-                            onClick={() => setMostrarAnuladas(prev => !prev)}
-                            type="button"
-                        >
-                            {mostrarAnuladas ? 'Ver Activas' : 'Ver Anuladas'}
-                        </button>
-                    </div>
+ <div className="ventas-header-container">
+    <h2 className="admin-section-title">Gestión de Compras</h2>
+    <div className="filter-buttons-container">
+        <button
+            className={`filter-tab ${!mostrarAnuladas ? 'filter-tab-active' : ''}`}
+            onClick={() => setMostrarAnuladas(false)}
+            type="button"
+        >
+            Activas
+        </button>
+        <button
+            className={`filter-tab ${mostrarAnuladas ? 'filter-tab-active' : ''}`}
+            onClick={() => setMostrarAnuladas(true)}
+            type="button"
+        >
+            Anuladas
+        </button>
+    </div>
+</div>
 
                         <DataTable
                         value={comprasFiltradas}

@@ -125,17 +125,31 @@ export default function Produccion() {
   };
 
   // ======================= ELIMINAR PROCESO =======================
-  const eliminarProceso = async (proceso) => {
-    try {
-      if (proceso.id) await produccionApiService.eliminarProduccion(proceso.id);
-      setProcesos(prev => prev.filter(p => p.id !== proceso.id));
-      cerrarModal();
-      showNotification('Proceso eliminado exitosamente');
-    } catch (e) {
-      console.error('Error eliminando proceso:', e);
-      showNotification('Error al eliminar el proceso', 'error');
+const eliminarProceso = async (proceso) => {
+  try {
+    const id = proceso.idproduccion || proceso.id; // 🔥 soporte para ambas claves
+
+    if (!id) {
+      console.error("❌ No se encontró ID de producción en el proceso:", proceso);
+      showNotification("Error: ID de producción no encontrado", "error");
+      return;
     }
-  };
+
+    console.log(`🚀 Intentando eliminar producción con ID: ${id}`);
+
+    const resultado = await produccionApiService.eliminarProduccion(id);
+    console.log("📦 Respuesta del service eliminarProduccion:", resultado);
+
+    setProcesos((prev) => prev.filter((p) => p.idproduccion !== id && p.id !== id));
+    console.log("✅ Producción removida del estado local");
+
+    cerrarModal();
+    showNotification("Producción eliminada exitosamente");
+  } catch (e) {
+    console.error("💥 Error al eliminar producción:", e);
+    showNotification("Error al eliminar la producción", "error");
+  }
+};
 
   // ======================= RENDER SELECT ESTADO =======================
   const renderEstadoSelect = (rowData, campo) => {
@@ -286,10 +300,10 @@ export default function Produccion() {
               )}
             </>
           )}
-
           {modalVisible && modalTipo === 'eliminar' && (
-            <Modal visible={true} onClose={cerrarModal}>
+            <Modal visible={modalVisible} onClose={cerrarModal}>
               <ModalEliminarProduccion
+                visible={modalVisible}
                 proceso={procesoSeleccionado}
                 onEliminar={eliminarProceso}
                 onCancelar={cerrarModal}

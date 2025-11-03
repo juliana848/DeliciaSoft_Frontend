@@ -1,5 +1,3 @@
-// src/services/produccion_services.js
-
 const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/produccion";
 
 class ProduccionApiService {
@@ -26,16 +24,18 @@ class ProduccionApiService {
       error.details = errorDetails;
       throw error;
     }
-    return response.json();
+
+    try {
+      return await response.json();
+    } catch {
+      return {}; // por si la API no devuelve JSON
+    }
   }
 
   async obtenerProducciones({ tipo } = {}) {
     try {
       const url = tipo ? `${BASE_URL}?tipo=${encodeURIComponent(tipo)}` : BASE_URL;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.baseHeaders,
-      });
+      const response = await fetch(url, { method: "GET", headers: this.baseHeaders });
       return this.handleResponse(response);
     } catch (error) {
       console.error("❌ Error al obtener producciones:", error);
@@ -45,10 +45,7 @@ class ProduccionApiService {
 
   async obtenerProduccionPorId(id) {
     try {
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: "GET",
-        headers: this.baseHeaders,
-      });
+      const response = await fetch(`${BASE_URL}/${id}`, { method: "GET", headers: this.baseHeaders });
       if (response.status === 404) throw new Error("Producción no encontrada");
       return this.handleResponse(response);
     } catch (error) {
@@ -57,24 +54,20 @@ class ProduccionApiService {
     }
   }
 
-async crearProduccion(data) {
-  try {
-    console.log("📤 Payload que se envía al backend:", data); // 👀 log para debug
-
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: this.baseHeaders,
-      body: JSON.stringify(data),
-    });
-
-    console.log("📥 Respuesta cruda del backend:", response); // 👀 log para ver status
-    return this.handleResponse(response);
-  } catch (error) {
-    console.error("❌ Error al crear producción:", error);
-    throw error;
+  async crearProduccion(data) {
+    try {
+      console.log("📤 Enviando nueva producción:", data);
+      const response = await fetch(BASE_URL, {
+        method: "POST",
+        headers: this.baseHeaders,
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("❌ Error al crear producción:", error);
+      throw error;
+    }
   }
-}
-
 
   async actualizarProduccion(id, data) {
     try {
@@ -90,12 +83,12 @@ async crearProduccion(data) {
     }
   }
 
-  async actualizarEstado(id, estados) {
+  async actualizarEstado(id, nuevoEstado) {
     try {
-      const response = await fetch(`${BASE_URL}/${id}/estado`, {
+      const response = await fetch(`${BASE_URL}/${id}`, {
         method: "PATCH",
         headers: this.baseHeaders,
-        body: JSON.stringify(estados),
+        body: JSON.stringify({ estadoproduccion: nuevoEstado }),
       });
       return this.handleResponse(response);
     } catch (error) {
@@ -104,13 +97,20 @@ async crearProduccion(data) {
     }
   }
 
-  async eliminarProduccion(id) {
+  async eliminarProduccion(produccion) {
+    const id = produccion?.idproduccion || produccion;
+
+    if (!id) throw new Error("ID de producción no proporcionado");
+
     try {
+      console.log(`🗑️ Eliminando producción con ID: ${id}`);
       const response = await fetch(`${BASE_URL}/${id}`, {
         method: "DELETE",
         headers: this.baseHeaders,
       });
+
       await this.handleResponse(response);
+      console.log("✅ Producción eliminada correctamente");
       return { success: true, message: "Producción eliminada exitosamente" };
     } catch (error) {
       console.error(`❌ Error al eliminar producción ${id}:`, error);

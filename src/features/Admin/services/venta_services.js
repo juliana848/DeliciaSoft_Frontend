@@ -142,7 +142,7 @@ class VentaApiService {
         };
     }
 
-   transformarVentaCompletaDesdeAPI(ventaApi) {
+transformarVentaCompletaDesdeAPI(ventaApi) {
     if (!ventaApi) return null;
     
     let subtotal = 0;
@@ -165,7 +165,10 @@ class VentaApiService {
         subtotal: subtotal,
         iva: iva,
         detalleVenta: this.transformarDetalleVentaDesdeAPI(ventaApi.detalleventa),
-        abonos: this.transformarAbonosDesdeAPI(ventaApi.abonos)
+        abonos: this.transformarAbonosDesdeAPI(ventaApi.abonos),
+        // ✅ AGREGADO: Campos de pedido
+        fechaEntrega: ventaApi.fechaEntrega || null,
+        observaciones: ventaApi.observaciones || null
     };
 }
 

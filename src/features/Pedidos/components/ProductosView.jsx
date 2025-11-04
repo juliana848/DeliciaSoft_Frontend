@@ -18,11 +18,13 @@ const ProductosView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // NUEVOS ESTADOS PARA FILTROS
+  // ESTADOS PARA FILTROS
   const [busqueda, setBusqueda] = useState('');
   const [precioMin, setPrecioMin] = useState(0);
   const [precioMax, setPrecioMax] = useState(1000000);
+  const [precioMaximo, setPrecioMaximo] = useState(1000000); // Para el rango máximo absoluto
   const [rangoActivo, setRangoActivo] = useState(false);
+  const [sliderActivo, setSliderActivo] = useState(null); // 'min' | 'max' | null
 
   const navigate = useNavigate();
   const { 
@@ -97,7 +99,12 @@ const ProductosView = () => {
       productosResponse.forEach(p => {
         if (p.precio > maxPrecio) maxPrecio = p.precio;
       });
-      setPrecioMax(Math.ceil(maxPrecio / 1000) * 1000);
+      
+      const precioMaxRedondeado = Math.ceil(maxPrecio / 1000) * 1000;
+      
+      setPrecioMaximo(precioMaxRedondeado);
+      setPrecioMin(0);
+      setPrecioMax(precioMaxRedondeado);
 
     } catch (error) {
       console.error('Error al cargar datos:', error);
@@ -158,7 +165,7 @@ const ProductosView = () => {
     return productosAgrupados;
   };
 
-  // NUEVA FUNCIÓN PARA FILTRAR PRODUCTOS
+  // FUNCIÓN PARA FILTRAR PRODUCTOS
   const filtrarProductos = (productosCategoria) => {
     return productosCategoria.filter(producto => {
       const cumpleBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -169,11 +176,12 @@ const ProductosView = () => {
     });
   };
 
-  // NUEVA FUNCIÓN PARA RESETEAR FILTROS
+  // FUNCIÓN PARA RESETEAR FILTROS
   const resetearFiltros = () => {
     setBusqueda('');
     setRangoActivo(false);
     setPrecioMin(0);
+    setPrecioMax(precioMaximo);
   };
 
   const showCustomAlert = (type, message) => {
@@ -332,7 +340,7 @@ const ProductosView = () => {
         </p>
       </div>
 
-      {/* NUEVA SECCIÓN: FILTROS DE BÚSQUEDA */}
+      {/* SECCIÓN DE FILTROS CON SLIDER */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '20px',
@@ -342,8 +350,8 @@ const ProductosView = () => {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '25px',
           alignItems: 'end'
         }}>
           {/* Buscador */}
@@ -376,7 +384,7 @@ const ProductosView = () => {
             />
           </div>
 
-          {/* Filtro de precio */}
+          {/* Slider de rango de precio */}
           <div>
             <label style={{
               display: 'block',
@@ -387,39 +395,114 @@ const ProductosView = () => {
             }}>
               💰 Rango de precio
             </label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <input
-                type="number"
-                value={precioMin}
-                onChange={(e) => setPrecioMin(Number(e.target.value))}
-                placeholder="Min"
+            
+            {/* Etiquetas de precio */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              fontSize: '13px',
+              color: '#7f8c8d',
+              fontWeight: '600'
+            }}>
+              <span style={{ 
+                color: '#e91e63',
+                backgroundColor: '#ffe4ec',
+                padding: '4px 10px',
+                borderRadius: '8px'
+              }}>
+                ${precioMin.toLocaleString()}
+              </span>
+              <span style={{ 
+                color: '#e91e63',
+                backgroundColor: '#ffe4ec',
+                padding: '4px 10px',
+                borderRadius: '8px'
+              }}>
+                ${precioMax.toLocaleString()}
+              </span>
+            </div>
+
+{/* Contenedor de sliders */}
+            <div style={{ position: 'relative', height: '50px', paddingTop: '10px' }}>
+              {/* Barra de fondo */}
+              <div style={{
+                position: 'absolute',
+                top: '25px',
+                left: '0',
+                right: '0',
+                height: '6px',
+                backgroundColor: '#e0e0e0',
+                borderRadius: '3px'
+              }} />
+              
+              {/* Barra activa (rosita) */}
+              <div
                 style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none'
+                  position: 'absolute',
+                  top: '25px',
+                  left: `${(precioMin / precioMaximo) * 100}%`,
+                  right: `${100 - (precioMax / precioMaximo) * 100}%`,
+                  height: '6px',
+                  background: 'linear-gradient(90deg, #e91e63, #ff6b9d)',
+                  borderRadius: '3px',
+                  boxShadow: '0 2px 5px rgba(233, 30, 99, 0.3)',
+                  pointerEvents: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#e91e63'}
-                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
               />
-              <span style={{ color: '#7f8c8d', fontWeight: 'bold' }}>-</span>
+
+              {/* Slider mínimo - arriba */}
               <input
-                type="number"
-                value={precioMax}
-                onChange={(e) => setPrecioMax(Number(e.target.value))}
-                placeholder="Max"
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none'
+                type="range"
+                min={0}
+                max={precioMaximo}
+                step={1000}
+                value={precioMin}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value < precioMax - 1000) {
+                    setPrecioMin(value);
+                  }
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#e91e63'}
-                onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '6px',
+                  top: '10px',
+                  appearance: 'none',
+                  background: 'transparent',
+                  zIndex: 4,
+                  cursor: 'pointer',
+                  pointerEvents: 'auto'
+                }}
+                className="range-slider range-slider-min"
+              />
+
+              {/* Slider máximo - abajo */}
+              <input
+                type="range"
+                min={0}
+                max={precioMaximo}
+                step={1000}
+                value={precioMax}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value > precioMin + 1000) {
+                    setPrecioMax(value);
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '6px',
+                  top: '40px',
+                  appearance: 'none',
+                  background: 'transparent',
+                  zIndex: 4,
+                  cursor: 'pointer',
+                  pointerEvents: 'auto'
+                }}
+                className="range-slider range-slider-max"
               />
             </div>
           </div>
@@ -437,9 +520,26 @@ const ProductosView = () => {
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                backgroundColor: rangoActivo ? '#e91e63' : '#FFD700',
-                color: rangoActivo ? 'white' : '#2c3e50',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                background: rangoActivo 
+                  ? 'linear-gradient(135deg, #e91e63, #ff6b9d)' 
+                  : 'linear-gradient(135deg, #FFD700, #FFA500)',
+                color: 'white',
+                boxShadow: rangoActivo 
+                  ? '0 4px 15px rgba(233, 30, 99, 0.3)' 
+                  : '0 4px 15px rgba(255, 215, 0, 0.3)',
+                transform: rangoActivo ? 'translateY(-2px)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = rangoActivo 
+                  ? '0 6px 20px rgba(233, 30, 99, 0.4)' 
+                  : '0 6px 20px rgba(255, 215, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = rangoActivo ? 'translateY(-2px)' : 'none';
+                e.currentTarget.style.boxShadow = rangoActivo 
+                  ? '0 4px 15px rgba(233, 30, 99, 0.3)' 
+                  : '0 4px 15px rgba(255, 215, 0, 0.3)';
               }}
             >
               {rangoActivo ? '✓ Filtro activo' : 'Aplicar filtro'}
@@ -460,13 +560,15 @@ const ProductosView = () => {
               onMouseEnter={(e) => {
                 e.target.style.borderColor = '#e91e63';
                 e.target.style.color = '#e91e63';
+                e.target.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
                 e.target.style.borderColor = '#e0e0e0';
                 e.target.style.color = '#7f8c8d';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
-              Limpiar
+              🗑️ Limpiar
             </button>
           </div>
         </div>
@@ -475,14 +577,20 @@ const ProductosView = () => {
         {(busqueda || rangoActivo) && (
           <div style={{
             marginTop: '15px',
-            padding: '10px 15px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '10px',
+            padding: '12px 18px',
+            background: 'linear-gradient(135deg, #ffe4ec, #fff0f6)',
+            borderRadius: '12px',
             fontSize: '14px',
             color: '#2c3e50',
-            borderLeft: '4px solid #e91e63'
+            borderLeft: '4px solid #e91e63',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
           }}>
-            📊 Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{productosCategoria.length}</strong> productos
+            <span style={{ fontSize: '18px' }}>📊</span>
+            <span>
+              Mostrando <strong style={{ color: '#e91e63' }}>{productosFiltrados.length}</strong> de <strong>{productosCategoria.length}</strong> productos
+            </span>
           </div>
         )}
       </div>
@@ -577,29 +685,29 @@ const ProductosView = () => {
                   }}
                   onClick={() => abrirModal(producto)}
                 >
-{/* NUEVO: Icono de ver detalles (ojito) */}
-<div
-  style={{
-    position: 'absolute',
-    top: '10px',
-    left: '10px',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    color: '#ec4899', // rosa moderno
-    borderRadius: '50%',
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '22px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-    transition: 'transform 0.3s ease'
-  }}
-  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
-  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
->
-  <FiEye />
-</div>
+                  {/* Icono de ver detalles (ojito) */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      color: '#ec4899',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '22px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      transition: 'transform 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  >
+                    <FiEye />
+                  </div>
 
                   {yaEnCarrito && (
                     <div style={{
@@ -643,7 +751,6 @@ const ProductosView = () => {
                     ${producto.precio.toLocaleString()}
                   </p>
                   
-                  {/* MODIFICADO: Botón con ícono de carrito */}
                   <button
                     style={{
                       width: '100%',
@@ -684,8 +791,6 @@ const ProductosView = () => {
           })
         )}
       </div>
-
-      {/* Modal de detalles */}
       {modalDetalle && (
         <div style={{
           position: 'fixed',
@@ -904,6 +1009,78 @@ const ProductosView = () => {
               transform: translateX(0);
               opacity: 1;
             }
+          }
+
+          @keyframes scaleIn {
+            from {
+              transform: scale(0.9);
+              opacity: 0;
+            }
+            to {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+
+          /* Estilos para los sliders de rango */
+          .range-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e91e63, #ff6b9d);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(233, 30, 99, 0.4);
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 5;
+          }
+
+          .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(233, 30, 99, 0.6);
+          }
+
+          .range-slider::-webkit-slider-thumb:active {
+            transform: scale(1.1);
+          }
+
+          .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e91e63, #ff6b9d);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(233, 30, 99, 0.4);
+            transition: all 0.2s ease;
+          }
+
+          .range-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(233, 30, 99, 0.6);
+          }
+
+          .range-slider::-moz-range-thumb:active {
+            transform: scale(1.1);
+          }
+
+          /* Para Edge */
+          .range-slider::-ms-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e91e63, #ff6b9d);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(233, 30, 99, 0.4);
+            transition: all 0.2s ease;
+          }
+
+          .range-slider::-ms-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(233, 30, 99, 0.6);
           }
         `}
       </style>

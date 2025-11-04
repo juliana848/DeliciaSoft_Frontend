@@ -1,0 +1,67 @@
+.modal-overlay-fixed {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background-color: rgba(0,0,0,0.6);
+  display:flex; justify-content:center; align-items:center;
+  z-index:1002;
+}
+
+.modal-content-fixed {
+  background:white;
+  border-radius:12px;
+  width:90%;
+  max-width:900px;
+  max-height:90vh;
+  overflow-y:auto;
+  box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+}
+
+.modal-inner {
+  padding:1.5rem;
+}
+
+.modal-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:1rem;
+  border-bottom:1px solid #eee;
+}
+
+.modal-header h2 {
+  font-size:1.6rem; font-weight:600; color:#2c3e50; margin:0;
+}
+
+.btn-cerrar {
+  background:#ff6b6b; color:white; border:none;
+  padding:0.4rem 0.9rem; border-radius:6px;
+  font-weight:600; cursor:pointer;
+}
+
+.receta-form .form-campos {
+  display:grid; gap:1rem; margin-bottom:1rem;
+}
+
+.campo label { display:block; font-weight:600; margin-bottom:0.25rem; color:#34495e; font-size:0.9rem; }
+.campo input, .campo textarea {
+  width:100%; padding:0.5rem; border:1.5px solid #e9ecef; border-radius:6px;
+}
+.campo input.error, .campo textarea.error { border-color:#e74c3c; }
+.error-text { color:#e74c3c; font-size:0.8rem; margin-top:0.25rem; display:block; }
+
+.section-divider { border-top:1px solid #eee; margin:1rem 0; }
+
+.insumos-section .insumos-header {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;
+}
+
+.btn-agregar { background:#1abc9c; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-weight:600; cursor:pointer; }
+.btn-eliminar { background:#e74c3c; color:white; border:none; padding:0.3rem 0.7rem; border-radius:6px; font-weight:600; cursor:pointer; }
+.sin-insumos { border:2px dashed #ddd; border-radius:6px; padding:1.5rem; text-align:center; background:#f8f9fa; }
+
+.tabla-insumos { width:100%; border-collapse:collapse; }
+.tabla-insumos th, .tabla-insumos td { padding:0.5rem; border-bottom:1px solid #f0f0f0; font-size:0.9rem; }
+
+.botones-form { display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem; }
+.btn-cancelar { background:#bdc3c7; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600; }
+.btn-guardar { background:#3498db; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600; }
+.btn-cancelar:disabled, .btn-guardar:disabled, .btn-agregar:disabled, .btn-eliminar:disabled, .btn-cerrar:disabled { opacity:0.6; cursor:not-allowed; }

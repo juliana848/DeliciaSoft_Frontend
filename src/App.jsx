@@ -34,12 +34,11 @@ import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
 import ProveedoresTable from './features/Admin/pages/Compras/proveedores/ProveedoresTable.jsx';
 import Dashboard from './features/Admin/pages/Dashboard/Dashboard.jsx'
-import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
+import CategoriaProductos from './features/Admin/pages/CatProductos/CategoriaMain.jsx';
 import Productos from './features/Admin/pages/Productos/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas/Recetas.jsx';
 import SedesPage from './features/Admin/pages/Compras/sedes/sede.jsx';
-
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
 import Layout from './shared/components/Layout/Layout/Layout.jsx';

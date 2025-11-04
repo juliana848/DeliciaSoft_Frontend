@@ -91,23 +91,54 @@ const Contactenos = () => {
     loadRecaptcha();
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (isRecaptchaLoaded && recaptchaRef.current && !recaptchaRef.current.hasChildNodes()) {
-      window.grecaptcha.render(recaptchaRef.current, {
-        sitekey: '6Lf-0MArAAAAAE3Oqa0W2uuTnxvoPgEk4cXs48bJ',
-        callback: (token) => {
-          setRecaptchaToken(token);
-          if (errors.recaptcha) {
-            setErrors(prev => ({ ...prev, recaptcha: '' }));
-          }
-        },
-        'expired-callback': () => {
-          setRecaptchaToken('');
+      // Verificar que grecaptcha y render estén disponibles
+      if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
+        try {
+          window.grecaptcha.render(recaptchaRef.current, {
+            sitekey: '6Lf-0MArAAAAAE3Oqa0W2uuTnxvoPgEk4cXs48bJ',
+            callback: (token) => {
+              setRecaptchaToken(token);
+              if (errors.recaptcha) {
+                setErrors(prev => ({ ...prev, recaptcha: '' }));
+              }
+            },
+            'expired-callback': () => {
+              setRecaptchaToken('');
+            }
+          });
+        } catch (error) {
+          console.error('Error rendering reCAPTCHA:', error);
         }
-      });
+      } else {
+        // Si no está disponible, esperar un poco más
+        const timer = setTimeout(() => {
+          if (window.grecaptcha && typeof window.grecaptcha.render === 'function' && recaptchaRef.current) {
+            try {
+              window.grecaptcha.render(recaptchaRef.current, {
+                sitekey: '6Lf-0MArAAAAAE3Oqa0W2uuTnxvoPgEk4cXs48bJ',
+                callback: (token) => {
+                  setRecaptchaToken(token);
+                  if (errors.recaptcha) {
+                    setErrors(prev => ({ ...prev, recaptcha: '' }));
+                  }
+                },
+                'expired-callback': () => {
+                  setRecaptchaToken('');
+                }
+              });
+            } catch (error) {
+              console.error('Error rendering reCAPTCHA (delayed):', error);
+            }
+          }
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
     }
   }, [isRecaptchaLoaded, errors.recaptcha]);
-
+  
   const validateForm = () => {
     const newErrors = {};
 

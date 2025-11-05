@@ -2922,3 +2922,37 @@ body, html {
 .estado-select-ventas::-ms-expand {
   display: none;
 }
+
+/* ===== CENTRAR VISUALMENTE TODOS LOS TÍTULOS DE TABLAS ===== */
+/* =====🔥 CENTRADO ABSOLUTO DE TÍTULOS EN TODAS LAS TABLAS ===== */
+.p-datatable.admin-table .p-datatable-thead > tr > th,
+.p-datatable.admin-table .p-datatable-thead > tr > th * {
+  text-align: center !important;
+}
+
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-header-content {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-title {
+  width: 100%;
+  display: block;
+  text-align: center !important;
+}
+
+/* 🩷 Fuerza centrado visual incluso si PrimeReact mete justify-content:start inline */
+.p-datatable.admin-table .p-datatable-thead > tr > th[style*="justify-content"],
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-header-content[style*="justify-content"] {
+  justify-content: center !important;
+}
+
+/* Opcional: igualar padding de todos los encabezados */
+.p-datatable.admin-table .p-datatable-thead > tr > th {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

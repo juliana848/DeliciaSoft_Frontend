@@ -30,7 +30,6 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     console.log('Productos del pedido prop:', pedido?.productos);
     console.log('Productos del carrito context:', carrito);
 
-    // Cargar personalizaciones
     const personalizacionesStorage = localStorage.getItem('personalizacionesPedido');
     if (personalizacionesStorage) {
       try {
@@ -92,23 +91,19 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     cargarSedes();
   }, []);
 
-  // 🎯 FUNCIÓN CLAVE: Obtener productos de múltiples fuentes
   const obtenerTodosLosProductos = () => {
     console.log('📦 Obteniendo productos...');
     
-    // Prioridad 1: Productos del pedido
     if (pedido?.productos && Array.isArray(pedido.productos) && pedido.productos.length > 0) {
       console.log('✅ Usando productos del pedido prop');
       return pedido.productos;
     }
     
-    // Prioridad 2: Productos del carrito context
     if (carrito && Array.isArray(carrito) && carrito.length > 0) {
       console.log('✅ Usando productos del carrito context');
       return carrito;
     }
     
-    // Prioridad 3: Recuperar de localStorage como último recurso
     try {
       const carritoStorage = localStorage.getItem('carritoParaPersonalizar');
       if (carritoStorage) {
@@ -133,14 +128,12 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
 
     console.log('💰 Calculando totales con productos:', productos.length);
 
-    // Calcular productos base
     if (productos && Array.isArray(productos)) {
       subtotalProductos = productos.reduce((sum, producto) => 
         sum + (producto.precio * (producto.cantidad || 1)), 0
       );
     }
 
-    // Calcular extras desde el pedido (toppings, salsas globales)
     if (pedido?.toppings) {
       subtotalExtras += pedido.toppings.reduce((sum, topping) => sum + (topping.precio || 0), 0);
     }
@@ -151,7 +144,6 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
       subtotalExtras += pedido.salsas.reduce((sum, salsa) => sum + (salsa.precio || 0), 0);
     }
 
-    // Calcular personalizaciones desde localStorage
     try {
       if (Object.keys(personalizacionesProductos).length > 0 && productos) {
         productos.forEach(producto => {
@@ -160,23 +152,18 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
             for (let unidad = 1; unidad <= (producto.cantidad || 1); unidad++) {
               const personalizacionUnidad = personalizacionProducto[unidad];
               if (personalizacionUnidad) {
-                // Sumar toppings
                 if (personalizacionUnidad.toppings) {
                   subtotalExtras += personalizacionUnidad.toppings.reduce((sum, item) => sum + (item.precio || 0), 0);
                 }
-                // Sumar salsas
                 if (personalizacionUnidad.salsas) {
                   subtotalExtras += personalizacionUnidad.salsas.reduce((sum, item) => sum + (item.precio || 0), 0);
                 }
-                // Sumar rellenos
                 if (personalizacionUnidad.rellenos) {
                   subtotalExtras += personalizacionUnidad.rellenos.reduce((sum, item) => sum + (item.precio || 0), 0);
                 }
-                // Sumar adiciones
                 if (personalizacionUnidad.adiciones) {
                   subtotalExtras += personalizacionUnidad.adiciones.reduce((sum, item) => sum + (item.precio || 0), 0);
                 }
-                // Sumar sabores
                 if (personalizacionUnidad.sabores) {
                   subtotalExtras += personalizacionUnidad.sabores.reduce((sum, item) => sum + (item.precio || 0), 0);
                 }
@@ -265,20 +252,6 @@ const OpcionesPagoView = ({ pedido, total, onPedidoCompletado, onAnterior, onOpc
     });
   };
 
-  const mostrarAlertaEfectivo = () => {
-    const sedeInfo = sedes.find(sede => sede.id === sedeSeleccionada);
-    const mensaje = `
-Número de Pedido: ${numeroPedido}
-Sede: ${sedeInfo.nombre}
-Dirección: ${sedeInfo.direccion}
-Horario: ${sedeInfo.horario}
-Valor a pagar: $${abono.toLocaleString()}
-
-IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
-
-    triggerAlert('info', mensaje);
-  };
-
   const procesarPago = async () => {
     if (!metodoPago) {
       triggerAlert('error', 'Por favor selecciona un método de pago.');
@@ -295,7 +268,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
       return;
     }
 
-    // Validar que el total sea mayor a 0
     if (totalFinal <= 0) {
       triggerAlert('error', '❌ Error: El total del pedido debe ser mayor a 0. Por favor verifica los productos.');
       console.error('❌ Total inválido:', totalFinal);
@@ -305,7 +277,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
     setProcesandoPedido(true);
 
     try {
-      // Obtener información de la sede
       const sedeInfo = sedes.find(s => s.id === sedeSeleccionada);
       const sedeNombre = sedeInfo?.nombre || sedes[0]?.nombre || 'San Benito';
       
@@ -313,10 +284,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
       console.log('💳 Método de pago:', metodoPago);
       console.log('💰 Abono:', abono);
       console.log('💰 Total:', totalFinal);
-      console.log('📦 Subtotal Productos:', subtotalProductos);
-      console.log('✨ Subtotal Extras:', subtotalExtras);
       
-      // Preparar datos de la venta con validación explícita
       const datosPagoInfo = {
         metodo: metodoPago,
         sede: sedeSeleccionada,
@@ -331,22 +299,18 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
       console.log('📋 Datos de pago antes de preparar venta:', datosPagoInfo);
       
-      // Preparar datos de la venta (ahora es async)
       const datosVenta = await prepararDatosVenta(datosPagoInfo);
 
       console.log('📤 Datos de venta preparados:', datosVenta);
       
-      // Validar que datosVenta tenga el total correcto
       if (!datosVenta.total || datosVenta.total <= 0) {
         throw new Error(`Total inválido en datosVenta: ${datosVenta.total}. Usando totalFinal: ${totalFinal}`);
       }
 
-      // PASO 1: Crear la venta
-      console.log('📄 Creando venta...');
+      console.log('🔄 Creando venta...');
       const ventaCreada = await ventaApiService.crearVenta(datosVenta);
       console.log('✅ Venta creada exitosamente:', ventaCreada);
 
-      // PASO 2: Crear el abono
       const abonoData = {
         idpedido: ventaCreada.idVenta,
         metodopago: metodoPago,
@@ -354,13 +318,11 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
         TotalPagado: abono
       };
 
-      console.log('📄 Creando abono con datos:', abonoData);
+      console.log('🔄 Creando abono con datos:', abonoData);
       const abonoCreado = await ventaApiService.crearAbono(abonoData, comprobante);
       console.log('✅ Abono creado exitosamente:', abonoCreado);
 
-      // PASO 3: Actualizar estado según método de pago
       if (metodoPago === 'efectivo') {
-        // Para efectivo, establecer estado "Activa" (ID 5)
         await ventaApiService.actualizarEstadoVenta(ventaCreada.idVenta, 5);
         
         triggerAlert('success', 
@@ -373,7 +335,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
           `IMPORTANTE: Presenta este número de pedido al llegar a la sede.`
         );
       } else if (metodoPago === 'transferencia') {
-        // Para transferencia, dejar en "En espera" (ID 1) hasta verificar comprobante
         triggerAlert('success', 
           `¡Pedido creado exitosamente!\n` +
           `Número: ${numeroPedido}\n` +
@@ -383,7 +344,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
         );
       }
 
-      // Guardar datos del pago para referencia
       const datosPago = {
         metodo: metodoPago,
         sede: sedeSeleccionada,
@@ -398,7 +358,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
 
       onOpcionSeleccionada(datosPago);
       
-      // Esperar 3 segundos y recargar la página para mostrar el nuevo pedido
       setTimeout(() => {
         console.log('🔄 Recargando página...');
         window.location.reload();
@@ -407,7 +366,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
     } catch (error) {
       console.error('❌ Error al procesar pago:', error);
       
-      // Mensajes de error específicos
       let mensajeError = 'Error al crear el pedido';
       
       if (error.message.includes('inventario') || error.message.includes('Inventario')) {
@@ -599,7 +557,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                   textAlign: 'center',
                   background: '#fff3cd',
                   borderRadius: '12px',
-                  border: '2px dashed #ffc107'
+                  border: '2px dashed #fbc02d'
                 }}>
                   <div style={{ fontSize: '48px', marginBottom: '15px' }}>⚠️</div>
                   <h4 style={{ color: '#856404', marginBottom: '10px' }}>
@@ -624,83 +582,6 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                     </div>
                   ))}
                 </div>
-
-                {/* Mostrar personalizaciones si existen */}
-                {(() => {
-                  const tienePersonalizaciones = productos.some(producto => {
-                    const personalizacionProducto = personalizacionesProductos[producto.id];
-                    if (!personalizacionProducto) return false;
-                    
-                    return Object.values(personalizacionProducto).some(unidad => 
-                      (unidad.toppings?.length > 0) ||
-                      (unidad.salsas?.length > 0) ||
-                      (unidad.rellenos?.length > 0) ||
-                      (unidad.adiciones?.length > 0) ||
-                      (unidad.sabores?.length > 0)
-                    );
-                  });
-
-                  if (!tienePersonalizaciones) return null;
-
-                  return (
-                    <div className="extras-section">
-                      <h4 className="subseccion-title">🎨 Personalizaciones:</h4>
-                      {productos.map(producto => {
-                        const personalizacionProducto = personalizacionesProductos[producto.id];
-                        if (!personalizacionProducto) return null;
-
-                        const extrasProducto = [];
-                        
-                        Object.values(personalizacionProducto).forEach(unidad => {
-                          ['toppings', 'salsas', 'rellenos', 'adiciones', 'sabores'].forEach(tipo => {
-                            if (unidad[tipo]?.length > 0) {
-                              unidad[tipo].forEach(item => {
-                                const existente = extrasProducto.find(e => e.nombre === item.nombre);
-                                if (existente) {
-                                  existente.cantidad++;
-                                } else {
-                                  extrasProducto.push({
-                                    nombre: item.nombre,
-                                    precio: item.precio || 0,
-                                    cantidad: 1
-                                  });
-                                }
-                              });
-                            }
-                          });
-                        });
-
-                        if (extrasProducto.length === 0) return null;
-
-                        return (
-                          <div key={producto.id} style={{ marginBottom: '15px' }}>
-                            <strong style={{ 
-                              display: 'block', 
-                              marginBottom: '8px',
-                              color: '#495057',
-                              fontSize: '14px'
-                            }}>
-                              {producto.nombre}:
-                            </strong>
-                            {extrasProducto.map((extra, idx) => (
-                              <div key={idx} className="extra-item">
-                                <span>
-                                  {extra.nombre} {extra.cantidad > 1 && `x${extra.cantidad}`}
-                                </span>
-                                <span>
-                                  {extra.precio > 0 
-                                    ? `+$${(extra.precio * extra.cantidad).toLocaleString()}`
-                                    : 'Gratis'
-                                  }
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
               </>
             );
           })()}
@@ -748,7 +629,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
             </div>
             {subtotalExtras > 0 && (
               <div className="total-item">
-                <span>Personalizaciones:</span>
+                <span>Extras:</span>
                 <span>${subtotalExtras.toLocaleString()}</span>
               </div>
             )}
@@ -823,7 +704,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                   </div>
 
                   <div className="comprobante-section">
-                    <h5>📎 Subir Comprobante <span className="obligatorio">*</span></h5>
+                    <h5>📷 Subir Comprobante <span className="obligatorio">*</span></h5>
                     <div className="upload-area">
                       <input
                         type="file"
@@ -849,7 +730,7 @@ IMPORTANTE: Presenta este número de pedido al llegar a la sede.`;
                     </div>
                     {errorComprobante && (
                       <div className="error-message">
-                        <span className="error-icon">✗</span>
+                        <span className="error-icon">✗</span>s
                         <span>{errorComprobante}</span>
                       </div>
                     )}

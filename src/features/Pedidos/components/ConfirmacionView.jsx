@@ -395,101 +395,151 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
                     </div>
 
                     {mostrarDetalles[producto.id] && (
-                      <div style={{ padding: '20px', background: '#f8f9fa', borderTop: '1px solid #eee' }}>
+                      <div style={{ 
+                        padding: '20px', 
+                        background: 'white', 
+                        borderTop: '1px solid #e0e0e0'
+                      }}>
                         {personalizacionProducto ? (
                           <>
-                            <h5 style={{
-                              fontSize: '16px',
+                            <div style={{
+                              fontSize: '13px',
                               fontWeight: '600',
-                              color: '#495057',
-                              marginBottom: '15px'
+                              color: '#666',
+                              marginBottom: '15px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
                             }}>
-                              🎨 Personalizaciones por Unidad
-                            </h5>
+                              🎨 Personalizaciones:
+                            </div>
                             
                             {Object.keys(personalizacionProducto).map((unidad) => {
                               const personalizacionUnidad = personalizacionProducto[unidad];
                               const tienePersonalizacion = 
-                                (personalizacionUnidad.rellenos?.length > 0) ||
+                                (personalizacionUnidad.toppings?.length > 0) ||
+                                (personalizacionUnidad.salsas?.length > 0) ||
                                 (personalizacionUnidad.adiciones?.length > 0) ||
+                                (personalizacionUnidad.rellenos?.length > 0) ||
                                 (personalizacionUnidad.sabores?.length > 0);
 
                               if (!tienePersonalizacion) return null;
 
                               return (
                                 <div key={unidad} style={{
-                                  background: 'white',
-                                  padding: '15px',
-                                  borderRadius: '10px',
-                                  marginBottom: '10px',
-                                  border: '2px solid #e91e63'
+                                  borderLeft: '3px solid #e91e63',
+                                  paddingLeft: '15px',
+                                  marginBottom: '15px'
                                 }}>
-                                  <h6 style={{
-                                    fontSize: '14px',
-                                    fontWeight: '700',
-                                    color: '#e91e63',
-                                    marginBottom: '10px'
+                                  <div style={{
+                                    fontSize: '12px',
+                                    fontWeight: '600',
+                                    color: '#333',
+                                    marginBottom: '8px'
                                   }}>
-                                    Unidad {unidad} de {producto.cantidad}
-                                  </h6>
+                                    {producto.nombre} {producto.cantidad > 1 ? `- Unidad ${unidad}:` : ':'}
+                                  </div>
 
-                                  {personalizacionUnidad.rellenos?.length > 0 && (
-                                    <div style={{ marginBottom: '10px' }}>
-                                      <strong style={{ fontSize: '13px', color: '#495057' }}>🥧 Rellenos:</strong>
-                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                                        {personalizacionUnidad.rellenos.map((item, idx) => (
-                                          <span key={idx} style={{
-                                            padding: '4px 8px',
-                                            background: '#007bff',
-                                            color: 'white',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                          }}>
-                                            {item.nombre} {item.precio > 0 && `(+$${item.precio.toLocaleString()})`}
-                                          </span>
-                                        ))}
-                                      </div>
+                                  {personalizacionUnidad.toppings?.length > 0 && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      {personalizacionUnidad.toppings.map((item, idx) => (
+                                        <div key={idx} style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '4px 0',
+                                          fontSize: '13px',
+                                          color: '#555'
+                                        }}>
+                                          <span>Topping: {item.nombre}</span>
+                                          <span style={{ color: '#999', fontStyle: 'italic' }}>Gratis</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {personalizacionUnidad.salsas?.length > 0 && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      {personalizacionUnidad.salsas.map((item, idx) => (
+                                        <div key={idx} style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '4px 0',
+                                          fontSize: '13px',
+                                          color: '#555'
+                                        }}>
+                                          <span>Salsa: {item.nombre}</span>
+                                          <span style={{ color: '#999', fontStyle: 'italic' }}>Gratis</span>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
 
                                   {personalizacionUnidad.adiciones?.length > 0 && (
-                                    <div style={{ marginBottom: '10px' }}>
-                                      <strong style={{ fontSize: '13px', color: '#495057' }}>✨ Adiciones:</strong>
-                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                                        {personalizacionUnidad.adiciones.map((item, idx) => (
-                                          <span key={idx} style={{
-                                            padding: '4px 8px',
-                                            background: '#e91e63',
-                                            color: 'white',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                          }}>
-                                            {item.nombre} (+${item.precio.toLocaleString()})
+                                    <div style={{ marginBottom: '8px' }}>
+                                      {personalizacionUnidad.adiciones.map((item, idx) => (
+                                        <div key={idx} style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '4px 0',
+                                          fontSize: '13px',
+                                          color: '#555'
+                                        }}>
+                                          <span>Adición: {item.nombre}</span>
+                                          <span style={{ color: '#e91e63', fontWeight: '600' }}>
+                                            +${item.precio.toLocaleString()}
                                           </span>
-                                        ))}
-                                      </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {personalizacionUnidad.rellenos?.length > 0 && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                      {personalizacionUnidad.rellenos.map((item, idx) => (
+                                        <div key={idx} style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '4px 0',
+                                          fontSize: '13px',
+                                          color: '#555'
+                                        }}>
+                                          <span>Relleno: {item.nombre}</span>
+                                          <span style={{ 
+                                            color: item.precio > 0 ? '#e91e63' : '#999',
+                                            fontWeight: item.precio > 0 ? '600' : '400',
+                                            fontStyle: item.precio > 0 ? 'normal' : 'italic'
+                                          }}>
+                                            {item.precio > 0 ? `+${item.precio.toLocaleString()}` : 'Gratis'}
+                                          </span>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
 
                                   {personalizacionUnidad.sabores?.length > 0 && (
-                                    <div style={{ marginBottom: '10px' }}>
-                                      <strong style={{ fontSize: '13px', color: '#495057' }}>🎨 Sabores:</strong>
-                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                                        {personalizacionUnidad.sabores.map((item, idx) => (
-                                          <span key={idx} style={{
-                                            padding: '4px 8px',
-                                            background: '#ffc107',
-                                            color: '#856404',
-                                            borderRadius: '12px',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
+                                    <div style={{ marginBottom: '8px' }}>
+                                      {personalizacionUnidad.sabores.map((item, idx) => (
+                                        <div key={idx} style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '4px 0',
+                                          fontSize: '13px',
+                                          color: '#555'
+                                        }}>
+                                          <span>Sabor: {item.nombre}</span>
+                                          <span style={{ 
+                                            color: item.precio > 0 ? '#e91e63' : '#999',
+                                            fontWeight: item.precio > 0 ? '600' : '400',
+                                            fontStyle: item.precio > 0 ? 'normal' : 'italic'
                                           }}>
-                                            {item.nombre} {item.precio > 0 && `(+$${item.precio.toLocaleString()})`}
+                                            {item.precio > 0 ? `+${item.precio.toLocaleString()}` : 'Gratis'}
                                           </span>
-                                        ))}
-                                      </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </div>
@@ -498,23 +548,15 @@ const ConfirmacionView = ({ pedido, total, onSiguiente, onAnterior, onEliminarPr
                           </>
                         ) : (
                           <div style={{
-                            background: '#fff3cd',
-                            color: '#856404',
-                            padding: '15px',
-                            borderRadius: '10px',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            textAlign: 'center'
+                            background: '#f5f5f5',
+                            color: '#666',
+                            padding: '12px',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                            textAlign: 'center',
+                            fontStyle: 'italic'
                           }}>
-                            <span style={{ fontSize: '20px', lineHeight: 1 }}>ℹ️</span>
-                            <div>
-                              <strong>Sin personalizaciones</strong>
-                              <br />
-                              <small>Este producto se servirá en su presentación estándar.</small>
-                            </div>
+                            Sin personalizaciones adicionales
                           </div>
                         )}
                       </div>

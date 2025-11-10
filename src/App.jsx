@@ -25,21 +25,20 @@ import PersonalizacionProductosView from './features/Pedidos/components/Personal
 import PerfilCliente from './features/Perfil/pages/PerfilCliente';
 
 // Importar páginas de Admin
-import ComprasTable from "./features/Admin/pages/Compras/comprasCrud/ComprasTabla.jsx";
-import CategoriaTableDemo from './features/Admin/pages/Compras/CategoriaInsumo.jsx'
-import TablaInsumos from "./features/Admin/pages/Compras/insumos/TablaInsumos.jsx";
+import ComprasTable from "./features/Admin/pages/comprasCrud/ComprasTabla.jsx";
+import CategoriaTableDemo from './features/Admin/pages/CategoriaInsumo/CategoriaTable.jsx'
+import TablaInsumos from "./features/Admin/pages/insumos/TablaInsumos.jsx";
 import Usuarios from './features/Admin/pages/Usuarios/Usuarios.jsx';
 import Roles from './features/Admin/pages/Roles/Roles.jsx';
 import Clientes from './features/Admin/pages/Clientes/Clientes.jsx';
 import Ventas from './features/Admin/pages/Ventas/ventas.jsx';
-import ProveedoresTable from './features/Admin/pages/Compras/proveedores/ProveedoresTable.jsx';
+import ProveedoresTable from './features/Admin/pages/proveedores/ProveedoresTable.jsx';
 import Dashboard from './features/Admin/pages/Dashboard/Dashboard.jsx'
-import CategoriaProductos from './features/Admin/pages/CategoriaProductos.jsx';
+import CategoriaProductos from './features/Admin/pages/CatProductos/CategoriaMain.jsx';
 import Productos from './features/Admin/pages/Productos/Productos.jsx';
 import Produccion from './features/Admin/pages/Produccion.jsx';
 import RecetasTabla from './features/Admin/pages/Recetas/Recetas.jsx';
-import SedesPage from './features/Admin/pages/Compras/sedes/sede.jsx';
-
+import SedesPage from './features/Admin/pages/sedes/sede.jsx';
 import Navegacion from './shared/components/Navegacion/Navegacion.jsx';
 import Footer from './shared/components/Fooder/Footer';
 import Layout from './shared/components/Layout/Layout/Layout.jsx';

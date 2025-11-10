@@ -1,17 +1,24 @@
-// src/features/Admin/pages/Productos/ProductosCreate.jsx
 import React, { useState, useEffect } from "react";
-import SeleccionarRecetaModal from "./components_recetas/SeleccionarRecetaModal";
+import CrearRecetaModal from "./components_recetas/CrearRecetaModal";
 import ConfiguracionProducto from "./ConfiguracionProducto";
 import productoApiService from "../../../services/productos_services";
 import Notification from "../../../components/Notification";
-import "./css/productoscss.css"; 
+import "./css/productoscss.css";
 import ModalCategoria from "./ModalCategoria";
 import categoriaProductoApiService from "../../../services/categoriaProductosService";
 
 export default function ProductosCreate({ onSave, onCancel }) {
-  const [paso, setPaso] = useState(1); // 1: Crear Producto, 2: Configurar
+  const [paso, setPaso] = useState(1);
   const [productoCreado, setProductoCreado] = useState(null);
-  
+  const [mostrarModalReceta, setMostrarModalReceta] = useState(false);
+  const [modalCategoriaVisible, setModalCategoriaVisible] = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [erroresValidacion, setErroresValidacion] = useState({});
+  const [notification, setNotification] = useState({ visible: false, mensaje: "", tipo: "success" });
+
   const [formData, setFormData] = useState({
     nombreproducto: "",
     precioproducto: "",
@@ -23,36 +30,17 @@ export default function ProductosCreate({ onSave, onCancel }) {
     imagenPreview: null,
   });
 
-  const [categorias, setCategorias] = useState([]);
-  const [loadingCategorias, setLoadingCategorias] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [mostrarModalReceta, setMostrarModalReceta] = useState(false);
-  const [modalCategoriaVisible, setModalCategoriaVisible] = useState(false);
-  const [erroresValidacion, setErroresValidacion] = useState({});
-  const [subiendoImagen, setSubiendoImagen] = useState(false);
-  const [notification, setNotification] = useState({
-    visible: false,
-    mensaje: "",
-    tipo: "success",
-  });
-
-  const showNotification = (mensaje, tipo = "success") =>
-    setNotification({ visible: true, mensaje, tipo });
-  const hideNotification = () =>
-    setNotification({ visible: false, mensaje: "", tipo: "success" });
+  const showNotification = (mensaje, tipo = "success") => setNotification({ visible: true, mensaje, tipo });
+  const hideNotification = () => setNotification({ visible: false, mensaje: "", tipo: "success" });
 
   useEffect(() => {
     const cargarCategorias = async () => {
       try {
-        const response = await fetch(
-          "https://deliciasoft-backend-i6g9.onrender.com/api/categorias-productos"
-        );
-        if (!response.ok) throw new Error("No se pudo obtener las categorías");
-        const data = await response.json();
+        const res = await fetch("https://deliciasoft-backend-i6g9.onrender.com/api/categorias-productos");
+        const data = await res.json();
         setCategorias(data);
-      } catch (error) {
-        showNotification("Error al cargar categorías: " + error.message, "error");
-        setCategorias([]);
+      } catch {
+        showNotification("Error al cargar categorías", "error");
       } finally {
         setLoadingCategorias(false);
       }
@@ -61,164 +49,122 @@ export default function ProductosCreate({ onSave, onCancel }) {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    if (erroresValidacion[name]) {
-      setErroresValidacion((prev) => ({ ...prev, [name]: "" }));
-    }
+    const { name, value } = e.target;
+    setFormData((p) => ({ ...p, [name]: value }));
+    if (erroresValidacion[name]) setErroresValidacion((p) => ({ ...p, [name]: "" }));
   };
 
   const handleImagenChange = (e) => {
-    const archivo = e.target.files[0];
-    if (!archivo) return;
-
-    const tiposPermitidos = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-    if (!tiposPermitidos.includes(archivo.type)) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       showNotification("Tipo de archivo no permitido", "error");
       e.target.value = "";
       return;
     }
-
-    if (archivo.size > 5 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       showNotification("El archivo es demasiado grande (máx 5MB)", "error");
       e.target.value = "";
       return;
     }
-
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setFormData((prev) => ({
-        ...prev,
-        imagenArchivo: archivo,
-        imagenPreview: ev.target.result,
-      }));
-    };
-    reader.readAsDataURL(archivo);
+    reader.onload = (ev) =>
+      setFormData((p) => ({ ...p, imagenArchivo: file, imagenPreview: ev.target.result }));
+    reader.readAsDataURL(file);
   };
 
   const removerImagen = () => {
-    setFormData((prev) => ({ ...prev, imagenArchivo: null, imagenPreview: null }));
+    setFormData((p) => ({ ...p, imagenArchivo: null, imagenPreview: null }));
     const fileInput = document.getElementById("imagen-upload");
     if (fileInput) fileInput.value = "";
   };
 
-  const handleSeleccionarReceta = (receta) => {
-    setFormData((prev) => ({
-      ...prev,
-      idreceta: receta.idreceta,
-      recetaSeleccionada: receta,
+  const handleGuardarReceta = (receta) => {
+    const idReceta = receta.idreceta || receta.id || null;
+    const nombreReceta = receta.nombrereceta || receta.nombre || "";
+    const especificaciones = receta.especificaciones || receta.especificacionesreceta || "";
+
+    setFormData((p) => ({
+      ...p,
+      idreceta: idReceta,
+      recetaSeleccionada: {
+        ...receta,
+        idreceta: idReceta,
+        nombrereceta: nombreReceta,
+        especificaciones: especificaciones,
+      },
     }));
+
     setMostrarModalReceta(false);
   };
 
-  const removerReceta = () => {
-    setFormData((prev) => ({ ...prev, idreceta: null, recetaSeleccionada: null }));
-  };
+
+  const removerReceta = () => setFormData((p) => ({ ...p, idreceta: null, recetaSeleccionada: null }));
 
   const abrirModalCategoria = () => setModalCategoriaVisible(true);
   const cerrarModalCategoria = () => setModalCategoriaVisible(false);
 
   const guardarCategoria = async (nuevaCategoria) => {
-    try {
-      const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria);
-      setCategorias((prev) => [...prev, categoriaCreada]);
-      setFormData((prev) => ({
-        ...prev,
-        idcategoriaproducto: categoriaCreada.idcategoriaproducto,
-      }));
-      showNotification("Categoría creada correctamente", "success");
-      cerrarModalCategoria();
-    } catch (error) {
-      throw error;
-    }
+    const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria);
+    setCategorias((p) => [...p, categoriaCreada]);
+    setFormData((p) => ({ ...p, idcategoriaproducto: categoriaCreada.idcategoriaproducto }));
+    cerrarModalCategoria();
   };
 
   const validateForm = () => {
-    const errores = {};
-    if (!formData.nombreproducto.trim()) errores.nombreproducto = "El nombre del producto es requerido";
-    if (!formData.idcategoriaproducto) errores.idcategoriaproducto = "Debe seleccionar una categoría";
-
+    const err = {};
+    if (!formData.nombreproducto.trim()) err.nombreproducto = "Requerido";
+    if (!formData.idcategoriaproducto) err.idcategoriaproducto = "Seleccione una categoría";
     const precio = parseFloat(formData.precioproducto);
-    if (!formData.precioproducto || isNaN(precio) || precio < 0)
-      errores.precioproducto = "El precio debe ser un número válido mayor o igual a 0";
-
-    setErroresValidacion(errores);
-    return Object.keys(errores).length === 0;
+    if (!formData.precioproducto || isNaN(precio) || precio < 0) err.precioproducto = "Precio inválido";
+    setErroresValidacion(err);
+    return Object.keys(err).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
     setLoading(true);
-    let idImagenSubida = null;
-
+    let idImagen = null;
     try {
       if (formData.imagenArchivo) {
         setSubiendoImagen(true);
-        try {
-          const resultadoImagen = await productoApiService.subirImagen(formData.imagenArchivo);
-          idImagenSubida = resultadoImagen.idimagen;
-        } catch {
-          showNotification("Error al subir la imagen", "error");
-          return;
-        } finally {
-          setSubiendoImagen(false);
-        }
+        const img = await productoApiService.subirImagen(formData.imagenArchivo);
+        idImagen = img.idimagen;
+        setSubiendoImagen(false);
       }
-
       const payload = {
         nombreproducto: formData.nombreproducto.trim(),
         precioproducto: parseFloat(formData.precioproducto),
         cantidadproducto: 1,
         estado: true,
         idcategoriaproducto: parseInt(formData.idcategoriaproducto),
-        idimagen: idImagenSubida,
+        idimagen: idImagen,
         idreceta: formData.idreceta,
       };
-
-      const productoCreado = await productoApiService.crearProducto(payload);
-      setProductoCreado(productoCreado);
+      const prod = await productoApiService.crearProducto(payload);
+      setProductoCreado(prod);
       showNotification("Producto creado exitosamente", "success");
-      
-      // Preguntar si desea configurar personalización
       setTimeout(() => {
-        const configurar = window.confirm(
-          "¿Desea configurar las opciones de personalización para este producto?"
-        );
-        
-        if (configurar) {
-          setPaso(2); // Ir al paso de configuración
-        } else {
-          if (onSave) onSave(productoCreado);
-        }
+        const conf = window.confirm("¿Desea configurar personalización?");
+        if (conf) setPaso(2);
+        else if (onSave) onSave(prod);
       }, 1000);
-      
-    } catch (error) {
-      showNotification("Error al crear producto: " + error.message, "error");
+    } catch (err) {
+      showNotification("Error al crear producto: " + err.message, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handler para guardar configuración
-  const handleSaveConfiguracion = (configuracion) => {
-    showNotification("¡Producto y configuración guardados exitosamente!", "success");
-    setTimeout(() => {
-      if (onSave) onSave(productoCreado);
-    }, 1500);
+  const handleSaveConfiguracion = (config) => {
+    showNotification("¡Producto guardado exitosamente!", "success");
+    setTimeout(() => onSave && onSave(productoCreado), 1500);
   };
 
-  // Handler para saltar configuración
-  const handleSkipConfiguracion = () => {
-    if (onSave) onSave(productoCreado);
-  };
+  const handleSkipConfiguracion = () => onSave && onSave(productoCreado);
 
-  // Si estamos en el paso 2, mostrar el componente de configuración
-  if (paso === 2 && productoCreado) {
+  if (paso === 2 && productoCreado)
     return (
       <ConfiguracionProducto
         idProducto={productoCreado.id || productoCreado.idproductogeneral}
@@ -227,31 +173,16 @@ export default function ProductosCreate({ onSave, onCancel }) {
         onCancel={handleSkipConfiguracion}
       />
     );
-  }
 
-  // Paso 1: Formulario de creación de producto
   return (
     <div className="compra-form-container">
-      <Notification
-        visible={notification.visible}
-        mensaje={notification.mensaje}
-        tipo={notification.tipo}
-        onClose={hideNotification}
-      />
-
+      <Notification {...notification} onClose={hideNotification} />
       <form onSubmit={handleSubmit}>
-        {/* Información del Producto */}
         <div className="form-card">
-          <h2 className="section-title">
-            <span className="title-icon">📦</span> Información del Producto
-          </h2>
-
+          <h2 className="section-title">📦 Información del Producto</h2>
           <div className="form-grid">
-            {/* Nombre */}
             <div className="field-group">
-              <label className="field-label">
-                Nombre del Producto <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Nombre del Producto *</label>
               <input
                 type="text"
                 name="nombreproducto"
@@ -259,128 +190,63 @@ export default function ProductosCreate({ onSave, onCancel }) {
                 onChange={handleInputChange}
                 className={`form-input ${erroresValidacion.nombreproducto ? "error" : ""}`}
                 placeholder="Ej: Pan de yuca"
-                required
               />
-              {erroresValidacion.nombreproducto && (
-                <span className="error-message">{erroresValidacion.nombreproducto}</span>
-              )}
             </div>
-
-            {/* Precio */}
             <div className="field-group">
-              <label className="field-label">
-                Precio <span style={{ color: "red" }}>*</span>
-              </label>
+              <label>Precio *</label>
               <input
                 type="number"
                 name="precioproducto"
                 value={formData.precioproducto}
                 onChange={handleInputChange}
                 className={`form-input ${erroresValidacion.precioproducto ? "error" : ""}`}
-                min="0"
-                step="0.01"
                 placeholder="Ej: 5000"
-                required
               />
-              {erroresValidacion.precioproducto && (
-                <span className="error-message">{erroresValidacion.precioproducto}</span>
-              )}
             </div>
-
-            {/* Cantidad */}
             <div className="field-group">
-              <label className="field-label">Cantidad Inicial</label>
-              <input
-                type="number"
-                name="cantidadproducto"
-                value={formData.cantidadproducto}
-                className="form-input"
-                readOnly
-                disabled
-              />
-              <small className="info-message">Siempre se crea con 1 unidad</small>
-            </div>
-
-            {/* Categoría */}
-            <div className="field-group">
-              <label className="field-label">
-                Categoría <span style={{ color: "red" }}>*</span>
-              </label>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                {loadingCategorias ? (
-                  <select disabled className="form-input" style={{ flex: 1 }}>
-                    <option>Cargando categorías...</option>
-                  </select>
-                ) : (
-                  <select
-                    name="idcategoriaproducto"
-                    value={formData.idcategoriaproducto}
-                    onChange={handleInputChange}
-                    className={`form-input ${erroresValidacion.idcategoriaproducto ? "error" : ""}`}
-                    required
-                    style={{ flex: 1 }}
-                  >
-                    <option value="">Seleccione una categoría</option>
-                    {categorias.map((categoria) => (
-                      <option key={categoria.idcategoriaproducto} value={categoria.idcategoriaproducto}>
-                        {categoria.nombrecategoria || categoria.nombre}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <button
-                  type="button"
-                  className="btn-small"
-                  onClick={abrirModalCategoria}
+              <label>Categoría *</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <select
+                  name="idcategoriaproducto"
+                  value={formData.idcategoriaproducto}
+                  onChange={handleInputChange}
+                  className={`form-input ${erroresValidacion.idcategoriaproducto ? "error" : ""}`}
                 >
+                  <option value="">Seleccione una categoría</option>
+                  {categorias.map((c) => (
+                    <option key={c.idcategoriaproducto} value={c.idcategoriaproducto}>
+                      {c.nombrecategoria || c.nombre}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="btn-small" onClick={abrirModalCategoria}>
                   +
                 </button>
               </div>
-              {erroresValidacion.idcategoriaproducto && (
-                <span className="error-message">{erroresValidacion.idcategoriaproducto}</span>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Imagen */}
         <div className="form-card">
-          <h2 className="section-title">
-            <span className="title-icon">🖼️</span> Imagen del Producto
-          </h2>
-          <div>
-            {formData.imagenPreview ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <img
-                  src={formData.imagenPreview}
-                  alt="Preview"
-                  style={{ width: "120px", borderRadius: "10px" }}
-                />
-                <button type="button" className="delete-btn" onClick={removerImagen}>
-                  Eliminar
-                </button>
-              </div>
-            ) : (
-              <p style={{ color: "#6b7280" }}>No se ha subido imagen</p>
-            )}
-            <input
-              id="imagen-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleImagenChange}
-              style={{ display: "none" }}
-            />
-            <label htmlFor="imagen-upload" className="btn-small" style={{ marginTop: "10px" }}>
-              {formData.imagenPreview ? "Cambiar Imagen" : "Subir Imagen"}
-            </label>
-          </div>
+          <h2 className="section-title">🖼️ Imagen del Producto</h2>
+          {formData.imagenPreview ? (
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <img src={formData.imagenPreview} alt="preview" style={{ width: 120, borderRadius: 10 }} />
+              <button type="button" className="delete-btn" onClick={removerImagen}>
+                Eliminar
+              </button>
+            </div>
+          ) : (
+            <p style={{ color: "#6b7280" }}>No se ha subido imagen</p>
+          )}
+          <input id="imagen-upload" type="file" accept="image/*" onChange={handleImagenChange} style={{ display: "none" }} />
+          <label htmlFor="imagen-upload" className="btn-small" style={{ marginTop: "10px" }}>
+            {formData.imagenPreview ? "Cambiar Imagen" : "Subir Imagen"}
+          </label>
         </div>
 
-        {/* Receta */}
         <div className="form-card">
-          <h2 className="section-title">
-            <span className="title-icon">📋</span> Receta del Producto
-          </h2>
+          <h2 className="section-title">📋 Receta del Producto</h2>
           {formData.recetaSeleccionada ? (
             <div className="nested-item-list">
               <strong>{formData.recetaSeleccionada.nombrereceta}</strong>
@@ -393,35 +259,24 @@ export default function ProductosCreate({ onSave, onCancel }) {
             <p style={{ color: "#6b7280" }}>No hay receta asignada</p>
           )}
           <button type="button" className="btn-small" onClick={() => setMostrarModalReceta(true)}>
-            {formData.recetaSeleccionada ? "Cambiar Receta" : "+ Agregar Receta"}
+            {formData.recetaSeleccionada ? "Cambiar Receta" : "+ Crear Receta"}
           </button>
         </div>
 
-        {/* Botones */}
         <div className="action-buttons">
-          <button type="button" className="btn btn-cancel" onClick={onCancel} disabled={loading}>
+          <button type="button" className="btn btn-cancel" onClick={onCancel}>
             Cancelar
           </button>
           <button type="submit" className="btn btn-save" disabled={loading || subiendoImagen}>
-            {loading ? "Guardando..." : subiendoImagen ? "Subiendo..." : "💾 Guardar"}
+            {loading ? "Guardando..." : "💾 Guardar"}
           </button>
         </div>
       </form>
 
-      {mostrarModalReceta && (
-        <SeleccionarRecetaModal
-          onClose={() => setMostrarModalReceta(false)}
-          onSeleccionar={handleSeleccionarReceta}
-        />
-      )}
+      {mostrarModalReceta && <CrearRecetaModal onClose={() => setMostrarModalReceta(false)} onGuardar={handleGuardarReceta} />}
 
       {modalCategoriaVisible && (
-        <ModalCategoria
-          visible={modalCategoriaVisible}
-          onClose={cerrarModalCategoria}
-          tipo="agregar"
-          onGuardar={guardarCategoria}
-        />
+        <ModalCategoria visible={modalCategoriaVisible} onClose={cerrarModalCategoria} tipo="agregar" onGuardar={guardarCategoria} />
       )}
     </div>
   );

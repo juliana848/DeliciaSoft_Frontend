@@ -9,30 +9,12 @@
 }
 
 /* Estilos generales para la tabla de PrimeReact */
-.p-datatable.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-    table-layout: fixed;
-}
-.p-datatable.admin-table th,
-.p-datatable.admin-table td {
-    font-size: 0.875rem;
-    padding: 8px 10px;
-}
 /* ⚙️ Ajuste del contenedor principal de contenido (tabla incluida) */
 .admin-content-wrapper {
   width: calc(200vw - 240px) !important; /* 🔹 ocupa todo el ancho menos el sidebar */
   margin-left: 240px !important;         /* 🔹 alinea con el borde derecho del sidebar */
   padding: 0 40px !important;            /* 🔹 espacio proporcional a ambos lados */
   box-sizing: border-box;
-}
-
-/* 📋 Ajuste de la tabla */
-.p-datatable.admin-table {
-  width: 100% !important;
-  max-width: 100%;
-  margin: 0 auto !important;
 }
 
 /* 🔧 Toolbar superior */
@@ -48,75 +30,84 @@
 
 /* 🎚️ Encabezado gris difuminado */
 .p-datatable.admin-table .p-datatable-thead > tr > th {
-  background: linear-gradient(
-    to right,
-    #E5E7EB 0%,    
-    #ECEFF1 25%,   
-    #F3F4F6 50%,   
-    #ECEFF1 75%,   
-    #E5E7EB 100%
-  );
-
-  
-
-  border: 1px solid #D1D5DB;
-  color: #1F2937;
+  background: linear-gradient(135deg, #ffffff 0%, #fef5f9 100%);
+  color: #2d2d2d;
   text-align: center;
-  padding: 10px;
+  padding: 16px 12px;
   font-weight: 600;
-  border-radius: 6px;
-  box-shadow:
-    inset 0 -1px 0 rgba(209, 213, 219, 0.7),
-    inset 1px 0 0 rgba(209, 213, 219, 0.3),
-    inset -1px 0 0 rgba(209, 213, 219, 0.3);
-  transition: background 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #ec4899;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-/* Hover del encabezado */
+.p-datatable.admin-table .p-datatable-thead > tr > th::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ec4899 0%, #f97316 100%);
+  transition: width 0.4s ease;
+}
+
+.p-datatable.admin-table .p-datatable-thead > tr > th:hover::after {
+  width: 100%;
+}
+
 .p-datatable.admin-table .p-datatable-thead > tr > th:hover {
-  background: linear-gradient(
-    to right,
-    #E2E8F0 0%,
-    #ECEFF1 20%,
-    #F3F4F6 50%,
-    #ECEFF1 80%,
-    #E2E8F0 100%
-  );
-  box-shadow:
-    inset 0 -1px 0 rgba(156, 163, 175, 0.6),
-    0 2px 4px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, #fef5f9 0%, #fff1f7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.08);
 }
 
+/* 3️⃣ FILAS DE DATOS PROFESIONALES - Reemplazar sección tbody (~línea 95) */
 .p-datatable.admin-table .p-datatable-tbody > tr > td {
-  padding: 10px;
+  padding: 16px 12px;
   text-align: center;
-  border-bottom: 1px solid rgba(209, 213, 219, 0.4); 
-  border-left: 1px solid rgba(209, 213, 219, 0.4); 
-  border-right: 1px solid rgba(209, 213, 219, 0.4);
-  color: #1F2937;
+  border-bottom: 1px solid #f5f5f5;
+  color: #4a4a4a;
+  font-size: 0.85rem;
+  background-color: #ffffff;
+  transition: all 0.25s ease;
+  vertical-align: middle;
 }
 
-.p-datatable.admin-table .p-datatable-tbody > tr:nth-child(odd) {
-  background-color: #FFFFFF; 
-}
-
-.p-datatable.admin-table .p-datatable-tbody > tr:nth-child(even) {
-  background-color: #F3F4F6; 
+.p-datatable.admin-table .p-datatable-tbody > tr {
+  transition: all 0.25s ease;
 }
 
 .p-datatable.admin-table .p-datatable-tbody > tr:hover > td {
-  background-color: #E5E7EB; 
-  transition: background-color 0.2s ease-in-out;
+  background: linear-gradient(90deg, #fff5f9 0%, #ffffff 100%);
+  transform: scale(1.005);
+  box-shadow: 
+    0 2px 8px rgba(236, 72, 153, 0.05),
+    inset 3px 0 0 #ec4899;
 }
 
-
+/* Eliminar alternancia de colores para look más limpio */
+.p-datatable.admin-table .p-datatable-tbody > tr:nth-child(odd),
+.p-datatable.admin-table .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #ffffff;
+}
 /* Botones de acciones */
 .admin-button {
-    border: none;
-    padding: 8px;
-    border-radius: 50%;
-    margin: 0 2px;
-    cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .admin-button.gray {
@@ -2921,4 +2912,38 @@ body, html {
 
 .estado-select-ventas::-ms-expand {
   display: none;
+}
+
+/* ===== CENTRAR VISUALMENTE TODOS LOS TÍTULOS DE TABLAS ===== */
+/* =====🔥 CENTRADO ABSOLUTO DE TÍTULOS EN TODAS LAS TABLAS ===== */
+.p-datatable.admin-table .p-datatable-thead > tr > th,
+.p-datatable.admin-table .p-datatable-thead > tr > th * {
+  text-align: center !important;
+}
+
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-header-content {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-title {
+  width: 100%;
+  display: block;
+  text-align: center !important;
+}
+
+/* 🩷 Fuerza centrado visual incluso si PrimeReact mete justify-content:start inline */
+.p-datatable.admin-table .p-datatable-thead > tr > th[style*="justify-content"],
+.p-datatable.admin-table .p-datatable-thead > tr > th .p-column-header-content[style*="justify-content"] {
+  justify-content: center !important;
+}
+
+/* Opcional: igualar padding de todos los encabezados */
+.p-datatable.admin-table .p-datatable-thead > tr > th {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

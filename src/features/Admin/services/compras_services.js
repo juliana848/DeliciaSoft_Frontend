@@ -1,4 +1,4 @@
-import { obtenerFechaColombia } from '../pages/Compras/comprasCrud/Utils/fechaUtils';
+import { obtenerFechaColombia } from '../pages/comprasCrud/Utils/fechaUtils';
 
 const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/compra";
 

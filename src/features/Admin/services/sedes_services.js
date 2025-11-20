@@ -3,7 +3,6 @@ const BASE_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/sede";
 class SedeApiService {
   constructor() {
     this.baseHeaders = { "Content-Type": "application/json" };
-    this.multipartHeaders = {};
   }
 
   async handleResponse(response) {
@@ -51,11 +50,51 @@ class SedeApiService {
 
   async crearSede(sedeData) {
     try {
+      console.log('🔍 === CREAR SEDE SERVICE ===');
+      console.log('📦 Tipo recibido:', sedeData instanceof FormData ? 'FormData' : 'Object');
+      
+      // Si es FormData (con imagen)
       if (sedeData instanceof FormData) {
-        return await this.crearSedeConImagen(sedeData);
+        console.log('📤 Enviando FormData directamente al backend...');
+        
+        // Log de los datos del FormData
+        for (let pair of sedeData.entries()) {
+          console.log(`  - ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
+        }
+
+        const response = await fetch(BASE_URL, {
+          method: "POST",
+          body: sedeData,
+          // ❌ NO incluir Content-Type cuando usas FormData
+        });
+
+        console.log('📡 Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Error response:', errorText);
+          
+          let errorMessage = `Error ${response.status}`;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            errorMessage = errorText.substring(0, 200);
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log('✅ Sede creada con imagen:', data);
+        return this.transformarSedeDesdeAPI(data);
       }
 
+      // Si es JSON (sin imagen)
+      console.log('📤 Enviando JSON sin imagen...');
       const sedeAPI = this.transformarSedeParaAPI(sedeData);
+      console.log('🔄 Datos transformados:', sedeAPI);
+      
       this.validarDatosSede(sedeAPI);
 
       const response = await fetch(BASE_URL, {
@@ -64,144 +103,79 @@ class SedeApiService {
         body: JSON.stringify(sedeAPI),
       });
 
-      const data = await this.handleResponse(response);
-      return this.transformarSedeDesdeAPI(data);
-    } catch (error) {
-      console.error("Error en crearSede:", error);
-      throw new Error("Error al crear la sede: " + error.message);
-    }
-  }
-
-  async crearSedeConImagen(formData) {
-    try {
-      const nombre = formData.get('nombre');
-      const telefono = formData.get('telefono');
-      const direccion = formData.get('direccion');
-
-      if (!nombre || !telefono || !direccion) {
-        throw new Error("Faltan datos obligatorios");
-      }
-
-      const response = await fetch(`${BASE_URL}`, {
-        method: "POST",
-        body: formData,
-      });
+      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
-        console.warn(`POST ${BASE_URL} falló, intentando endpoints alternativos...`);
-        return await this.crearSedeConImagenAlternativo(formData);
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = errorText.substring(0, 200);
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const data = await this.handleResponse(response);
+      const data = await response.json();
+      console.log('✅ Sede creada sin imagen:', data);
       return this.transformarSedeDesdeAPI(data);
     } catch (error) {
-      console.error("Error en crearSedeConImagen:", error);
-      return await this.crearSedeConImagenAlternativo(formData);
-    }
-  }
-
-  async crearSedeConImagenAlternativo(formData) {
-    try {
-      const endpoints = [
-        `${BASE_URL}/crear`,
-        `${BASE_URL}/new`,
-        `${BASE_URL}/add`,
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`Intentando con endpoint: ${endpoint}`);
-          const response = await fetch(endpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            const data = await this.handleResponse(response);
-            return this.transformarSedeDesdeAPI(data);
-          }
-        } catch (endpointError) {
-          console.warn(`Falló endpoint ${endpoint}:`, endpointError.message);
-          continue;
-        }
-      }
-
-      return await this.crearSedeDosEtapas(formData);
-    } catch (error) {
-      console.error("Error en métodos alternativos:", error);
-      throw new Error("Error al crear la sede con imagen. Verifique la configuración del servidor.");
-    }
-  }
-
-  async crearSedeDosEtapas(formData) {
-    try {
-      const sedeData = {
-        nombre: formData.get('nombre'),
-        Telefono: formData.get('telefono'),
-        Direccion: formData.get('direccion'),
-        activo: formData.get('estado') === 'true',
-      };
-
-      const sedeCreada = await this.crearSede(sedeData);
-
-      const imagen = formData.get('imagen');
-      if (imagen && sedeCreada.id) {
-        try {
-          await this.subirImagenSede(sedeCreada.id, imagen);
-          return await this.obtenerSedePorId(sedeCreada.id);
-        } catch (imageError) {
-          console.warn("Sede creada pero error al subir imagen:", imageError);
-          return sedeCreada;
-        }
-      }
-
-      return sedeCreada;
-    } catch (error) {
-      console.error("Error en crearSedeDosEtapas:", error);
-      throw error;
-    }
-  }
-
-  async subirImagenSede(sedeId, imagenFile) {
-    try {
-      const formData = new FormData();
-      formData.append('imagen', imagenFile);
-
-      const endpoints = [
-        `${BASE_URL}/${sedeId}/imagen`,
-        `${BASE_URL}/${sedeId}/upload-image`,
-        `${BASE_URL}/${sedeId}/photo`,
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            return await this.handleResponse(response);
-          }
-        } catch (endpointError) {
-          continue;
-        }
-      }
-
-      throw new Error("No se pudo encontrar endpoint válido para subir imagen");
-    } catch (error) {
-      console.error("Error al subir imagen:", error);
-      throw error;
+      console.error("❌ Error en crearSede:", error);
+      throw new Error("Error al crear la sede: " + error.message);
     }
   }
 
   async actualizarSede(id, sedeData) {
     try {
+      console.log('🔍 === ACTUALIZAR SEDE SERVICE ===');
+      console.log('📦 ID:', id);
+      console.log('📦 Tipo recibido:', sedeData instanceof FormData ? 'FormData' : 'Object');
+      
+      // Si es FormData (con imagen)
       if (sedeData instanceof FormData) {
-        return await this.actualizarSedeConImagen(id, sedeData);
+        console.log('📤 Enviando FormData directamente al backend...');
+        
+        // Log de los datos del FormData
+        for (let pair of sedeData.entries()) {
+          console.log(`  - ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name})` : pair[1]);
+        }
+
+        const response = await fetch(`${BASE_URL}/${id}`, {
+          method: "PUT",
+          body: sedeData,
+        });
+
+        console.log('📡 Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Error response:', errorText);
+          
+          let errorMessage = `Error ${response.status}`;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            errorMessage = errorText.substring(0, 200);
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log('✅ Sede actualizada con imagen:', data);
+        return this.transformarSedeDesdeAPI(data);
       }
 
+      // Si es JSON (sin imagen)
+      console.log('📤 Enviando JSON sin imagen...');
       const sedeAPI = this.transformarSedeParaAPI(sedeData);
+      console.log('🔄 Datos transformados:', sedeAPI);
+      
       this.validarDatosSede(sedeAPI);
 
       const response = await fetch(`${BASE_URL}/${id}`, {
@@ -210,67 +184,29 @@ class SedeApiService {
         body: JSON.stringify(sedeAPI),
       });
 
-      const data = await this.handleResponse(response);
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = errorText.substring(0, 200);
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('✅ Sede actualizada sin imagen:', data);
       return this.transformarSedeDesdeAPI(data);
     } catch (error) {
-      console.error("Error en actualizarSede:", error);
+      console.error("❌ Error en actualizarSede:", error);
       throw new Error("Error al actualizar la sede: " + error.message);
-    }
-  }
-
-  async actualizarSedeConImagen(id, formData) {
-    try {
-      const nombre = formData.get('nombre');
-      const telefono = formData.get('telefono');
-      const direccion = formData.get('direccion');
-
-      if (!nombre || !telefono || !direccion) {
-        throw new Error("Faltan datos obligatorios");
-      }
-
-      const response = await fetch(`${BASE_URL}/${id}`, {
-        method: "PUT",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await this.handleResponse(response);
-        return this.transformarSedeDesdeAPI(data);
-      }
-
-      return await this.actualizarSedeDosEtapas(id, formData);
-    } catch (error) {
-      console.error("Error en actualizarSedeConImagen:", error);
-      return await this.actualizarSedeDosEtapas(id, formData);
-    }
-  }
-
-  async actualizarSedeDosEtapas(id, formData) {
-    try {
-      const sedeData = {
-        nombre: formData.get('nombre'),
-        Telefono: formData.get('telefono'),
-        Direccion: formData.get('direccion'),
-        activo: formData.get('estado') === 'true',
-      };
-
-      const sedeActualizada = await this.actualizarSede(id, sedeData);
-
-      const imagen = formData.get('imagen');
-      if (imagen && imagen.size > 0) {
-        try {
-          await this.subirImagenSede(id, imagen);
-          return await this.obtenerSedePorId(id);
-        } catch (imageError) {
-          console.warn("Sede actualizada pero error al subir imagen:", imageError);
-          return sedeActualizada;
-        }
-      }
-
-      return sedeActualizada;
-    } catch (error) {
-      console.error("Error en actualizarSedeDosEtapas:", error);
-      throw error;
     }
   }
 
@@ -328,11 +264,6 @@ class SedeApiService {
     }
   }
 
-  obtenerUrlImagen(idimagen) {
-    if (!idimagen) return null;
-    return `${BASE_URL.replace('/api/sede', '')}/uploads/sedes/${idimagen}`;
-  }
-
   validarDatosSede(sede) {
     const errores = [];
     if (!sede.nombre || sede.nombre.trim() === "") {
@@ -360,19 +291,12 @@ class SedeApiService {
       nombre: (sede.nombre || "").trim(),
       telefono: (sede.Telefono || sede.telefono || "").replace(/\s/g, ''),
       direccion: (sede.Direccion || sede.direccion || "").trim(),
-      idimagen: sede.idimagen || null,
       estado: sede.estado !== undefined ? Boolean(sede.estado || sede.activo) : true,
     };
   }
 
   transformarSedeDesdeAPI(sede) {
     if (!sede) return null;
-
-    let imagenUrl = sede.imagenUrl || sede.urlImagen || null;
-
-    if (sede.idimagen && !imagenUrl) {
-      imagenUrl = this.obtenerUrlImagen(sede.idimagen);
-    }
 
     return {
       id: sede.idsede,
@@ -381,8 +305,7 @@ class SedeApiService {
       Direccion: sede.direccion || "",
       telefono: sede.telefono || "",
       direccion: sede.direccion || "",
-      idimagen: sede.idimagen || null,
-      imagenUrl,
+      imagenUrl: sede.imagenUrl || null,
       estado: Boolean(sede.estado),
       activo: Boolean(sede.estado),
     };

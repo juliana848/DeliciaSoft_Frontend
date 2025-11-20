@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import '../../adminStyles.css';
 import Notification from '../../components/Notification';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
-import CategoriaToolbar from './components/CategoriaToolbar';
+import SearchBar from '../../components/SearchBar';
 import CategoriaDataTable from './components/CategoriaDataTable';
 import CategoriaModal from './components/CategoriaModal';
 import { useCategorias } from './hooks/useCategorias';
@@ -126,12 +126,21 @@ export default function CategoriaTable() {
         onClose={hideNotification}
       />
 
-      <CategoriaToolbar
-        onAgregar={() => abrirModal('agregar')}
-        filtro={filtro}
-        onFiltroChange={setFiltro}
-        loading={loading}
-      />
+      {/* Toolbar: Buscador + Agregar a la derecha */}
+      <div className="admin-toolbar">
+        <SearchBar
+          placeholder="Buscar categoría..."
+          value={filtro}
+          onChange={setFiltro}
+        />
+        <button
+          className="admin-button pink"
+          onClick={() => abrirModal('agregar')}
+          type="button"
+        >
+          <i className="fas fa-plus"></i> Agregar
+        </button>
+      </div>
 
       <h2 className="admin-section-title">Gestión de Categoría Insumos</h2>
 

@@ -5,8 +5,8 @@ import { InputSwitch } from 'primereact/inputswitch';
 import '../../adminStyles.css';
 import SearchBar from '../../components/SearchBar';
 import Notification from '../../components/Notification';
+import Tooltip from '../../components/Tooltip';
 import ProveedorModal from './components/ProveedorModal';
-import ProveedorActions from './components/ProveedorActions';
 import { useProveedores } from './hooks/useProveedores';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -69,6 +69,10 @@ export default function ProveedoresTable() {
       nombreContacto.includes(filtroLower);
   });
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="admin-wrapper">
       <Notification
@@ -78,66 +82,131 @@ export default function ProveedoresTable() {
         onClose={hideNotification}
       />
 
+      {/* Toolbar: Buscador + Agregar a la derecha */}
       <div className="admin-toolbar">
+        <SearchBar 
+          placeholder="Buscar proveedor..." 
+          value={filtro} 
+          onChange={setFiltro} 
+        />
         <button 
           className="admin-button pink" 
           onClick={() => abrirModal('agregar')}
           disabled={loading}
+          type="button"
         >
-          + Agregar
+          <i className="fas fa-plus"></i> Agregar
         </button>
-        <SearchBar placeholder="Buscar proveedor..." value={filtro} onChange={setFiltro} />
       </div>
 
-      <h2 className="admin-section-title"> Gestión de Proveedores</h2>
+      <h2 className="admin-section-title">Gestión de Proveedores</h2>
 
-      {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
-          <LoadingSpinner />
-        </div>
-      ) : (
-          <DataTable 
-            value={proveedoresFiltrados} 
-            className="admin-table compact-paginator" 
-            paginator 
-            rows={5}
-            rowsPerPageOptions={[5, 10, 20]}
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
-          >
-          <Column 
-            header="N°" 
-            headerStyle={{ paddingLeft: '1rem' }} 
-            body={(rowData, { rowIndex }) => rowIndex + 1} 
-            style={{ width: '3rem', textAlign: 'center' }} 
-          />
-          <Column field="nombre" header="Nombre" headerStyle={{ paddingLeft: '3rem' }} />
-          <Column field="tipo" header="Tipo Proveedor" />
-          <Column field="contacto" header="Contacto" />
-          <Column field="correo" header="Correo" headerStyle={{ paddingLeft: '3rem' }} />
-          <Column field="direccion" header="Dirección" headerStyle={{ paddingLeft: '2rem' }} />
-          <Column
-            header="Estado"
-            body={(rowData) => (
-              <InputSwitch 
-                checked={rowData.estado} 
-                onChange={() => toggleEstado(rowData)}
-                disabled={loading}
-              />
-            )}
-          />
-          <Column
-            header="Acción"
-            body={(rowData) => (
-              <ProveedorActions 
-                proveedor={rowData}
-                onAction={abrirModal}
-                loading={loading}
-              />
-            )}
-          />
-        </DataTable>
-      )}
+      <DataTable 
+        value={proveedoresFiltrados} 
+        className="admin-table compact-paginator" 
+        paginator 
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{ minWidth: '50rem' }}
+        emptyMessage="No se encontraron proveedores"
+      >
+        <Column 
+          header="N°" 
+          body={(rowData, { rowIndex }) => rowIndex + 1} 
+          style={{ width: '50px' }} 
+        />
+        <Column field="nombre" header="Nombre" />
+        <Column field="tipo" header="Tipo Proveedor" />
+        <Column field="contacto" header="Contacto" />
+        <Column field="correo" header="Correo" />
+        <Column field="direccion" header="Dirección" />
+        <Column
+          header="Estado"
+          body={(rowData) => (
+            <InputSwitch 
+              checked={rowData.estado} 
+              onChange={() => toggleEstado(rowData)}
+              disabled={loading}
+            />
+          )}
+          style={{ width: '80px' }}
+        />
+        <Column
+          header="Acciones"
+          body={(rowData) => (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+              <Tooltip text="Visualizar">
+                <button 
+                  className="admin-button"
+                  onClick={() => abrirModal('visualizar', rowData)}
+                  disabled={loading}
+                  style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
+
+              <Tooltip text={rowData.estado ? "Editar" : "Proveedor inactivo"}>
+                <button 
+                  className="admin-button"
+                  onClick={() => abrirModal('editar', rowData)}
+                  disabled={loading || !rowData.estado}
+                  style={{
+                    background: rowData.estado ? '#fff8e1' : '#f5f5f5',
+                    color: rowData.estado ? '#f57c00' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-pen" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
+
+              <Tooltip text={rowData.estado ? "Eliminar" : "Proveedor inactivo"}>
+                <button 
+                  className="admin-button"
+                  onClick={() => abrirModal('eliminar', rowData)}
+                  disabled={loading || !rowData.estado}
+                  style={{
+                    background: rowData.estado ? '#ffebee' : '#f5f5f5',
+                    color: rowData.estado ? '#d32f2f' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
+            </div>
+          )}
+          style={{ width: '100px' }}
+        />
+      </DataTable>
 
       <ProveedorModal
         visible={modalVisible}

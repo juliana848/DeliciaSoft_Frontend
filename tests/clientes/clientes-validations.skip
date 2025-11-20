@@ -1,0 +1,247 @@
+// tests/clientes/clientes-validations.spec.js
+import { test, expect } from '@playwright/test';
+import { 
+  clienteInvalido, 
+  clienteValido,
+  mensajesError 
+} from '../fixtures/clientes-data.js';
+import { 
+  generarDocumentoUnico,
+  generarCorreoUnico,
+  generarCelularUnico,
+  navegarAClientes,
+  abrirModalAgregar,
+  llenarFormularioCliente,
+  guardarFormulario
+} from '../utils/helpers.js';
+
+test.describe('Validaciones del Formulario de Clientes', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    await navegarAClientes(page);
+    await abrirModalAgregar(page);
+  });
+
+  test('debe validar número de documento requerido', async ({ page }) => {
+    // Intentar guardar sin llenar el documento
+    await guardarFormulario(page);
+    
+    // Verificar mensaje de error
+    await expect(page.locator(`text=${mensajesError.numeroDocumentoRequerido}`)).toBeVisible();
+  });
+
+  test('debe validar que número de documento solo acepta números', async ({ page }) => {
+    const documentoInput = await page.locator('input[type="text"]').first();
+    await documentoInput.fill(clienteInvalido.numeroDocumentoConLetras);
+    
+    // Verificar que no se permiten letras
+    const valor = await documentoInput.inputValue();
+    expect(valor).toMatch(/^\d*$/); // Solo dígitos
+  });
+
+  test('debe validar nombre requerido', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator(`text=${mensajesError.nombreRequerido}`)).toBeVisible();
+  });
+
+  test('debe validar que nombre solo acepta letras', async ({ page }) => {
+    const nombreInputs = await page.locator('input[type="text"]').all();
+    await nombreInputs[1].fill(clienteInvalido.nombreConNumeros);
+    await nombreInputs[1].blur();
+    
+    await expect(page.locator('text=Solo se permiten letras')).toBeVisible();
+  });
+
+  test('debe validar apellido requerido', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator(`text=${mensajesError.apellidoRequerido}`)).toBeVisible();
+  });
+
+  test('debe validar que apellido solo acepta letras', async ({ page }) => {
+    const apellidoInputs = await page.locator('input[type="text"]').all();
+    await apellidoInputs[2].fill(clienteInvalido.apellidoConNumeros);
+    await apellidoInputs[2].blur();
+    
+    await expect(page.locator('text=Solo se permiten letras')).toBeVisible();
+  });
+
+  test('debe validar correo requerido', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator(`text=${mensajesError.correoRequerido}`)).toBeVisible();
+  });
+
+  test('debe validar formato de correo inválido', async ({ page }) => {
+    await page.fill('input[type="email"]', clienteInvalido.correoInvalido);
+    await page.locator('input[type="email"]').blur();
+    
+    await expect(page.locator(`text=${mensajesError.correoInvalido}`)).toBeVisible();
+  });
+
+  test('debe validar celular requerido', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator(`text=${mensajesError.celularRequerido}`)).toBeVisible();
+  });
+
+  test('debe validar que celular solo acepta números', async ({ page }) => {
+    const celularInputs = await page.locator('input[type="text"]').all();
+    const celularInput = celularInputs[3];
+    await celularInput.fill(clienteInvalido.celularConLetras);
+    
+    const valor = await celularInput.inputValue();
+    expect(valor).toMatch(/^\d*$/);
+  });
+
+  test('debe validar contraseña requerida en modo agregar', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator(`text=${mensajesError.contrasenaRequerida}`)).toBeVisible();
+  });
+
+  test('debe validar longitud mínima de contraseña', async ({ page }) => {
+    const contrasenaInput = await page.locator('input[type="password"]').first();
+    await contrasenaInput.fill(clienteInvalido.contrasenaCorta);
+    await contrasenaInput.blur();
+    
+    await expect(page.locator(`text=${mensajesError.contrasenaCorta}`)).toBeVisible();
+  });
+
+  test('debe validar contraseña sin mayúscula', async ({ page }) => {
+    const contrasenaInput = await page.locator('input[type="password"]').first();
+    await contrasenaInput.fill(clienteInvalido.contrasenaSinMayuscula);
+    await contrasenaInput.blur();
+    
+    await expect(page.locator(`text=${mensajesError.contrasenaSinMayuscula}`)).toBeVisible();
+  });
+
+  test('debe validar contraseña sin carácter especial', async ({ page }) => {
+    const contrasenaInput = await page.locator('input[type="password"]').first();
+    await contrasenaInput.fill(clienteInvalido.contrasenaSinEspecial);
+    await contrasenaInput.blur();
+    
+    await expect(page.locator(`text=${mensajesError.contrasenaSinEspecial}`)).toBeVisible();
+  });
+
+  test('debe validar que las contraseñas coincidan', async ({ page }) => {
+    const contrasenaInputs = await page.locator('input[type="password"]').all();
+    
+    await contrasenaInputs[0].fill('ValidPass123!');
+    await contrasenaInputs[1].fill('DiferentePass123!');
+    await contrasenaInputs[1].blur();
+    
+    await expect(page.locator(`text=${mensajesError.contrasenasNoCoinciden}`)).toBeVisible();
+  });
+
+  test('debe validar edad mínima de 13 años', async ({ page }) => {
+    await page.fill('input[type="date"]', clienteInvalido.fechaMenor13);
+    await page.locator('input[type="date"]').blur();
+    
+    await expect(page.locator(`text=${mensajesError.menor13}`)).toBeVisible();
+  });
+
+  test('debe validar dirección requerida', async ({ page }) => {
+    await guardarFormulario(page);
+    await expect(page.locator('text=La dirección es obligatoria')).toBeVisible();
+  });
+
+  test('debe validar formato de dirección válida', async ({ page }) => {
+    const direccionInput = await page.locator('input[placeholder*="Cra"]').first();
+    await direccionInput.fill(clienteInvalido.direccionInvalida);
+    await direccionInput.blur();
+    
+    await expect(page.locator(`text=${mensajesError.direccionInvalida}`)).toBeVisible();
+  });
+
+  test('debe aceptar dirección válida con formato Carrera', async ({ page }) => {
+    const direccionInput = await page.locator('input[placeholder*="Cra"]').first();
+    await direccionInput.fill('Carrera 45 #23-12');
+    await direccionInput.blur();
+    
+    // No debe haber error
+    await expect(page.locator(`text=${mensajesError.direccionInvalida}`)).not.toBeVisible();
+  });
+
+  test('debe aceptar dirección válida con formato Calle', async ({ page }) => {
+    const direccionInput = await page.locator('input[placeholder*="Cra"]').first();
+    await direccionInput.fill('Calle 50 #30-15');
+    await direccionInput.blur();
+    
+    await expect(page.locator(`text=${mensajesError.direccionInvalida}`)).not.toBeVisible();
+  });
+
+  test('debe prevenir espacios al inicio en campos de texto', async ({ page }) => {
+    const nombreInputs = await page.locator('input[type="text"]').all();
+    await nombreInputs[1].fill('   Juan');
+    
+    const valor = await nombreInputs[1].inputValue();
+    expect(valor).not.toMatch(/^\s/); // No debe tener espacios al inicio
+  });
+
+  test('debe validar documento duplicado', async ({ page }) => {
+    // Crear primer cliente
+    const documentoDuplicado = generarDocumentoUnico();
+    const cliente1 = {
+      ...clienteValido,
+      numeroDocumento: documentoDuplicado,
+      correo: generarCorreoUnico(),
+      celular: generarCelularUnico()
+    };
+    
+    await llenarFormularioCliente(page, cliente1);
+    await guardarFormulario(page);
+    
+    // Esperar que se guarde
+    await page.waitForTimeout(2000);
+    
+    // Intentar crear otro con el mismo documento
+    await abrirModalAgregar(page);
+    const cliente2 = {
+      ...clienteValido,
+      numeroDocumento: documentoDuplicado,
+      correo: generarCorreoUnico(),
+      celular: generarCelularUnico()
+    };
+    
+    await llenarFormularioCliente(page, cliente2);
+    await guardarFormulario(page);
+    
+    // Verificar error de duplicado
+    await expect(page.locator(`text=${mensajesError.clienteDuplicado}`)).toBeVisible();
+  });
+
+  test('debe mostrar/ocultar contraseña al hacer clic en el ícono', async ({ page }) => {
+    const contrasenaInput = await page.locator('input[type="password"]').first();
+    const toggleButton = await page.locator('button[title*="contraseña"]').first();
+    
+    // Verificar que inicialmente es tipo password
+    let tipo = await contrasenaInput.getAttribute('type');
+    expect(tipo).toBe('password');
+    
+    // Hacer clic para mostrar
+    await toggleButton.click();
+    tipo = await contrasenaInput.getAttribute('type');
+    expect(tipo).toBe('text');
+    
+    // Hacer clic para ocultar
+    await toggleButton.click();
+    tipo = await contrasenaInput.getAttribute('type');
+    expect(tipo).toBe('password');
+  });
+
+  test('debe validar longitud máxima de campos', async ({ page }) => {
+    // Número de documento (10 caracteres)
+    const documentoInput = await page.locator('input[type="text"]').first();
+    await documentoInput.fill('12345678901234567890'); // Más de 10
+    let valor = await documentoInput.inputValue();
+    expect(valor.length).toBeLessThanOrEqual(10);
+    
+    // Nombre (15 caracteres)
+    const nombreInputs = await page.locator('input[type="text"]').all();
+    await nombreInputs[1].fill('NombreMuyLargoQueExcedeLimite');
+    valor = await nombreInputs[1].inputValue();
+    expect(valor.length).toBeLessThanOrEqual(15);
+    
+    // Celular (10 caracteres)
+    await nombreInputs[3].fill('12345678901234567890');
+    valor = await nombreInputs[3].inputValue();
+    expect(valor.length).toBeLessThanOrEqual(10);
+  });
+});

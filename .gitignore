@@ -22,3 +22,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vercel
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+*.webm
+*.mp4

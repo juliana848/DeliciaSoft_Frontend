@@ -5,17 +5,15 @@ import { InputSwitch } from "primereact/inputswitch";
 import "../../adminStyles.css";
 import SearchBar from "../../components/SearchBar";
 import Notification from "../../components/Notification";
+import Tooltip from '../../components/Tooltip';
 import ModalGenerico from "./modalgenerico";
 import ModalInsumo from "./modalesInsumo";
 import AgregarCategoria from "./agregarCategoria";
 import IndicadorStock from "./insicadorStock";
 import IndicadorStockMin from "./indicadorStockMin";
-// import NotificationBell from "../../../components/NotificationBell"; // DESHABILITADO
 import insumoApiService from "../../services/insumos";
 import categoriaInsumoApiService from "../../services/categoriainsumos";
 import LoadingSpinner from '../../components/LoadingSpinner';
-import '../comprasCrud/styles/ComprasTable.css'
-import Tooltip from '../../components/Tooltip';
 
 export default function TablaInsumos() {
   const [insumos, setInsumos] = useState([]);
@@ -79,8 +77,6 @@ export default function TablaInsumos() {
         return;
       }
       
-      console.log(`Cambiando estado de insumo ${id} a:`, nuevoEstado);
-      
       await insumoApiService.cambiarEstadoInsumo(id, nuevoEstado);
 
       setInsumos(
@@ -125,11 +121,7 @@ export default function TablaInsumos() {
   };
 
   if (loading) {
-    return (
-      <div>
-        <LoadingSpinner />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -141,33 +133,28 @@ export default function TablaInsumos() {
         onClose={hideNotification}
       />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', justifyContent: 'space-between' }}>
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal("agregar")}
-        >
-          + Agregar
-        </button>
+      {/* Toolbar: Buscador + Agregar a la derecha */}
+      <div className="admin-toolbar">
         <SearchBar
           value={filtro}
           onChange={setFiltro}
           placeholder="Buscar por nombre, categoría, cantidad, estado..."
         />
+        <button
+          className="admin-button pink"
+          onClick={() => abrirModal("agregar")}
+          type="button"
+        >
+          <i className="fas fa-plus"></i> Agregar
+        </button>
       </div>
 
-      <div
-        style={{
-          margin: "10px 0",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ margin: "10px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: "14px", color: "#666" }}>
           📊 {insumos.length} insumos | 📁 {categorias.length} categorías | 📏 {unidades.length} unidades
         </div>
         <button
-          className="admin-button info-button"
+          className="admin-button"
           onClick={toggleStockInfo}
           style={{
             padding: "5px 10px",
@@ -175,52 +162,46 @@ export default function TablaInsumos() {
             backgroundColor: "#e3f2fd",
             color: "#1565c0",
             border: "1px solid #bbdefb",
+            borderRadius: "6px",
+            cursor: "pointer"
           }}
         >
-          📚
+          📚 Info
         </button>
       </div>
 
       {showStockInfo && (
-        <div
-          className="stock-info-message"
-          style={{
-            backgroundColor: "#f8f9fa",
-            padding: "15px",
-            borderRadius: "5px",
-            marginBottom: "15px",
-            border: "1px solid #dee2e6",
-          }}
-        >
+        <div style={{
+          backgroundColor: "#f8f9fa",
+          padding: "15px",
+          borderRadius: "5px",
+          marginBottom: "15px",
+          border: "1px solid #dee2e6",
+        }}>
           <h4 style={{ marginTop: 0 }}>📊 Niveles de Stock:</h4>
           <ul style={{ marginBottom: 0 }}>
-            <li>
-              <strong>Crítico:</strong> Menos del 20% del stock mínimo
-            </li>
-            <li>
-              <strong>Bajo:</strong> Entre 20% y 50% del stock mínimo
-            </li>
-            <li>
-              <strong>Normal:</strong> Más del 50% del stock mínimo
-            </li>
+            <li><strong>Crítico:</strong> Menos del 20% del stock mínimo</li>
+            <li><strong>Bajo:</strong> Entre 20% y 50% del stock mínimo</li>
+            <li><strong>Normal:</strong> Más del 50% del stock mínimo</li>
           </ul>
         </div>
       )}
 
       <h2 className="admin-section-title">Gestión de Insumos</h2>
-        <DataTable
-          value={insumosFiltrados}
-          paginator
-          rows={5}
-          rowsPerPageOptions={[5, 10, 20]}
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
-          className="admin-table compact-paginator"
-        >
+
+      <DataTable
+        value={insumosFiltrados}
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        className="admin-table compact-paginator"
+        tableStyle={{ minWidth: '50rem' }}
+        emptyMessage="No se encontraron insumos"
+      >
         <Column
-          header="Nº"
+          header="N°"
           body={(rowData, { rowIndex }) => rowIndex + 1}
-          style={{ width: "3rem", textAlign: "center" }}
+          style={{ width: "50px" }}
         />
         <Column field="nombreInsumo" header="Nombre" />
         <Column
@@ -255,56 +236,82 @@ export default function TablaInsumos() {
               onChange={() => toggleEstado(getInsumoId(i))}
             />
           )}
+          style={{ width: "80px" }}
         />
-       <Column
-  header="Acción"
-  body={(rowData) => (
-    <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-      <Tooltip text="Visualizar">
-        <button
-          className="admin-button gray"
-          onClick={() => abrirModal("ver", rowData)}
-        >
-          👁
-        </button>
-      </Tooltip>
+        <Column
+          header="Acciones"
+          body={(rowData) => (
+            <div style={{ display: "flex", justifyContent: "center", gap: "3px" }}>
+              <Tooltip text="Visualizar">
+                <button
+                  className="admin-button"
+                  onClick={() => abrirModal("ver", rowData)}
+                  style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
 
-      <Tooltip text={!rowData.estado ? "Editar (Deshabilitado)" : "Editar"}>
-        <button
-          className={`admin-button yellow ${
-            !rowData.estado ? "disabled" : ""
-          }`}
-          onClick={() => rowData.estado && abrirModal("editar", rowData)}
-          disabled={!rowData.estado}
-          style={{
-            opacity: !rowData.estado ? 0.5 : 1,
-            cursor: !rowData.estado ? "not-allowed" : "pointer",
-          }}
-        >
-          ✏️
-        </button>
-      </Tooltip>
+              <Tooltip text={rowData.estado ? "Editar" : "Insumo inactivo"}>
+                <button
+                  className="admin-button"
+                  onClick={() => rowData.estado && abrirModal("editar", rowData)}
+                  disabled={!rowData.estado}
+                  style={{
+                    background: rowData.estado ? '#fff8e1' : '#f5f5f5',
+                    color: rowData.estado ? '#f57c00' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-pen" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
 
-      <Tooltip text={!rowData.estado ? "Eliminar (Deshabilitado)" : "Eliminar"}>
-        <button
-          className={`admin-button red ${
-            !rowData.estado ? "disabled" : ""
-          }`}
-          onClick={() =>
-            rowData.estado && abrirModal("eliminar", rowData)
-          }
-          disabled={!rowData.estado}
-          style={{
-            opacity: !rowData.estado ? 0.5 : 1,
-            cursor: !rowData.estado ? "not-allowed" : "pointer",
-          }}
-        >
-          🗑️
-        </button>
-      </Tooltip>
-    </div>
-  )}
-/>
+              <Tooltip text={rowData.estado ? "Eliminar" : "Insumo inactivo"}>
+                <button
+                  className="admin-button"
+                  onClick={() => rowData.estado && abrirModal("eliminar", rowData)}
+                  disabled={!rowData.estado}
+                  style={{
+                    background: rowData.estado ? '#ffebee' : '#f5f5f5',
+                    color: rowData.estado ? '#d32f2f' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
+                </button>
+              </Tooltip>
+            </div>
+          )}
+          style={{ width: "100px" }}
+        />
       </DataTable>
 
       {modal.visible && (

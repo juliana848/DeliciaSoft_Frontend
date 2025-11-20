@@ -111,149 +111,148 @@ export default function Produccion() {
     setModalTipo(null);
   };
 
- // ======================= ACTUALIZAR ESTADO =======================
-const actualizarEstadoProceso = async (procesoId, campo, valor) => {
-  try {
-    console.log(`🔄 Actualizando ${campo} a ${valor} para producción ${procesoId}`);
-    
-    // Construir el objeto con el nombre correcto del campo para el backend
-    const estados = {};
-    
-    if (campo === 'estadoProduccion') {
-      estados.estadoproduccion = valor; // Backend espera estadoproduccion en minúsculas
-    } else if (campo === 'estadoPedido') {
-      estados.estadopedido = valor; // Backend espera estadopedido en minúsculas
+  // ======================= ACTUALIZAR ESTADO =======================
+  const actualizarEstadoProceso = async (procesoId, campo, valor) => {
+    try {
+      console.log(`🔄 Actualizando ${campo} a ${valor} para producción ${procesoId}`);
+      
+      // Construir el objeto con el nombre correcto del campo para el backend
+      const estados = {};
+      
+      if (campo === 'estadoProduccion') {
+        estados.estadoproduccion = valor; // Backend espera estadoproduccion en minúsculas
+      } else if (campo === 'estadoPedido') {
+        estados.estadopedido = valor; // Backend espera estadopedido en minúsculas
+      }
+
+      console.log('📤 Enviando estados:', estados);
+      
+      await produccionApiService.actualizarEstado(procesoId, estados);
+      
+      // Actualizar estado local
+      setProcesos(prev => prev.map(p => 
+        p.id === procesoId ? { ...p, [campo]: valor } : p
+      ));
+      
+      showNotification('Estado actualizado correctamente');
+    } catch (error) {
+      console.error('❌ Error actualizando estado:', error);
+      showNotification(`Error al actualizar el estado: ${error.message}`, 'error');
     }
-
-    console.log('📤 Enviando estados:', estados);
-    
-    await produccionApiService.actualizarEstado(procesoId, estados);
-    
-    // Actualizar estado local
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId ? { ...p, [campo]: valor } : p
-    ));
-    
-    showNotification('Estado actualizado correctamente');
-  } catch (error) {
-    console.error('❌ Error actualizando estado:', error);
-    showNotification(`Error al actualizar el estado: ${error.message}`, 'error');
-  }
-};
-
-  // ======================= ELIMINAR PROCESO =======================
-const eliminarProceso = async (proceso) => {
-  try {
-    const id = proceso.idproduccion || proceso.id; // 🔥 soporte para ambas claves
-
-    if (!id) {
-      console.error("❌ No se encontró ID de producción en el proceso:", proceso);
-      showNotification("Error: ID de producción no encontrado", "error");
-      return;
-    }
-
-    console.log(`🚀 Intentando eliminar producción con ID: ${id}`);
-
-    const resultado = await produccionApiService.eliminarProduccion(id);
-    console.log("📦 Respuesta del service eliminarProduccion:", resultado);
-
-    setProcesos((prev) => prev.filter((p) => p.idproduccion !== id && p.id !== id));
-    console.log("✅ Producción removida del estado local");
-
-    cerrarModal();
-    showNotification("Producción eliminada exitosamente");
-  } catch (e) {
-    console.error("💥 Error al eliminar producción:", e);
-    showNotification("Error al eliminar la producción", "error");
-  }
-};
-
-  // ======================= RENDER SELECT ESTADO =======================
-const renderEstadoSelect = (rowData, campo) => {
-  const estadoActual = rowData[campo];
-  const esProduccion = campo === 'estadoProduccion';
-  const estadosFinales = esProduccion ? [6, 99] : [6, 7, 99];
-  const deshabilitar = estadosFinales.includes(estadoActual);
-  const opciones = esProduccion
-    ? obtenerOpcionesEstadoProduccion(estadoActual)
-    : obtenerOpcionesEstadoPedido(estadoActual);
-
-  // Función para obtener el color según el estado - ROSA DEL BOTÓN AGREGAR
-  const obtenerColorEstado = (idEstado) => {
-    // Todos usan el mismo rosa del botón agregar (#E91E63)
-    return { bg: '#E91E63', text: '#fff' };
   };
 
-  const colorActual = obtenerColorEstado(estadoActual);
+  // ======================= ELIMINAR PROCESO =======================
+  const eliminarProceso = async (proceso) => {
+    try {
+      const id = proceso.idproduccion || proceso.id; // 🔥 soporte para ambas claves
 
-return (
-  <div style={{ position: 'relative', width: 'fit-content', display: 'inline-block' }}>
-    <div style={{ position: 'relative' }}>
-      <select
-        value={estadoActual}
-        onChange={(e) => actualizarEstadoProceso(rowData.id, campo, parseInt(e.target.value))}
-        disabled={deshabilitar}
-        className="estado-select-mejorado"
-        style={{
-          width: '180px',
-          padding: '6px 28px 6px 10px', // deja espacio para la flecha
-          fontSize: '13px',
-          fontWeight: '600',
-          border: 'none',
-          borderRadius: '6px',
-          appearance: 'none',
-          backgroundColor: colorActual.bg,
-          color: colorActual.text,
-          cursor: deshabilitar ? 'not-allowed' : 'pointer',
-          opacity: deshabilitar ? 0.6 : 1,
-          boxShadow: deshabilitar 
-            ? 'none' 
-            : '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.1)',
-          transition: 'all 0.2s ease',
-          textAlign: 'left',
-        }}
-      >
-        {opciones.map((opcion) => {
-          const colorOpcion = obtenerColorEstado(opcion.id);
-          return (
-            <option 
-              key={opcion.id} 
-              value={opcion.id}
+      if (!id) {
+        console.error("❌ No se encontró ID de producción en el proceso:", proceso);
+        showNotification("Error: ID de producción no encontrado", "error");
+        return;
+      }
+
+      console.log(`🚀 Intentando eliminar producción con ID: ${id}`);
+
+      const resultado = await produccionApiService.eliminarProduccion(id);
+      console.log("📦 Respuesta del service eliminarProduccion:", resultado);
+
+      setProcesos((prev) => prev.filter((p) => p.idproduccion !== id && p.id !== id));
+      console.log("✅ Producción removida del estado local");
+
+      cerrarModal();
+      showNotification("Producción eliminada exitosamente");
+    } catch (e) {
+      console.error("💥 Error al eliminar producción:", e);
+      showNotification("Error al eliminar la producción", "error");
+    }
+  };
+
+  // ======================= RENDER SELECT ESTADO =======================
+  const renderEstadoSelect = (rowData, campo) => {
+    const estadoActual = rowData[campo];
+    const esProduccion = campo === 'estadoProduccion';
+    const estadosFinales = esProduccion ? [6, 99] : [6, 7, 99];
+    const deshabilitar = estadosFinales.includes(estadoActual);
+    const opciones = esProduccion
+      ? obtenerOpcionesEstadoProduccion(estadoActual)
+      : obtenerOpcionesEstadoPedido(estadoActual);
+
+    // Función para obtener el color según el estado - ROSA DEL BOTÓN AGREGAR
+    const obtenerColorEstado = (idEstado) => {
+      // Todos usan el mismo rosa del botón agregar (#E91E63)
+      return { bg: '#E91E63', text: '#fff' };
+    };
+
+    const colorActual = obtenerColorEstado(estadoActual);
+
+    return (
+      <div style={{ position: 'relative', width: 'fit-content', display: 'inline-block' }}>
+        <div style={{ position: 'relative' }}>
+          <select
+            value={estadoActual}
+            onChange={(e) => actualizarEstadoProceso(rowData.id, campo, parseInt(e.target.value))}
+            disabled={deshabilitar}
+            className="estado-select-mejorado"
+            style={{
+              width: '180px',
+              padding: '6px 28px 6px 10px',
+              fontSize: '13px',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '6px',
+              appearance: 'none',
+              backgroundColor: colorActual.bg,
+              color: colorActual.text,
+              cursor: deshabilitar ? 'not-allowed' : 'pointer',
+              opacity: deshabilitar ? 0.6 : 1,
+              boxShadow: deshabilitar 
+                ? 'none' 
+                : '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              textAlign: 'left',
+            }}
+          >
+            {opciones.map((opcion) => {
+              const colorOpcion = obtenerColorEstado(opcion.id);
+              return (
+                <option 
+                  key={opcion.id} 
+                  value={opcion.id}
+                  style={{
+                    backgroundColor: colorOpcion.bg,
+                    color: colorOpcion.text,
+                    padding: '8px',
+                  }}
+                >
+                  {opcion.label}
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Icono flecha dentro del mismo contenedor */}
+          {!deshabilitar && (
+            <div 
               style={{
-                backgroundColor: colorOpcion.bg,
-                color: colorOpcion.text,
-                padding: '8px',
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none',
+                color: colorActual.text,
+                fontSize: '12px',
+                opacity: 0.9,
+                fontWeight: 'bold',
               }}
             >
-              {opcion.label}
-            </option>
-          );
-        })}
-      </select>
-
-      {/* Icono flecha dentro del mismo contenedor */}
-      {!deshabilitar && (
-        <div 
-          style={{
-            position: 'absolute',
-            right: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            pointerEvents: 'none',
-            color: colorActual.text,
-            fontSize: '12px',
-            opacity: 0.9,
-            fontWeight: 'bold',
-          }}
-        >
-          ▼
+              ▼
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  </div>
-);
-};
-
+      </div>
+    );
+  };
 
   // ======================= RENDER PRINCIPAL =======================
   return (
@@ -281,15 +280,16 @@ return (
         />
       ) : (
         <>
+          {/* Toolbar: Buscador + Agregar a la derecha */}
           <div className="admin-toolbar">
+            <SearchBar placeholder="Buscar producción..." value={filtro} onChange={setFiltro} />
             <button
               className="admin-button pink"
               onClick={() => setMostrarAgregarProceso(true)}
               type="button"
             >
-              + Agregar
+              <i className="fas fa-plus"></i> Agregar
             </button>
-            <SearchBar placeholder="Buscar producción..." value={filtro} onChange={setFiltro} />
           </div>
 
           <div className="ventas-header-container">
@@ -319,52 +319,130 @@ return (
           ) : (
             <>
               {pestanaActiva === 'pedido' ? (
-                  <DataTable
-                    value={procesosFiltrados}
-                    className="admin-table compact-paginator"
-                    paginator
-                    rows={10}
-                    rowsPerPageOptions={[5, 10, 25]}
-                  >
-                  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
+                <DataTable
+                  value={procesosFiltrados}
+                  className="admin-table compact-paginator"
+                  paginator
+                  rows={5}
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  tableStyle={{ minWidth: '50rem' }}
+                >
+                  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '50px' }} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />
                   <Column field="fechaEntrega" header="Fecha Entrega" />
                   <Column header="Estado Pedido" body={(rowData) => renderEstadoSelect(rowData, 'estadoPedido')} />
                   <Column field="numeroPedido" header="N° Pedido" />
-                  <Column header="Acción" body={(rowData) => (
-                    <>
-                      <Tooltip text="Visualizar">
-                        <button className="admin-button gray" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
-                      </Tooltip>
-                      <Tooltip text="Eliminar">
-                        <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
-                      </Tooltip>
-                    </>
-                  )} />
+                  <Column 
+                    header="Acciones" 
+                    body={(rowData) => (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+                        <Tooltip text="Visualizar">
+                          <button 
+                            className="admin-button"
+                            onClick={() => abrirModal('visualizar', rowData)}
+                            style={{
+                              background: '#e3f2fd',
+                              color: '#1976d2',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '26px',
+                              height: '26px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Eliminar">
+                          <button 
+                            className="admin-button"
+                            onClick={() => abrirModal('eliminar', rowData)}
+                            style={{
+                              background: '#ffebee',
+                              color: '#d32f2f',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '26px',
+                              height: '26px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
+                          </button>
+                        </Tooltip>
+                      </div>
+                    )}
+                    style={{ width: '100px' }}
+                  />
                 </DataTable>
               ) : (
-                  <DataTable
-                    value={procesosFiltrados}
-                    className="admin-table compact-paginator"
-                    paginator
-                    rows={10}
-                    rowsPerPageOptions={[5, 10, 25]}
-                  >
-                  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} />
+                <DataTable
+                  value={procesosFiltrados}
+                  className="admin-table compact-paginator"
+                  paginator
+                  rows={5}
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  tableStyle={{ minWidth: '50rem' }}
+                >
+                  <Column header="N°" body={(rowData, { rowIndex }) => rowIndex + 1} style={{ width: '50px' }} />
                   <Column field="nombreProduccion" header="Producción" />
                   <Column field="fechaCreacion" header="Fecha Creación" />
                   <Column header="Estado Producción" body={(rowData) => renderEstadoSelect(rowData, 'estadoProduccion')} />
-                  <Column header="Acción" body={(rowData) => (
-                    <>
-                      <Tooltip text="Visualizar">
-                        <button className="admin-button gray" onClick={() => abrirModal('visualizar', rowData)}>👁</button>
-                      </Tooltip>
-                      <Tooltip text="Eliminar">
-                        <button className="admin-button red" onClick={() => abrirModal('eliminar', rowData)}>🗑️</button>
-                      </Tooltip>
-                    </>
-                  )} />
+                  <Column 
+                    header="Acciones" 
+                    body={(rowData) => (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+                        <Tooltip text="Visualizar">
+                          <button 
+                            className="admin-button"
+                            onClick={() => abrirModal('visualizar', rowData)}
+                            style={{
+                              background: '#e3f2fd',
+                              color: '#1976d2',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '26px',
+                              height: '26px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Eliminar">
+                          <button 
+                            className="admin-button"
+                            onClick={() => abrirModal('eliminar', rowData)}
+                            style={{
+                              background: '#ffebee',
+                              color: '#d32f2f',
+                              border: 'none',
+                              borderRadius: '6px',
+                              width: '26px',
+                              height: '26px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
+                          </button>
+                        </Tooltip>
+                      </div>
+                    )}
+                    style={{ width: '100px' }}
+                  />
                 </DataTable>
               )}
             </>

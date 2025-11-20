@@ -10,7 +10,6 @@ import "../../../adminStyles.css";
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import ConfiguracionProducto from "./ConfiguracionProducto";
 
-
 const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("");
@@ -20,7 +19,6 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     tipo: "success",
   });
   const [loading, setLoading] = useState(true);
-
   const [productoAConfigurar, setProductoAConfigurar] = useState(null);
   const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
 
@@ -33,7 +31,6 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     setProductoAConfigurar(null);
     setMostrarConfiguracion(false);
   };
-
 
   const formatearPrecio = (precio) =>
     new Intl.NumberFormat("es-CO", {
@@ -98,7 +95,6 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
     producto.nombre?.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  // Render de imagen
   const ImagenProducto = ({ producto }) => {
     const urlImagen = producto.urlimagen ||
       producto.imagenes?.urlimg ||
@@ -148,15 +144,8 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
   }));
 
   if (loading) {
-    return (
-      <div className="admin-wrapper">
-        <div>
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
-
 
   return (
     <div className="admin-wrapper">
@@ -167,66 +156,59 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
         onClose={hideNotification}
       />
 
+      {/* Toolbar: Buscador + Agregar a la derecha */}
       <div className="admin-toolbar">
-        <button className="admin-button pink" onClick={onAdd}>
-          + Agregar
-        </button>
         <SearchBar
           placeholder="Buscar productos..."
           value={filtro}
           onChange={handleSearch}
         />
+        <button 
+          className="admin-button pink" 
+          onClick={onAdd}
+          type="button"
+        >
+          <i className="fas fa-plus"></i> Agregar
+        </button>
       </div>
 
       <h2 className="admin-section-title">Gestión de productos</h2>
-        <DataTable
-          value={filteredProductos}
-          paginator
-          rows={5}
-          rowsPerPageOptions={[5, 10, 25]}
-          className="admin-table compact-paginator"
-          emptyMessage="No se encontraron productos"
-          tableStyle={{ minWidth: '50rem' }}
-        >
+
+      <DataTable
+        value={filteredProductos}
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        className="admin-table compact-paginator"
+        emptyMessage="No se encontraron productos"
+        tableStyle={{ minWidth: '50rem' }}
+      >
         <Column
           header="N°"
           body={(_, { rowIndex }) => rowIndex + 1}
-          style={{ width: '3rem' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '25px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '3px' }}
+          style={{ width: '50px' }}
         />
 
         <Column
           header="Imagen"
           body={(row) => <ImagenProducto producto={row} />}
           style={{ width: "100px" }}
-          headerStyle={{ textAlign: 'center', paddingLeft: '10px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '10px' }}
         />
 
         <Column
           field="nombre"
           header="Nombre"
-          style={{ width: '200px' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
         <Column
           field="precio"
           header="Precio"
           body={(row) => formatearPrecio(row.precio)}
-          style={{ width: '150px' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
         <Column
           field="categoria"
           header="Categoría"
-          style={{ width: '150px' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
         <Column
@@ -235,66 +217,100 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
             <InputSwitch checked={row.estado} onChange={() => toggleEstado(row)} />
           )}
           style={{ width: '80px' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
         />
 
         <Column
-          header="Acción"
+          header="Acciones"
           body={(row) => (
-            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-              <Tooltip text="visualizar">
+            <div style={{ display: "flex", justifyContent: "center", gap: "3px" }}>
+              <Tooltip text="Visualizar">
                 <button
-                  className="admin-button gray"
+                  className="admin-button"
                   onClick={() => onView(row)}
+                  style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
-                  👁
+                  <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
               
               <Tooltip text="Editar">
                 <button
-                  className="admin-button yellow"
+                  className="admin-button"
                   onClick={() => onEdit(row)}
+                  style={{
+                    background: '#fff8e1',
+                    color: '#f57c00',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
-                  ✏️
+                  <i className="fas fa-pen" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
               
               <Tooltip text="Eliminar">
                 <button
-                  className="admin-button red"
+                  className="admin-button"
                   onClick={() => onDelete(row)}
+                  style={{
+                    background: '#ffebee',
+                    color: '#d32f2f',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
-                  🗑️
+                  <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
               
               <Tooltip text="Configurar personalización">
                 <button
                   onClick={() => handleConfiguracion(row)}
-                  className="btn-small"
                   style={{
                     background: "#8b5cf6",
                     color: "white",
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "0.875rem"
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
-                  ⚙️
+                  <i className="fas fa-cog" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
-
             </div>
           )}
-          style={{ width: '180px' }}
-          headerStyle={{ textAlign: 'right', paddingLeft: '80px' }}
-          bodyStyle={{ textAlign: 'center', paddingLeft: '20px' }}
+          style={{ width: '120px' }}
         />
       </DataTable>
+
       {mostrarConfiguracion && productoAConfigurar && (
         <div style={{
           position: "fixed",
@@ -323,15 +339,12 @@ const ProductosList = forwardRef(({ onAdd, onEdit, onView, onDelete }, ref) => {
               nombreProducto={productoAConfigurar.nombre || productoAConfigurar.nombreproducto}
               onSave={(config) => {
                 handleCloseConfiguracion();
-                // Opcional: recargar lista de productos
-                // cargarProductos();
               }}
               onCancel={handleCloseConfiguracion}
             />
           </div>
         </div>
       )}
-
     </div>
   );
 });

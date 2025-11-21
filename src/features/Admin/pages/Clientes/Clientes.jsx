@@ -184,115 +184,126 @@ export default function Clientes() {
         onClose={hideNotification}
       />
 
+      {/* Toolbar: Buscador + Agregar a la derecha */}
       <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal('agregar')}
-          type="button"
-        >
-          + Agregar
-        </button>
-
         <SearchBar
           placeholder="Buscar cliente..."
           value={filtro}
           onChange={setFiltro}
         />
+        <button
+          className="admin-button pink"
+          onClick={() => abrirModal('agregar')}
+          type="button"
+        >
+          <i className="fas fa-plus"></i> Agregar
+        </button>
       </div>
 
       <h2 className="admin-section-title">Gestión de Clientes</h2>
 
-        <DataTable
-          value={clientesFiltrados}
-          className="admin-table compact-paginator"
-          paginator
-          rows={5}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          tableStyle={{ minWidth: '50rem' }}
-          emptyMessage="No hay clientes para mostrar"
-        >
+      <DataTable
+        value={clientesFiltrados}
+        className="admin-table compact-paginator"
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{ minWidth: '50rem' }}
+        emptyMessage="No hay clientes para mostrar"
+      >
         <Column
           header="N°"
-          headerStyle={{ paddingLeft: '1.5rem' }}
           body={(rowData, { rowIndex }) => rowIndex + 1}
-          style={{ width: '3rem', textAlign: 'center' }}
+          style={{ width: '50px' }}
         />
-        <Column 
-          field="numeroDocumento" 
-          header="N° Documento" 
-          headerStyle={{ paddingLeft: '2rem' }} 
-        />
-        <Column 
-          field="nombre" 
-          header="Nombre" 
-          headerStyle={{ paddingLeft: '3rem' }} 
-        />
-        <Column 
-          field="apellido" 
-          header="Apellido" 
-          headerStyle={{ paddingLeft: '3rem' }} 
-        />
-        <Column 
-          field="correo" 
-          header="Correo" 
-          headerStyle={{ paddingLeft: '7rem' }} 
-        />
+        <Column field="numeroDocumento" header="N° Documento" />
+        <Column field="nombre" header="Nombre" />
+        <Column field="apellido" header="Apellido" />
+        <Column field="correo" header="Correo" />
         <Column
           header="Estado"
-          body={(rowData) => {
-            return (
-              <InputSwitch
-                inputId={`switch-${rowData.idCliente}`}
-                checked={!!rowData.estado}
-                onChange={() => toggleEstado(rowData)}
-                disabled={false}
-              />
-            );
-          }}
+          body={(rowData) => (
+            <InputSwitch
+              inputId={`switch-${rowData.idCliente}`}
+              checked={!!rowData.estado}
+              onChange={() => toggleEstado(rowData)}
+            />
+          )}
+          style={{ width: '80px' }}
         />
         <Column
           header="Acciones"
-          headerStyle={{ paddingLeft: '3.5rem' }}
           body={(rowData) => (
-            <>
-              <Tooltip text="Visualizar" position="top">
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+              <Tooltip text="Visualizar">
                 <button 
-                  className="admin-button gray" 
+                  className="admin-button" 
                   onClick={() => abrirModal('visualizar', rowData)}
+                  style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
-                  👁
+                  <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
               
-              <Tooltip text={rowData.estado ? "Editar" : "Cliente inactivo"} position="top">
+              <Tooltip text={rowData.estado ? "Editar" : "Cliente inactivo"}>
                 <button
-                  className="admin-button yellow"
+                  className="admin-button"
                   onClick={() => abrirModal('editar', rowData)}
                   disabled={!rowData.estado}
-                  style={{ 
-                    opacity: rowData.estado ? 1 : 0.5, 
-                    cursor: rowData.estado ? 'pointer' : 'not-allowed' 
+                  style={{
+                    background: rowData.estado ? '#fff8e1' : '#f5f5f5',
+                    color: rowData.estado ? '#f57c00' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
-                  ✏️
+                  <i className="fas fa-pen" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
               
-              <Tooltip text={rowData.estado ? "Eliminar" : "Cliente inactivo"} position="top">
+              <Tooltip text={rowData.estado ? "Eliminar" : "Cliente inactivo"}>
                 <button
-                  className="admin-button red"
+                  className="admin-button"
                   onClick={() => abrirModal('eliminar', rowData)}
                   disabled={!rowData.estado}
-                  style={{ 
-                    opacity: rowData.estado ? 1 : 0.5, 
-                    cursor: rowData.estado ? 'pointer' : 'not-allowed' 
+                  style={{
+                    background: rowData.estado ? '#ffebee' : '#f5f5f5',
+                    color: rowData.estado ? '#d32f2f' : '#bbb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '26px',
+                    height: '26px',
+                    cursor: rowData.estado ? 'pointer' : 'not-allowed',
+                    opacity: rowData.estado ? 1 : 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
-                  🗑️
+                  <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
                 </button>
               </Tooltip>
-            </>
+            </div>
           )}
+          style={{ width: '100px' }}
         />
       </DataTable>
 
@@ -330,7 +341,7 @@ export default function Clientes() {
 
       {modalTipo === 'confirmarEliminar' && clienteSeleccionado && (
         <Modal visible={modalVisible} onClose={cerrarModal}>
-          <h2 className="modal-title"> Eliminar Cliente</h2>
+          <h2 className="modal-title">Eliminar Cliente</h2>
           <div className="modal-body">
             <p>¿Está seguro que desea eliminar el cliente <strong>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido}</strong>?</p>
           </div>

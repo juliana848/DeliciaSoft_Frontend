@@ -12,53 +12,56 @@ export default function SedeTable({
   onVerSede,
   onEditarSede,
   onEliminarSede,
+  filtro,
+  setFiltro,
+  onAgregar,
+  SearchBar
 }) {
-  // Template para numeración consecutiva
   const numeroTemplate = (rowData, options) => {
     return options.rowIndex + 1;
   };
 
-  const accionesTemplate = (rowData) => (
-    <div className="action-buttons">
-      <Tooltip text="Visualizar">
-        <button
-          className="admin-button gray"
-          onClick={() => onVerSede(rowData)}
-          disabled={loading}
-        >
-          👁
-        </button>
-      </Tooltip>
+  const accionesTemplate = (rowData) => {
+    const puedeEditar = rowData.activo;
+    const puedeEliminar = rowData.activo;
 
-      <Tooltip text={!rowData.activo ? "Editar (Deshabilitado)" : "Editar"}>
-        <button
-          className="admin-button yellow"
-          onClick={() => onEditarSede(rowData)}
-          disabled={loading || !rowData.activo}
-          style={{
-            opacity: !rowData.activo ? 0.5 : 1,
-            cursor: !rowData.activo ? "not-allowed" : "pointer",
-          }}
-        >
-          ✏️
-        </button>
-      </Tooltip>
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+        <Tooltip text="Visualizar">
+          <button
+            className="admin-button"
+            onClick={() => onVerSede(rowData)}
+            disabled={loading}
+            style={{ background: '#e3f2fd', color: '#1976d2', border: 'none', borderRadius: '6px', width: '26px', height: '26px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+          </button>
+        </Tooltip>
 
-      <Tooltip text={!rowData.activo ? "Eliminar (Deshabilitado)" : "Eliminar"}>
-        <button
-          className="admin-button red"
-          onClick={() => onEliminarSede(rowData)}
-          disabled={loading || !rowData.activo}
-          style={{
-            opacity: !rowData.activo ? 0.5 : 1,
-            cursor: !rowData.activo ? "not-allowed" : "pointer",
-          }}
-        >
-          🗑️
-        </button>
-      </Tooltip>
-    </div>
-  );
+        <Tooltip text={puedeEditar ? "Editar" : "Sede desactivada"}>
+          <button
+            className="admin-button"
+            onClick={() => onEditarSede(rowData)}
+            disabled={loading || !puedeEditar}
+            style={{ background: puedeEditar ? '#fff8e1' : '#f5f5f5', color: puedeEditar ? '#f57c00' : '#bbb', border: 'none', borderRadius: '6px', width: '26px', height: '26px', cursor: puedeEditar ? 'pointer' : 'not-allowed', opacity: puedeEditar ? 1 : 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <i className="fas fa-pen" style={{ fontSize: '11px' }}></i>
+          </button>
+        </Tooltip>
+
+        <Tooltip text={puedeEliminar ? "Eliminar" : "Sede desactivada"}>
+          <button
+            className="admin-button"
+            onClick={() => onEliminarSede(rowData)}
+            disabled={loading || !puedeEliminar}
+            style={{ background: puedeEliminar ? '#ffebee' : '#f5f5f5', color: puedeEliminar ? '#d32f2f' : '#bbb', border: 'none', borderRadius: '6px', width: '26px', height: '26px', cursor: puedeEliminar ? 'pointer' : 'not-allowed', opacity: puedeEliminar ? 1 : 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <i className="fas fa-trash" style={{ fontSize: '11px' }}></i>
+          </button>
+        </Tooltip>
+      </div>
+    );
+  };
 
   const estadoTemplate = (rowData) => (
     <InputSwitch
@@ -68,7 +71,18 @@ export default function SedeTable({
     />
   );
 
-   return (
+  return (
+    <>
+      {/* Toolbar: SearchBar izquierda + Agregar derecha (como Usuarios) */}
+      {SearchBar && onAgregar && (
+        <div className="admin-toolbar">
+          <SearchBar placeholder="Buscar sede..." value={filtro} onChange={setFiltro} />
+          <button className="admin-button pink" onClick={onAgregar} type="button">
+            <i className="fas fa-plus"></i> Agregar
+          </button>
+        </div>
+      )}
+
       <DataTable
         value={sedes}
         className="admin-table compact-paginator"
@@ -84,48 +98,40 @@ export default function SedeTable({
         size="small"
         stripedRows
       >
-      <Column
-        header="N°"
-        body={numeroTemplate}
-        style={{ width: "80px", textAlign: "center" }}
-        headerStyle={{ width: "80px", textAlign: "center" }}
-      />
-      <Column
-        field="nombre"
-        header="Nombre"
-        style={{ width: "180px" }}
-        headerStyle={{ width: "180px" }}
-      />
-      <Column
-        field="Direccion"
-        header="Dirección"
-        style={{
-          width: "280px",
-          maxWidth: "280px",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-        headerStyle={{ width: "280px" }}
-      />
-      <Column
-        field="Telefono"
-        header="Teléfono"
-        style={{ width: "140px" }}
-        headerStyle={{ width: "140px" }}
-      />
-      <Column
-        header="Estado"
-        body={estadoTemplate}
-        style={{ width: "100px", textAlign: "center" }}
-        headerStyle={{ width: "100px", textAlign: "center" }}
-      />
-      <Column
-        header="Acciones"
-        body={accionesTemplate}
-        style={{ width: "160px", textAlign: "center" }}
-        headerStyle={{ width: "160px", textAlign: "center" }}
-      />
-    </DataTable>
+        <Column
+          header="N°"
+          body={numeroTemplate}
+          style={{ width: "50px" }}
+        />
+        <Column
+          field="nombre"
+          header="Nombre"
+        />
+        <Column
+          field="Direccion"
+          header="Dirección"
+          style={{
+            maxWidth: "280px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        />
+        <Column
+          field="Telefono"
+          header="Teléfono"
+        />
+        <Column
+          header="Estado"
+          body={estadoTemplate}
+          style={{ width: "80px" }}
+        />
+        <Column
+          header="Acciones"
+          body={accionesTemplate}
+          style={{ width: "100px" }}
+        />
+      </DataTable>
+    </>
   );
 }

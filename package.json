@@ -30,9 +30,21 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:clientes": "playwright test tests/clientes",
+    "test:validations": "playwright test tests/clientes/clientes-validations.spec.js",
+    "test:report": "playwright show-report",
+    "test:codegen": "playwright codegen http://localhost:3000"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss7-compat": "^2.2.17",
     "autoprefixer": "^9.8.8",
     "postcss": "^8.5.6",

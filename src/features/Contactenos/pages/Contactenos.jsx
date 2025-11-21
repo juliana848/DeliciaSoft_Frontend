@@ -1,3 +1,4 @@
+// Importación de librerías y estilos
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './contactenos.css';
@@ -18,6 +19,7 @@ const Contactenos = () => {
     mensaje: ''
   });
 
+    // Estados principales del formulario
   const [showMessage, setShowMessage] = useState(false);
   const [messageType, setMessageType] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
@@ -43,6 +45,7 @@ const Contactenos = () => {
           mensaje: ''
         }));
         
+           // Mostrar mensaje de bienvenida si viene desde el login
         const fromLogin = sessionStorage.getItem('fromLogin');
         if (fromLogin === 'true') {
           sessionStorage.removeItem('fromLogin');
@@ -71,6 +74,7 @@ const Contactenos = () => {
     }
   }, []);
 
+  // Cargar datos del usuario si está autenticado
   useEffect(() => {
     const loadRecaptcha = () => {
       if (window.grecaptcha) {
@@ -91,6 +95,7 @@ const Contactenos = () => {
     loadRecaptcha();
   }, []);
 
+  // Inicializar reCAPTCHA una vez cargado
  useEffect(() => {
     if (isRecaptchaLoaded && recaptchaRef.current && !recaptchaRef.current.hasChildNodes()) {
       // Verificar que grecaptcha y render estén disponibles
@@ -139,6 +144,7 @@ const Contactenos = () => {
     }
   }, [isRecaptchaLoaded, errors.recaptcha]);
   
+  // Validación de los campos del formulario
   const validateForm = () => {
     const newErrors = {};
 
@@ -183,6 +189,7 @@ const Contactenos = () => {
     return newErrors;
   };
 
+  // Manejar cambios en los inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -217,6 +224,7 @@ const Contactenos = () => {
     }
   };
 
+   // Envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -291,6 +299,7 @@ const Contactenos = () => {
     }
   };
 
+   // Navegación a otras páginas
   const handleSedesClick = () => {
     navigate('/sedes');
   };
@@ -300,6 +309,7 @@ const Contactenos = () => {
     navigate('/iniciar-sesion');
   };
 
+    // Renderizado del formulario y la información de contacto
   return (
     <div className="contact-page-wrapper">
       <div className="contact-container">

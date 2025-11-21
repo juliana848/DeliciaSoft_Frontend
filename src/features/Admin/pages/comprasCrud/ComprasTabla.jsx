@@ -5,11 +5,10 @@ import '../../adminStyles.css';
 import Modal from '../../components/modal.jsx';
 import SearchBar from '../../components/SearchBar.jsx';
 import Notification from '../../components/Notification.jsx';
-import AgregarInsumosModal from '../../components/AgregarInsumosModal.jsx';
+import Tooltip from '../../components/Tooltip';
 import PDFPreview from '../PDFPreview.jsx';
 import CompraForm from './CompraForm.jsx';
 import ProveedorModal from './ProveedorModal.jsx';
-import CompraActions from './CompraActions.jsx';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import { useCompras } from './Hooks/useCompras.jsx';
 import { useProveedores } from './Hooks/useProveedor.jsx';
@@ -18,7 +17,6 @@ import compraApiService from '../../services/compras_services.js';
 import './styles/CompraStyles.css';
 import compraValidationService from '../../services/compras_validation_services';
 import { obtenerFechaColombia } from '../comprasCrud/Utils/fechaUtils.js';
-
 
 export default function ComprasTable() {
     const [filtro, setFiltro] = useState('');
@@ -31,19 +29,12 @@ export default function ComprasTable() {
     const [mostrarAnuladas, setMostrarAnuladas] = useState(false);
     const [cargando, setCargando] = useState(false);
     const [mensajeCarga, setMensajeCarga] = useState('Cargando...');
-
-    // Estados para PDFPreview
     const [pdfPreviewVisible, setPdfPreviewVisible] = useState(false);
     const [compraPdf, setCompraPdf] = useState(null);
     const [insumos, setInsumos] = useState([]);
-
-    // Estados para el modal de proveedores
     const [modalProveedorVisible, setModalProveedorVisible] = useState(false);
     const [modalProveedorTipo, setModalProveedorTipo] = useState(null);
-
-    // Estado buscador proveedores
     const [buscarProveedor, setBuscarProveedor] = useState('');
-
     const [errores, setErrores] = useState({
         proveedor: '',
         fecha_compra: '',
@@ -60,7 +51,6 @@ export default function ComprasTable() {
         observaciones: ''
     });
 
-    // Custom hooks
     const { 
         compras, 
         cargarCompras, 
@@ -102,23 +92,17 @@ export default function ComprasTable() {
                 setCargando(false);
             }
         };
-
         cargarInsumos();
     }, []);
 
-    // Cargar datos iniciales
     useEffect(() => {
         let isMounted = true;
-
         const cargarDatos = async () => {
             if (!isMounted) return;
             setMensajeCarga('Cargando datos...');
             setCargando(true);
             try {
-                await Promise.all([
-                    cargarCompras(),
-                    cargarProveedores()
-                ]);
+                await Promise.all([cargarCompras(), cargarProveedores()]);
             } catch (error) {
                 console.error('Error al cargar datos:', error);
                 if (isMounted) {
@@ -130,12 +114,8 @@ export default function ComprasTable() {
                 }
             }
         };
-
         cargarDatos();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, []);
 
     function transformarInsumosDesdeAPI(apiInsumos) {
@@ -153,58 +133,46 @@ export default function ComprasTable() {
         }));
     }
 
-   const abrirPDFPreview = async (compra) => {
-    try {
-        setMensajeCarga('Preparando PDF...');
-        setCargando(true);
-        const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
+    const abrirPDFPreview = async (compra) => {
+        try {
+            setMensajeCarga('Preparando PDF...');
+            setCargando(true);
+            const compraCompleta = await compraApiService.obtenerCompraPorId(compra.id);
 
-        if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
-            showNotification('No se puede generar PDF: La compra no tiene insumos registrados', 'error');
-            return;
+            if (!compraCompleta.detalles || compraCompleta.detalles.length === 0) {
+                showNotification('No se puede generar PDF: La compra no tiene insumos registrados', 'error');
+                return;
+            }
+
+            const datosCompra = {
+                id: compraCompleta.id,
+                proveedor: compraCompleta.proveedor?.nombre || 'N/A',
+                documento_proveedor: compraCompleta.proveedor?.documento || compraCompleta.proveedor?.nit || 'N/A',
+                fecha_compra: compraCompleta.fechaCompra,
+                fecha_registro: compraCompleta.fechaRegistro,
+                observaciones: compraCompleta.observaciones || '',
+                insumos: compraCompleta.detalles.map(detalle => ({
+                    nombre: detalle.insumo?.nombre || 'N/A',
+                    cantidad: detalle.cantidad,
+                    precio: detalle.precioUnitario,
+                    precioUnitario: detalle.precioUnitario,
+                    unidad_medida: detalle.insumo?.unidad || 'N/A'
+                }))
+            };
+
+            setCompraPdf(datosCompra);
+            setPdfPreviewVisible(true);
+        } catch (error) {
+            console.error('Error al preparar PDF:', error);
+            showNotification('Error al preparar la visualización: ' + error.message, 'error');
+        } finally {
+            setCargando(false);
         }
-
-        const datosCompra = {
-            id: compraCompleta.id,
-            proveedor: compraCompleta.proveedor?.nombre || 'N/A',
-            documento_proveedor: compraCompleta.proveedor?.documento || compraCompleta.proveedor?.nit || 'N/A', // ✅ AGREGADO
-            fecha_compra: compraCompleta.fechaCompra,
-            fecha_registro: compraCompleta.fechaRegistro,
-            observaciones: compraCompleta.observaciones || '',
-            insumos: compraCompleta.detalles.map(detalle => ({
-                nombre: detalle.insumo?.nombre || 'N/A',
-                cantidad: detalle.cantidad,
-                precio: detalle.precioUnitario,
-                precioUnitario: detalle.precioUnitario,
-                unidad_medida: detalle.insumo?.unidad || 'N/A'
-            }))
-        };
-
-        setCompraPdf(datosCompra);
-        setPdfPreviewVisible(true);
-
-    } catch (error) {
-        console.error('Error al preparar PDF:', error);
-        showNotification('Error al preparar la visualización: ' + error.message, 'error');
-    } finally {
-        setCargando(false);
-    }
-};
+    };
 
     const cerrarPDFPreview = () => {
         setPdfPreviewVisible(false);
         setCompraPdf(null);
-    };
-
-    const descargarPDFDesdePreview = async () => {
-        try {
-            if (compraPdf) {
-                showNotification('PDF descargado exitosamente', 'success');
-            }
-        } catch (error) {
-            console.error('Error al descargar PDF:', error);
-            showNotification('Error al descargar el PDF: ' + error.message, 'error');
-        }
     };
 
     const generarPDF = async (compra) => {
@@ -223,17 +191,13 @@ export default function ComprasTable() {
             proveedor: "",
             idProveedor: null,
             fechaCompra: "",
-            fechaRegistro: obtenerFechaColombia(), // ✅ Cambio aquí
+            fechaRegistro: obtenerFechaColombia(),
             observaciones: "",
         });
         setInsumosSeleccionados([]);
         setCompraSeleccionada(null);
         setModalTipo(null);
-        setErrores({
-            proveedor: "",
-            fecha_compra: "",
-            insumos: "",
-        });
+        setErrores({ proveedor: "", fecha_compra: "", insumos: "" });
     };
 
     const anularCompra = async () => {
@@ -246,16 +210,13 @@ export default function ComprasTable() {
             setMensajeCarga('Validando compra...');
             setCargando(true);
             
-            // Validar antes de anular
             const validacion = await compraValidationService.validarAnulacionCompra(compraSeleccionada.id);
             
-            // Si no puede anular, mostrar error y detener
             if (!validacion.puedeAnular) {
                 setCargando(false);
                 setModalVisible(false);
                 
                 let mensajeDetallado = validacion.mensaje + '\n\n';
-                
                 validacion.detalles
                     .filter(d => !d.puedeAnular)
                     .forEach(d => {
@@ -270,17 +231,12 @@ export default function ComprasTable() {
                 return;
             }
 
-            // Si puede anular, proceder
             setMensajeCarga('Anulando compra...');
             await anularCompraHook(compraSeleccionada.id);
-            
-            // Cambiar a vista anuladas
             setMostrarAnuladas(true);
-            
             await cargarCompras();
             showNotification("Compra anulada correctamente", "success");
             setModalVisible(false);
-            
         } catch (error) {
             console.error("Error al anular compra:", error);
             showNotification("Error al anular la compra: " + error.message, "error");
@@ -305,32 +261,22 @@ export default function ComprasTable() {
     };
 
     const abrirModal = async (tipo, compra = null) => {
-        console.log("abrirModal llamado con:", tipo, compra);
         setModalTipo(tipo);
 
         if (tipo === "ver" && compra) {
             try {
                 setMensajeCarga('Cargando detalles de compra...');
                 setCargando(true);
-
                 const compraId = compra.id || compra.idcompra || compra.idCompra;
 
                 if (!compraId) {
-                    console.error("No se pudo determinar el ID de la compra:", compra);
                     showNotification("Error: No se encontró un ID válido", "error");
                     return;
                 }
 
-                console.log("Cargando compra con ID:", compraId);
-
-                // Obtener la compra completa desde el API
                 const datosCompra = await compraApiService.obtenerCompraPorId(compraId);
-                console.log("Compra completa obtenida:", datosCompra);
-
-                // Guardar la compra completa
                 setCompraSeleccionada(datosCompra);
 
-                // Formatear los insumos para el formulario
                 const detalles = datosCompra.detalles || [];
                 const insumosFormateados = detalles.map((detalle) => ({
                     id: detalle.idInsumo || detalle.id,
@@ -343,7 +289,6 @@ export default function ComprasTable() {
 
                 setInsumosSeleccionados(insumosFormateados);
                 setMostrarAgregarCompra(true);
-                
             } catch (error) {
                 console.error("Error al cargar compra:", error);
                 showNotification("Error al cargar la compra: " + error.message, "error");
@@ -355,7 +300,7 @@ export default function ComprasTable() {
                 proveedor: "",
                 idProveedor: null,
                 fechaCompra: "",
-                fechaRegistro: obtenerFechaColombia(), 
+                fechaRegistro: obtenerFechaColombia(),
                 observaciones: "",
             });
             setCompraSeleccionada(null);
@@ -364,53 +309,26 @@ export default function ComprasTable() {
             setMostrarAgregarCompra(true);
         } else if (tipo === "anular" && compra) {
             const compraId = compra.id || compra.idcompra || compra.idCompra;
-
             if (!compraId) {
-                console.error("No se pudo determinar el ID de la compra:", compra);
                 showNotification("Error: No se encontró un ID válido", "error");
                 return;
             }
-
             setCompraSeleccionada({ ...compra, id: compraId });
             setModalVisible(true);
         }
     };
 
     const filtrarCompras = (compras, filtro) => {
-        if (!filtro || filtro.trim() === '') {
-            return compras;
-        }
-
+        if (!filtro || filtro.trim() === '') return compras;
         const filtroLower = filtro.toLowerCase().trim();
         
         return compras.filter(compra => {
             const proveedorMatch = compra.proveedor?.nombre && compra.proveedor.nombre.toLowerCase().includes(filtroLower);
             const fechaMatch = compra.fechaCompra && compra.fechaCompra.toLowerCase().includes(filtroLower);
-            const observacionesMatch = compra.observaciones && compra.observaciones.toLowerCase().includes(filtroLower);
-            
-            const idMatch = compra.id && compra.id.toString().includes(filtroLower);
-            const totalMatch = compra.total && compra.total.toString().includes(filtroLower);
-            const subtotalMatch = compra.subtotal && compra.subtotal.toString().includes(filtroLower);
-            const ivaMatch = compra.iva && compra.iva.toString().includes(filtroLower);
-            
             const totalFormateado = compra.total ? formatoCOP(compra.total) : '';
-            const subtotalFormateado = compra.subtotal ? formatoCOP(compra.subtotal) : '';
-            const ivaFormateado = compra.iva ? formatoCOP(compra.iva) : '';
-            
             const totalFormateadoMatch = totalFormateado.toLowerCase().includes(filtroLower);
-            const subtotalFormateadoMatch = subtotalFormateado.toLowerCase().includes(filtroLower);
-            const ivaFormateadoMatch = ivaFormateado.toLowerCase().includes(filtroLower);
             
-            return proveedorMatch || 
-                    fechaMatch || 
-                    observacionesMatch ||
-                    idMatch || 
-                    totalMatch || 
-                    subtotalMatch || 
-                    ivaMatch ||
-                    totalFormateadoMatch ||
-                    subtotalFormateadoMatch ||
-                    ivaFormateadoMatch;
+            return proveedorMatch || fechaMatch || totalFormateadoMatch;
         });
     };
 
@@ -449,7 +367,6 @@ export default function ComprasTable() {
             setMensajeCarga('Guardando proveedor...');
             setCargando(true);
             const nuevoProveedor = await guardarProveedorHook(proveedorData);
-            
             await cargarProveedores();
             
             setCompraData(prev => ({
@@ -460,7 +377,6 @@ export default function ComprasTable() {
 
             setErrores(prev => ({ ...prev, proveedor: '' }));
             showNotification('Proveedor agregado exitosamente');
-            
             setModalProveedorVisible(false);
             setModalProveedorTipo(null);
         } catch (error) {
@@ -504,83 +420,61 @@ export default function ComprasTable() {
 
             {!mostrarAgregarCompra ? (
                 <>
-                    <div className="admin-toolbar" >
+                    {/* Toolbar: Buscador + Agregar a la derecha */}
+                    <div className="admin-toolbar">
+                        <SearchBar 
+                            placeholder="Buscar Compras" 
+                            value={filtro} 
+                            onChange={setFiltro} 
+                        />
                         <button 
                             className="admin-button pink" 
                             onClick={() => abrirModal('agregar')} 
                             type="button"
                             disabled={cargando}
                         >
-                            + Agregar
+                            <i className="fas fa-plus"></i> Agregar
                         </button>
-
-                        <SearchBar 
-                            placeholder="Buscar Compras" 
-                            value={filtro} 
-                            onChange={setFiltro} 
-                        />
                     </div>
 
- <div className="ventas-header-container">
-    <h2 className="admin-section-title">Gestión de Compras</h2>
-    <div className="filter-buttons-container">
-        <button
-            className={`filter-tab ${!mostrarAnuladas ? 'filter-tab-active' : ''}`}
-            onClick={() => setMostrarAnuladas(false)}
-            type="button"
-        >
-            Activas
-        </button>
-        <button
-            className={`filter-tab ${mostrarAnuladas ? 'filter-tab-active' : ''}`}
-            onClick={() => setMostrarAnuladas(true)}
-            type="button"
-        >
-            Anuladas
-        </button>
-    </div>
-</div>
+                    <div className="ventas-header-container">
+                        <h2 className="admin-section-title">Gestión de Compras</h2>
+                        <div className="filter-buttons-container">
+                            <button
+                                className={`filter-tab ${!mostrarAnuladas ? 'filter-tab-active' : ''}`}
+                                onClick={() => setMostrarAnuladas(false)}
+                                type="button"
+                            >
+                                Activas
+                            </button>
+                            <button
+                                className={`filter-tab ${mostrarAnuladas ? 'filter-tab-active' : ''}`}
+                                onClick={() => setMostrarAnuladas(true)}
+                                type="button"
+                            >
+                                Anuladas
+                            </button>
+                        </div>
+                    </div>
 
-                        <DataTable
+                    <DataTable
                         value={comprasFiltradas}
                         className="admin-table compact-paginator"
                         paginator
-                        rows={10}
+                        rows={5}
                         rowsPerPageOptions={[5, 10, 25, 50]}
                         rowClassName={rowData => !rowData.estado ? 'fila-anulada' : ''}
-                        tableStyle={{ 
-                            tableLayout: 'fixed',
-                            width: '100%'
-                        }}
-                        >
+                        tableStyle={{ minWidth: '50rem' }}
+                    >
                         <Column 
-                            header="Nº" 
+                            header="N°" 
                             body={(r, { rowIndex }) => rowIndex + 1} 
-                            style={{ 
-                                width: '60px', 
-                                textAlign: 'center',
-                                padding: '8px 4px'
-                            }} 
-                            headerStyle={{
-                                width: '60px',
-                                textAlign: 'center',
-                                padding: '8px 4px'
-                            }}
+                            style={{ width: '50px' }} 
                         />
                         <Column 
                             field="proveedor" 
                             header="Proveedor" 
                             body={rowData => rowData.proveedor?.nombre || 'N/A'}
-                            style={{ 
-                                width: '25%',
-                                textAlign: 'left',
-                                padding: '8px'
-                            }}
-                            headerStyle={{
-                                width: '25%',
-                                textAlign: 'left',
-                                padding: '8px'
-                            }}
                         />
                         <Column 
                             field="fechaCompra" 
@@ -592,54 +486,108 @@ export default function ComprasTable() {
                                     return rowData.fechaCompra || 'N/A';
                                 }
                             }}
-                            style={{ 
-                                width: '20%',
-                                textAlign: 'center',
-                                padding: '8px'
-                            }}
-                            headerStyle={{
-                                width: '20%',
-                                textAlign: 'center',
-                                padding: '8px'
-                            }}
                         />
                         <Column
                             field="total"
                             header="Total"
                             body={(rowData) => formatoCOP(rowData.total)}
-                            style={{ 
-                                width: '20%',
-                                textAlign: 'right',
-                                padding: '8px'
-                            }}
-                            headerStyle={{
-                                width: '20%',
-                                textAlign: 'right',
-                                padding: '8px'
-                            }}
                         />
                         <Column
-                            header="Acción"
+                            header="Acciones"
                             body={rowData => (
-                                <CompraActions 
-                                    compra={rowData}
-                                    onVer={() => abrirModal('ver', rowData)}
-                                    onAnular={() => abrirModal('anular', rowData)}
-                                    onReactivar={() => reactivarCompra(rowData)}
-                                    onGenerarPDF={() => generarPDF(rowData)}
-                                    cargando={cargando}
-                                />
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '3px' }}>
+                                    <Tooltip text="Visualizar">
+                                        <button 
+                                            className="admin-button"
+                                            onClick={() => abrirModal('ver', rowData)}
+                                            disabled={cargando}
+                                            style={{
+                                                background: '#e3f2fd',
+                                                color: '#1976d2',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                width: '26px',
+                                                height: '26px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <i className="fas fa-eye" style={{ fontSize: '11px' }}></i>
+                                        </button>
+                                    </Tooltip>
+
+                                    {rowData.estado ? (
+                                        <Tooltip text="Anular">
+                                            <button 
+                                                className="admin-button"
+                                                onClick={() => abrirModal('anular', rowData)}
+                                                disabled={cargando}
+                                                style={{
+                                                    background: '#ffebee',
+                                                    color: '#d32f2f',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <i className="fas fa-ban" style={{ fontSize: '11px' }}></i>
+                                            </button>
+                                        </Tooltip>
+                                    ) : (
+                                        <Tooltip text="Reactivar">
+                                            <button 
+                                                className="admin-button"
+                                                onClick={() => reactivarCompra(rowData)}
+                                                disabled={cargando}
+                                                style={{
+                                                    background: '#e8f5e9',
+                                                    color: '#388e3c',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <i className="fas fa-check-circle" style={{ fontSize: '11px' }}></i>
+                                            </button>
+                                        </Tooltip>
+                                    )}
+
+                                    <Tooltip text="Generar PDF">
+                                        <button 
+                                            className="admin-button"
+                                            onClick={() => generarPDF(rowData)}
+                                            disabled={cargando}
+                                            style={{
+                                                background: '#fff8e1',
+                                                color: '#f57c00',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                width: '26px',
+                                                height: '26px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <i className="fas fa-file-pdf" style={{ fontSize: '11px' }}></i>
+                                        </button>
+                                    </Tooltip>
+                                </div>
                             )}
-                            style={{ 
-                                width: '15%',
-                                textAlign: 'center',
-                                padding: '8px'
-                            }}
-                            headerStyle={{
-                                width: '15%',
-                                textAlign: 'center',
-                                padding: '8px'
-                            }}
+                            style={{ width: '100px' }}
                         />
                     </DataTable>
 
@@ -686,28 +634,6 @@ export default function ComprasTable() {
                     loading={cargando}
                 />
             )}
-            
-            <style jsx>{`
-                .fila-anulada {
-                    background-color: #ffebee !important;
-                    opacity: 0.7;
-                }
-                
-                .admin-table .p-datatable-header-cell {
-                    text-align: center;
-                    vertical-align: middle;
-                    padding: 12px 8px;
-                    font-weight: 600;
-                    background-color: #f8f9fa;
-                    border-bottom: 2px solid #dee2e6;
-                }
-                
-                .admin-table .p-datatable-tbody > tr > td {
-                    vertical-align: middle;
-                    padding: 8px;
-                    border-bottom: 1px solid #dee2e6;
-                }
-            `}</style>
         </div>
     );
 }

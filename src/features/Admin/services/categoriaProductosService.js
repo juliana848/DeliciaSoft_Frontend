@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://deliciasoft-backend.onrender.com/api';
+const API_BASE_URL = 'https://deliciasoft-backend-i6g9.onrender.com/api';
 
 class CategoriaProductoApiService {
   // Obtener todas las categorías

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e91e63 0%, #ec407a 100%);
+            color: white;
+            padding: 12px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(233, 30, 99, 0.3);
+            position: relative;
+            top: 70px;
+            left: 0;
+            z-index: -1;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+            border-bottom-left-radius: 0;
+        }
+
+        .header i {
+            font-size: 18px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #f0f0f0;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #e91e63;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 14px;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, #e91e63 0%, #ec407a 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+        }
+
+        .table-container {
+            background: white;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 10px;     
+            border-bottom-right-radius: 10px;
+            border-bottom-left-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #fffafd;
+            border-bottom: 2px solid #f8b6d0;
+        }
+
+        th {
+            padding: 18px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        td {
+            padding: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .user-email {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-cliente {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .badge-vip {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-admin {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle.active {
+            background: linear-gradient(135deg, #e91e63 0%, #ec407a 100%);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle.active::after {
+            left: 27px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-view {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .btn-view:hover {
+            background: #bbdefb;
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .btn-edit:hover {
+            background: #fff59d;
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .btn-delete:hover {
+            background: #ffcdd2;
+            transform: translateY(-2px);
+        }
+
+        .number-cell {
+            font-weight: 600;
+            color: #666;
+        }
+
+        th i {
+            color: #e91e63;
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .items-per-page {
+            padding: 6px 12px;
+            border: 1.5px solid #f8bbd0;
+            border-radius: 20px;
+            background: white;
+            color: #e91e63;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .items-per-page:hover {
+            background: #fce4ec;
+            border-color: #e91e63;
+        }
+
+        .items-per-page:focus {
+            border-color: #e91e63;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1.5px solid #f8bbd0;
+            color: #e91e63;
+            padding: 6px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(.active) {
+            background: #fce4ec;
+            transform: scale(1.1);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #e91e63 0%, #ec407a 100%);
+            color: white;
+            border-color: #e91e63;
+            box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+        }
+
+        .page-btn.nav {
+            border-radius: 50%;
+        }
+
+        .page-btn.nav i {
+            font-size: 10px;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .page-btn:disabled:hover {
+            transform: none;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <i class="fas fa-folder-open"></i>
+        Gestión de Usuarios
+    </div>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar usuarios...">
+        </div>
+        <button class="btn-create">
+            <i class="fas fa-user-plus"></i>
+            Crear Usuario
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> N°</th>
+                    <th><i class="fas fa-user"></i> NOMBRE</th>
+                    <th><i class="fas fa-user-tag"></i> APELLIDO</th>
+                    <th><i class="fas fa-envelope"></i> CORREO</th>
+                    <th><i class="fas fa-user-shield"></i> ROL</th>
+                    <th><i class="fas fa-toggle-on"></i> ESTADO</th>
+                    <th><i class="fas fa-cog"></i> ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="number-cell">1</td>
+                    <td>María</td>
+                    <td>González</td>
+                    <td class="user-email">maria.gonzalez@email.com</td>
+                    <td><span class="badge badge-cliente">Cliente</span></td>
+                    <td>
+                        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-action btn-view" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn-action btn-delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="number-cell">2</td>
+                    <td>Carlos</td>
+                    <td>Rodríguez</td>
+                    <td class="user-email">carlos.rodriguez@email.com</td>
+                    <td><span class="badge badge-vip"><i class="fas fa-crown"></i> Cliente VIP</span></td>
+                    <td>
+                        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-action btn-view" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn-action btn-delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="number-cell">3</td>
+                    <td>Ana</td>
+                    <td>Martínez</td>
+                    <td class="user-email">ana.martinez@email.com</td>
+                    <td><span class="badge badge-cliente">Cliente</span></td>
+                    <td>
+                        <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-action btn-view" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn-action btn-delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="number-cell">4</td>
+                    <td>Luis</td>
+                    <td>Fernández</td>
+                    <td class="user-email">luis.fernandez@email.com</td>
+                    <td><span class="badge badge-admin">Administrador</span></td>
+                    <td>
+                        <div class="toggle" onclick="this.classList.toggle('active')"></div>
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-action btn-view" title="Ver">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn-action btn-delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>            
+        </table>
+        
+        <div class="pagination">
+            
+            <div class="pagination-controls">
+                <button class="page-btn nav" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">4</button>
+                <button class="page-btn">5</button>
+                <button class="page-btn nav">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+             <select class="items-per-page" id="itemsPerPage">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        // Funcionalidad de paginación
+        const pageButtons = document.querySelectorAll('.page-btn:not(.nav)');
+        const prevButton = document.querySelector('.pagination .page-btn.nav:first-child');
+        const nextButton = document.querySelector('.pagination-controls .page-btn.nav:last-child');
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+
+        pageButtons.forEach((button, index) => {
+            button.addEventListener('click', () => {
+                pageButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Actualizar botones de navegación
+                prevButton.disabled = index === 0;
+                nextButton.disabled = index === pageButtons.length - 1;
+            });
+        });
+
+        prevButton.addEventListener('click', () => {
+            const activeIndex = Array.from(pageButtons).findIndex(btn => btn.classList.contains('active'));
+            if (activeIndex > 0) {
+                pageButtons[activeIndex - 1].click();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            const activeIndex = Array.from(pageButtons).findIndex(btn => btn.classList.contains('active'));
+            if (activeIndex < pageButtons.length - 1) {
+                pageButtons[activeIndex + 1].click();
+            }
+        });
+
+        // Cambiar cantidad de registros por página
+        itemsPerPageSelect.addEventListener('change', (e) => {
+            console.log(`Mostrando ${e.target.value} registros por página`);
+            // Aquí puedes agregar la lógica para cargar los datos según la cantidad seleccionada
+        });
+    </script>
+</body>
+</html>

@@ -1,61 +1,82 @@
-/* Layout Styles */
+/* Layout Styles - Optimizado */
 .layout-container {
-  display: flex;
-  min-height: 100vh;
+    display: flex;
+    min-height: 100vh;
 }
 
 .main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  transition: margin-left 0.3s ease;
-  padding-top: 0; /* Sin padding - elementos fijos independientes */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease;
+    padding-top: 0;
 }
 
+/* Reducir margen izquierdo - más pegado al sidebar */
 .main-content.with-sidebar {
-  margin-left: 280px;
+    margin-left: 240px; /* Antes era 280px */
 }
 
 .main-content.full-width {
-  margin-left: 0;
-  padding-top: 0; /* Sin header en páginas públicas */
+    margin-left: 0;
+    padding-top: 0;
 }
 
+/* Content wrapper más compacto */
 .content-wrapper {
-  flex: 1;
-  padding: 2rem;
-  min-height: calc(100vh - 70px);
+    flex: 1;
+    padding: 15px 20px; /* Reducido de 2rem */
+    padding-top: 70px; /* Espacio para el header */
+    min-height: calc(100vh - 70px);
 }
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .main-content.with-sidebar {
-    margin-left: 0;
-  }
+    .main-content.with-sidebar {
+        margin-left: 0;
+    }
+    
+    .content-wrapper {
+        padding: 12px 15px;
+        padding-top: 70px;
+    }
 }
 
 @media (max-width: 768px) {
-  .main-content {
-    padding-top: 60px; /* Header más pequeño en móvil */
-  }
-  
-  .content-wrapper {
-    padding: 1rem;
-    min-height: calc(100vh - 60px);
-  }
+    .main-content {
+        padding-top: 0;
+    }
+    
+    .content-wrapper {
+        padding: 10px 12px;
+        padding-top: 60px;
+        min-height: calc(100vh - 60px);
+    }
 }
 
 /* Smooth transitions */
 * {
-  box-sizing: border-box;
-}
-
-.layout-container * {
-  transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 /* Asegurar que el header nunca se mueva */
 .admin-header-fixed {
-  position: fixed !important;
-  top: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+}
+
+/* Quitar márgenes innecesarios en el contenido */
+.content-wrapper > * {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Asegurar que las tablas ocupen todo el ancho disponible */
+.content-wrapper .p-datatable {
+    width: 100%;
+}
+
+.content-wrapper .admin-wrapper {
+    padding: 0;
+    background: transparent;
 }

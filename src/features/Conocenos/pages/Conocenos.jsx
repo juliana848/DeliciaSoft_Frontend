@@ -3,6 +3,7 @@ import './conocenos.css';
 import cup from "./cup.png";
 import cup2 from "./cup2.png";
 
+// Estados para controlar visibilidad, imágenes y carga
 const Conocenos = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [imagenes, setImagenes] = useState({});
@@ -13,6 +14,7 @@ const Conocenos = () => {
     cargarImagenes();
   }, []);
 
+  // Función para obtener las imágenes desde el backend
   const cargarImagenes = async () => {
     try {
       const response = await fetch('https://deliciasoft-backend.onrender.com/api/imagenes');
@@ -31,6 +33,7 @@ const Conocenos = () => {
     }
   };
 
+  // Pantalla de carga
   if (loading) {
     return (
       <div className="conocenos-container">

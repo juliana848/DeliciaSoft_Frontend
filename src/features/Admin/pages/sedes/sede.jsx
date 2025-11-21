@@ -65,23 +65,6 @@ export default function SedesPage() {
         onClose={hideNotification}
       />
       
-      <div className="admin-toolbar">
-        <button
-          className="admin-button pink"
-          onClick={() => abrirModal("agregar")}
-          type="button"
-          disabled={loading}
-          style={{ padding: "10px 18px", fontSize: "15px", fontWeight: "500" }}
-        >
-          + Agregar
-        </button>
-        <SearchBar
-          placeholder="Buscar sede..."
-          value={filtro}
-          onChange={setFiltro}
-        />
-      </div>
-      
       <h2 className="admin-section-title">Gestión de Sedes</h2>
 
       <SedeTable
@@ -91,6 +74,10 @@ export default function SedesPage() {
         onVerSede={(sede) => abrirModal("ver", sede)}
         onEditarSede={(sede) => abrirModal("editar", sede)}
         onEliminarSede={(sede) => abrirModal("eliminar", sede)}
+        filtro={filtro}
+        setFiltro={setFiltro}
+        onAgregar={() => abrirModal("agregar")}
+        SearchBar={SearchBar}
       />
 
       <SedeModal

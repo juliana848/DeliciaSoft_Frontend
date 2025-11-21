@@ -1,355 +1,47 @@
-.admin-table .p-datatable-thead > tr > th {
-  white-space: nowrap;
-  padding: 12px 8px;
-  background-color: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-  font-weight: 600;
-  color: #374151;
-}
-
-.admin-table .p-datatable-tbody > tr > td {
-  padding: 12px 8px;
-  vertical-align: middle;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.admin-table .p-datatable-tbody > tr:hover {
-  background-color: #f9fafb;
-}
-
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-
-.action-buttons button {
-  min-width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.action-buttons button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.action-buttons button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-
-
-.sede-image-container {
-  margin-top: 10px;
-  text-align: center;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  background-color: #f9fafb;
-}
-
-.sede-image-preview {
-  max-width: 100%;
-  max-height: 400px;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.sede-image-error {
-  color: #ef4444;
-  font-style: italic;
-  padding: 20px;
-  border: 1px dashed #ef4444;
-  border-radius: 8px;
-  margin: 0;
-}
-
-.sede-no-image {
-  margin-top: 10px;
-  padding: 20px;
-  text-align: center;
-  border: 1px dashed #ddd;
-  border-radius: 8px;
-  background-color: #f9fafb;
-  color: #666;
-}
-
-.sede-image-upload-container {
-  margin-top: 10px;
-  text-align: center;
-  position: relative;
-  max-height: 250px;
-  overflow: hidden;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9fafb;
-}
-
-.sede-image-upload-preview {
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.sede-image-upload-preview[style*="opacity: 1"] {
-  opacity: 1;
-}
-
-.sede-image-delete-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-  z-index: 10;
-  line-height: 1;
-  padding: 0;
-}
-
-.sede-image-delete-btn:hover {
-  background: #dc2626;
-  transform: scale(1.1);
-}
-
-.sede-image-delete-btn:active {
-  transform: scale(0.95);
-}
-
-@media (max-width: 768px) {
-  .admin-table .p-datatable-thead > tr > th,
-  .admin-table .p-datatable-tbody > tr > td {
-    padding: 8px 4px;
-    font-size: 13px;
-  }
-
-  .action-buttons {
-    gap: 4px;
-  }
-
-  .action-buttons button {
-    min-width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .sede-image-preview {
-    max-height: 300px;
-  }
-}
-
-.modal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.modal-field {
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-label {
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #374151;
-  font-size: 14px;
-}
-
-.modal-input {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.modal-input:focus {
-  outline: none;
-  border-color: #ec4899;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
-}
-
-.modal-input:disabled {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
-}
-
-
-.admin-wrapper {
-  position: relative;
-  min-height: 400px;
-}
-
-/* Asegurar que el loading se vea sobre todo */
-.loading-overlay {
-  position: fixed !important;
-  z-index: 9999 !important;
-}
-
-
-.modal-input:focus {
-  outline: none;
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
-}
-
-.modal-input:focus-visible {
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
-}
-
-
-.modal-confirmation {
-  text-align: center;
-  padding: 30px 20px;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.confirmation-icon {
-  font-size: 72px;
-  color: #f59e0b;
-  margin-bottom: 20px;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-.confirmation-icon i {
-  filter: drop-shadow(0 4px 6px rgba(245, 158, 11, 0.3));
-}
-
-.confirmation-text {
-  font-size: 18px;
-  color: #1f2937;
-  margin-bottom: 16px;
-  line-height: 1.6;
-  font-weight: 500;
-}
-
-.confirmation-text strong {
-  color: #ec4899;
-  font-weight: 700;
-}
-
-.confirmation-warning {
-  font-size: 15px;
-  color: #6b7280;
-  font-style: italic;
-  margin-top: 8px;
-  padding: 12px 20px;
-  background-color: #fef2f2;
-  border-left: 4px solid #ef4444;
-  border-radius: 4px;
-  max-width: 400px;
-}
-
-
-.sede-image-upload-preview {
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  transition: opacity 0.3s ease;
-}
-
-/* Mostrar imagen inmediatamente */
-.sede-image-upload-container img {
-  opacity: 1 !important;
-}
-
 /* ============================================
-   MODAL DE CONFIRMACIÓN COMPACTO
+   TOOLBAR DE SEDES
    ============================================ */
 
-.modal-confirmation-compact {
-  text-align: center;
-  padding: 20px 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+.sede-toolbar {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  margin-bottom: 20px !important;
+  gap: 12px !important;
+  width: 100% !important;
 }
 
-.confirmation-icon-small {
-  font-size: 48px;
-  margin-bottom: 8px;
+.sede-toolbar-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  background-color: #ec4899 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 25px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.2) !important;
 }
 
-.confirmation-text-compact {
-  font-size: 16px;
-  color: #1f2937;
-  margin: 0;
-  line-height: 1.5;
+.sede-toolbar-button:hover {
+  background-color: #db2777 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(236, 72, 153, 0.3) !important;
 }
 
-.confirmation-text-compact strong {
-  color: #ec4899;
-  font-weight: 600;
-}
-
-.confirmation-warning-compact {
-  font-size: 13px;
-  color: #6b7280;
-  font-style: italic;
-  margin-top: 4px;
-  padding: 8px 16px;
-  background-color: #fef2f2;
-  border-left: 3px solid #ef4444;
-  border-radius: 4px;
-  width: 100%;
-  text-align: left;
-}
-
-/* ============================================
-   BORDES ROSA NEÓN EN INPUTS
-   ============================================ */
-
-.modal-input:focus {
-  outline: none;
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
-}
-
-.modal-input:focus-visible {
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
+.sede-toolbar-search {
+  width: 300px !important;
+  min-width: 300px !important;
+  max-width: 300px !important;
 }
 
 /* ============================================
-   ESTILOS PARA LA TABLA DE SEDES
+   TABLA DE SEDES
    ============================================ */
 
 .admin-table .p-datatable-thead > tr > th {
@@ -531,11 +223,37 @@
   cursor: not-allowed;
 }
 
+.modal-input:focus {
+  outline: none;
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
+}
+
+.modal-input:focus-visible {
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2) !important;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
 
 @media (max-width: 768px) {
+  .sede-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .sede-toolbar-button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .sede-toolbar-search {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .admin-table .p-datatable-thead > tr > th,
   .admin-table .p-datatable-tbody > tr > td {
     padding: 8px 4px;

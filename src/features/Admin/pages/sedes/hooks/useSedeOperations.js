@@ -1,7 +1,5 @@
 import { useState, useRef } from "react";
 import sedeApiService from "../../../services/sedes_services";
-import { validarDireccionMedellin, normalizarDireccion } from "./validadorDirecciones";
-
 
 export default function useSedeOperations(showNotification) {
   const [sedes, setSedes] = useState([]);
@@ -30,25 +28,6 @@ export default function useSedeOperations(showNotification) {
     } catch (error) {
       console.error("Error al cargar sedes:", error);
       showNotification("Error al cargar las sedes", "error");
-      const mockSedes = [
-        {
-          id: 501,
-          nombre: "San Pablo",
-          Direccion: "Cra. 37 #97-27, Medellín, Antioquia, Colombia",
-          Telefono: "325888960",
-          activo: true,
-          imagenUrl: null,
-        },
-        {
-          id: 502,
-          nombre: "San Benito",
-          Direccion: "Cra. 57 #51-83, Medellín, Antioquia, Colombia",
-          Telefono: "3107412156",
-          activo: true,
-          imagenUrl: null,
-        },
-      ];
-      setSedes(mockSedes);
     } finally {
       setLoading(false);
     }
@@ -107,6 +86,7 @@ export default function useSedeOperations(showNotification) {
     setModalVisible(false);
     setSedeSeleccionada(null);
     setModalTipo(null);
+    
     setFormData({
       id: "",
       nombre: "",
@@ -117,9 +97,12 @@ export default function useSedeOperations(showNotification) {
       imagenPreview: null,
       imagenUrl: null,
     });
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    
+    console.log('🧹 Modal cerrado y estado limpiado');
   };
 
   const handleInputChange = (field, value) => {
@@ -203,10 +186,8 @@ export default function useSedeOperations(showNotification) {
       return false;
     }
 
-    // Validación mejorada de dirección
-    const validacionDireccion = validarDireccionMedellin(Direccion.trim());
-    if (!validacionDireccion.valida) {
-      showNotification(validacionDireccion.mensaje, "error");
+    if (Direccion.trim().length < 5) {
+      showNotification("La dirección debe tener al menos 5 caracteres", "error");
       return false;
     }
 
@@ -260,25 +241,56 @@ export default function useSedeOperations(showNotification) {
     try {
       setLoading(true);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append("nombre", formData.nombre.trim());
-      formDataToSend.append("direccion", formData.Direccion.trim());
-      formDataToSend.append("telefono", formData.Telefono.replace(/\s/g, ""));
-      formDataToSend.append("estado", formData.activo ? "true" : "false");
+      // 🔧 VERIFICAR SI REALMENTE HAY IMAGEN
+      const tieneImagen = formData.imagen && 
+                         formData.imagen instanceof File && 
+                         formData.imagen.size > 0;
+      
+      console.log('🔍 Estado de imagen:', {
+        existe: !!formData.imagen,
+        esFile: formData.imagen instanceof File,
+        tamaño: formData.imagen?.size || 0,
+        tieneImagen
+      });
 
-      if (formData.imagen) {
-        formDataToSend.append("imagen", formData.imagen);
+      let datosParaEnviar;
+
+      if (tieneImagen) {
+        // ✅ CON IMAGEN: Usar FormData
+        console.log('📤 Enviando con FormData (CON imagen)');
+        const formDataToSend = new FormData();
+        formDataToSend.append("nombre", formData.nombre.trim());
+        // 🔧 CORRECCIÓN CRÍTICA: Backend espera campos en minúsculas
+        formDataToSend.append("direccion", formData.Direccion.trim());
+        formDataToSend.append("telefono", formData.Telefono.replace(/\s/g, ""));
+        formDataToSend.append("estado", formData.activo ? "true" : "false");
+        formDataToSend.append("imagen", formData.imagen, formData.imagen.name);
+        
+        datosParaEnviar = formDataToSend;
+      } else {
+        // ✅ SIN IMAGEN: Usar JSON simple
+        console.log('📤 Enviando con JSON (SIN imagen)');
+        // 🔧 CORRECCIÓN CRÍTICA: Usar minúsculas para coincidir con el backend
+        datosParaEnviar = {
+          nombre: formData.nombre.trim(),
+          direccion: formData.Direccion.trim(),  // ✅ Backend espera "direccion"
+          telefono: formData.Telefono.replace(/\s/g, ""),  // ✅ Backend espera "telefono"
+          estado: formData.activo
+        };
       }
+
+      console.log('📋 Tipo de datos:', tieneImagen ? 'FormData' : 'JSON');
+      console.log('📦 Datos a enviar:', tieneImagen ? 'FormData (ver Network tab)' : datosParaEnviar);
 
       let resultado;
       if (modalTipo === "agregar") {
-        resultado = await sedeApiService.crearSede(formDataToSend);
+        resultado = await sedeApiService.crearSede(datosParaEnviar);
         setSedes([...sedes, resultado]);
         showNotification("Sede agregada exitosamente");
       } else if (modalTipo === "editar") {
         resultado = await sedeApiService.actualizarSede(
           sedeSeleccionada.id,
-          formDataToSend
+          datosParaEnviar
         );
         const sedesActualizadas = sedes.map((s) =>
           s.id === sedeSeleccionada.id ? resultado : s
@@ -289,7 +301,7 @@ export default function useSedeOperations(showNotification) {
 
       cerrarModal();
     } catch (error) {
-      console.error("Error al guardar sede:", error);
+      console.error("❌ Error al guardar sede:", error);
       showNotification(error.message || "Error al guardar la sede", "error");
     } finally {
       setLoading(false);

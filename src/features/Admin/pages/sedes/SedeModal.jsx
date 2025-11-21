@@ -182,7 +182,7 @@ export default function SedeModal({
         </Modal>
       );
 
-  case "eliminar":
+case "eliminar":
       return (
         <Modal visible={visible} onClose={onClose} width="460px">
           <div style={{ 
@@ -196,7 +196,7 @@ export default function SedeModal({
               paddingBottom: "12px",
               borderBottom: "2px solid #ec4899"
             }}>
-              Eliminar Insumo
+              Eliminar Sede
             </h2>
           </div>
           
@@ -207,7 +207,7 @@ export default function SedeModal({
               lineHeight: "1.6",
               margin: 0
             }}>
-              ¿Seguro que quieres eliminar el insumo{" "}
+              ¿Seguro que quieres eliminar la sede{" "}
               <strong style={{ fontWeight: "600" }}>{sede?.nombre}</strong>?
             </p>
           </div>
@@ -260,7 +260,7 @@ export default function SedeModal({
                 if (!loading) e.target.style.backgroundColor = "#db2777";
               }}
               onMouseOut={(e) => {
-                if (!loading) e.target.style.backgroundColor = "#f0f017ff";
+                if (!loading) e.target.style.backgroundColor = "#ec4899";
               }}
             >
               {loading ? "Eliminando..." : "Eliminar"}

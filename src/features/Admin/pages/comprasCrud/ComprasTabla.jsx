@@ -79,6 +79,47 @@ export default function ComprasTable() {
         }).format(valor);
     };
 
+    // 🆕 Función mejorada para formatear fechas correctamente
+    const formatearFecha = (fecha) => {
+        if (!fecha) return 'N/A';
+        
+        try {
+            // Crear objeto Date sin conversión de zona horaria
+            const fechaStr = String(fecha);
+            let fechaObj;
+            
+            // Si la fecha viene en formato ISO con hora (2024-01-15T00:00:00.000Z)
+            if (fechaStr.includes('T')) {
+                // Extraer solo la parte de la fecha (YYYY-MM-DD)
+                const soloFecha = fechaStr.split('T')[0];
+                const [year, month, day] = soloFecha.split('-');
+                fechaObj = new Date(Number(year), Number(month) - 1, Number(day));
+            } else if (fechaStr.includes('-')) {
+                // Formato YYYY-MM-DD
+                const [year, month, day] = fechaStr.split('-');
+                fechaObj = new Date(Number(year), Number(month) - 1, Number(day));
+            } else {
+                // Intentar parsear normalmente
+                fechaObj = new Date(fecha);
+            }
+            
+            // Verificar si la fecha es válida
+            if (isNaN(fechaObj.getTime())) {
+                return 'Fecha inválida';
+            }
+            
+            // Formatear manualmente para evitar problemas de zona horaria
+            const dia = String(fechaObj.getDate()).padStart(2, '0');
+            const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+            const anio = fechaObj.getFullYear();
+            
+            return `${dia}/${mes}/${anio}`;
+        } catch (error) {
+            console.error('Error al formatear fecha:', error);
+            return 'Error en fecha';
+        }
+    };
+
     useEffect(() => {
         const cargarInsumos = async () => {
             setMensajeCarga('Cargando insumos...');
@@ -332,12 +373,8 @@ export default function ComprasTable() {
         });
     };
 
+    // 🆕 El filtrado ya no ordena porque las compras ya vienen ordenadas de useCompras
     const comprasFiltradas = filtrarCompras(compras, filtro)
-        .sort((a, b) => {
-            const fechaA = new Date(a.fechaCompra || a.fechacompra).getTime();
-            const fechaB = new Date(b.fechaCompra || b.fechacompra).getTime();
-            return fechaB - fechaA;
-        })
         .filter(c => {
             if (mostrarAnuladas) {
                 return c.estado === false;
@@ -479,13 +516,7 @@ export default function ComprasTable() {
                         <Column 
                             field="fechaCompra" 
                             header="Fecha Compra" 
-                            body={rowData => {
-                                try {
-                                    return new Date(rowData.fechaCompra).toLocaleDateString('es-ES');
-                                } catch {
-                                    return rowData.fechaCompra || 'N/A';
-                                }
-                            }}
+                            body={rowData => formatearFecha(rowData.fechaCompra || rowData.fechacompra)}
                         />
                         <Column
                             field="total"

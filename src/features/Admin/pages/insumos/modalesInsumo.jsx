@@ -8,7 +8,6 @@ import SearchableSelect from "./SearchableSelect";
 import StyledSelect from "./StyledSelect";
 import './styles.css'
 
-
 export default function ModalInsumo({
   modal,
   cerrar,
@@ -38,11 +37,14 @@ export default function ModalInsumo({
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [catalogosExistentes, setCatalogosExistentes] = useState([]);
   const [cargandoCatalogos, setCargandoCatalogos] = useState(false);
+  const [nombreDuplicado, setNombreDuplicado] = useState(false);
+  const [verificandoNombre, setVerificandoNombre] = useState(false);
   const fileInputRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   const opcionesCatalogos = [
-    { label: '🍬 Adiciones', value: 'adicion' },
-    { label: '🍫 Toppings', value: 'topping' },
+    { label: '🬠Adiciones', value: 'adicion' },
+    { label: '🫠Toppings', value: 'topping' },
     { label: '🌶️ Salsas', value: 'salsa' },
     { label: '🎨 Sabores', value: 'sabor' },
     { label: '🥧 Rellenos', value: 'relleno' }
@@ -67,11 +69,61 @@ export default function ModalInsumo({
     );
   };
 
+  // Verificar nombre duplicado en tiempo real
+  useEffect(() => {
+    const verificarNombreDuplicado = async () => {
+      if (!form.nombreInsumo.trim() || form.nombreInsumo.trim().length < 2) {
+        setNombreDuplicado(false);
+        return;
+      }
+
+      setVerificandoNombre(true);
+      
+      try {
+        const insumos = await insumoApiService.obtenerInsumos();
+        const nombreNormalizado = form.nombreInsumo.trim().toLowerCase();
+        const idActual = modal.tipo === "editar" ? (modal.insumo.id || modal.insumo.idinsumo) : null;
+        
+        const duplicado = insumos.find(insumo => {
+          const idInsumo = insumo.id || insumo.idinsumo;
+          const nombreInsumo = (insumo.nombreInsumo || insumo.nombreinsumo || '').trim().toLowerCase();
+          
+          if (idActual && idInsumo === idActual) {
+            return false;
+          }
+          
+          return nombreInsumo === nombreNormalizado;
+        });
+        
+        setNombreDuplicado(!!duplicado);
+      } catch (error) {
+        console.error("Error al verificar nombre:", error);
+      } finally {
+        setVerificandoNombre(false);
+      }
+    };
+
+    // Debounce: esperar 500ms después de que el usuario deje de escribir
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      verificarNombreDuplicado();
+    }, 500);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [form.nombreInsumo, modal.tipo, modal.insumo]);
+
   const cargarImagenDesdeAPI = async (idImagen) => {
     if (!idImagen) return null;
     
     try {
-      console.log('📥 Cargando imagen con ID:', idImagen);
+      console.log('🔥 Cargando imagen con ID:', idImagen);
       const imagenData = await imagenesApiService.obtenerImagenPorId(idImagen);
       console.log('✅ Imagen obtenida:', imagenData);
       return imagenData.urlimg || null;
@@ -186,6 +238,7 @@ export default function ModalInsumo({
           estadoCatalogo: true,
         });
         setCatalogosExistentes([]);
+        setNombreDuplicado(false);
       }
     };
     
@@ -242,29 +295,6 @@ export default function ModalInsumo({
     }
   };
 
-  const verificarNombreDuplicado = async (nombre, idActual = null) => {
-    try {
-      const insumos = await insumoApiService.obtenerInsumos();
-      const nombreNormalizado = nombre.trim().toLowerCase();
-      
-      const duplicado = insumos.find(insumo => {
-        const idInsumo = insumo.id || insumo.idinsumo;
-        const nombreInsumo = (insumo.nombreInsumo || insumo.nombreinsumo || '').trim().toLowerCase();
-        
-        if (idActual && idInsumo === idActual) {
-          return false;
-        }
-        
-        return nombreInsumo === nombreNormalizado;
-      });
-      
-      return duplicado !== undefined;
-    } catch (error) {
-      console.error("Error al verificar duplicados:", error);
-      return false;
-    }
-  };
-
   const guardar = async () => {
     try {
       if (!form.nombreInsumo.trim()) {
@@ -272,10 +302,7 @@ export default function ModalInsumo({
         return;
       }
 
-      const idActual = modal.tipo === "editar" ? (modal.insumo.id || modal.insumo.idinsumo) : null;
-      const existeDuplicado = await verificarNombreDuplicado(form.nombreInsumo, idActual);
-      
-      if (existeDuplicado) {
+      if (nombreDuplicado) {
         showNotification(
           `Ya existe un insumo con el nombre "${form.nombreInsumo}". Por favor, usa un nombre diferente.`,
           "error"
@@ -562,8 +589,8 @@ export default function ModalInsumo({
                       }}
                     >
                       <span style={{ fontSize: "20px" }}>
-                        {cat.tipo === 'adicion' && '🍬'}
-                        {cat.tipo === 'topping' && '🍫'}
+                        {cat.tipo === 'adicion' && '🬠'}
+                        {cat.tipo === 'topping' && '🫠'}
                         {cat.tipo === 'salsa' && '🌶️'}
                         {cat.tipo === 'sabor' && '🎨'}
                         {cat.tipo === 'relleno' && '🥧'}
@@ -625,9 +652,22 @@ export default function ModalInsumo({
                 name="nombreInsumo"
                 value={form.nombreInsumo}
                 onChange={handleChange}
-                className="modal-input"
+                className={`modal-input ${nombreDuplicado ? 'input-invalid' : ''}`}
                 placeholder="Ingrese el nombre del insumo"
+                style={{
+                  borderColor: nombreDuplicado ? '#ef4444' : verificandoNombre ? '#f59e0b' : undefined
+                }}
               />
+              {verificandoNombre && (
+                <span style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                  ⏳ Verificando nombre...
+                </span>
+              )}
+              {nombreDuplicado && (
+                <span className="error-message">
+                  ⚠️ Ya existe un insumo con este nombre
+                </span>
+              )}
             </label>
 
             <label>
@@ -781,7 +821,9 @@ export default function ModalInsumo({
                   </div>
                 </label>
               </div>
-            )}{mostrarCamposCatalogo && (
+            )}
+
+            {mostrarCamposCatalogo && (
               <>
                 <div style={{ 
                   gridColumn: "1 / -1", 
@@ -1070,11 +1112,11 @@ export default function ModalInsumo({
           <button
             className="modal-btn save-btn"
             onClick={guardar}
-            disabled={subiendoImagen}
+            disabled={subiendoImagen || nombreDuplicado || verificandoNombre}
             style={{
-              backgroundColor: subiendoImagen ? "#ccc" : "#ec4899",
+              backgroundColor: (subiendoImagen || nombreDuplicado || verificandoNombre) ? "#ccc" : "#ec4899",
               color: "white",
-              cursor: subiendoImagen ? "not-allowed" : "pointer"
+              cursor: (subiendoImagen || nombreDuplicado || verificandoNombre) ? "not-allowed" : "pointer"
             }}
           >
             {subiendoImagen ? "⏳ Subiendo..." : "Guardar"}

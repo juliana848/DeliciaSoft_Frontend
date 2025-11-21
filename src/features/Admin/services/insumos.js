@@ -3,11 +3,11 @@ const CATEGORIAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catego
 const UNIDADES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/unidadmedida";
 
 // ✅ 5 CATÁLOGOS: Adiciones, Toppings, Salsas, Sabores, Rellenos
-const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones";  // ✅ MANTENER
-const CATALOGO_TOPPINGS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings";    // 🆕 NUEVO
-const CATALOGO_SALSAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas";        // 🆕 NUEVO
-const CATALOGO_SABORES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor";        // ✅ MANTENER
-const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno";     // ✅ MANTENER
+const CATALOGO_ADICIONES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-adiciones";
+const CATALOGO_TOPPINGS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-toppings";
+const CATALOGO_SALSAS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-salsas";
+const CATALOGO_SABORES_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-sabor";
+const CATALOGO_RELLENOS_URL = "https://deliciasoft-backend-i6g9.onrender.com/api/catalogo-relleno";
 
 class InsumoApiService {
   constructor() {
@@ -33,7 +33,6 @@ class InsumoApiService {
     return response.json();
   }
 
-  // ✅ FUNCIÓN ACTUALIZADA: Soporta los 5 catálogos
   async crearMultiplesCatalogos(insumoId, catalogos) {
     try {
       console.log('🎯 CREANDO MÚLTIPLES CATÁLOGOS');
@@ -224,66 +223,64 @@ class InsumoApiService {
   }
 
   async actualizarInsumo(id, insumoData) {
-  try {
-    console.log("=== ACTUALIZANDO INSUMO ===");
-    console.log("ID:", id);
-    console.log("Datos:", JSON.stringify(insumoData, null, 2));
+    try {
+      console.log("=== ACTUALIZANDO INSUMO ===");
+      console.log("ID:", id);
+      console.log("Datos:", JSON.stringify(insumoData, null, 2));
 
-    // 📦 Extraer datos de catálogos si existen
-    const catalogosSeleccionados = insumoData.catalogosSeleccionados || [];
-    const nombreCatalogo = insumoData.nombreCatalogo;
-    const precioadicion = insumoData.precioadicion;
-    const estadoCatalogo = insumoData.estadoCatalogo;
+      const catalogosSeleccionados = insumoData.catalogosSeleccionados || [];
+      const nombreCatalogo = insumoData.nombreCatalogo;
+      const precioadicion = insumoData.precioadicion;
+      const estadoCatalogo = insumoData.estadoCatalogo;
 
-    const insumoAPI = this.transformarInsumoParaAPI({
-      ...insumoData,
-      cantidad: Number(insumoData.cantidad) || 0,
-    });
+      const insumoAPI = this.transformarInsumoParaAPI({
+        ...insumoData,
+        cantidad: Number(insumoData.cantidad) || 0,
+      });
 
-    await this.verificarIDsValidos(insumoAPI);
-    this.validarDatosInsumo(insumoAPI);
+      await this.verificarIDsValidos(insumoAPI);
+      this.validarDatosInsumo(insumoAPI);
 
-    // 🔄 Actualizar el insumo base
-    const response = await fetch(`${BASE_URL}/${id}`, {
-      method: "PUT",
-      headers: this.baseHeaders,
-      body: JSON.stringify(insumoAPI),
-    });
+      const response = await fetch(`${BASE_URL}/${id}`, {
+        method: "PUT",
+        headers: this.baseHeaders,
+        body: JSON.stringify(insumoAPI),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // 🎯 Si hay catálogos seleccionados, crearlos
-    if (catalogosSeleccionados && catalogosSeleccionados.length > 0) {
-      console.log('🎯 Creando catálogos múltiples durante la actualización...');
-      
-      const catalogosParaCrear = catalogosSeleccionados.map(tipo => ({
-        tipo: tipo,
-        nombre: nombreCatalogo,
-        precioadicion: parseFloat(precioadicion || 0),
-        estado: estadoCatalogo
-      }));
-
-      console.log('Catálogos a crear:', JSON.stringify(catalogosParaCrear, null, 2));
-
-      const resultadosCatalogos = await this.crearMultiplesCatalogos(id, catalogosParaCrear);
-      
-      const algunoExitoso = resultadosCatalogos.some(r => r.exito);
-      if (!algunoExitoso) {
-        console.error('⚠️ Ningún catálogo se creó exitosamente');
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
       }
+
+      const data = await response.json();
+
+      if (catalogosSeleccionados && catalogosSeleccionados.length > 0) {
+        console.log('🎯 Creando catálogos múltiples durante la actualización...');
+        
+        const catalogosParaCrear = catalogosSeleccionados.map(tipo => ({
+          tipo: tipo,
+          nombre: nombreCatalogo,
+          precioadicion: parseFloat(precioadicion || 0),
+          estado: estadoCatalogo
+        }));
+
+        console.log('Catálogos a crear:', JSON.stringify(catalogosParaCrear, null, 2));
+
+        const resultadosCatalogos = await this.crearMultiplesCatalogos(id, catalogosParaCrear);
+        
+        const algunoExitoso = resultadosCatalogos.some(r => r.exito);
+        if (!algunoExitoso) {
+          console.error('⚠️ Ningún catálogo se creó exitosamente');
+        }
+      }
+
+      return this.transformarInsumoDesdeAPI(data);
+
+    } catch (error) {
+      console.error(`Error al actualizar insumo ${id}:`, error);
+      throw error;
     }
-
-    return this.transformarInsumoDesdeAPI(data);
-
-  } catch (error) {
-    console.error(`Error al actualizar insumo ${id}:`, error);
-    throw error;
   }
-}
+
   async eliminarInsumo(id) {
     try {
       const response = await fetch(`${BASE_URL}/${id}`, {
@@ -342,6 +339,7 @@ class InsumoApiService {
     }
   }
 
+  // 🆕 MÉTODO ACTUALIZADO: Ordena por ID descendente (más recientes primero)
   async obtenerInsumos() {
     try {
       const response = await fetch(`${BASE_URL}`, {
@@ -350,7 +348,14 @@ class InsumoApiService {
       });
       const data = await this.handleResponse(response);
       const insumosEnriquecidos = await this.enriquecerInsumosConReferencias(data);
-      return this.transformarInsumosDesdeAPI(insumosEnriquecidos);
+      const insumosTransformados = this.transformarInsumosDesdeAPI(insumosEnriquecidos);
+      
+      // ✅ ORDENAR POR ID DESCENDENTE (más recientes primero)
+      return insumosTransformados.sort((a, b) => {
+        const idA = a.id || 0;
+        const idB = b.id || 0;
+        return idB - idA; // Orden descendente
+      });
     } catch (error) {
       console.error('Error al obtener insumos:', error);
       throw error;
@@ -440,7 +445,6 @@ class InsumoApiService {
     }
   }
 
-  // ✅ FUNCIÓN ACTUALIZADA: Soporta los 5 catálogos
   async obtenerCatalogos(tipoCatalogo) {
     try {
       let url;
@@ -553,7 +557,6 @@ class InsumoApiService {
     this.categoriasCache = null;
   }
 
-  // 🆕 Método auxiliar para crear un catálogo individual (usado por modalCatalogo.jsx)
   async crearCatalogo(tipoCatalogo, datos) {
     let url;
     

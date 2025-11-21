@@ -9,7 +9,24 @@ export const useCompras = () => {
             console.log('=== CARGANDO COMPRAS ===');
             const comprasAPI = await compraApiService.obtenerCompras();
             console.log('Compras obtenidas:', comprasAPI.length);
-            setCompras(comprasAPI);
+            
+            // 🆕 Ordenar por ID o fecha descendente para mostrar las más recientes primero
+            const comprasOrdenadas = comprasAPI.sort((a, b) => {
+                // Primero intentar ordenar por ID (asumiendo que es autoincremental)
+                const idA = a.id || a.idcompra || a.idCompra || 0;
+                const idB = b.id || b.idcompra || b.idCompra || 0;
+                
+                if (idA !== idB) {
+                    return idB - idA; // Orden descendente por ID
+                }
+                
+                // Si los IDs son iguales o no existen, ordenar por fecha
+                const fechaA = new Date(a.fechaCompra || a.fechacompra).getTime();
+                const fechaB = new Date(b.fechaCompra || b.fechacompra).getTime();
+                return fechaB - fechaA; // Orden descendente por fecha
+            });
+            
+            setCompras(comprasOrdenadas);
         } catch (error) {
             console.error('Error al cargar compras:', error);
             throw error;

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import categoriaInsumoApiService from '../../../services/categoriainsumos';
 import { SUCCESS_MESSAGES, LOADING_MESSAGES, MOCK_CATEGORIAS } from '../constants/categoriaConstants';
+import { normalizar } from '../utils/categoriaValidations';
 
 export const useCategorias = () => {
   const [categorias, setCategorias] = useState([]);
@@ -44,6 +45,15 @@ export const useCategorias = () => {
     }
   };
 
+  // Nueva función para verificar si existe una categoría
+  const existeCategoria = (nombre, idExcluir = null) => {
+    const nombreNormalizado = normalizar(nombre.trim());
+    return categorias.some(cat => {
+      if (idExcluir && cat.id === idExcluir) return false;
+      return normalizar(cat.nombre) === nombreNormalizado;
+    });
+  };
+
   const toggleActivo = async (categoria) => {
     try {
       setLoadingStates(prev => ({ ...prev, [categoria.id]: true }));
@@ -64,6 +74,12 @@ export const useCategorias = () => {
 
   const crearCategoria = async (datosCategoria) => {
     try {
+      // Verificar si la categoría ya existe
+      if (existeCategoria(datosCategoria.nombreCategoria)) {
+        showNotification('Ya existe una categoría con ese nombre', 'error');
+        return false;
+      }
+
       setMensajeCarga(LOADING_MESSAGES.AGREGAR);
       setLoading(true);
       const nuevaCategoria = await categoriaInsumoApiService.crearCategoria(datosCategoria);
@@ -73,7 +89,8 @@ export const useCategorias = () => {
         descripcion: nuevaCategoria.descripcion,
         activo: nuevaCategoria.estado
       };
-      setCategorias([...categorias, categoriaParaEstado]);
+      // Agregar al inicio del array
+      setCategorias([categoriaParaEstado, ...categorias]);
       showNotification(SUCCESS_MESSAGES.CREAR);
       return true;
     } catch (error) {
@@ -87,6 +104,12 @@ export const useCategorias = () => {
 
   const actualizarCategoria = async (id, datosCategoria) => {
     try {
+      // Verificar si la categoría ya existe (excluyendo la actual)
+      if (existeCategoria(datosCategoria.nombreCategoria, id)) {
+        showNotification('Ya existe otra categoría con ese nombre', 'error');
+        return false;
+      }
+
       setMensajeCarga(LOADING_MESSAGES.GUARDAR);
       setLoading(true);
       const categoriaActualizada = await categoriaInsumoApiService.actualizarCategoria(id, datosCategoria);
@@ -141,6 +164,7 @@ export const useCategorias = () => {
     toggleActivo,
     crearCategoria,
     actualizarCategoria,
-    eliminarCategoria
+    eliminarCategoria,
+    existeCategoria // Exportar para uso en otros componentes si es necesario
   };
 };

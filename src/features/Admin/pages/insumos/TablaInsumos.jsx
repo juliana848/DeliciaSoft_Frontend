@@ -43,6 +43,7 @@ export default function TablaInsumos() {
       const unidadesAPI = await insumoApiService.obtenerUnidadesMedida();
       setUnidades(unidadesAPI);
 
+      // ✅ El ordenamiento ya se hace en el servicio
       const insumosAPI = await insumoApiService.obtenerInsumos();
       setInsumos(insumosAPI);
     } catch (error) {

@@ -151,7 +151,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
 
-        // Aumentar altura del rectángulo para incluir documento
         doc.setFillColor(...COLORES.grisFondo);
         doc.rect(20, 60, 170, 32, 'F'); 
         
@@ -217,7 +216,7 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
                 formatearMoneda(insumo.precio || 0),
                 formatearMoneda((insumo.cantidad || 0) * (insumo.precio || 0))
             ]),
-            startY: 110, // Aumentado de 100 a 110 para más espacio
+            startY: 110,
             styles: {
                 fillColor: COLORES.blanco,
                 textColor: COLORES.grisTexto,
@@ -246,12 +245,25 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
                 3: { halign: 'right', cellWidth: 35 },
                 4: { halign: 'right', cellWidth: 40, fontStyle: 'bold' }
             },
-            margin: { top: 15 } // Margen adicional superior
+            margin: { top: 15 },
+            // 🆕 Configuración para que la tabla no se corte
+            showHead: 'everyPage',
+            tableWidth: 'auto'
         }); 
     };
 
     const crearTotal = (doc, total, finalY) => {
+        // 🆕 Calcular posición Y dinámica basada en donde terminó la tabla
         const totalY = finalY + 10;
+        
+        // 🆕 Verificar si hay espacio suficiente, si no, agregar nueva página
+        const pageHeight = doc.internal.pageSize.height;
+        const espacioNecesario = 40; // Espacio para total + observaciones
+        
+        if (totalY + espacioNecesario > pageHeight - 30) {
+            doc.addPage();
+            return 20; // Retornar nueva posición Y en la nueva página
+        }
         
         doc.setFillColor(...COLORES.grisElegante);
         doc.rect(130, totalY, 60, 15, 'F');
@@ -265,7 +277,6 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
         doc.setFont('helvetica', 'bold');
         doc.text('TOTAL:', 135, totalY + 10);
         
-        // Formatear total con signo de pesos y separador de miles
         const totalFormateado = formatearMoneda(total);
         doc.text(totalFormateado, 185, totalY + 10, { align: 'right' });
         
@@ -274,6 +285,14 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
 
     const crearObservaciones = (doc, observaciones, startY) => {
         if (observaciones && observaciones.trim() !== '') {
+            // 🆕 Verificar si hay espacio para las observaciones
+            const pageHeight = doc.internal.pageSize.height;
+            
+            if (startY + 40 > pageHeight - 30) {
+                doc.addPage();
+                startY = 20;
+            }
+            
             doc.setFontSize(11);
             doc.setTextColor(...COLORES.grisTexto);
             doc.setFont('helvetica', 'bold');
@@ -287,18 +306,29 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
 
     const crearFooter = (doc) => {
         const pageHeight = doc.internal.pageSize.height;
-        doc.setFillColor(...COLORES.rosaClaro);
-        doc.rect(0, pageHeight - 20, 210, 20, 'F');
-
-        doc.setFontSize(8);
-        doc.setTextColor(...COLORES.grisTexto);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Documento generado automáticamente - Delicias Darsy', 20, pageHeight - 10);
+        const pageCount = doc.internal.getNumberOfPages();
         
-        const { fecha, hora } = obtenerFechaHoraColombia();
-        doc.text(`Generado: ${fecha} - ${hora}`, 20, pageHeight - 5);
+        // 🆕 Crear footer en todas las páginas
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            
+            doc.setFillColor(...COLORES.rosaClaro);
+            doc.rect(0, pageHeight - 20, 210, 20, 'F');
 
-        crearLogo(doc, 180, pageHeight - 10, EMPRESA_CONFIG.logoFooterSize);
+            doc.setFontSize(8);
+            doc.setTextColor(...COLORES.grisTexto);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Documento generado automáticamente - Delicias Darsy', 20, pageHeight - 10);
+            
+            const { fecha, hora } = obtenerFechaHoraColombia();
+            doc.text(`Generado: ${fecha} - ${hora}`, 20, pageHeight - 5);
+
+            crearLogo(doc, 180, pageHeight - 10, EMPRESA_CONFIG.logoFooterSize);
+            
+            // 🆕 Agregar número de página
+            doc.setFontSize(8);
+            doc.text(`Página ${i} de ${pageCount}`, 105, pageHeight - 5, { align: 'center' });
+        }
     };
 
     const calcularTotal = (insumos) => {
@@ -330,9 +360,11 @@ const PDFPreview = ({ visible, onClose, compraData, onDownload }) => {
             crearTablaInsumos(doc, compraCompleta.insumos);
             
             const total = calcularTotal(compraCompleta.insumos);
-            const finalY = doc.previousAutoTable ? doc.previousAutoTable.finalY : 150;
-            const totalY = crearTotal(doc, total, finalY);
             
+            // 🆕 Obtener la posición Y donde terminó la tabla
+            const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 150;
+            
+            const totalY = crearTotal(doc, total, finalY);
             crearObservaciones(doc, compraCompleta.observaciones, totalY);
             crearFooter(doc);
 

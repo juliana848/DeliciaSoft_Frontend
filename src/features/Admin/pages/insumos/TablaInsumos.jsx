@@ -139,7 +139,7 @@ export default function TablaInsumos() {
         <SearchBar
           value={filtro}
           onChange={setFiltro}
-          placeholder="Buscar por nombre, categoría, cantidad, estado..."
+          placeholder="Buscar por nombre..."
         />
         <button
           className="admin-button pink"

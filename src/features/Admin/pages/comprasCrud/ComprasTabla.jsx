@@ -549,15 +549,68 @@ export default function ComprasTable() {
                                         </button>
                                     </Tooltip>
 
-                                    {rowData.estado ? (
-                                        <Tooltip text="Anular">
+                                    {/* COMENTADO: Solo mostrar cuando NO estamos en vista de anuladas */}
+                                    {!mostrarAnuladas && (
+                                        rowData.estado ? (
+                                            <Tooltip text="Anular">
+                                                <button 
+                                                    className="admin-button"
+                                                    onClick={() => abrirModal('anular', rowData)}
+                                                    disabled={cargando}
+                                                    style={{
+                                                        background: '#ffebee',
+                                                        color: '#d32f2f',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        width: '26px',
+                                                        height: '26px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <i className="fas fa-ban" style={{ fontSize: '11px' }}></i>
+                                                </button>
+                                            </Tooltip>
+                                        ) : (
+                                            /* COMENTADO: Botón Reactivar - Solo visible en vista activas
+                                            <Tooltip text="Reactivar">
+                                                <button 
+                                                    className="admin-button"
+                                                    onClick={() => reactivarCompra(rowData)}
+                                                    disabled={cargando}
+                                                    style={{
+                                                        background: '#e8f5e9',
+                                                        color: '#388e3c',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        width: '26px',
+                                                        height: '26px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <i className="fas fa-check-circle" style={{ fontSize: '11px' }}></i>
+                                                </button>
+                                            </Tooltip>
+                                            */
+                                            null
+                                        )
+                                    )}
+
+                                    {/* Botón PDF - Solo visible en vista activas */}
+                                    {!mostrarAnuladas && (
+                                        <Tooltip text="Generar PDF">
                                             <button 
                                                 className="admin-button"
-                                                onClick={() => abrirModal('anular', rowData)}
+                                                onClick={() => generarPDF(rowData)}
                                                 disabled={cargando}
                                                 style={{
-                                                    background: '#ffebee',
-                                                    color: '#d32f2f',
+                                                    background: '#fff8e1',
+                                                    color: '#f57c00',
                                                     border: 'none',
                                                     borderRadius: '6px',
                                                     width: '26px',
@@ -568,54 +621,10 @@ export default function ComprasTable() {
                                                     justifyContent: 'center'
                                                 }}
                                             >
-                                                <i className="fas fa-ban" style={{ fontSize: '11px' }}></i>
-                                            </button>
-                                        </Tooltip>
-                                    ) : (
-                                        <Tooltip text="Reactivar">
-                                            <button 
-                                                className="admin-button"
-                                                onClick={() => reactivarCompra(rowData)}
-                                                disabled={cargando}
-                                                style={{
-                                                    background: '#e8f5e9',
-                                                    color: '#388e3c',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    width: '26px',
-                                                    height: '26px',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <i className="fas fa-check-circle" style={{ fontSize: '11px' }}></i>
+                                                <i className="fas fa-file-pdf" style={{ fontSize: '11px' }}></i>
                                             </button>
                                         </Tooltip>
                                     )}
-
-                                    <Tooltip text="Generar PDF">
-                                        <button 
-                                            className="admin-button"
-                                            onClick={() => generarPDF(rowData)}
-                                            disabled={cargando}
-                                            style={{
-                                                background: '#fff8e1',
-                                                color: '#f57c00',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                width: '26px',
-                                                height: '26px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            <i className="fas fa-file-pdf" style={{ fontSize: '11px' }}></i>
-                                        </button>
-                                    </Tooltip>
                                 </div>
                             )}
                             style={{ width: '100px' }}

@@ -100,16 +100,23 @@ export default function CrearRecetaModal({ onClose, onGuardar, onNotificar }) {
 
       const recetaCompleta = await recetaApiService.crearReceta(datosReceta);
 
-      const recetaNormalizada = {
-        ...recetaCompleta,
-        idreceta: recetaCompleta.idreceta || recetaCompleta.id,
-        nombrereceta: recetaCompleta.nombrereceta || recetaCompleta.nombre,
-        especificaciones: recetaCompleta.especificaciones || recetaCompleta.especificacionesreceta,
-      };
+    const recetaNormalizada = {
+      ...recetaCompleta,
+      idreceta: recetaCompleta.idreceta || recetaCompleta.id,
+      nombrereceta: recetaCompleta.nombrereceta || recetaCompleta.nombre,
+      especificaciones: recetaCompleta.especificaciones || recetaCompleta.especificacionesreceta,
+      insumos: recetaCompleta.insumos 
+            || recetaCompleta.detallereceta 
+            || insumosReceta
+    };
 
-      showNotification(`Receta "${recetaNormalizada.nombrereceta}" creada exitosamente con ${recetaNormalizada.insumos?.length || insumosReceta.length} insumos`, "success");
+    showNotification(
+      `Receta "${recetaNormalizada.nombrereceta}" creada exitosamente con ${recetaNormalizada.insumos.length} insumos`,
+      "success"
+    );
 
-      onGuardar(recetaNormalizada);
+    onGuardar(recetaNormalizada);
+
 
     } catch (error) {
       showNotification('Error al crear la receta: ' + (error.message || error), "error");

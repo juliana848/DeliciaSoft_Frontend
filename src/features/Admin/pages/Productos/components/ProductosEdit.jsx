@@ -49,7 +49,6 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
         const data = await response.json();
         setCategorias(data);
         
-        // Establecer el searchTerm inicial con la categoría del producto
         if (producto?.idcategoriaproducto) {
           const categoriaActual = data.find(c => c.idcategoriaproducto === producto.idcategoriaproducto);
           if (categoriaActual) {
@@ -174,10 +173,10 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
           <h2 className="section-title"><span className="title-icon">✏️</span> Editar Producto</h2>
           
           <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: "24px", alignItems: "start" }}>
-            {/* Columna izquierda: Campos del formulario */}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              
+              {/* --- CAMPOS --- */}
               <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                {/* Nombre */}
                 <div className="field-group">
                   <label className="field-label">Nombre<span style={{ color: "red" }}>*</span></label>
                   <input 
@@ -190,8 +189,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
                   />
                   {erroresValidacion.nombreproducto && <span className="error-message">{erroresValidacion.nombreproducto}</span>}
                 </div>
-                
-                {/* Precio */}
+
                 <div className="field-group">
                   <label className="field-label">Precio<span style={{ color: "red" }}>*</span></label>
                   <input 
@@ -208,7 +206,6 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
               </div>
 
               <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                {/* Cantidad */}
                 <div className="field-group">
                   <label className="field-label">Cantidad</label>
                   <input 
@@ -221,7 +218,6 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
                   />
                 </div>
 
-                {/* Estado */}
                 <div className="field-group">
                   <label className="field-label">Estado</label>
                   <select 
@@ -236,7 +232,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
                 </div>
               </div>
 
-              {/* Categoría con búsqueda */}
+              {/* Categoría */}
               <div className="field-group">
                 <label>Categoría *</label>
                 <div style={{ display: "flex", gap: "8px", position: "relative" }}>
@@ -337,7 +333,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
               </div>
             </div>
 
-            {/* Columna derecha: Imagen del producto */}
+            {/* Imagen */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <label style={{ fontWeight: "600", color: "#374151", fontSize: "14px" }}>Imagen del Producto</label>
               
@@ -428,6 +424,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
         {/* Receta */}
         <div className="form-card">
           <h2 className="section-title"><span className="title-icon">📋</span> Resumen de Receta</h2>
+
           {formData.recetaSeleccionada ? (
             <div>
               <div style={{ marginBottom: "1rem" }}>
@@ -438,7 +435,7 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
                   {formData.recetaSeleccionada.especificaciones}
                 </p>
               </div>
-              
+
               {(formData.recetaSeleccionada.insumos || []).length > 0 && (
                 <div className="table-container" style={{ marginBottom: "1rem" }}>
                   <table className="products-table">
@@ -467,16 +464,44 @@ export default function ProductosEdit({ producto, onSave, onCancel }) {
                   </table>
                 </div>
               )}
-              
-              <button type="button" className="delete-btn" onClick={removerReceta}>Eliminar Receta</button>
+
+              {/* --- BOTONES lado a lado --- */}
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button
+                  type="button"
+                  className="btn-small"
+                  onClick={() => setMostrarModalReceta(true)}
+                >
+                  Cambiar Receta
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-small"
+                  onClick={removerReceta}
+                  style={{
+                    background: "#dc2626",
+                    color: "white",
+                    border: "1px solid #b91c1c"
+                  }}
+                >
+                  Eliminar Receta
+                </button>
+              </div>
             </div>
-          ) : <p>No hay receta asignada</p>}
-          <button type="button" className="btn-small" onClick={() => setMostrarModalReceta(true)} style={{ marginTop: "10px" }}>
-            {formData.recetaSeleccionada ? "Cambiar Receta" : "+ Agregar Receta"}
-          </button>
+
+          ) : (
+            <button
+              type="button"
+              className="btn-small"
+              onClick={() => setMostrarModalReceta(true)}
+              style={{ marginTop: "10px" }}
+            >
+              + Agregar Receta
+            </button>
+          )}
         </div>
 
-        {/* Botones */}
         <div className="action-buttons">
           <button type="button" className="btn btn-cancel" onClick={onCancel} disabled={loading}>Cancelar</button>
           <button type="submit" className="btn btn-save" disabled={loading || subiendoImagen}>

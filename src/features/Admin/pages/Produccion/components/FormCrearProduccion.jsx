@@ -123,13 +123,13 @@ export default function FormCrearProduccion({
   const guardarProceso = async () => {
     const nombreNormalizado = procesoData.nombreProduccion.trim();
 
-    if (!nombreNormalizado || nombreNormalizado === '') {
+    if (!nombreNormalizado) {
       showNotification('El nombre de la producción es obligatorio', 'error');
       return;
     }
 
-    if (!/^producción\s*/i.test(nombreNormalizado)) {
-      showNotification("El nombre debe comenzar con 'Producción'", 'error');
+    if (nombreNormalizado.length > 30) {
+      showNotification('El nombre no puede superar los 30 caracteres', 'error');
       return;
     }
 
@@ -241,7 +241,7 @@ export default function FormCrearProduccion({
                   onChange={(e) => setProcesoData(prev => ({ ...prev, nombreProduccion: e.target.value }))} 
                   className="form-input"
                   placeholder="Ej: Producción #1"
-                  maxLength={100}
+                  maxLength={30}
                   required 
                 />
               </div>

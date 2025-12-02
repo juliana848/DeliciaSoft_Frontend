@@ -2,30 +2,35 @@ import React, { useState, useEffect } from "react";
 import CrearRecetaModal from "./CrearRecetaModal";
 import recetaApiService from "../../../../services/Receta_services";
 
-const RecetaCard = ({ receta, onSelect }) => {
+const RecetaCard = ({ receta, selected, onSelect }) => {
   return (
     <div
-      className="producto-modal-card"
+      className={`modal-agregar-card ${selected ? "seleccionado" : ""}`}
       onClick={() => onSelect(receta)}
     >
-      <div className="receta-placeholder">
-        <span className="receta-icon">📋</span>
+      {selected && <div className="check-icon">✓</div>}
+
+      {/* Cuadro más cuadrado y grande */}
+      <div className="insumo-placeholder receta-cuadro">
+        <span className="insumo-icon">📋</span>
       </div>
-      <h4>{receta.nombrereceta}</h4>
-      <p style={{ fontSize: '12px', color: '#666', margin: '4px 0', lineHeight: '1.3' }}>
+
+      <span>{receta.nombrereceta}</span>
+
+      <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
         {receta.especificaciones || "Sin especificaciones"}
-      </p>
-      <small>ID: {receta.idreceta}</small>
-      
+      </div>
+
       {receta.cantidadInsumos && (
-        <div style={{ fontSize: '10px', color: '#28a745', marginTop: '4px' }}>
-          📦 {receta.cantidadInsumos} insumo{receta.cantidadInsumos !== 1 ? 's' : ''}
+        <div style={{ fontSize: "9px", color: "#28a745", marginTop: "3px" }}>
+          📦 {receta.cantidadInsumos} insumo
+          {receta.cantidadInsumos !== 1 ? "s" : ""}
         </div>
       )}
-      
+
       {receta.costoEstimado && (
-        <div style={{ fontSize: '10px', color: '#ff69b4', marginTop: '2px' }}>
-          💰 ${receta.costoEstimado.toLocaleString('es-CO')}
+        <div style={{ fontSize: "9px", color: "#ff69b4", marginTop: "2px" }}>
+          💰 ${receta.costoEstimado.toLocaleString("es-CO")}
         </div>
       )}
     </div>
@@ -35,73 +40,44 @@ const RecetaCard = ({ receta, onSelect }) => {
 export default function SeleccionarRecetaModal({ onClose, onSeleccionar }) {
   const [recetas, setRecetas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [mostrarModalCrearReceta, setMostrarModalCrearReceta] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [mostrarModalCrearReceta, setMostrarModalCrearReceta] = useState(false);
+
+  // PAGINACIÓN
+  const recetasPorPagina = 8;
+  const [paginaActual, setPaginaActual] = useState(1);
 
   useEffect(() => {
     const fetchRecetas = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        console.log('🔄 Cargando recetas desde el servicio...');
-        
         const recetasData = await recetaApiService.obtenerRecetas();
-        console.log('✅ Recetas cargadas:', recetasData);
-        
         setRecetas(recetasData);
-        
       } catch (error) {
-        console.error('❌ Error al cargar recetas:', error);
         setError(error.message);
-        
-        // Fallback con datos de prueba
-        const recetasFallback = [
+
+        const fallback = [
           {
             idreceta: 1,
-            nombrereceta: 'Cupcakes de Vainilla',
-            especificaciones: 'Cupcakes suaves con frosting de vainilla',
+            nombrereceta: "Cupcakes de Vainilla",
+            especificaciones: "Cupcakes suaves con frosting de vainilla",
             cantidadInsumos: 6,
-            costoEstimado: 12500
+            costoEstimado: 12500,
           },
           {
             idreceta: 2,
-            nombrereceta: 'Brownies de Chocolate',
-            especificaciones: 'Brownies húmedos con chocolate intenso',
+            nombrereceta: "Brownies de Chocolate",
+            especificaciones: "Brownies húmedos con chocolate intenso",
             cantidadInsumos: 5,
-            costoEstimado: 15000
+            costoEstimado: 15000,
           },
-          {
-            idreceta: 3,
-            nombrereceta: 'Galletas con Chispas',
-            especificaciones: 'Galletas crujientes con chispas de chocolate',
-            cantidadInsumos: 7,
-            costoEstimado: 8500
-          },
-          {
-            idreceta: 4,
-            nombrereceta: 'Pastel de Limón',
-            especificaciones: 'Pastel esponjoso con glaseado de limón',
-            cantidadInsumos: 8,
-            costoEstimado: 18000
-          },
-          {
-            idreceta: 5,
-            nombrereceta: 'Muffins de Arándanos',
-            especificaciones: 'Muffins tiernos con arándanos frescos',
-            cantidadInsumos: 6,
-            costoEstimado: 14000
-          },
-          {
-            idreceta: 6,
-            nombrereceta: 'Donas Glaseadas',
-            especificaciones: 'Donas esponjosas con glaseado dulce',
-            cantidadInsumos: 5,
-            costoEstimado: 10500
-          }
         ];
-        
-        setRecetas(recetasFallback);
+
+        setRecetas(fallback);
       } finally {
         setLoading(false);
       }
@@ -110,61 +86,61 @@ export default function SeleccionarRecetaModal({ onClose, onSeleccionar }) {
     fetchRecetas();
   }, []);
 
-  const recetasFiltradas = recetas.filter(receta =>
-    !searchTerm || receta.nombrereceta.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    receta.especificaciones?.toLowerCase().includes(searchTerm.toLowerCase())
+  const recetasFiltradas = recetas.filter(
+    (receta) =>
+      receta.nombrereceta.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      receta.especificaciones?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCrearReceta = (nuevaReceta) => {
-    console.log('🍰 Nueva receta creada:', nuevaReceta);
-    
-    setRecetas(prev => [nuevaReceta, ...prev]);
-    setMostrarModalCrearReceta(false);
-    
-    onSeleccionar(nuevaReceta);
-  };
+  // Cálculo de paginación
+  const inicio = (paginaActual - 1) * recetasPorPagina;
+  const fin = inicio + recetasPorPagina;
+  const recetasPaginadas = recetasFiltradas.slice(inicio, fin);
+  const totalPaginas = Math.ceil(recetasFiltradas.length / recetasPorPagina);
 
   const handleSeleccionarReceta = async (receta) => {
     try {
-      console.log('🎯 Seleccionando receta:', receta);
-      
+      setSelectedId(receta.idreceta);
+
       let recetaCompleta = receta;
-      
+
       if (!receta.insumos || receta.insumos.length === 0) {
-        console.log('📋 Obteniendo detalles de la receta...');
         try {
-          recetaCompleta = await recetaApiService.obtenerRecetaPorId(receta.idreceta);
-        } catch (error) {
-          console.warn('⚠️ No se pudieron obtener detalles adicionales:', error);
-        }
+          recetaCompleta = await recetaApiService.obtenerRecetaPorId(
+            receta.idreceta
+          );
+        } catch {}
       }
-      
-      console.log('✅ Receta seleccionada completa:', recetaCompleta);
+
       onSeleccionar(recetaCompleta);
       onClose();
-      
     } catch (error) {
-      console.error('❌ Error al seleccionar receta:', error);
-      alert('Error al seleccionar la receta: ' + error.message);
+      alert("Error al seleccionar: " + error.message);
     }
   };
 
+  const handleCrearReceta = (nuevaReceta) => {
+    setRecetas((prev) => [nuevaReceta, ...prev]);
+    setMostrarModalCrearReceta(false);
+    onSeleccionar(nuevaReceta);
+  };
+
   return (
-    <div className="producto-modal-overlay">
-      <div className="producto-modal-container">
+    <div className="modal-agregar-overlay">
+      <div className="modal-agregar-container">
         <style>{`
-          .producto-modal-overlay {
-            background-color: rgba(0, 0, 0, 0.4);
+          .modal-agregar-overlay {
+            background-color: rgba(0, 0, 0, 0.45);
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1001;
+            z-index: 2000;
           }
 
-          .producto-modal-container {
+          .modal-agregar-container {
             background: #fff0f5;
             border-radius: 20px;
             padding: 25px;
@@ -172,33 +148,43 @@ export default function SeleccionarRecetaModal({ onClose, onSeleccionar }) {
             max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: fadeIn 0.3s ease-in-out;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
           }
 
-          .producto-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-          }
-
-          .producto-modal-close-btn {
+          .modal-agregar-close {
             background: none;
             border: none;
-            font-size: 28px;
+            font-size: 30px;
             cursor: pointer;
             color: #d63384;
+            position: absolute;
+            right: 15px;
+            top: 10px;
           }
 
-          .producto-modal-search-container {
+          .modal-agregar-title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 700;
+            color: #d63384;
+            margin-bottom: 10px;
+          }
+
+          .modal-agregar-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+          }
+
+          .modal-agregar-controles {
             display: flex;
-            align-items: center;
             gap: 10px;
             margin-bottom: 20px;
           }
 
-          .producto-modal-search-container input {
+          .modal-agregar-input {
             flex-grow: 1;
             padding: 10px;
             border-radius: 10px;
@@ -206,239 +192,203 @@ export default function SeleccionarRecetaModal({ onClose, onSeleccionar }) {
             font-size: 16px;
           }
 
-          .crear-receta-btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 10px;
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            white-space: nowrap;
-          }
-
-          .crear-receta-btn:hover {
-            background-color: #218838;
-          }
-
-          .crear-receta-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          .producto-modal-grid {
+          .modal-agregar-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 20px;
-            margin: 20px 0;
-            min-height: 200px;
           }
 
-          .producto-modal-card {
-            background: #fff;
+          .modal-agregar-card {
+            background: white;
             border-radius: 16px;
-            padding: 10px;
+            padding: 12px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.2s, border-color 0.2s;
             cursor: pointer;
             border: 3px solid transparent;
+            position: relative;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
           }
 
-          .producto-modal-card:hover {
+          .modal-agregar-card:hover {
             transform: translateY(-4px);
             border-color: #ff69b4;
           }
 
-          .receta-placeholder {
-            width: 100px;
-            height: 100px;
+          .modal-agregar-card.seleccionado {
+            border-color: #ff69b4;
+            box-shadow: 0 6px 18px rgba(255,105,180,0.4);
+          }
+
+          .check-icon {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #ff69b4;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+          }
+
+          /* Nuevo: imagen cuadrada mejor proporcionada */
+          .receta-cuadro {
+            width: 110px;
+            height: 110px;
             background: linear-gradient(135deg, #ff69b4, #ffc1cc);
             border-radius: 12px;
-            margin: 0 auto 8px auto;
+            margin: 0 auto 8px;
             display: flex;
             align-items: center;
             justify-content: center;
           }
 
-          .receta-icon {
-            font-size: 40px;
+          .insumo-icon {
+            font-size: 45px;
           }
 
-          .producto-modal-card h4 {
-            font-size: 16px;
-            color: #d63384;
-            margin: 0 0 4px 0;
-          }
-
-          .producto-modal-card small {
-            color: #666;
-            font-size: 12px;
-          }
-
-          .producto-modal-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+          /* PAGINACIÓN */
+          .modal-agregar-paginacion {
             margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            align-items: center;
           }
 
-          .footer-info {
-            font-size: 14px;
-            color: #666;
-          }
-
-          .producto-modal-btn {
-            padding: 10px 18px;
+          .paginacion-btn {
+            background: #ff69b4;
+            color: white;
             border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+          }
+
+          .paginacion-info {
+            font-size: 14px;
+            color: #444;
+          }
+
+          .modal-agregar-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+          }
+
+          .cancel-btn {
+            background: #f8d7da;
+            color: #721c24;
+            border: none;
+            padding: 10px 18px;
             border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
             font-size: 16px;
           }
 
-          .producto-modal-btn-cancel {
-            background-color: #f8d7da;
-            color: #721c24;
-          }
-
-          .loading-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 200px;
-            flex-direction: column;
-            gap: 10px;
-          }
-
-          .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #ff69b4;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-          }
-
-          .error-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 200px;
-            flex-direction: column;
-            gap: 10px;
-            color: #d63384;
-          }
-
-          .error-container button {
-            background-color: #ff69b4;
+          .crear-btn {
+            background: #28a745;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-          }
-
-          .error-message {
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
+            padding: 10px 15px;
             border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            color: #dc2626;
-          }
-
-          .error-message strong {
-            display: block;
-            margin-bottom: 5px;
-          }
-
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 600;
           }
         `}</style>
 
-        <div className="producto-modal-header">
-          <h2>Seleccionar Receta</h2>
-          <button onClick={onClose} className="producto-modal-close-btn">&times;</button>
+        <button className="modal-agregar-close" onClick={onClose}>
+          ×
+        </button>
+
+        <h2 className="modal-agregar-title">📋 Seleccionar Receta</h2>
+
+        <div className="modal-agregar-info">
+          Selecciona la receta que quieras usar
         </div>
 
-        {/* Mensaje de error */}
-        {error && (
-          <div className="error-message">
-            <strong>Error:</strong> {error}
-            <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem" }}>
-              Se están mostrando datos de prueba.
-            </p>
-          </div>
-        )}
-
-        <div className="producto-modal-search-container">
+        <div className="modal-agregar-controles">
           <input
             type="text"
-            placeholder="Buscar receta por nombre o especificaciones..."
+            className="modal-agregar-input"
+            placeholder="🔍 Buscar receta..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPaginaActual(1);
+            }}
             disabled={loading}
           />
+
           <button
-            className="crear-receta-btn"
+            className="crear-btn"
             onClick={() => setMostrarModalCrearReceta(true)}
-            disabled={loading}
           >
-            + Crear Nueva Receta
+            + Crear Receta
           </button>
         </div>
 
-        <div className="producto-modal-grid">
+        <div className="modal-agregar-grid">
           {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Cargando recetas...</p>
-            </div>
+            <p style={{ gridColumn: "1 / -1" }}>⏳ Cargando recetas...</p>
           ) : recetasFiltradas.length === 0 ? (
-            <div className="error-container">
-              <p>
-                {searchTerm 
-                  ? `No se encontraron recetas que coincidan con "${searchTerm}"`
-                  : "No hay recetas disponibles"
-                }
-              </p>
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')}>
-                  Limpiar búsqueda
-                </button>
-              )}
-            </div>
+            <p style={{ gridColumn: "1 / -1" }}>No se encontraron recetas</p>
           ) : (
-            recetasFiltradas.map(receta => (
+            recetasPaginadas.map((receta) => (
               <RecetaCard
                 key={receta.idreceta}
                 receta={receta}
+                selected={selectedId === receta.idreceta}
                 onSelect={handleSeleccionarReceta}
               />
             ))
           )}
         </div>
 
-        <div className="producto-modal-footer">
-          <div className="footer-info">
-            {loading ? "Cargando..." : `${recetasFiltradas.length} receta${recetasFiltradas.length !== 1 ? 's' : ''} ${searchTerm ? 'encontrada' + (recetasFiltradas.length !== 1 ? 's' : '') : 'disponible' + (recetasFiltradas.length !== 1 ? 's' : '')}`}
+        {/* PAGINACIÓN */}
+        {totalPaginas > 1 && (
+          <div className="modal-agregar-paginacion">
+            <button
+              className="paginacion-btn"
+              onClick={() =>
+                setPaginaActual((prev) => Math.max(prev - 1, 1))
+              }
+            >
+              ◀
+            </button>
+
+            <span className="paginacion-info">
+              Página {paginaActual} de {totalPaginas}
+            </span>
+
+            <button
+              className="paginacion-btn"
+              onClick={() =>
+                setPaginaActual((prev) =>
+                  Math.min(prev + 1, totalPaginas)
+                )
+              }
+            >
+              ▶
+            </button>
           </div>
-          
-          <button className="producto-modal-btn producto-modal-btn-cancel" onClick={onClose}>
+        )}
+
+        <div className="modal-agregar-footer">
+          <button className="cancel-btn" onClick={onClose}>
             Cancelar
           </button>
         </div>
 
-        {/* Modal Crear Receta */}
         {mostrarModalCrearReceta && (
           <CrearRecetaModal
             onClose={() => setMostrarModalCrearReceta(false)}

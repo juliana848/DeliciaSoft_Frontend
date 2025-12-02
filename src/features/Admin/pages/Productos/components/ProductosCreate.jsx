@@ -30,13 +30,17 @@ export default function ProductosCreate({ onSave, onCancel }) {
     imagenPreview: null,
   });
 
-  const showNotification = (mensaje, tipo = "success") => setNotification({ visible: true, mensaje, tipo });
-  const hideNotification = () => setNotification({ visible: false, mensaje: "", tipo: "success" });
+  const showNotification = (mensaje, tipo = "success") =>
+    setNotification({ visible: true, mensaje, tipo });
+  const hideNotification = () =>
+    setNotification({ visible: false, mensaje: "", tipo: "success" });
 
   useEffect(() => {
     const cargarCategorias = async () => {
       try {
-        const res = await fetch("https://deliciasoft-backend-i6g9.onrender.com/api/categorias-productos");
+        const res = await fetch(
+          "https://deliciasoft-backend-i6g9.onrender.com/api/categorias-productos"
+        );
         const data = await res.json();
         setCategorias(data);
       } catch {
@@ -51,12 +55,14 @@ export default function ProductosCreate({ onSave, onCancel }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
-    if (erroresValidacion[name]) setErroresValidacion((p) => ({ ...p, [name]: "" }));
+    if (erroresValidacion[name])
+      setErroresValidacion((p) => ({ ...p, [name]: "" }));
   };
 
   const handleImagenChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       showNotification("Tipo de archivo no permitido", "error");
       e.target.value = "";
@@ -67,9 +73,14 @@ export default function ProductosCreate({ onSave, onCancel }) {
       e.target.value = "";
       return;
     }
+
     const reader = new FileReader();
     reader.onload = (ev) =>
-      setFormData((p) => ({ ...p, imagenArchivo: file, imagenPreview: ev.target.result }));
+      setFormData((p) => ({
+        ...p,
+        imagenArchivo: file,
+        imagenPreview: ev.target.result,
+      }));
     reader.readAsDataURL(file);
   };
 
@@ -82,7 +93,11 @@ export default function ProductosCreate({ onSave, onCancel }) {
   const handleGuardarReceta = (receta) => {
     const idReceta = receta.idreceta || receta.id || null;
     const nombreReceta = receta.nombrereceta || receta.nombre || "";
-    const especificaciones = receta.especificaciones || receta.especificacionesreceta || "";
+    const especificaciones =
+      receta.especificaciones || receta.especificacionesreceta || "";
+
+    const insumos =
+      receta.insumos || receta.detallereceta || receta.detalle || [];
 
     setFormData((p) => ({
       ...p,
@@ -92,31 +107,44 @@ export default function ProductosCreate({ onSave, onCancel }) {
         idreceta: idReceta,
         nombrereceta: nombreReceta,
         especificaciones: especificaciones,
+        insumos: insumos,
       },
     }));
 
     setMostrarModalReceta(false);
   };
 
-
-  const removerReceta = () => setFormData((p) => ({ ...p, idreceta: null, recetaSeleccionada: null }));
+  const removerReceta = () =>
+    setFormData((p) => ({
+      ...p,
+      idreceta: null,
+      recetaSeleccionada: null,
+    }));
 
   const abrirModalCategoria = () => setModalCategoriaVisible(true);
   const cerrarModalCategoria = () => setModalCategoriaVisible(false);
 
   const guardarCategoria = async (nuevaCategoria) => {
-    const categoriaCreada = await categoriaProductoApiService.crearCategoria(nuevaCategoria);
+    const categoriaCreada =
+      await categoriaProductoApiService.crearCategoria(nuevaCategoria);
+
     setCategorias((p) => [...p, categoriaCreada]);
-    setFormData((p) => ({ ...p, idcategoriaproducto: categoriaCreada.idcategoriaproducto }));
+    setFormData((p) => ({
+      ...p,
+      idcategoriaproducto: categoriaCreada.idcategoriaproducto,
+    }));
     cerrarModalCategoria();
   };
 
   const validateForm = () => {
     const err = {};
     if (!formData.nombreproducto.trim()) err.nombreproducto = "Requerido";
-    if (!formData.idcategoriaproducto) err.idcategoriaproducto = "Seleccione una categoría";
+    if (!formData.idcategoriaproducto)
+      err.idcategoriaproducto = "Seleccione una categoría";
     const precio = parseFloat(formData.precioproducto);
-    if (!formData.precioproducto || isNaN(precio) || precio < 0) err.precioproducto = "Precio inválido";
+    if (!formData.precioproducto || isNaN(precio) || precio < 0)
+      err.precioproducto = "Precio inválido";
+
     setErroresValidacion(err);
     return Object.keys(err).length === 0;
   };
@@ -125,14 +153,19 @@ export default function ProductosCreate({ onSave, onCancel }) {
     e.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
+
     let idImagen = null;
+
     try {
       if (formData.imagenArchivo) {
         setSubiendoImagen(true);
-        const img = await productoApiService.subirImagen(formData.imagenArchivo);
+        const img = await productoApiService.subirImagen(
+          formData.imagenArchivo
+        );
         idImagen = img.idimagen;
         setSubiendoImagen(false);
       }
+
       const payload = {
         nombreproducto: formData.nombreproducto.trim(),
         precioproducto: parseFloat(formData.precioproducto),
@@ -142,9 +175,28 @@ export default function ProductosCreate({ onSave, onCancel }) {
         idimagen: idImagen,
         idreceta: formData.idreceta,
       };
+
       const prod = await productoApiService.crearProducto(payload);
-      setProductoCreado(prod);
+
+      // ⭐ FIX: cargar receta completa después de crear producto
+      let recetaCompleta = null;
+
+      if (formData.idreceta) {
+        try {
+          const r = await fetch(
+            `https://deliciasoft-backend-i6g9.onrender.com/api/receta/${formData.idreceta}`
+          );
+          recetaCompleta = await r.json();
+        } catch (e) {}
+      }
+
+      setProductoCreado({
+        ...prod,
+        receta: recetaCompleta,
+      });
+
       showNotification("Producto creado exitosamente", "success");
+
       setTimeout(() => {
         const conf = window.confirm("¿Desea configurar personalización?");
         if (conf) setPaso(2);
@@ -162,13 +214,18 @@ export default function ProductosCreate({ onSave, onCancel }) {
     setTimeout(() => onSave && onSave(productoCreado), 1500);
   };
 
-  const handleSkipConfiguracion = () => onSave && onSave(productoCreado);
+  const handleSkipConfiguracion = () =>
+    onSave && onSave(productoCreado);
 
   if (paso === 2 && productoCreado)
     return (
       <ConfiguracionProducto
-        idProducto={productoCreado.id || productoCreado.idproductogeneral}
-        nombreProducto={productoCreado.nombre || productoCreado.nombreproducto}
+        idProducto={
+          productoCreado.id || productoCreado.idproductogeneral
+        }
+        nombreProducto={
+          productoCreado.nombre || productoCreado.nombreproducto
+        }
         onSave={handleSaveConfiguracion}
         onCancel={handleSkipConfiguracion}
       />
@@ -188,7 +245,9 @@ export default function ProductosCreate({ onSave, onCancel }) {
                 name="nombreproducto"
                 value={formData.nombreproducto}
                 onChange={handleInputChange}
-                className={`form-input ${erroresValidacion.nombreproducto ? "error" : ""}`}
+                className={`form-input ${
+                  erroresValidacion.nombreproducto ? "error" : ""
+                }`}
                 placeholder="Ej: Pan de yuca"
               />
             </div>
@@ -199,7 +258,9 @@ export default function ProductosCreate({ onSave, onCancel }) {
                 name="precioproducto"
                 value={formData.precioproducto}
                 onChange={handleInputChange}
-                className={`form-input ${erroresValidacion.precioproducto ? "error" : ""}`}
+                className={`form-input ${
+                  erroresValidacion.precioproducto ? "error" : ""
+                }`}
                 placeholder="Ej: 5000"
               />
             </div>
@@ -210,16 +271,25 @@ export default function ProductosCreate({ onSave, onCancel }) {
                   name="idcategoriaproducto"
                   value={formData.idcategoriaproducto}
                   onChange={handleInputChange}
-                  className={`form-input ${erroresValidacion.idcategoriaproducto ? "error" : ""}`}
+                  className={`form-input ${
+                    erroresValidacion.idcategoriaproducto ? "error" : ""
+                  }`}
                 >
                   <option value="">Seleccione una categoría</option>
                   {categorias.map((c) => (
-                    <option key={c.idcategoriaproducto} value={c.idcategoriaproducto}>
+                    <option
+                      key={c.idcategoriaproducto}
+                      value={c.idcategoriaproducto}
+                    >
                       {c.nombrecategoria || c.nombre}
                     </option>
                   ))}
                 </select>
-                <button type="button" className="btn-small" onClick={abrirModalCategoria}>
+                <button
+                  type="button"
+                  className="btn-small"
+                  onClick={abrirModalCategoria}
+                >
                   +
                 </button>
               </div>
@@ -230,53 +300,117 @@ export default function ProductosCreate({ onSave, onCancel }) {
         <div className="form-card">
           <h2 className="section-title">🖼️ Imagen del Producto</h2>
           {formData.imagenPreview ? (
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <img src={formData.imagenPreview} alt="preview" style={{ width: 120, borderRadius: 10 }} />
-              <button type="button" className="delete-btn" onClick={removerImagen}>
+            <div
+              style={{ display: "flex", gap: "12px", alignItems: "center" }}
+            >
+              <img
+                src={formData.imagenPreview}
+                alt="preview"
+                style={{ width: 120, borderRadius: 10 }}
+              />
+              <button
+                type="button"
+                className="delete-btn"
+                onClick={removerImagen}
+              >
                 Eliminar
               </button>
             </div>
           ) : (
             <p style={{ color: "#6b7280" }}>No se ha subido imagen</p>
           )}
-          <input id="imagen-upload" type="file" accept="image/*" onChange={handleImagenChange} style={{ display: "none" }} />
-          <label htmlFor="imagen-upload" className="btn-small" style={{ marginTop: "10px" }}>
+          <input
+            id="imagen-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleImagenChange}
+            style={{ display: "none" }}
+          />
+          <label
+            htmlFor="imagen-upload"
+            className="btn-small"
+            style={{ marginTop: "10px" }}
+          >
             {formData.imagenPreview ? "Cambiar Imagen" : "Subir Imagen"}
           </label>
         </div>
 
         <div className="form-card">
           <h2 className="section-title">📋 Receta del Producto</h2>
+
           {formData.recetaSeleccionada ? (
             <div className="nested-item-list">
               <strong>{formData.recetaSeleccionada.nombrereceta}</strong>
               <p>{formData.recetaSeleccionada.especificaciones}</p>
-              <button type="button" className="delete-btn" onClick={removerReceta}>
+
+              {formData.recetaSeleccionada.insumos?.length > 0 && (
+                <ul>
+                  {formData.recetaSeleccionada.insumos.map(
+                    (i, index) => (
+                      <li key={index}>
+                        {i.nombreinsumo || i.nombre} - {i.cantidad}{" "}
+                        {i.unidadmedida}
+                      </li>
+                    )
+                  )}
+                </ul>
+              )}
+
+              <button
+                type="button"
+                className="delete-btn"
+                onClick={removerReceta}
+              >
                 Eliminar Receta
               </button>
             </div>
           ) : (
             <p style={{ color: "#6b7280" }}>No hay receta asignada</p>
           )}
-          <button type="button" className="btn-small" onClick={() => setMostrarModalReceta(true)}>
-            {formData.recetaSeleccionada ? "Cambiar Receta" : "+ Crear Receta"}
+
+          <button
+            type="button"
+            className="btn-small"
+            onClick={() => setMostrarModalReceta(true)}
+          >
+            {formData.recetaSeleccionada
+              ? "Cambiar Receta"
+              : "+ Crear Receta"}
           </button>
         </div>
 
         <div className="action-buttons">
-          <button type="button" className="btn btn-cancel" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-cancel"
+            onClick={onCancel}
+          >
             Cancelar
           </button>
-          <button type="submit" className="btn btn-save" disabled={loading || subiendoImagen}>
+          <button
+            type="submit"
+            className="btn btn-save"
+            disabled={loading || subiendoImagen}
+          >
             {loading ? "Guardando..." : "💾 Guardar"}
           </button>
         </div>
       </form>
 
-      {mostrarModalReceta && <CrearRecetaModal onClose={() => setMostrarModalReceta(false)} onGuardar={handleGuardarReceta} />}
+      {mostrarModalReceta && (
+        <CrearRecetaModal
+          onClose={() => setMostrarModalReceta(false)}
+          onGuardar={handleGuardarReceta}
+        />
+      )}
 
       {modalCategoriaVisible && (
-        <ModalCategoria visible={modalCategoriaVisible} onClose={cerrarModalCategoria} tipo="agregar" onGuardar={guardarCategoria} />
+        <ModalCategoria
+          visible={modalCategoriaVisible}
+          onClose={cerrarModalCategoria}
+          tipo="agregar"
+          onGuardar={guardarCategoria}
+        />
       )}
     </div>
   );

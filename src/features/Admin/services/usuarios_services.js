@@ -178,7 +178,7 @@ class UsuarioApiService {
     }
   }
 
-  // Obtener todos los roles desde la API de roles
+  // ✅ ACTUALIZADO: Obtener todos los roles activos desde la API de roles
   async obtenerRoles() {
     try {
       console.log('Obteniendo roles...');
@@ -194,20 +194,27 @@ class UsuarioApiService {
       }
       
       const data = await response.json();
-      console.log('Roles obtenidos:', data);
+      console.log('Roles obtenidos desde API:', data);
       
-      return data.map(rol => ({
-        id: rol.idrol,
-        nombre: rol.rol
-      }));
+      // ✅ FILTRAR SOLO ROLES ACTIVOS
+      const rolesActivos = data
+        .filter(rol => rol.estado !== false)
+        .map(rol => ({
+          id: rol.idrol,
+          nombre: rol.rol,
+          activo: rol.estado
+        }));
+      
+      console.log('Roles activos filtrados:', rolesActivos);
+      return rolesActivos;
     } catch (error) {
       console.error('Error al obtener roles:', error);
       // Fallback a roles mock si la API no funciona
       return [
-        { id: 1, nombre: 'Administrador' },
-        { id: 2, nombre: 'Repostero' },
-        { id: 3, nombre: 'Decorador' },
-        { id: 4, nombre: 'Vendedor' }
+        { id: 1, nombre: 'Administrador', activo: true },
+        { id: 2, nombre: 'Repostero', activo: true },
+        { id: 3, nombre: 'Decorador', activo: true },
+        { id: 4, nombre: 'Vendedor', activo: true }
       ];
     }
   }

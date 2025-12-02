@@ -595,7 +595,7 @@ export default function ClienteFormModal({
                                 )}
                             </div>
 
-                            {/* Contraseña field */}
+                           {/* Contraseña field */}
                             <div className="modal-field">
                                 <label className="text-sm" style={{ fontSize: '12px', marginBottom: '2px', display: 'block' }}>
                                     Contraseña: {modalTipo === 'agregar' && <span style={{ color: 'red' }}>*</span>}
@@ -610,8 +610,7 @@ export default function ClienteFormModal({
                                             width: '100%',
                                             height: '28px',
                                             fontSize: '12px',
-                                            padding: '2px 25px 2px 4px',
-                                            paddingRight: '25px',
+                                            padding: isReadOnly ? '2px 4px' : '2px 25px 2px 4px',
                                             borderColor: formErrors.contrasena ? 'red' : '',
                                             backgroundColor: isReadOnly ? '#f5f5f5' : 'white',
                                             color: isReadOnly ? '#666' : 'black'
@@ -620,31 +619,32 @@ export default function ClienteFormModal({
                                         maxLength={20}
                                         readOnly={isReadOnly}
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setMostrarContrasena(!mostrarContrasena)}
-                                        style={{
-                                            position: 'absolute',
-                                            right: '5px',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: isReadOnly ? 'default' : 'pointer',
-                                            fontSize: '12px',
-                                            color: isReadOnly ? '#ccc' : '#666',
-                                            padding: '0',
-                                            width: '16px',
-                                            height: '16px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
-                                        title={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                                        disabled={isReadOnly}
-                                    >
-                                        {mostrarContrasena ? '👁️' : '👁️‍🗨️'}
-                                    </button>
+                                    {!isReadOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarContrasena(!mostrarContrasena)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '5px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                color: '#666',
+                                                padding: '0',
+                                                width: '16px',
+                                                height: '16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                            title={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        >
+                                            {mostrarContrasena ? '👁️' : '👁️‍🗨️'}
+                                        </button>
+                                    )}
                                 </div>
                                 {formErrors.contrasena && !isReadOnly && (
                                     <small style={{ color: 'red', fontSize: '10px' }}>{formErrors.contrasena}</small>

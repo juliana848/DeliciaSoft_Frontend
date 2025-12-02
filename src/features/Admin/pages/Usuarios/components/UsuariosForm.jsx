@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { InputSwitch } from 'primereact/inputswitch';
 import roleApiService from '../../../services/roles_services';
 
+
+
 // Utilidad para validaciones
 const validationUtils = {
   // Validaciones de texto
@@ -426,9 +428,10 @@ function RoleSelectorWithSearch({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filtrar roles según búsqueda
+  // Filtrar roles según búsqueda y solo mostrar activos
   const filteredRoles = roles.filter(rol =>
-    rol.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    rol.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    rol.activo !== false
   );
 
   // Obtener el rol seleccionado
@@ -484,42 +487,42 @@ function RoleSelectorWithSearch({
         </div>
 
         {/* Botón + para crear rol */}
-        <button
-          type="button"
-          onClick={onCreateRole}
-          disabled={disabled}
-          style={{
-            width: '45px',
-            height: '45px',
-            backgroundColor: disabled ? '#e0e0e0' : '#e91e63',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            transition: 'all 0.2s',
-            flexShrink: 0
-          }}
-          onMouseOver={(e) => {
-            if (!disabled) {
-              e.currentTarget.style.backgroundColor = '#c2185b';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }
-          }}
-          onMouseOut={(e) => {
-            if (!disabled) {
-              e.currentTarget.style.backgroundColor = '#e91e63';
-              e.currentTarget.style.transform = 'scale(1)';
-            }
-          }}
-          title="Crear nuevo rol"
-        >
-          +
-        </button>
+       <button
+  type="button"
+  onClick={onCreateRole}
+  disabled={disabled}
+  style={{
+    width: '36px',
+    height: '36px',
+    backgroundColor: disabled ? '#e0e0e0' : '#e91e63',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    fontWeight: 'bold',
+    transition: 'all 0.2s',
+    flexShrink: 0
+  }}
+  onMouseOver={(e) => {
+    if (!disabled) {
+      e.currentTarget.style.backgroundColor = '#c2185b';
+      e.currentTarget.style.transform = 'scale(1.05)';
+    }
+  }}
+  onMouseOut={(e) => {
+    if (!disabled) {
+      e.currentTarget.style.backgroundColor = '#e91e63';
+      e.currentTarget.style.transform = 'scale(1)';
+    }
+  }}
+  title="Crear nuevo rol"
+>
+  +
+</button>
       </div>
 
       {/* Dropdown con resultados */}
@@ -1216,287 +1219,263 @@ export default function UsuariosForm({
   };
 
   return (
-    <>
-      <div className="usuarios-modal-body usuarios-modal-body-compact">
-        <div className="usuarios-modal-grid-two-columns">
-          {/* COLUMNA 1 */}
-          <div className="usuarios-modal-column">
-            {/* Tipo de Documento */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Tipo de Documento<span className="required">*</span>:
-              </label>
-              <select
-                value={formData.tipo_documento_id}
-                onChange={(e) => {
-                  handleInputChange('tipo_documento_id', e.target.value);
-                  // Limpiar documento cuando cambia el tipo
-                  if (formData.documento) {
-                    setFormData(prev => ({ ...prev, documento: '' }));
-                    setFieldErrors(prev => ({ ...prev, documento: [] }));
-                  }
-                }}
-                className={`modal-input ${fieldErrors.tipo_documento_id?.length ? 'error' : ''}`}
-                disabled={isReadOnly}
-              >
-                <option value="">Seleccionar</option>
-                {tiposDocumento.map(tipo => (
-                  <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
-                ))}
-              </select>
-              {fieldErrors.tipo_documento_id?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.tipo_documento_id[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Nombres */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Nombre<span className="required">*</span>:
-              </label>
-              <input
-                type="text"
-                value={formData.nombres}
-                onChange={(e) => handleInputChange('nombres', e.target.value)}
-                className={`modal-input ${fieldErrors.nombres?.length ? 'error' : ''}`}
-                placeholder="Nombres"
-                maxLength="15"
-                readOnly={isReadOnly}
-              />
-              {fieldErrors.nombres?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.nombres[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Correo */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Correo<span className="required">*</span>:
-              </label>
-              <input
-                type="email"
-                value={formData.correo}
-                onChange={(e) => handleInputChange('correo', e.target.value)}
-                className={`modal-input ${fieldErrors.correo?.length ? 'error' : ''}`}
-                placeholder="ejemplo@correo.com"
-                maxLength="100"
-                readOnly={isReadOnly}
-              />
-              {fieldErrors.correo?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.correo[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Contraseña */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Contraseña<span className="required">*</span>:
-              </label>
-              <div className="password-container" style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={formData.contraseña}
-                  onChange={(e) => handleInputChange('contraseña', e.target.value)}
-                  className={`modal-input ${fieldErrors.contraseña?.length ? 'error' : ''}`}
-                  placeholder="8+ chars, 1 mayúscula, 1 special"
-                  maxLength="50"
-                  readOnly={isReadOnly}
-                />
-                {!isReadOnly && (
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      zIndex: 1
-                    }}
-                  >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                )}
-              </div>
-              {fieldErrors.contraseña?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.contraseña.slice(0, 2).map((error, index) => (
-                    <div key={index}>• {error}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* COLUMNA 2 */}
-          <div className="modal-column">
-            {/* N° Documento */}
-            <div className="modal-field">
-              <label className="modal-label">
-                N° Documento<span className="required">*</span>:
-              </label>
-              <input
-                type="text"
-                value={formData.documento}
-                onChange={(e) => handleInputChange('documento', e.target.value)}
-                className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
-                placeholder={formData.tipo_documento_id === 'PA' ? 'Alfanumérico' : 'Número'}
-                maxLength="12"
-                inputMode={formData.tipo_documento_id === 'PA' ? 'text' : 'numeric'}
-                readOnly={isReadOnly}
-              />
-              {fieldErrors.documento?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.documento[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Apellidos */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Apellido<span className="required">*</span>:
-              </label>
-              <input
-                type="text"
-                value={formData.apellidos}
-                onChange={(e) => handleInputChange('apellidos', e.target.value)}
-                className={`modal-input ${fieldErrors.apellidos?.length ? 'error' : ''}`}
-                placeholder="Apellidos"
-                maxLength="15"
-                readOnly={isReadOnly}
-              />
-              {fieldErrors.apellidos?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.apellidos[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Rol con buscador y botón + */}
-            <div className="modal-field">
-              <label className="modal-label">
-                Rol<span className="required">*</span>:
-              </label>
-              <RoleSelectorWithSearch
-                value={formData.rol_id}
-                onChange={(value) => handleInputChange('rol_id', value)}
-                roles={roles}
-                disabled={isReadOnly}
-                onCreateRole={() => setShowQuickCreateRole(true)}
-                hasError={fieldErrors.rol_id?.length > 0}
-              />
-              {fieldErrors.rol_id?.length > 0 && (
-                <div className="error-message">
-                  {fieldErrors.rol_id[0]}
-                </div>
-              )}
-            </div>
-
-            {/* Confirmar Contraseña - Solo en agregar */}
-            {modalTipo === 'agregar' && (
-              <div className="modal-field">
-                <label className="modal-label">
-                  Confirmar Contraseña<span className="required">*</span>:
-                </label>
-                <div className="password-container" style={{ position: 'relative' }}>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmarContraseña}
-                    onChange={(e) => handleInputChange('confirmarContraseña', e.target.value)}
-                    className={`modal-input ${fieldErrors.confirmarContraseña?.length ? 'error' : ''}`}
-                    placeholder="Confirme la contraseña"
-                    maxLength="50"
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      zIndex: 1
-                    }}
-                  >
-                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
-                {fieldErrors.confirmarContraseña?.length > 0 && (
-                  <div className="error-message">
-                    {fieldErrors.confirmarContraseña[0]}
-                  </div>
-                )}
-                {formData.contraseña && formData.confirmarContraseña && 
-                 formData.contraseña === formData.confirmarContraseña && (
-                  <div className="success-message">
-                    ✓ Las contraseñas coinciden
-                  </div>
-                )}
+  <>
+    <div className="usuarios-modal-body usuarios-modal-body-compact">
+      <div className="usuarios-modal-grid-two-columns">
+        {/* COLUMNA 1 */}
+        <div className="usuarios-modal-column">
+          {/* Tipo de Documento */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Tipo de Documento<span className="required">*</span>:
+            </label>
+            <select
+              value={formData.tipo_documento_id}
+              onChange={(e) => {
+                handleInputChange('tipo_documento_id', e.target.value);
+                if (formData.documento) {
+                  setFormData(prev => ({ ...prev, documento: '' }));
+                  setFieldErrors(prev => ({ ...prev, documento: [] }));
+                }
+              }}
+              className={`modal-input ${fieldErrors.tipo_documento_id?.length ? 'error' : ''}`}
+              disabled={isReadOnly}
+            >
+              <option value="">Seleccionar</option>
+              {tiposDocumento.map(tipo => (
+                <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+              ))}
+            </select>
+            {fieldErrors.tipo_documento_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.tipo_documento_id[0]}
               </div>
             )}
+          </div>
 
-            {/* Estado */}
-            {modalTipo !== 'agregar' && (
-              <div className="modal-field">
-                <label className="modal-label">Estado:</label>
-                <div className="switch-container">
-                  <InputSwitch
-                    checked={formData.activo}
-                    onChange={(e) => handleInputChange('activo', e.value)}
-                    disabled={isReadOnly}
-                  />
-                  <span className="switch-label">
-                    {formData.activo ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
+          {/* Nombres */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Nombre<span className="required">*</span>:
+            </label>
+            <input
+              type="text"
+              value={formData.nombres}
+              onChange={(e) => handleInputChange('nombres', e.target.value)}
+              className={`modal-input ${fieldErrors.nombres?.length ? 'error' : ''}`}
+              placeholder="Nombres"
+              maxLength="15"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.nombres?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.nombres[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Correo */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Correo<span className="required">*</span>:
+            </label>
+            <input
+              type="email"
+              value={formData.correo}
+              onChange={(e) => handleInputChange('correo', e.target.value)}
+              className={`modal-input ${fieldErrors.correo?.length ? 'error' : ''}`}
+              placeholder="ejemplo@correo.com"
+              maxLength="100"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.correo?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.correo[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Contraseña */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Contraseña<span className="required">*</span>:
+            </label>
+            <div className="password-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={formData.contraseña}
+                onChange={(e) => handleInputChange('contraseña', e.target.value)}
+                className={`modal-input ${fieldErrors.contraseña?.length ? 'error' : ''}`}
+                placeholder="8+ chars, 1 mayúscula, 1 special"
+                maxLength="50"
+                readOnly={isReadOnly}
+              />
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                </button>
+              )}
+            </div>
+            {fieldErrors.contraseña?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.contraseña.slice(0, 2).map((error, index) => (
+                  <div key={index}>• {error}</div>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        <div className="modal-footer">
-          <button className="modal-btn cancel-btn" onClick={onCancel}>
-            {isReadOnly ? 'Cerrar' : 'Cancelar'}
-          </button>
-          {!isReadOnly && (
-            <button className="modal-btn save-btn" onClick={handleSave}>
-              Guardar
-            </button>
+        {/* COLUMNA 2 */}
+        <div className="usuarios-modal-column">
+          {/* N° Documento */}
+          <div className="modal-field">
+            <label className="modal-label">
+              N° Documento<span className="required">*</span>:
+            </label>
+            <input
+              type="text"
+              value={formData.documento}
+              onChange={(e) => handleInputChange('documento', e.target.value)}
+              className={`modal-input ${fieldErrors.documento?.length ? 'error' : ''}`}
+              placeholder={formData.tipo_documento_id === 'PA' ? 'Alfanumérico' : 'Número'}
+              maxLength="12"
+              inputMode={formData.tipo_documento_id === 'PA' ? 'text' : 'numeric'}
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.documento?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.documento[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Apellidos */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Apellido<span className="required">*</span>:
+            </label>
+            <input
+              type="text"
+              value={formData.apellidos}
+              onChange={(e) => handleInputChange('apellidos', e.target.value)}
+              className={`modal-input ${fieldErrors.apellidos?.length ? 'error' : ''}`}
+              placeholder="Apellidos"
+              maxLength="15"
+              readOnly={isReadOnly}
+            />
+            {fieldErrors.apellidos?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.apellidos[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Rol con buscador y botón + */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Rol<span className="required">*</span>:
+            </label>
+            <RoleSelectorWithSearch
+              value={formData.rol_id}
+              onChange={(value) => handleInputChange('rol_id', value)}
+              roles={roles}
+              disabled={isReadOnly}
+              onCreateRole={() => setShowQuickCreateRole(true)}
+              hasError={fieldErrors.rol_id?.length > 0}
+            />
+            {fieldErrors.rol_id?.length > 0 && (
+              <div className="error-message">
+                {fieldErrors.rol_id[0]}
+              </div>
+            )}
+          </div>
+
+          {/* Confirmar Contraseña - Solo en agregar */}
+          {modalTipo === 'agregar' && (
+            <div className="modal-field">
+              <label className="modal-label">
+                Confirmar Contraseña<span className="required">*</span>:
+              </label>
+              <div className="password-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmarContraseña}
+                  onChange={(e) => handleInputChange('confirmarContraseña', e.target.value)}
+                  className={`modal-input ${fieldErrors.confirmarContraseña?.length ? 'error' : ''}`}
+                  placeholder="Confirme la contraseña"
+                  maxLength="50"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {fieldErrors.confirmarContraseña?.length > 0 && (
+                <div className="error-message">
+                  {fieldErrors.confirmarContraseña[0]}
+                </div>
+              )}
+              {formData.contraseña && formData.confirmarContraseña && 
+               formData.contraseña === formData.confirmarContraseña && (
+                <div className="success-message">
+                  ✓ Las contraseñas coinciden
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Estado - Solo en editar/visualizar */}
+          {modalTipo !== 'agregar' && (
+            <div className="modal-field">
+              <label className="modal-label">Estado:</label>
+              <div className="switch-container">
+                <InputSwitch
+                  checked={formData.activo}
+                  onChange={(e) => handleInputChange('activo', e.value)}
+                  disabled={isReadOnly}
+                />
+                <span className="switch-label">
+                  {formData.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Modal de Creación Rápida de Rol */}
-      <QuickCreateRoleModal
-        isOpen={showQuickCreateRole}
-        onClose={() => setShowQuickCreateRole(false)}
-        onSave={handleQuickCreateRole}
-        permisos={permisos}
-        showNotification={(mensaje, tipo) => setNotification({ 
-          visible: true, 
-          mensaje, 
-          tipo 
-        })}
-      />
-    </>
-  );
+      <div className="modal-footer">
+        <button className="modal-btn cancel-btn" onClick={onCancel}>
+          {isReadOnly ? 'Cerrar' : 'Cancelar'}
+        </button>
+        {!isReadOnly && (
+          <button className="modal-btn save-btn" onClick={handleSave}>
+            Guardar
+          </button>
+        )}
+      </div>
+    </div>
+
+    {/* Modal de Creación Rápida de Rol */}
+    <QuickCreateRoleModal
+      isOpen={showQuickCreateRole}
+      onClose={() => setShowQuickCreateRole(false)}
+      onSave={handleQuickCreateRole}
+      permisos={permisos}
+      showNotification={(mensaje, tipo) => setNotification({ 
+        visible: true, 
+        mensaje, 
+        tipo 
+      })}
+    />
+  </>
+);
 }

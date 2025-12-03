@@ -1310,13 +1310,15 @@ export default function UsuariosForm({
                 maxLength="50"
                 readOnly={isReadOnly}
               />
-              {!isReadOnly && (
+              {modalTipo === 'agregar' && (
                 <button
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
                   title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
+                  <i className={showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'} style={{ fontSize: '14px' }} />
                 </button>
               )}
             </div>
@@ -1415,8 +1417,9 @@ export default function UsuariosForm({
                   className="password-toggle"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   title={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
-                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  <i className={showConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'} style={{ fontSize: '14px' }} />
                 </button>
               </div>
               {fieldErrors.confirmarContraseña?.length > 0 && (

@@ -997,3 +997,37 @@ select.modal-input {
 .p-inputswitch .p-inputswitch-slider {
   border-radius: 12px;
 }
+
+/* Password eye styles for admin modals */
+.usuarios-modal-body .password-container {
+    position: relative;
+}
+
+.usuarios-modal-body .password-container input {
+    /* leave room for the eye icon */
+    padding-right: 64px; /* a bit more space to accommodate icons */
+}
+
+.usuarios-modal-body .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: calc(50% + 10px); /* ↓ Bajado 10px */
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9aa0a6;
+    padding: 8px;
+    z-index: 5;
+    border-radius: 8px;
+}
+
+.usuarios-modal-body .password-toggle i {
+    font-size: 14px;
+    color: inherit;
+}
+
+.usuarios-modal-body .password-toggle:hover {
+    color: #e91e63;
+    background: rgba(233, 30, 99, 0.08);
+}

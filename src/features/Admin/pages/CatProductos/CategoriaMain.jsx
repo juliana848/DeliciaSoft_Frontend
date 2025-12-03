@@ -4,10 +4,10 @@ import Notification from "../../components/Notification";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import categoriaProductoApiService from "../../services/categoriaProductosService";
 import CategoriaList from "./components/CategoriaList";
-import CategoriaCreate from "./Components/CategoriaCreate";
+import CategoriaCreate from "./components/CategoriaCreate";
 import CategoriaEdit from "./components/CategoriaEdit";
-import CategoriaView from "./Components/CategoriaView";
-import CategoriaDelete from "./Components/CategoriaDelete";
+import CategoriaView from "./components/CategoriaView";
+import CategoriaDelete from "./components/CategoriaDelete";
 
 export default function CategoriaMain() {
   const [categorias, setCategorias] = useState([]);
